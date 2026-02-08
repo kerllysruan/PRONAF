@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      disbursements: {
+        Row: {
+          account: string | null
+          agency: string | null
+          amount: number
+          bank_name: string | null
+          created_at: string
+          disbursed_date: string | null
+          expected_date: string | null
+          id: string
+          notes: string | null
+          proposal_id: string | null
+          request_date: string
+          requested_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account?: string | null
+          agency?: string | null
+          amount?: number
+          bank_name?: string | null
+          created_at?: string
+          disbursed_date?: string | null
+          expected_date?: string | null
+          id?: string
+          notes?: string | null
+          proposal_id?: string | null
+          request_date?: string
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account?: string | null
+          agency?: string | null
+          amount?: number
+          bank_name?: string | null
+          created_at?: string
+          disbursed_date?: string | null
+          expected_date?: string | null
+          id?: string
+          notes?: string | null
+          proposal_id?: string | null
+          request_date?: string
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disbursements_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disbursements_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_tasks: {
         Row: {
           assigned_to: string | null

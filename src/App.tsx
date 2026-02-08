@@ -9,7 +9,8 @@ import Dashboard from "./pages/Dashboard";
 import Proposals from "./pages/Proposals";
 import KanbanBoard from "./pages/KanbanBoard";
 import Documentation from "./pages/Documentation";
-import Visits from "./pages/Visits";
+import Tasks from "./pages/Tasks";
+import Disbursements from "./pages/Disbursements";
 import Management from "./pages/Management";
 import AccessControl from "./pages/AccessControl";
 import Auth from "./pages/Auth";
@@ -54,7 +55,8 @@ const AppRoutes = () => (
     <Route path="/propostas" element={<ProtectedRoute><Proposals /></ProtectedRoute>} />
     <Route path="/kanban" element={<ProtectedRoute><KanbanBoard /></ProtectedRoute>} />
     <Route path="/documentacao" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
-    <Route path="/agenda" element={<ProtectedRoute><Visits /></ProtectedRoute>} />
+    <Route path="/tarefas" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+    <Route path="/desembolsos" element={<ProtectedRoute><Disbursements /></ProtectedRoute>} />
     <Route path="/gerenciamento" element={<ProtectedRoute><Management /></ProtectedRoute>} />
     <Route path="/controle-acesso" element={<ProtectedRoute><AccessControl /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
