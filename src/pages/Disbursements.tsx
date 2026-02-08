@@ -1,0 +1,391 @@
+import { useState, useMemo } from "react";
+import {
+  Plus, DollarSign, Loader2, Trash2, Eye, ArrowUpRight,
+  CheckCircle2, Clock, XCircle, FileText, Filter,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+  useDisbursements,
+  DISBURSEMENT_STATUS_LABELS,
+  DISBURSEMENT_STATUS_COLORS,
+  type DisbursementStatus,
+} from "@/hooks/useDisbursements";
+import { useProposals } from "@/hooks/useProposals";
+import { useTeam } from "@/hooks/useTeam";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+export default function Disbursements() {
+  const { disbursements, loading: loadingD, createDisbursement, updateDisbursement, deleteDisbursement } = useDisbursements();
+  const { proposals, loading: loadingP } = useProposals();
+  const { members, loading: loadingM } = useTeam();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const [formData, setFormData] = useState({
+    proposal_id: null as string | null,
+    requested_by: null as string | null,
+    amount: "",
+    status: "pendente",
+    request_date: new Date().toISOString().split("T")[0],
+    expected_date: null as string | null,
+    disbursed_date: null as string | null,
+    bank_name: "",
+    agency: "",
+    account: "",
+    notes: "",
+  });
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+
+  const getInitials = (name: string) => name.split(" ").map((w) => w[0]).join("").substring(0, 2).toUpperCase();
+  const getMemberById = (id?: string | null) => members.find((m) => m.id === id);
+  const getProposalById = (id?: string | null) => proposals.find((p) => p.id === id);
+
+  const stats = useMemo(() => {
+    const total = disbursements.length;
+    const pendentes = disbursements.filter((d) => d.status === "pendente").length;
+    const aprovados = disbursements.filter((d) => d.status === "aprovado").length;
+    const liberados = disbursements.filter((d) => d.status === "liberado").length;
+    const negados = disbursements.filter((d) => d.status === "negado").length;
+    const valorTotal = disbursements.reduce((s, d) => s + Number(d.amount), 0);
+    const valorLiberado = disbursements.filter((d) => d.status === "liberado").reduce((s, d) => s + Number(d.amount), 0);
+    return { total, pendentes, aprovados, liberados, negados, valorTotal, valorLiberado };
+  }, [disbursements]);
+
+  const filtered = useMemo(() =>
+    disbursements.filter((d) => statusFilter === "all" || d.status === statusFilter),
+    [disbursements, statusFilter]);
+
+  const selectedDisbursement = selectedId ? disbursements.find((d) => d.id === selectedId) : null;
+
+  const handleSave = async () => {
+    if (!formData.amount || !formData.proposal_id) return;
+    await createDisbursement({
+      ...formData,
+      amount: Number(formData.amount),
+    } as any);
+    setIsDialogOpen(false);
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setFormData({
+      proposal_id: null, requested_by: null, amount: "", status: "pendente",
+      request_date: new Date().toISOString().split("T")[0], expected_date: null,
+      disbursed_date: null, bank_name: "", agency: "", account: "", notes: "",
+    });
+  };
+
+  if (loadingD || loadingP || loadingM) {
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
+  // Detail view
+  if (selectedDisbursement) {
+    const proposal = getProposalById(selectedDisbursement.proposal_id);
+    const member = getMemberById(selectedDisbursement.requested_by);
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)}>← Voltar</Button>
+          <h1 className="text-2xl font-bold font-heading">Detalhes do Desembolso</h1>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-0 shadow-md">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Valor</p>
+              <p className="text-2xl font-bold font-heading mt-1">{formatCurrency(Number(selectedDisbursement.amount))}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-md">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Status</p>
+              <Badge className={`${DISBURSEMENT_STATUS_COLORS[selectedDisbursement.status as DisbursementStatus]} mt-1`}>
+                {DISBURSEMENT_STATUS_LABELS[selectedDisbursement.status as DisbursementStatus]}
+              </Badge>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-md">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">Produtor</p>
+              <p className="text-sm font-semibold mt-1">{proposal?.producer_name || "—"}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="border-0 shadow-md">
+          <CardHeader><CardTitle className="text-sm font-heading">Informações Completas</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Data do Pedido</p>
+                <p className="text-sm font-medium">{format(parseISO(selectedDisbursement.request_date), "dd/MM/yyyy")}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Previsão</p>
+                <p className="text-sm font-medium">{selectedDisbursement.expected_date ? format(parseISO(selectedDisbursement.expected_date), "dd/MM/yyyy") : "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Data Liberação</p>
+                <p className="text-sm font-medium">{selectedDisbursement.disbursed_date ? format(parseISO(selectedDisbursement.disbursed_date), "dd/MM/yyyy") : "—"}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Solicitado por</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  {member ? (
+                    <>
+                      <Avatar className="h-5 w-5"><AvatarFallback className="text-[9px]" style={{ backgroundColor: member.color, color: "white" }}>{getInitials(member.name)}</AvatarFallback></Avatar>
+                      <span className="text-sm font-medium">{member.name}</span>
+                    </>
+                  ) : <span className="text-sm">—</span>}
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div><p className="text-xs text-muted-foreground">Banco</p><p className="text-sm font-medium">{selectedDisbursement.bank_name || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground">Agência</p><p className="text-sm font-medium">{selectedDisbursement.agency || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground">Conta</p><p className="text-sm font-medium">{selectedDisbursement.account || "—"}</p></div>
+            </div>
+            {selectedDisbursement.notes && (
+              <div><p className="text-xs text-muted-foreground">Observações</p><p className="text-sm mt-1">{selectedDisbursement.notes}</p></div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <Select value={selectedDisbursement.status} onValueChange={(v) => updateDisbursement(selectedDisbursement.id, { status: v })}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {Object.entries(DISBURSEMENT_STATUS_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="destructive" size="sm" onClick={() => { deleteDisbursement(selectedDisbursement.id); setSelectedId(null); }}>
+                <Trash2 className="h-4 w-4 mr-1" /> Excluir
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold font-heading">Controle de Desembolso</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gestão de pedidos e liberação de recursos</p>
+        </div>
+        <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="gap-2 shadow-md shadow-primary/20">
+          <Plus className="h-4 w-4" /> Novo Pedido
+        </Button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        {[
+          { icon: FileText, label: "Total Pedidos", value: stats.total, sub: "registrados" },
+          { icon: Clock, label: "Pendentes", value: stats.pendentes, sub: "aguardando" },
+          { icon: CheckCircle2, label: "Aprovados", value: stats.aprovados, sub: "para liberar" },
+          { icon: ArrowUpRight, label: "Liberados", value: stats.liberados, sub: "concluídos" },
+          { icon: XCircle, label: "Negados", value: stats.negados, sub: "recusados" },
+          { icon: DollarSign, label: "Liberado", value: formatCurrency(stats.valorLiberado), sub: "total" },
+        ].map((item) => (
+          <Card key={item.label} className="border-0 shadow-md">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <item.icon className="h-4 w-4 text-primary" />
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{item.label}</p>
+              </div>
+              <p className="text-lg font-bold font-heading">{item.value}</p>
+              <p className="text-[10px] text-muted-foreground">{item.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Progress */}
+      {stats.total > 0 && (
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold font-heading">Taxa de Liberação</h3>
+              <span className="text-sm font-bold text-primary">
+                {stats.total > 0 ? Math.round((stats.liberados / stats.total) * 100) : 0}%
+              </span>
+            </div>
+            <Progress value={stats.total > 0 ? (stats.liberados / stats.total) * 100 : 0} className="h-3" />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Filters */}
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48"><SelectValue placeholder="Filtrar status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Status</SelectItem>
+                {Object.entries(DISBURSEMENT_STATUS_LABELS).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Table */}
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Produtor</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden md:table-cell">Solicitante</TableHead>
+                  <TableHead className="hidden md:table-cell">Data Pedido</TableHead>
+                  <TableHead className="w-24">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      Nenhum pedido de desembolso encontrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filtered.map((d) => {
+                    const proposal = getProposalById(d.proposal_id);
+                    const member = getMemberById(d.requested_by);
+                    return (
+                      <TableRow key={d.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => setSelectedId(d.id)}>
+                        <TableCell>
+                          <p className="font-medium text-sm">{proposal?.producer_name || "—"}</p>
+                          <p className="text-xs text-muted-foreground">{proposal?.producer_cpf || ""}</p>
+                        </TableCell>
+                        <TableCell className="font-semibold text-sm">{formatCurrency(Number(d.amount))}</TableCell>
+                        <TableCell>
+                          <Badge className={`${DISBURSEMENT_STATUS_COLORS[d.status as DisbursementStatus]} text-xs`}>
+                            {DISBURSEMENT_STATUS_LABELS[d.status as DisbursementStatus]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {member ? (
+                            <div className="flex items-center gap-1.5">
+                              <Avatar className="h-5 w-5"><AvatarFallback className="text-[9px]" style={{ backgroundColor: member.color, color: "white" }}>{getInitials(member.name)}</AvatarFallback></Avatar>
+                              <span className="text-xs">{member.name}</span>
+                            </div>
+                          ) : "—"}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">
+                          {format(parseISO(d.request_date), "dd/MM/yyyy")}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setSelectedId(d.id); }}>
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); deleteDisbursement(d.id); }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* New Disbursement Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle className="font-heading">Novo Pedido de Desembolso</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Proposta *</Label>
+              <Select value={formData.proposal_id || ""} onValueChange={(v) => setFormData((f) => ({ ...f, proposal_id: v || null }))}>
+                <SelectTrigger><SelectValue placeholder="Selecionar proposta" /></SelectTrigger>
+                <SelectContent>
+                  {proposals.filter((p) => p.status === "aprovada").map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.producer_name} — {formatCurrency(Number(p.requested_value))}</SelectItem>
+                  ))}
+                  {proposals.filter((p) => p.status !== "aprovada").length > 0 && proposals.filter((p) => p.status === "aprovada").length === 0 && (
+                    <SelectItem value="" disabled>Nenhuma proposta aprovada</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Valor *</Label>
+                <Input type="number" value={formData.amount} onChange={(e) => setFormData((f) => ({ ...f, amount: e.target.value }))} placeholder="0,00" />
+              </div>
+              <div>
+                <Label>Solicitado por</Label>
+                <Select value={formData.requested_by || ""} onValueChange={(v) => setFormData((f) => ({ ...f, requested_by: v || null }))}>
+                  <SelectTrigger><SelectValue placeholder="Membro" /></SelectTrigger>
+                  <SelectContent>
+                    {members.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Data do Pedido</Label>
+                <Input type="date" value={formData.request_date} onChange={(e) => setFormData((f) => ({ ...f, request_date: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Previsão Liberação</Label>
+                <Input type="date" value={formData.expected_date || ""} onChange={(e) => setFormData((f) => ({ ...f, expected_date: e.target.value || null }))} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div><Label>Banco</Label><Input value={formData.bank_name} onChange={(e) => setFormData((f) => ({ ...f, bank_name: e.target.value }))} placeholder="Ex: BNB" /></div>
+              <div><Label>Agência</Label><Input value={formData.agency} onChange={(e) => setFormData((f) => ({ ...f, agency: e.target.value }))} placeholder="0001" /></div>
+              <div><Label>Conta</Label><Input value={formData.account} onChange={(e) => setFormData((f) => ({ ...f, account: e.target.value }))} placeholder="12345-6" /></div>
+            </div>
+            <div>
+              <Label>Observações</Label>
+              <Textarea value={formData.notes} onChange={(e) => setFormData((f) => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Detalhes adicionais..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={!formData.amount || !formData.proposal_id}>Criar Pedido</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
