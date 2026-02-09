@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,12 +19,18 @@ import { useProposals } from "@/hooks/useProposals";
 import {
   ProposalStatus, PronafLine, STATUS_LABELS, STATUS_COLORS, PRONAF_LINE_LABELS,
 } from "@/types/proposal";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, getMonth, getYear } from "date-fns";
+import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
+
+const PAGE_SIZE = 10;
 
 export default function Proposals() {
   const { proposals, loading, createProposal, updateProposal, deleteProposal } = useProposals();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [filterMonth, setFilterMonth] = useState("all");
+  const [filterYear, setFilterYear] = useState("all");
+  const [page, setPage] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -33,15 +39,27 @@ export default function Proposals() {
     entry_date: new Date().toISOString().split("T")[0], notes: "",
   });
 
+  const availableYears = useMemo(() => {
+    const years = new Set(proposals.map((p) => String(getYear(parseISO(p.entry_date)))));
+    return Array.from(years).sort().reverse();
+  }, [proposals]);
+
   const filtered = useMemo(() => {
+    setPage(0);
     return proposals.filter((p) => {
       const matchesSearch =
         p.producer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.producer_cpf.includes(searchTerm);
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const d = parseISO(p.entry_date);
+      const matchesMonth = filterMonth === "all" || getMonth(d) + 1 === Number(filterMonth);
+      const matchesYear = filterYear === "all" || getYear(d) === Number(filterYear);
+      return matchesSearch && matchesStatus && matchesMonth && matchesYear;
     });
-  }, [proposals, searchTerm, statusFilter]);
+  }, [proposals, searchTerm, statusFilter, filterMonth, filterYear]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -95,8 +113,8 @@ export default function Proposals() {
 
       <Card className="border-0 shadow-md">
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
+          <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Buscar por nome ou CPF..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
             </div>
@@ -109,6 +127,7 @@ export default function Proposals() {
                 ))}
               </SelectContent>
             </Select>
+            <MonthYearFilter month={filterMonth} year={filterYear} onMonthChange={setFilterMonth} onYearChange={setFilterYear} years={availableYears} />
           </div>
         </CardContent>
       </Card>
@@ -129,14 +148,14 @@ export default function Proposals() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 ? (
+                {paged.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      {proposals.length === 0 ? "Nenhuma proposta cadastrada. Clique em 'Nova Proposta' para começar." : "Nenhuma proposta encontrada"}
+                      {proposals.length === 0 ? "Nenhuma proposta cadastrada." : "Nenhuma proposta encontrada"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.map((p) => (
+                  paged.map((p) => (
                     <TableRow key={p.id} className="hover:bg-muted/50">
                       <TableCell className="font-medium">{p.producer_name}</TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground text-sm">{p.producer_cpf}</TableCell>
@@ -166,6 +185,19 @@ export default function Proposals() {
               </TableBody>
             </Table>
           </div>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t">
+              <p className="text-xs text-muted-foreground">{filtered.length} propostas • Página {page + 1} de {totalPages}</p>
+              <div className="flex gap-1">
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(page - 1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

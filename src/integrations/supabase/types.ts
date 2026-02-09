@@ -91,7 +91,9 @@ export type Database = {
           document_name: string | null
           due_date: string | null
           id: string
+          parent_task_id: string | null
           priority: string
+          progress: number
           proposal_id: string | null
           status: string
           title: string
@@ -105,7 +107,9 @@ export type Database = {
           document_name?: string | null
           due_date?: string | null
           id?: string
+          parent_task_id?: string | null
           priority?: string
+          progress?: number
           proposal_id?: string | null
           status?: string
           title: string
@@ -119,7 +123,9 @@ export type Database = {
           document_name?: string | null
           due_date?: string | null
           id?: string
+          parent_task_id?: string | null
           priority?: string
+          progress?: number
           proposal_id?: string | null
           status?: string
           title?: string
@@ -132,6 +138,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "document_tasks"
             referencedColumns: ["id"]
           },
           {
@@ -246,6 +259,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          member_id: string | null
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          member_id?: string | null
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          member_id?: string | null
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "document_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_members: {
         Row: {
