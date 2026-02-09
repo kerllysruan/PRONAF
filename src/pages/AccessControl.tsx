@@ -37,6 +37,8 @@ interface ManagedUser {
   permissions: Record<string, boolean> | null;
 }
 
+type UserRole = "admin" | "gerente" | "usuario";
+
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador",
   gerente: "Gerente",
@@ -112,30 +114,45 @@ export default function AccessControl() {
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [editPerms, setEditPerms] = useState<Record<string, boolean>>({});
   const [newPassword, setNewPassword] = useState("");
-  const [newUser, setNewUser] = useState({ email: "", password: "", display_name: "", role: "usuario" });
+  const [newUser, setNewUser] = useState({ email: "", password: "", display_name: "", role: "usuario" as UserRole });
   const [saving, setSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("users");
 
-  const callAdmin = async (body: any) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const res = await supabase.functions.invoke("admin-users", {
-      body,
-      headers: { Authorization: `Bearer ${session?.access_token}` },
-    });
-    if (res.error) throw new Error(res.error.message);
-    if (res.data?.error) throw new Error(res.data.error);
-    return res.data;
-  };
-
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const data = await callAdmin({ action: "list" });
-      setUsers(data.users || []);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Não autenticado");
+
+      // Buscar usuários do auth
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+      if (authError) throw authError;
+
+      // Buscar roles
+      const { data: roles } = await supabase.from("user_roles").select("*");
+      
+      // Buscar permissions
+      const { data: permissions } = await supabase.from("user_permissions").select("*");
+      
+      // Buscar profiles/display_names
+      const { data: profiles } = await supabase.from("profiles").select("*");
+
+      // Combinar dados
+      const enriched = authData?.users?.map((u) => ({
+        id: u.id,
+        email: u.email,
+        display_name: profiles?.find((p) => p.user_id === u.id)?.display_name || u.email,
+        created_at: u.created_at,
+        role: roles?.find((r) => r.user_id === u.id)?.role || "usuario",
+        permissions: permissions?.find((p) => p.user_id === u.id) || {},
+      })) || [];
+
+      setUsers(enriched);
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
+      console.error("Erro ao buscar usuários:", err);
     }
     setLoading(false);
   };
@@ -153,24 +170,78 @@ export default function AccessControl() {
     if (!newUser.email || !newUser.password) return;
     setSaving(true);
     try {
-      await callAdmin({ action: "create", ...newUser });
+      // Criar usuário no auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: newUser.email,
+        password: newUser.password,
+        email_confirm: true,
+      });
+      if (authError) throw authError;
+
+      const userId = authData.user?.id;
+      if (!userId) throw new Error("Erro ao criar usuário");
+
+      // Criar profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: userId,
+          display_name: newUser.display_name || newUser.email,
+        });
+      if (profileError) throw profileError;
+
+      // Criar role
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .insert([{
+          user_id: userId,
+          role: newUser.role as UserRole,
+        }]);
+      if (roleError) throw roleError;
+
+      // Criar permissions
+      const { error: permError } = await supabase
+        .from("user_permissions")
+        .insert({
+          user_id: userId,
+        });
+      if (permError) throw permError;
+
       toast({ title: "✓ Usuário criado com sucesso!" });
       setIsCreateOpen(false);
-      setNewUser({ email: "", password: "", display_name: "", role: "usuario" });
+      setNewUser({ email: "", password: "", display_name: "", role: "usuario" as UserRole });
       await fetchUsers();
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
+      console.error("Erro ao criar usuário:", err);
     }
     setSaving(false);
   };
 
-  const handleRoleChange = async (userId: string, role: string) => {
+  const handleRoleChange = async (userId: string, role: UserRole) => {
     try {
-      await callAdmin({ action: "update_role", user_id: userId, role });
+      const { error } = await supabase
+        .from("user_roles")
+        .update({ role })
+        .eq("user_id", userId);
+      if (error) throw error;
+
+      // Se admin, dar acesso ao controle de acesso
+      if (role === "admin") {
+        await supabase
+          .from("user_permissions")
+          .update({ 
+            can_view_access_control: true,
+            can_approve_proposals: true,
+          })
+          .eq("user_id", userId);
+      }
+
       toast({ title: "✓ Perfil atualizado!" });
       await fetchUsers();
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
+      console.error("Erro ao atualizar role:", err);
     }
   };
 
@@ -184,13 +255,18 @@ export default function AccessControl() {
     if (!selectedUser) return;
     setSaving(true);
     try {
-      const { id, user_id, created_at, updated_at, ...perms } = editPerms as any;
-      await callAdmin({ action: "update_permissions", user_id: selectedUser.id, permissions: perms });
+      const { error } = await supabase
+        .from("user_permissions")
+        .update(editPerms)
+        .eq("user_id", selectedUser.id);
+      if (error) throw error;
+
       toast({ title: "✓ Permissões atualizadas!" });
       setIsPermOpen(false);
       await fetchUsers();
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
+      console.error("Erro ao atualizar permissões:", err);
     }
     setSaving(false);
   };
@@ -205,12 +281,17 @@ export default function AccessControl() {
     if (!selectedUser || !newPassword) return;
     setSaving(true);
     try {
-      await callAdmin({ action: "update_password", user_id: selectedUser.id, password: newPassword });
+      const { error } = await supabase.auth.admin.updateUserById(selectedUser.id, {
+        password: newPassword,
+      });
+      if (error) throw error;
+
       toast({ title: "✓ Senha alterada com sucesso!" });
       setIsPasswordOpen(false);
       setNewPassword("");
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
+      console.error("Erro ao atualizar senha:", err);
     }
     setSaving(false);
   };
@@ -218,11 +299,14 @@ export default function AccessControl() {
   const handleDelete = async (userId: string) => {
     if (!confirm("Tem certeza que deseja excluir este usuário? Esta ação é irreversível.")) return;
     try {
-      await callAdmin({ action: "delete", user_id: userId });
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+      if (error) throw error;
+
       toast({ title: "✓ Usuário excluído." });
       await fetchUsers();
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
+      console.error("Erro ao deletar usuário:", err);
     }
   };
 
@@ -388,7 +472,7 @@ export default function AccessControl() {
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label className="text-xs text-muted-foreground">Perfil</Label>
-                      <Select value={user.role} onValueChange={(v) => handleRoleChange(user.id, v)}>
+                      <Select value={user.role} onValueChange={(v) => handleRoleChange(user.id, v as UserRole)}>
                         <SelectTrigger className="h-8 text-sm">
                           <SelectValue />
                         </SelectTrigger>
@@ -526,7 +610,7 @@ export default function AccessControl() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="role" className="text-sm font-medium">Perfil</Label>
-              <Select value={newUser.role} onValueChange={(v) => setNewUser((p) => ({ ...p, role: v }))}>
+              <Select value={newUser.role} onValueChange={(v) => setNewUser((p) => ({ ...p, role: v as UserRole }))}>
                 <SelectTrigger id="role" className="h-9">
                   <SelectValue />
                 </SelectTrigger>
