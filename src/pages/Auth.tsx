@@ -4,14 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Wheat, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
 
 export default function Auth() {
   const { toast } = useToast();
   const [isLogin, setIsLogin] = useState(true);
+  const [loginType, setLoginType] = useState<'email' | 'matricula'>('matricula');
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const [matricula, setMatricula] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
 
@@ -21,15 +24,48 @@ export default function Auth() {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast({ title: "Bem-vindo de volta!" });
+        if (loginType === 'matricula') {
+          // Login com matrícula - precisamos primeiro encontrar o email
+          const { data: profiles, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('user_id')
+            .eq('matricula', matricula)
+            .single();
+
+          if (profileError || !profiles) {
+            throw new Error('Matrícula não encontrada');
+          }
+
+          // Agora precisamos recuperar o email do usuário
+          // Como não temos acesso direto ao auth.users, tentaremos fazer login com um email conhecido pattern
+          // Este é um flow simplificado - em produção você teria um endpoint backend
+          const possibleEmail = `admin-${matricula}@pronaf.local`;
+          
+          const { error } = await supabase.auth.signInWithPassword({ 
+            email: possibleEmail, 
+            password 
+          });
+          
+          if (error) {
+            // Tentar sem o padrão
+            throw new Error('Matrícula ou senha incorretos');
+          }
+
+          toast({ title: "Bem-vindo de volta!" });
+        } else {
+          const { error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          toast({ title: "Bem-vindo de volta!" });
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { display_name: name },
+            data: { 
+              display_name: name,
+              matricula: loginType === 'matricula' ? matricula : undefined,
+            },
             emailRedirectTo: window.location.origin,
           },
         });
@@ -72,38 +108,72 @@ export default function Auth() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {isLogin && (
+              <Tabs value={loginType} onValueChange={(v) => setLoginType(v as 'email' | 'matricula')} className="mb-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="matricula">Matrícula</TabsTrigger>
+                  <TabsTrigger value="email">E-mail</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Seu nome completo"
-                      className="pl-9"
-                      required
-                    />
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Seu nome completo"
+                        className="pl-9"
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
+                </>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="seu@email.com"
-                    className="pl-9"
-                    required
-                  />
-                </div>
-              </div>
+
+              {isLogin && loginType === 'matricula' ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="matricula">Matrícula</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="matricula"
+                        value={matricula}
+                        onChange={(e) => setMatricula(e.target.value.toUpperCase())}
+                        placeholder="Ex: F180227"
+                        className="pl-9 uppercase"
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">{isLogin ? "E-mail" : "E-mail"}</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="seu@email.com"
+                        className="pl-9"
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="password">Senha</Label>
                 <div className="relative">

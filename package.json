@@ -10,7 +10,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "generate:proposals": "node scripts/generate_import_proposals.js",
+    "import:supabase": "node scripts/import_to_supabase.js",
+    "setup:complete": "node scripts/setup_complete.js",
+    "setup:all": "node scripts/setup_all.js",
+    "create:admin": "node scripts/create_admin_user.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

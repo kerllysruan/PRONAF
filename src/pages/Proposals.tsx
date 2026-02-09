@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ export default function Proposals() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
+  const [sortBy, setSortBy] = useState<"nome" | "data">("data");
   const [page, setPage] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export default function Proposals() {
 
   const filtered = useMemo(() => {
     setPage(0);
-    return proposals.filter((p) => {
+    let result = proposals.filter((p) => {
       const matchesSearch =
         p.producer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.producer_cpf.includes(searchTerm);
@@ -56,7 +57,16 @@ export default function Proposals() {
       const matchesYear = filterYear === "all" || getYear(d) === Number(filterYear);
       return matchesSearch && matchesStatus && matchesMonth && matchesYear;
     });
-  }, [proposals, searchTerm, statusFilter, filterMonth, filterYear]);
+
+    // Aplicar ordenamento
+    if (sortBy === "nome") {
+      result.sort((a, b) => a.producer_name.localeCompare(b.producer_name));
+    } else if (sortBy === "data") {
+      result.sort((a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime());
+    }
+
+    return result;
+  }, [proposals, searchTerm, statusFilter, filterMonth, filterYear, sortBy]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -128,6 +138,16 @@ export default function Proposals() {
               </SelectContent>
             </Select>
             <MonthYearFilter month={filterMonth} year={filterYear} onMonthChange={setFilterMonth} onYearChange={setFilterYear} years={availableYears} />
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as "nome" | "data")}>
+              <SelectTrigger className="w-full sm:w-48">
+                <ArrowUpDown className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="data">Mais Recentes</SelectItem>
+                <SelectItem value="nome">Ordem Alfabética</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
