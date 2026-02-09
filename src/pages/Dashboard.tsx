@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   FileText, CheckCircle2, Search, DollarSign, TrendingUp, Loader2,
   Sparkles, AlertTriangle, Clock, BarChart3, PieChart as PieChartIcon, ArrowUpRight, ArrowDownRight,
@@ -13,8 +13,9 @@ import {
 import { useProposals } from "@/hooks/useProposals";
 import { useTeam } from "@/hooks/useTeam";
 import { STATUS_LABELS, PRONAF_LINE_LABELS, type ProposalStatus, type PronafLine } from "@/types/proposal";
-import { format, parseISO, subMonths, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { format, parseISO, subMonths, startOfMonth, endOfMonth, isWithinInterval, getMonth, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
 
 const CHART_COLORS = [
   "hsl(215, 70%, 32%)", "hsl(210, 80%, 55%)", "hsl(142, 71%, 35%)",
@@ -24,19 +25,35 @@ const CHART_COLORS = [
 export default function Dashboard() {
   const { proposals, loading: loadingP } = useProposals();
   const { tasks, members, loading: loadingT } = useTeam();
+  const [filterMonth, setFilterMonth] = useState("all");
+  const [filterYear, setFilterYear] = useState("all");
+
+  const availableYears = useMemo(() => {
+    const years = new Set(proposals.map((p) => String(getYear(parseISO(p.created_at)))));
+    return Array.from(years).sort().reverse();
+  }, [proposals]);
+
+  const filteredProposals = useMemo(() => {
+    return proposals.filter((p) => {
+      const d = parseISO(p.created_at);
+      if (filterMonth !== "all" && getMonth(d) + 1 !== Number(filterMonth)) return false;
+      if (filterYear !== "all" && getYear(d) !== Number(filterYear)) return false;
+      return true;
+    });
+  }, [proposals, filterMonth, filterYear]);
 
   const stats = useMemo(() => {
-    const total = proposals.length;
-    const aprovadas = proposals.filter((p) => p.status === "aprovada").length;
-    const emAnalise = proposals.filter((p) => p.status === "em_analise").length;
-    const pendentes = proposals.filter((p) => p.status === "documentacao_pendente").length;
-    const novas = proposals.filter((p) => p.status === "nova").length;
-    const negadas = proposals.filter((p) => p.status === "negada").length;
-    const valorTotal = proposals.reduce((sum, p) => sum + Number(p.requested_value), 0);
-    const valorAprovado = proposals.filter((p) => p.status === "aprovada").reduce((s, p) => s + Number(p.requested_value), 0);
+    const total = filteredProposals.length;
+    const aprovadas = filteredProposals.filter((p) => p.status === "aprovada").length;
+    const emAnalise = filteredProposals.filter((p) => p.status === "em_analise").length;
+    const pendentes = filteredProposals.filter((p) => p.status === "documentacao_pendente").length;
+    const novas = filteredProposals.filter((p) => p.status === "nova").length;
+    const negadas = filteredProposals.filter((p) => p.status === "negada").length;
+    const valorTotal = filteredProposals.reduce((sum, p) => sum + Number(p.requested_value), 0);
+    const valorAprovado = filteredProposals.filter((p) => p.status === "aprovada").reduce((s, p) => s + Number(p.requested_value), 0);
     const taxaAprovacao = total > 0 ? Math.round((aprovadas / total) * 100) : 0;
     return { total, aprovadas, emAnalise, pendentes, novas, negadas, valorTotal, valorAprovado, taxaAprovacao };
-  }, [proposals]);
+  }, [filteredProposals]);
 
   const statusChartData = useMemo(() => [
     { name: "Novas", value: stats.novas, fill: "hsl(199, 89%, 48%)" },
@@ -46,8 +63,7 @@ export default function Dashboard() {
     { name: "Negadas", value: stats.negadas, fill: "hsl(0, 72%, 51%)" },
   ], [stats]);
 
-  const pieData = useMemo(() =>
-    statusChartData.filter((d) => d.value > 0), [statusChartData]);
+  const pieData = useMemo(() => statusChartData.filter((d) => d.value > 0), [statusChartData]);
 
   const monthlyData = useMemo(() => {
     const months: { name: string; propostas: number; valor: number }[] = [];
@@ -55,7 +71,7 @@ export default function Dashboard() {
       const date = subMonths(new Date(), i);
       const start = startOfMonth(date);
       const end = endOfMonth(date);
-      const monthProposals = proposals.filter((p) =>
+      const monthProposals = filteredProposals.filter((p) =>
         isWithinInterval(parseISO(p.created_at), { start, end })
       );
       months.push({
@@ -65,11 +81,11 @@ export default function Dashboard() {
       });
     }
     return months;
-  }, [proposals]);
+  }, [filteredProposals]);
 
   const lineData = useMemo(() => {
     const lines: Record<string, { count: number; valor: number }> = {};
-    proposals.forEach((p) => {
+    filteredProposals.forEach((p) => {
       if (!lines[p.pronaf_line]) lines[p.pronaf_line] = { count: 0, valor: 0 };
       lines[p.pronaf_line].count++;
       lines[p.pronaf_line].valor += Number(p.requested_value);
@@ -79,13 +95,13 @@ export default function Dashboard() {
       propostas: val.count,
       valor: val.valor / 1000,
     })).sort((a, b) => b.valor - a.valor);
-  }, [proposals]);
+  }, [filteredProposals]);
 
   const docStats = useMemo(() => {
-    const totalDocs = proposals.reduce((a, p) => a + p.documents.length, 0);
-    const completedDocs = proposals.reduce((a, p) => a + p.documents.filter((d) => d.completed).length, 0);
+    const totalDocs = filteredProposals.reduce((a, p) => a + p.documents.length, 0);
+    const completedDocs = filteredProposals.reduce((a, p) => a + p.documents.filter((d) => d.completed).length, 0);
     return { totalDocs, completedDocs, rate: totalDocs > 0 ? Math.round((completedDocs / totalDocs) * 100) : 0 };
-  }, [proposals]);
+  }, [filteredProposals]);
 
   const taskStats = useMemo(() => ({
     total: tasks.length,
@@ -102,14 +118,17 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-          <Sparkles className="h-5 w-5 text-white" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold font-heading text-foreground">Dashboard Analítico</h1>
+            <p className="text-sm text-muted-foreground">Visão estratégica das propostas PRONAF</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold font-heading text-foreground">Dashboard Analítico</h1>
-          <p className="text-sm text-muted-foreground">Visão estratégica das propostas PRONAF</p>
-        </div>
+        <MonthYearFilter month={filterMonth} year={filterYear} onMonthChange={setFilterMonth} onYearChange={setFilterYear} years={availableYears} />
       </div>
 
       {/* KPI Cards */}
@@ -158,9 +177,7 @@ export default function Dashboard() {
               <div>
                 <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Valor Total</p>
                 <p className="text-xl font-bold font-heading mt-1">{formatCurrency(stats.valorTotal)}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  Aprovado: {formatCurrency(stats.valorAprovado)}
-                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">Aprovado: {formatCurrency(stats.valorAprovado)}</p>
               </div>
               <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center">
                 <DollarSign className="h-6 w-6 text-accent" />
@@ -239,8 +256,7 @@ export default function Dashboard() {
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-heading flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-primary" />
-              Propostas por Status
+              <BarChart3 className="h-4 w-4 text-primary" /> Propostas por Status
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -261,8 +277,7 @@ export default function Dashboard() {
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-heading flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4 text-primary" />
-              Distribuição por Status
+              <PieChartIcon className="h-4 w-4 text-primary" /> Distribuição por Status
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -272,17 +287,9 @@ export default function Dashboard() {
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%" cy="50%"
-                      innerRadius={55} outerRadius={90}
-                      paddingAngle={3}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {pieData.map((entry, i) => (
-                        <Cell key={i} fill={entry.fill} />
-                      ))}
+                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                      {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                     </Pie>
                     <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} />
                   </PieChart>
@@ -298,8 +305,7 @@ export default function Dashboard() {
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-heading flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              Evolução Mensal
+              <TrendingUp className="h-4 w-4 text-primary" /> Evolução Mensal
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -321,8 +327,7 @@ export default function Dashboard() {
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-heading flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-primary" />
-              Valores por Linha PRONAF (R$ mil)
+              <DollarSign className="h-4 w-4 text-primary" /> Valores por Linha PRONAF (R$ mil)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -352,7 +357,7 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {proposals.slice(0, 5).map((p) => (
+            {filteredProposals.slice(0, 5).map((p) => (
               <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -376,8 +381,8 @@ export default function Dashboard() {
                 </div>
               </div>
             ))}
-            {proposals.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma proposta cadastrada</p>
+            {filteredProposals.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma proposta no período selecionado</p>
             )}
           </div>
         </CardContent>

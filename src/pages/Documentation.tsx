@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,7 +11,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { useProposals } from "@/hooks/useProposals";
+import { useProposals, DbDocument } from "@/hooks/useProposals";
 import {
   STATUS_LABELS, PRONAF_LINE_LABELS, STATUS_COLORS,
   type ProposalStatus, type PronafLine,
@@ -27,14 +27,26 @@ export default function Documentation() {
   const [docFilter, setDocFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedProposalId, setSelectedProposalId] = useState<string | null>(null);
+  // Optimistic local state for instant checkbox feedback
+  const [optimisticDocs, setOptimisticDocs] = useState<Record<string, boolean>>({});
+
+  const handleToggle = useCallback((docId: string, completed: boolean) => {
+    // Instantly update local state
+    setOptimisticDocs((prev) => ({ ...prev, [docId]: completed }));
+    // Fire API in background
+    toggleDocument(docId, completed);
+  }, [toggleDocument]);
+
+  const getDocCompleted = (doc: DbDocument) => {
+    return optimisticDocs[doc.id] !== undefined ? optimisticDocs[doc.id] : doc.completed;
+  };
 
   const totalDocs = proposals.reduce((a, p) => a + p.documents.length, 0);
-  const completedDocs = proposals.reduce((a, p) => a + p.documents.filter((d) => d.completed).length, 0);
+  const completedDocs = proposals.reduce((a, p) => a + p.documents.filter((d) => getDocCompleted(d)).length, 0);
   const pendingDocs = totalDocs - completedDocs;
   const completionRate = totalDocs > 0 ? Math.round((completedDocs / totalDocs) * 100) : 0;
-
-  const proposalsComplete = proposals.filter((p) => p.documents.length > 0 && p.documents.every((d) => d.completed)).length;
-  const proposalsIncomplete = proposals.filter((p) => p.documents.length > 0 && !p.documents.every((d) => d.completed)).length;
+  const proposalsComplete = proposals.filter((p) => p.documents.length > 0 && p.documents.every((d) => getDocCompleted(d))).length;
+  const proposalsIncomplete = proposals.filter((p) => p.documents.length > 0 && !p.documents.every((d) => getDocCompleted(d))).length;
 
   const filtered = useMemo(() => {
     return proposals.filter((p) => {
@@ -42,19 +54,19 @@ export default function Documentation() {
         p.producer_cpf.includes(searchTerm);
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
       if (docFilter === "all") return matchesSearch && matchesStatus;
-      if (docFilter === "completo") return matchesSearch && matchesStatus && p.documents.length > 0 && p.documents.every((d) => d.completed);
-      if (docFilter === "incompleto") return matchesSearch && matchesStatus && p.documents.length > 0 && !p.documents.every((d) => d.completed);
+      if (docFilter === "completo") return matchesSearch && matchesStatus && p.documents.length > 0 && p.documents.every((d) => getDocCompleted(d));
+      if (docFilter === "incompleto") return matchesSearch && matchesStatus && p.documents.length > 0 && !p.documents.every((d) => getDocCompleted(d));
       if (docFilter === "critico") {
-        const pct = p.documents.length > 0 ? p.documents.filter((d) => d.completed).length / p.documents.length : 0;
+        const pct = p.documents.length > 0 ? p.documents.filter((d) => getDocCompleted(d)).length / p.documents.length : 0;
         return matchesSearch && matchesStatus && pct < 0.5;
       }
       return matchesSearch && matchesStatus;
     });
-  }, [proposals, searchTerm, docFilter, statusFilter]);
+  }, [proposals, searchTerm, docFilter, statusFilter, optimisticDocs]);
 
-  const getCompletionPercent = (p: { documents: { completed: boolean }[] }) => {
+  const getCompletionPercent = (p: { documents: DbDocument[] }) => {
     if (p.documents.length === 0) return 0;
-    return Math.round((p.documents.filter((d) => d.completed).length / p.documents.length) * 100);
+    return Math.round((p.documents.filter((d) => getDocCompleted(d)).length / p.documents.length) * 100);
   };
 
   const selectedProposal = selectedProposalId ? proposals.find((p) => p.id === selectedProposalId) : null;
@@ -63,10 +75,9 @@ export default function Documentation() {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  // Detail view
   if (selectedProposal) {
     const percent = getCompletionPercent(selectedProposal);
-    const completed = selectedProposal.documents.filter((d) => d.completed).length;
+    const completed = selectedProposal.documents.filter((d) => getDocCompleted(d)).length;
     return (
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-3">
@@ -109,42 +120,44 @@ export default function Documentation() {
         <Card className="border-0 shadow-md">
           <CardHeader>
             <CardTitle className="text-sm font-heading flex items-center gap-2">
-              <ClipboardList className="h-4 w-4 text-primary" />
-              Documentos Necessários
+              <ClipboardList className="h-4 w-4 text-primary" /> Documentos Necessários
             </CardTitle>
           </CardHeader>
           <CardContent>
             {selectedProposal.documents.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum documento vinculado a esta proposta</p>
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum documento vinculado</p>
             ) : (
               <div className="space-y-2">
-                {selectedProposal.documents.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                      doc.completed
-                        ? "bg-success/5 border-success/20 hover:bg-success/10"
-                        : "bg-destructive/5 border-destructive/20 hover:bg-destructive/10"
-                    }`}
-                  >
-                    <Checkbox
-                      checked={doc.completed}
-                      onCheckedChange={(checked) => toggleDocument(doc.id, !!checked)}
-                      id={doc.id}
-                    />
-                    <label
-                      htmlFor={doc.id}
-                      className={`text-sm cursor-pointer flex-1 ${doc.completed ? "line-through text-muted-foreground" : "font-medium"}`}
+                {selectedProposal.documents.map((doc) => {
+                  const isCompleted = getDocCompleted(doc);
+                  return (
+                    <div
+                      key={doc.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-150 ${
+                        isCompleted
+                          ? "bg-success/5 border-success/20"
+                          : "bg-destructive/5 border-destructive/20"
+                      }`}
                     >
-                      {doc.name}
-                    </label>
-                    {doc.completed ? (
-                      <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-destructive shrink-0" />
-                    )}
-                  </div>
-                ))}
+                      <Checkbox
+                        checked={isCompleted}
+                        onCheckedChange={(checked) => handleToggle(doc.id, !!checked)}
+                        id={doc.id}
+                      />
+                      <label
+                        htmlFor={doc.id}
+                        className={`text-sm cursor-pointer flex-1 transition-all duration-150 ${isCompleted ? "line-through text-muted-foreground" : "font-medium"}`}
+                      >
+                        {doc.name}
+                      </label>
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-destructive shrink-0" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -160,7 +173,6 @@ export default function Documentation() {
         <p className="text-sm text-muted-foreground mt-1">Checklist e acompanhamento dos documentos por proposta</p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card className="border-0 shadow-md">
           <CardContent className="p-3">
@@ -179,7 +191,6 @@ export default function Documentation() {
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Completas</p>
             </div>
             <p className="text-lg font-bold font-heading">{proposalsComplete}</p>
-            <p className="text-[10px] text-muted-foreground">todos docs OK</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-md">
@@ -189,7 +200,6 @@ export default function Documentation() {
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Incompletas</p>
             </div>
             <p className="text-lg font-bold font-heading">{proposalsIncomplete}</p>
-            <p className="text-[10px] text-muted-foreground">faltam docs</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-md">
@@ -199,12 +209,10 @@ export default function Documentation() {
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Pendentes</p>
             </div>
             <p className="text-lg font-bold font-heading">{pendingDocs}</p>
-            <p className="text-[10px] text-muted-foreground">documentos</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Progress */}
       <Card className="border-0 shadow-md">
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
@@ -212,14 +220,9 @@ export default function Documentation() {
             <span className="text-sm font-bold text-primary">{completionRate}%</span>
           </div>
           <Progress value={completionRate} className="h-3" />
-          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-            <span>{completedDocs} entregues</span>
-            <span>{pendingDocs} pendentes</span>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Filters */}
       <Card className="border-0 shadow-md">
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-3">
@@ -247,7 +250,6 @@ export default function Documentation() {
         </CardContent>
       </Card>
 
-      {/* Proposals Table */}
       <Card className="border-0 shadow-md">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -264,14 +266,12 @@ export default function Documentation() {
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      Nenhuma proposta encontrada
-                    </TableCell>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma proposta encontrada</TableCell>
                   </TableRow>
                 ) : (
                   filtered.map((p) => {
                     const pct = getCompletionPercent(p);
-                    const completed = p.documents.filter((d) => d.completed).length;
+                    const completed = p.documents.filter((d) => getDocCompleted(d)).length;
                     return (
                       <TableRow key={p.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => setSelectedProposalId(p.id)}>
                         <TableCell>
