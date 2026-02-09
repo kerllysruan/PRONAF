@@ -9,6 +9,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "serve": "npm run build && node server.js",
+    "start": "node server.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "generate:proposals": "node scripts/generate_import_proposals.js",

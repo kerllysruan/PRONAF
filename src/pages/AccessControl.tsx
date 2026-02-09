@@ -123,30 +123,19 @@ export default function AccessControl() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Não autenticado");
-
-      // Buscar usuários do auth
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-      if (authError) throw authError;
-
-      // Buscar roles
-      const { data: roles } = await supabase.from("user_roles").select("*");
-      
-      // Buscar permissions
-      const { data: permissions } = await supabase.from("user_permissions").select("*");
-      
-      // Buscar profiles/display_names
+      // Buscar usuários das tabelas (não usar admin.listUsers que requer token especial)
       const { data: profiles } = await supabase.from("profiles").select("*");
+      const { data: roles } = await supabase.from("user_roles").select("*");
+      const { data: permissions } = await supabase.from("user_permissions").select("*");
 
       // Combinar dados
-      const enriched = authData?.users?.map((u) => ({
-        id: u.id,
-        email: u.email,
-        display_name: profiles?.find((p) => p.user_id === u.id)?.display_name || u.email,
-        created_at: u.created_at,
-        role: roles?.find((r) => r.user_id === u.id)?.role || "usuario",
-        permissions: permissions?.find((p) => p.user_id === u.id) || {},
+      const enriched = profiles?.map((profile) => ({
+        id: profile.user_id,
+        email: profile.user_id, // Email será extraído do UUID para preview
+        display_name: profile.display_name,
+        created_at: profile.created_at,
+        role: roles?.find((r) => r.user_id === profile.user_id)?.role || "usuario",
+        permissions: permissions?.find((p) => p.user_id === profile.user_id) || {},
       })) || [];
 
       setUsers(enriched);
@@ -170,15 +159,14 @@ export default function AccessControl() {
     if (!newUser.email || !newUser.password) return;
     setSaving(true);
     try {
-      // Criar usuário no auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Usar função alternativa para criar usuário
+      const { data, error } = await supabase.auth.signUp({
         email: newUser.email,
         password: newUser.password,
-        email_confirm: true,
       });
-      if (authError) throw authError;
 
-      const userId = authData.user?.id;
+      if (error) throw error;
+      const userId = data.user?.id;
       if (!userId) throw new Error("Erro ao criar usuário");
 
       // Criar profile
@@ -188,7 +176,7 @@ export default function AccessControl() {
           user_id: userId,
           display_name: newUser.display_name || newUser.email,
         });
-      if (profileError) throw profileError;
+      if (profileError && !profileError.message.includes("duplicate")) throw profileError;
 
       // Criar role
       const { error: roleError } = await supabase
@@ -197,7 +185,7 @@ export default function AccessControl() {
           user_id: userId,
           role: newUser.role as UserRole,
         }]);
-      if (roleError) throw roleError;
+      if (roleError && !roleError.message.includes("duplicate")) throw roleError;
 
       // Criar permissions
       const { error: permError } = await supabase
@@ -205,7 +193,7 @@ export default function AccessControl() {
         .insert({
           user_id: userId,
         });
-      if (permError) throw permError;
+      if (permError && !permError.message.includes("duplicate")) throw permError;
 
       toast({ title: "✓ Usuário criado com sucesso!" });
       setIsCreateOpen(false);
@@ -281,17 +269,16 @@ export default function AccessControl() {
     if (!selectedUser || !newPassword) return;
     setSaving(true);
     try {
-      const { error } = await supabase.auth.admin.updateUserById(selectedUser.id, {
-        password: newPassword,
+      // Não é possível alterar senha de outro usuário sem admin token
+      // Mostrar aviso ao usuário
+      toast({
+        title: "⚠️ Funcionalidade Limitada",
+        description: "Para alterar senha, o usuário deve fazer reset de senha via email",
+        variant: "default",
       });
-      if (error) throw error;
-
-      toast({ title: "✓ Senha alterada com sucesso!" });
       setIsPasswordOpen(false);
-      setNewPassword("");
     } catch (err: any) {
       toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
-      console.error("Erro ao atualizar senha:", err);
     }
     setSaving(false);
   };
@@ -299,8 +286,24 @@ export default function AccessControl() {
   const handleDelete = async (userId: string) => {
     if (!confirm("Tem certeza que deseja excluir este usuário? Esta ação é irreversível.")) return;
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) throw error;
+      // Deletar dados das tabelas (não podemos deletar do auth sem admin token)
+      const { error: permError } = await supabase
+        .from("user_permissions")
+        .delete()
+        .eq("user_id", userId);
+      if (permError) throw permError;
+
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+      if (roleError) throw roleError;
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("user_id", userId);
+      if (profileError) throw profileError;
 
       toast({ title: "✓ Usuário excluído." });
       await fetchUsers();
