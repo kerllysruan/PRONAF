@@ -100,13 +100,18 @@ function AccessControl() {
       const rolesMap = new Map((rolesData || []).map((r: any) => [r.user_id, r.role]));
       const permsMap = new Map((permsData || []).map((p: any) => [p.user_id, p]));
 
-      const mappedUsers: User[] = (profilesData || []).map((profile: any) => ({
-        id: profile.user_id,
-        email: profile.user_id,
-        display_name: profile.display_name || "Sem nome",
-        role: rolesMap.get(profile.user_id) || "usuario",
-        created_at: profile.created_at,
-      }));
+      const mappedUsers: User[] = (profilesData || []).map((profile: any) => {
+        if (!profile.user_id) {
+          console.warn("Perfil sem user_id detectado:", profile);
+        }
+        return {
+          id: profile.user_id,
+          email: profile.email || profile.user_id || "(sem email)",
+          display_name: profile.display_name || "Sem nome",
+          role: rolesMap.get(profile.user_id) || "usuario",
+          created_at: profile.created_at,
+        };
+      });
 
       setUsers(mappedUsers);
       setPermissions(permsMap);
@@ -363,8 +368,8 @@ function AccessControl() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold truncate">{user.display_name}</h4>
-                        <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                        <h4 className="font-semibold truncate">{user.display_name} <span style={{color: 'red', fontSize: 10}}>{!user.id ? '[ID ausente]' : ''}</span></h4>
+                        <p className="text-sm text-muted-foreground truncate">{user.email} <span style={{color: 'red', fontSize: 10}}>{!user.id ? '[ID ausente]' : ''}</span></p>
                         <div className="flex gap-2 mt-2">
                           <Badge className={clsx(getRoleColor(user.role || "usuario"), "rounded px-2 py-0.5 text-xs")}>{getRoleLabel(user.role || "usuario")}</Badge>
                         </div>
@@ -383,8 +388,13 @@ function AccessControl() {
                           }}>
                             <Lock className="h-4 w-4 mr-2" />Permissões
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteUser(user.id)} className="text-destructive">
-                            <Trash2 className="h-4 w-4 mr-2" />Deletar
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteUser(user.id)} 
+                            className="text-destructive"
+                            disabled={!user.id || user.id === "null" || user.id === null || user.id === undefined}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            {(!user.id || user.id === "null" || user.id === null || user.id === undefined) ? "ID inválido" : "Deletar"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
