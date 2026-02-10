@@ -19,6 +19,7 @@
     "setup:all": "node scripts/setup_all.js",
     "setup:db": "node scripts/setup-database.mjs",
     "create:admin": "node scripts/create_admin_user.js"
+    ,"fix:profiles": "node scripts/fix_profiles_user_id.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
