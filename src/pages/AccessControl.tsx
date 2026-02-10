@@ -197,9 +197,26 @@ function AccessControl() {
 
     try {
       setSaving(true);
+      
+      // Normalizar dados para evitar valores null ou inválidos
+      const permissionsData = {
+        can_view_dashboard: editPerms.can_view_dashboard === true,
+        can_view_proposals: editPerms.can_view_proposals === true,
+        can_view_kanban: editPerms.can_view_kanban === true,
+        can_view_documentation: editPerms.can_view_documentation === true,
+        can_view_visits: editPerms.can_view_visits === true,
+        can_view_management: editPerms.can_view_management === true,
+        can_view_access_control: editPerms.can_view_access_control === true,
+        can_create_proposals: editPerms.can_create_proposals === true,
+        can_edit_proposals: editPerms.can_edit_proposals === true,
+        can_delete_proposals: editPerms.can_delete_proposals === true,
+        can_approve_proposals: editPerms.can_approve_proposals === true,
+        read_only: editPerms.read_only === true,
+      };
+
       const { error } = await supabase
         .from("user_permissions")
-        .update(editPerms)
+        .update(permissionsData)
         .eq("user_id", selectedUser.id);
 
       if (error) throw error;
@@ -207,7 +224,8 @@ function AccessControl() {
       setIsPermOpen(false);
       await fetchUsers();
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      console.error("Erro ao salvar permissões:", err);
+      toast({ title: "Erro", description: err.message || "Erro ao salvar permissões", variant: "destructive" });
     } finally {
       setSaving(false);
     }

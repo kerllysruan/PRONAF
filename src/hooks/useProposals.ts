@@ -95,12 +95,34 @@ export function useProposals() {
   };
 
   const deleteProposal = async (id: string) => {
-    const { error } = await supabase.from("proposals").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Proposta removida." });
+    if (!confirm("Tem certeza que deseja deletar esta proposta?")) return;
+
+    try {
+      // Deletar documents primeiro (por causa da foreign key)
+      const { error: docsError } = await supabase
+        .from("proposal_documents")
+        .delete()
+        .eq("proposal_id", id);
+
+      if (docsError) throw docsError;
+
+      // Depois deletar a proposta
+      const { error: proposalError } = await supabase
+        .from("proposals")
+        .delete()
+        .eq("id", id);
+
+      if (proposalError) throw proposalError;
+
+      toast({ title: "Sucesso", description: "Proposta removida." });
       await fetchProposals();
+    } catch (error: any) {
+      console.error("Erro ao deletar proposta:", error);
+      toast({ 
+        title: "Erro ao excluir", 
+        description: error.message || "Erro ao deletar a proposta", 
+        variant: "destructive" 
+      });
     }
   };
 

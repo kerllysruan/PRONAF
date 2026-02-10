@@ -17,6 +17,7 @@
     "import:supabase": "node scripts/import_to_supabase.js",
     "setup:complete": "node scripts/setup_complete.js",
     "setup:all": "node scripts/setup_all.js",
+    "setup:db": "node scripts/setup-database.mjs",
     "create:admin": "node scripts/create_admin_user.js"
   },
   "dependencies": {
