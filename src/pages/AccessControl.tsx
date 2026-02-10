@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   Shield, UserPlus, Pencil, Trash2, Key, Loader2, Users, Lock, Eye, Search, Filter,
   CheckCircle2, Circle, AlertCircle, Mail, Calendar, Settings2, MoreVertical,
@@ -104,10 +105,11 @@ const PERMISSION_GROUPS = {
   "🔒 Segurança": ["read_only"],
 };
 
-export default function AccessControl() {
+function AccessControl() {
   const { toast } = useToast();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPermOpen, setIsPermOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
@@ -121,27 +123,41 @@ export default function AccessControl() {
   const [activeTab, setActiveTab] = useState("users");
 
   const fetchUsers = async () => {
+    console.log("[AccessControl] Iniciando busca de usuários...");
     setLoading(true);
+    setError(null);
     try {
       // Buscar usuários das tabelas (não usar admin.listUsers que requer token especial)
-      const { data: profiles } = await supabase.from("profiles").select("*");
-      const { data: roles } = await supabase.from("user_roles").select("*");
-      const { data: permissions } = await supabase.from("user_permissions").select("*");
+      console.log("[AccessControl] Buscando profiles...");
+      const { data: profiles, error: profileError } = await supabase.from("profiles").select("*");
+      console.log("[AccessControl] Profiles:", profiles, "Error:", profileError);
+
+      const { data: roles, error: roleError } = await supabase.from("user_roles").select("*");
+      console.log("[AccessControl] Roles:", roles, "Error:", roleError);
+
+      const { data: permissions, error: permError } = await supabase.from("user_permissions").select("*");
+      console.log("[AccessControl] Permissions:", permissions, "Error:", permError);
+
+      if (profileError || roleError || permError) {
+        throw new Error(`Erro ao buscar dados: ${profileError?.message || roleError?.message || permError?.message}`);
+      }
 
       // Combinar dados
       const enriched = profiles?.map((profile) => ({
         id: profile.user_id,
-        email: profile.user_id, // Email será extraído do UUID para preview
-        display_name: profile.display_name,
+        email: profile.user_id || "sem-email",
+        display_name: profile.display_name || profile.user_id || "Usuário",
         created_at: profile.created_at,
         role: roles?.find((r) => r.user_id === profile.user_id)?.role || "usuario",
         permissions: permissions?.find((p) => p.user_id === profile.user_id) || {},
       })) || [];
 
+      console.log("[AccessControl] Usuários enriquecidos:", enriched);
       setUsers(enriched);
     } catch (err: any) {
+      console.error("[AccessControl] Erro:", err);
+      setError(err.message);
       toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
-      console.error("Erro ao buscar usuários:", err);
     }
     setLoading(false);
   };
@@ -149,8 +165,8 @@ export default function AccessControl() {
   useEffect(() => { fetchUsers(); }, []);
 
   const filteredUsers = users.filter((u) => {
-    const matchesSearch = u.display_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (u.display_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.email || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === "all" || u.role === filterRole;
     return matchesSearch && matchesRole;
   });
@@ -200,6 +216,7 @@ export default function AccessControl() {
       setNewUser({ email: "", password: "", display_name: "", role: "usuario" as UserRole });
       await fetchUsers();
     } catch (err: any) {
+      setError(err.message);
       toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
       console.error("Erro ao criar usuário:", err);
     }
@@ -228,6 +245,7 @@ export default function AccessControl() {
       toast({ title: "✓ Perfil atualizado!" });
       await fetchUsers();
     } catch (err: any) {
+      setError(err.message);
       toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
       console.error("Erro ao atualizar role:", err);
     }
@@ -253,6 +271,7 @@ export default function AccessControl() {
       setIsPermOpen(false);
       await fetchUsers();
     } catch (err: any) {
+      setError(err.message);
       toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
       console.error("Erro ao atualizar permissões:", err);
     }
@@ -278,6 +297,7 @@ export default function AccessControl() {
       });
       setIsPasswordOpen(false);
     } catch (err: any) {
+      setError(err.message);
       toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
     }
     setSaving(false);
@@ -308,6 +328,7 @@ export default function AccessControl() {
       toast({ title: "✓ Usuário excluído." });
       await fetchUsers();
     } catch (err: any) {
+      setError(err.message);
       toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
       console.error("Erro ao deletar usuário:", err);
     }
@@ -340,6 +361,28 @@ export default function AccessControl() {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-muted-foreground">Carregando usuários...</p>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border-destructive">
+        <CardContent className="pt-6">
+          <div className="flex gap-4 items-start">
+            <AlertCircle className="h-12 w-12 text-destructive flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h2 className="font-bold text-destructive mb-2">Erro ao Carregar</h2>
+              <p className="text-sm text-muted-foreground mb-4">{error}</p>
+              <Button onClick={() => {
+                setError(null);
+                fetchUsers();
+              }} size="sm">
+               Tentar Novamente
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -448,8 +491,8 @@ export default function AccessControl() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base truncate">{user.display_name}</CardTitle>
-                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                          <CardTitle className="text-base truncate">{user.display_name || user.email || "Usuário"}</CardTitle>
+                          <p className="text-xs text-muted-foreground truncate">{user.email || "sem-email"}</p>
                         </div>
                       </div>
                       <DropdownMenu>
@@ -525,8 +568,8 @@ export default function AccessControl() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-semibold text-sm">{user.display_name}</p>
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                          <p className="font-semibold text-sm">{user.display_name || user.email || "Usuário"}</p>
+                          <p className="text-xs text-muted-foreground">{user.email || "sem-email"}</p>
                         </div>
                       </div>
                       <Button
@@ -728,3 +771,11 @@ export default function AccessControl() {
     </div>
   );
 }
+// Re-export com Error Boundary
+const AccessControlPage = () => (
+  <ErrorBoundary>
+    <AccessControl />
+  </ErrorBoundary>
+);
+
+export default AccessControlPage;
