@@ -1,365 +1,259 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
-  Shield, UserPlus, Pencil, Trash2, Key, Loader2, Users, Lock, Eye, Search, Filter,
-  CheckCircle2, Circle, AlertCircle, Mail, Calendar, Settings2, MoreVertical,
-  ChevronRight, Plus, X,
+  Shield, Plus, Trash2, Edit2, Loader2, Users, Lock, AlertCircle,
+  MoreVertical, CheckCircle2,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface ManagedUser {
+interface User {
   id: string;
   email: string;
-  display_name: string;
+  display_name?: string;
+  role?: string;
   created_at: string;
-  role: string;
-  permissions: Record<string, boolean> | null;
 }
 
-type UserRole = "admin" | "gerente" | "usuario";
+type UserRole = "usuario" | "gerente" | "admin";
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Administrador",
-  gerente: "Gerente",
-  usuario: "Usuário",
-};
+interface UserPermission {
+  [key: string]: string | boolean;
+  user_id: string;
+  can_view_dashboard?: boolean;
+  can_view_proposals?: boolean;
+  can_create_proposals?: boolean;
+  can_edit_proposals?: boolean;
+  can_delete_proposals?: boolean;
+  can_approve_proposals?: boolean;
+  can_view_access_control?: boolean;
+  can_view_kanban?: boolean;
+  can_view_documentation?: boolean;
+  can_view_visits?: boolean;
+  can_view_management?: boolean;
+  read_only?: boolean;
+}
 
-const ROLE_ICONS: Record<string, any> = {
-  admin: Shield,
-  gerente: Settings2,
-  usuario: Users,
-};
-
-const ROLE_COLORS: Record<string, string> = {
-  admin: "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800",
-  gerente: "bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800",
-  usuario: "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800",
-};
-
-const ROLE_BADGE_COLORS: Record<string, string> = {
-  admin: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  gerente: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-  usuario: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-};
-
-const PERMISSION_LABELS: Record<string, string> = {
-  can_view_dashboard: "Ver Dashboard",
-  can_view_proposals: "Ver Propostas",
-  can_view_kanban: "Ver Kanban",
-  can_view_documentation: "Ver Documentação",
-  can_view_visits: "Ver Agenda",
-  can_view_management: "Ver Gerenciamento",
-  can_view_access_control: "Ver Controle de Acesso",
-  can_create_proposals: "Criar Propostas",
-  can_edit_proposals: "Editar Propostas",
-  can_delete_proposals: "Excluir Propostas",
-  can_approve_proposals: "Aprovar/Negar Propostas",
-  read_only: "Modo Somente Leitura",
-};
-
-const PERMISSION_DESCRIPTIONS: Record<string, string> = {
-  can_view_dashboard: "Acesso à página inicial do sistema",
-  can_view_proposals: "Visualizar lista de propostas",
-  can_view_kanban: "Visualizar quadro Kanban",
-  can_view_documentation: "Acessar documentação do projeto",
-  can_view_visits: "Ver agenda de visitas",
-  can_view_management: "Acessar área de gerenciamento",
-  can_view_access_control: "Gerenciar controle de acesso",
-  can_create_proposals: "Criar novas propostas",
-  can_edit_proposals: "Modificar propostas existentes",
-  can_delete_proposals: "Remover propostas",
-  can_approve_proposals: "Aprovar ou rejeitar propostas",
-  read_only: "Impede edições e exclusões",
-};
-
-const PERMISSION_GROUPS = {
-  "📊 Acesso às Páginas": [
-    "can_view_dashboard", "can_view_proposals", "can_view_kanban",
-    "can_view_documentation", "can_view_visits", "can_view_management", "can_view_access_control",
-  ],
-  "✏️ Ações em Propostas": [
-    "can_create_proposals", "can_edit_proposals", "can_delete_proposals", "can_approve_proposals",
-  ],
-  "🔒 Segurança": ["read_only"],
-};
+const PERMISSIONS = [
+  { key: "can_view_dashboard", label: "Ver Dashboard", group: "Visualização" },
+  { key: "can_view_proposals", label: "Ver Propostas", group: "Visualização" },
+  { key: "can_view_kanban", label: "Ver Kanban", group: "Visualização" },
+  { key: "can_view_documentation", label: "Ver Documentação", group: "Visualização" },
+  { key: "can_view_visits", label: "Ver Visitas", group: "Visualização" },
+  { key: "can_view_management", label: "Ver Gerenciamento", group: "Visualização" },
+  { key: "can_view_access_control", label: "Controle de Acesso", group: "Visualização" },
+  { key: "can_create_proposals", label: "Criar Propostas", group: "Edição" },
+  { key: "can_edit_proposals", label: "Editar Propostas", group: "Edição" },
+  { key: "can_delete_proposals", label: "Deletar Propostas", group: "Edição" },
+  { key: "can_approve_proposals", label: "Aprovar Propostas", group: "Edição" },
+  { key: "read_only", label: "Somente Leitura", group: "Segurança" },
+];
 
 function AccessControl() {
   const { toast } = useToast();
-  const [users, setUsers] = useState<ManagedUser[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [permissions, setPermissions] = useState<Map<string, UserPermission>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPermOpen, setIsPermOpen] = useState(false);
-  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
-  const [editPerms, setEditPerms] = useState<Record<string, boolean>>({});
-  const [newPassword, setNewPassword] = useState("");
-  const [newUser, setNewUser] = useState({ email: "", password: "", display_name: "", role: "usuario" as UserRole });
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    display_name: "",
+    role: "usuario" as UserRole,
+  });
+  const [editPerms, setEditPerms] = useState<UserPermission>({ user_id: "" });
   const [saving, setSaving] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterRole, setFilterRole] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState("users");
 
   const fetchUsers = async () => {
-    console.log("[AccessControl] Iniciando busca de usuários...");
-    setLoading(true);
-    setError(null);
     try {
-      // Buscar usuários das tabelas (não usar admin.listUsers que requer token especial)
-      console.log("[AccessControl] Buscando profiles...");
-      const { data: profiles, error: profileError } = await supabase.from("profiles").select("*");
-      console.log("[AccessControl] Profiles:", profiles, "Error:", profileError);
+      setLoading(true);
+      setError(null);
 
-      const { data: roles, error: roleError } = await supabase.from("user_roles").select("*");
-      console.log("[AccessControl] Roles:", roles, "Error:", roleError);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("*");
 
-      const { data: permissions, error: permError } = await supabase.from("user_permissions").select("*");
-      console.log("[AccessControl] Permissions:", permissions, "Error:", permError);
+      if (profilesError) throw profilesError;
 
-      if (profileError || roleError || permError) {
-        throw new Error(`Erro ao buscar dados: ${profileError?.message || roleError?.message || permError?.message}`);
-      }
+      const { data: rolesData, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("*");
 
-      // Combinar dados
-      const enriched = profiles?.map((profile) => ({
+      if (rolesError) throw rolesError;
+
+      const { data: permsData, error: permsError } = await supabase
+        .from("user_permissions")
+        .select("*");
+
+      if (permsError) throw permsError;
+
+      const rolesMap = new Map((rolesData || []).map((r: any) => [r.user_id, r.role]));
+      const permsMap = new Map((permsData || []).map((p: any) => [p.user_id, p]));
+
+      const mappedUsers: User[] = (profilesData || []).map((profile: any) => ({
         id: profile.user_id,
-        email: profile.user_id || "sem-email",
-        display_name: profile.display_name || profile.user_id || "Usuário",
+        email: profile.user_id,
+        display_name: profile.display_name || "Sem nome",
+        role: rolesMap.get(profile.user_id) || "usuario",
         created_at: profile.created_at,
-        role: roles?.find((r) => r.user_id === profile.user_id)?.role || "usuario",
-        permissions: permissions?.find((p) => p.user_id === profile.user_id) || {},
-      })) || [];
+      }));
 
-      console.log("[AccessControl] Usuários enriquecidos:", enriched);
-      setUsers(enriched);
+      setUsers(mappedUsers);
+      setPermissions(permsMap);
     } catch (err: any) {
-      console.error("[AccessControl] Erro:", err);
-      setError(err.message);
-      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
+      console.error("Erro ao buscar usuários:", err);
+      setError(err.message || "Erro ao carregar dados");
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os usuários",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch = (u.display_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.email || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === "all" || u.role === filterRole;
-    return matchesSearch && matchesRole;
-  });
+  const handleCreateUser = async () => {
+    if (!formData.email || !formData.password) {
+      toast({ title: "Erro", description: "Email e senha são obrigatórios", variant: "destructive" });
+      return;
+    }
 
-  const handleCreate = async () => {
-    if (!newUser.email || !newUser.password) return;
-    setSaving(true);
     try {
-      // Usar função alternativa para criar usuário
-      const { data, error } = await supabase.auth.signUp({
-        email: newUser.email,
-        password: newUser.password,
+      setSaving(true);
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
       });
 
-      if (error) throw error;
-      const userId = data.user?.id;
+      if (authError) throw authError;
+      const userId = authData.user?.id;
       if (!userId) throw new Error("Erro ao criar usuário");
 
-      // Criar profile
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          user_id: userId,
-          display_name: newUser.display_name || newUser.email,
-        });
-      if (profileError && !profileError.message.includes("duplicate")) throw profileError;
+      await supabase.from("profiles").insert({
+        user_id: userId,
+        display_name: formData.display_name || formData.email,
+      });
 
-      // Criar role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert([{
-          user_id: userId,
-          role: newUser.role as UserRole,
-        }]);
-      if (roleError && !roleError.message.includes("duplicate")) throw roleError;
+      await supabase.from("user_roles").insert({
+        user_id: userId,
+        role: formData.role as UserRole,
+      });
 
-      // Criar permissions
-      const { error: permError } = await supabase
-        .from("user_permissions")
-        .insert({
-          user_id: userId,
-        });
-      if (permError && !permError.message.includes("duplicate")) throw permError;
+      await supabase.from("user_permissions").insert({
+        user_id: userId,
+      });
 
-      toast({ title: "✓ Usuário criado com sucesso!" });
+      toast({ title: "Sucesso", description: "Usuário criado com sucesso" });
       setIsCreateOpen(false);
-      setNewUser({ email: "", password: "", display_name: "", role: "usuario" as UserRole });
+      setFormData({ email: "", password: "", display_name: "", role: "usuario" });
       await fetchUsers();
     } catch (err: any) {
-      setError(err.message);
-      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
-      console.error("Erro ao criar usuário:", err);
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
-  const handleRoleChange = async (userId: string, role: UserRole) => {
+  const handleUpdateRole = async (userId: string, role: UserRole) => {
     try {
       const { error } = await supabase
         .from("user_roles")
-        .update({ role })
+        .update({ role: role as UserRole })
         .eq("user_id", userId);
+
       if (error) throw error;
-
-      // Se admin, dar acesso ao controle de acesso
-      if (role === "admin") {
-        await supabase
-          .from("user_permissions")
-          .update({ 
-            can_view_access_control: true,
-            can_approve_proposals: true,
-          })
-          .eq("user_id", userId);
-      }
-
-      toast({ title: "✓ Perfil atualizado!" });
+      toast({ title: "Sucesso", description: "Perfil atualizado" });
       await fetchUsers();
     } catch (err: any) {
-      setError(err.message);
-      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
-      console.error("Erro ao atualizar role:", err);
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
   };
 
-  const openPermissions = (user: ManagedUser) => {
-    setSelectedUser(user);
-    setEditPerms(user.permissions || {});
-    setIsPermOpen(true);
-  };
-
-  const handleSavePerms = async () => {
+  const handleSavePermissions = async () => {
     if (!selectedUser) return;
-    setSaving(true);
+
     try {
+      setSaving(true);
       const { error } = await supabase
         .from("user_permissions")
         .update(editPerms)
         .eq("user_id", selectedUser.id);
-      if (error) throw error;
 
-      toast({ title: "✓ Permissões atualizadas!" });
+      if (error) throw error;
+      toast({ title: "Sucesso", description: "Permissões atualizadas" });
       setIsPermOpen(false);
       await fetchUsers();
     } catch (err: any) {
-      setError(err.message);
-      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
-      console.error("Erro ao atualizar permissões:", err);
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
-  const openPassword = (user: ManagedUser) => {
-    setSelectedUser(user);
-    setNewPassword("");
-    setIsPasswordOpen(true);
-  };
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm("Tem certeza que deseja deletar este usuário?")) return;
 
-  const handleChangePassword = async () => {
-    if (!selectedUser || !newPassword) return;
-    setSaving(true);
     try {
-      // Não é possível alterar senha de outro usuário sem admin token
-      // Mostrar aviso ao usuário
-      toast({
-        title: "⚠️ Funcionalidade Limitada",
-        description: "Para alterar senha, o usuário deve fazer reset de senha via email",
-        variant: "default",
-      });
-      setIsPasswordOpen(false);
-    } catch (err: any) {
-      setError(err.message);
-      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
-    }
-    setSaving(false);
-  };
+      await supabase.from("user_permissions").delete().eq("user_id", userId);
+      await supabase.from("user_roles").delete().eq("user_id", userId);
+      const { error } = await supabase.from("profiles").delete().eq("user_id", userId);
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm("Tem certeza que deseja excluir este usuário? Esta ação é irreversível.")) return;
-    try {
-      // Deletar dados das tabelas (não podemos deletar do auth sem admin token)
-      const { error: permError } = await supabase
-        .from("user_permissions")
-        .delete()
-        .eq("user_id", userId);
-      if (permError) throw permError;
-
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId);
-      if (roleError) throw roleError;
-
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("user_id", userId);
-      if (profileError) throw profileError;
-
-      toast({ title: "✓ Usuário excluído." });
+      if (error) throw error;
+      toast({ title: "Sucesso", description: "Usuário deletado" });
       await fetchUsers();
     } catch (err: any) {
-      setError(err.message);
-      toast({ title: "❌ Erro", description: err.message, variant: "destructive" });
-      console.error("Erro ao deletar usuário:", err);
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
   };
 
-  const getInitials = (name: string) => name?.split(" ").map((w) => w[0]).join("").substring(0, 2).toUpperCase() || "?";
-  
-  const getAvatarColor = (role: string) => {
+  const getRoleColor = (role: string) => {
     const colors: Record<string, string> = {
-      admin: "bg-red-500",
-      gerente: "bg-amber-500",
-      usuario: "bg-blue-500",
+      admin: "bg-red-100 text-red-800",
+      gerente: "bg-amber-100 text-amber-800",
+      usuario: "bg-blue-100 text-blue-800",
     };
-    return colors[role] || "bg-gray-500";
+    return colors[role] || "bg-gray-100 text-gray-800";
   };
 
-  const countUserPermissions = (user: ManagedUser) => {
-    return Object.values(user.permissions || {}).filter(Boolean).length;
+  const getRoleLabel = (role: string) => {
+    const labels: Record<string, string> = {
+      admin: "Administrador",
+      gerente: "Gerente",
+      usuario: "Usuário",
+    };
+    return labels[role] || role;
   };
-
-  const stats = [
-    { label: "Total de Usuários", value: users.length, icon: Users, color: "text-blue-600" },
-    { label: "Administradores", value: users.filter((u) => u.role === "admin").length, icon: Shield, color: "text-red-600" },
-    { label: "Gerentes", value: users.filter((u) => u.role === "gerente").length, icon: Settings2, color: "text-amber-600" },
-  ];
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Carregando usuários...</p>
+      <div className="flex justify-center items-center h-96">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p>Carregando...</p>
+        </div>
       </div>
     );
   }
@@ -368,16 +262,13 @@ function AccessControl() {
     return (
       <Card className="border-destructive">
         <CardContent className="pt-6">
-          <div className="flex gap-4 items-start">
-            <AlertCircle className="h-12 w-12 text-destructive flex-shrink-0 mt-1" />
-            <div className="flex-1">
-              <h2 className="font-bold text-destructive mb-2">Erro ao Carregar</h2>
-              <p className="text-sm text-muted-foreground mb-4">{error}</p>
-              <Button onClick={() => {
-                setError(null);
-                fetchUsers();
-              }} size="sm">
-               Tentar Novamente
+          <div className="flex gap-4">
+            <AlertCircle className="h-6 w-6 text-destructive flex-shrink-0 mt-1" />
+            <div>
+              <h3 className="font-semibold text-destructive">Erro</h3>
+              <p className="text-sm text-muted-foreground">{error}</p>
+              <Button onClick={fetchUsers} variant="outline" size="sm" className="mt-3">
+                Tentar Novamente
               </Button>
             </div>
           </div>
@@ -387,157 +278,104 @@ function AccessControl() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-primary via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-            <Shield className="h-6 w-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">Controle de Acesso</h1>
-            <p className="text-sm text-muted-foreground">Gerencie usuários, perfis e permissões da plataforma</p>
-          </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Shield className="h-8 w-8" />
+            Controle de Acesso
+          </h1>
+          <p className="text-muted-foreground">Gerencie usuários e permissões</p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="gap-2 shadow-md h-10 px-6">
-          <Plus className="h-4 w-4" /> Novo Usuário
+        <Button onClick={() => {
+          setFormData({ email: "", password: "", display_name: "", role: "usuario" });
+          setIsCreateOpen(true);
+        }} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Novo Usuário
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.label} className="border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
-                    <p className="text-3xl font-bold mt-1">{stat.value}</p>
-                  </div>
-                  <div className={`h-12 w-12 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center`}>
-                    <Icon className={`h-6 w-6 ${stat.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="grid grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{users.length}</div>
+            <p className="text-sm text-muted-foreground">Usuários</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{users.filter(u => u.role === "admin").length}</div>
+            <p className="text-sm text-muted-foreground">Administradores</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{users.filter(u => u.role === "gerente").length}</div>
+            <p className="text-sm text-muted-foreground">Gerentes</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="users" className="gap-2">
-            <Users className="h-4 w-4" />
-            Lista de Usuários
-          </TabsTrigger>
-          <TabsTrigger value="permissions" className="gap-2">
-            <Lock className="h-4 w-4" />
-            Permissões
-          </TabsTrigger>
+      <Tabs defaultValue="users">
+        <TabsList>
+          <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" />Usuários</TabsTrigger>
+          <TabsTrigger value="permissions"><Lock className="h-4 w-4 mr-2" />Permissões</TabsTrigger>
         </TabsList>
 
-        {/* Users Tab */}
         <TabsContent value="users" className="space-y-4">
-          {/* Search and Filter */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome ou e-mail..."
-                className="pl-9"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Select value={filterRole} onValueChange={setFilterRole}>
-              <SelectTrigger className="w-full sm:w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Perfis</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="gerente">Gerente</SelectItem>
-                <SelectItem value="usuario">Usuário</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Users Grid */}
-          {filteredUsers.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="p-8 text-center">
-                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                <p className="text-muted-foreground">Nenhum usuário encontrado</p>
+          {users.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center text-muted-foreground">
+                Nenhum usuário encontrado
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredUsers.map((user) => (
-                <Card key={user.id} className={`border-l-4 transition-all hover:shadow-md ${
-                  user.role === "admin" ? "border-l-red-500" :
-                  user.role === "gerente" ? "border-l-amber-500" :
-                  "border-l-blue-500"
-                }`}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <Avatar className={`h-10 w-10 ${getAvatarColor(user.role)} flex-shrink-0`}>
-                          <AvatarFallback className="text-white font-bold text-sm">
-                            {getInitials(user.display_name)}
+            <div className="space-y-3">
+              {users.map((user) => (
+                <Card key={user.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <Avatar>
+                          <AvatarFallback>
+                            {(user.display_name || user.email).substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-base truncate">{user.display_name || user.email || "Usuário"}</CardTitle>
-                          <p className="text-xs text-muted-foreground truncate">{user.email || "sem-email"}</p>
+                        <div>
+                          <h4 className="font-semibold">{user.display_name}</h4>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                          <div className="flex gap-2 mt-2">
+                            <Badge className={getRoleColor(user.role || "usuario")}>
+                              {getRoleLabel(user.role || "usuario")}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                          <Button variant="ghost" size="icon">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openPermissions(user)}>
-                            <Lock className="h-4 w-4 mr-2" /> Permissões
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedUser(user);
+                            setEditPerms(permissions.get(user.id) || { user_id: user.id });
+                            setIsPermOpen(true);
+                          }}>
+                            <Lock className="h-4 w-4 mr-2" />
+                            Permissões
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openPassword(user)}>
-                            <Key className="h-4 w-4 mr-2" /> Alterar Senha
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user.id)}>
-                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Deletar
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">Perfil</Label>
-                      <Select value={user.role} onValueChange={(v) => handleRoleChange(user.id, v as UserRole)}>
-                        <SelectTrigger className="h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(ROLE_LABELS).map(([k, v]) => (
-                            <SelectItem key={k} value={k}>{v}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        {countUserPermissions(user)} permissões
-                      </Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -546,224 +384,142 @@ function AccessControl() {
           )}
         </TabsContent>
 
-        {/* Permissions Tab */}
         <TabsContent value="permissions" className="space-y-4">
-          {filteredUsers.length === 0 ? (
-            <Card className="border-dashed">
-              <CardContent className="p-8 text-center">
-                <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                <p className="text-muted-foreground">Nenhum usuário encontrado</p>
+          {users.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6 text-center text-muted-foreground">
+                Nenhum usuário encontrado
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
-              {filteredUsers.map((user) => (
-                <Card key={user.id} className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/30">
-                      <div className="flex items-center gap-3">
-                        <Avatar className={`h-10 w-10 ${getAvatarColor(user.role)}`}>
-                          <AvatarFallback className="text-white font-bold text-sm">
-                            {getInitials(user.display_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold text-sm">{user.display_name || user.email || "Usuário"}</p>
-                          <p className="text-xs text-muted-foreground">{user.email || "sem-email"}</p>
-                        </div>
+            <div className="grid grid-cols-2 gap-4">
+              {users.map((user) => {
+                const userPerms = permissions.get(user.id) || { user_id: user.id };
+                const permCount = Object.values(userPerms).filter(v => v === true).length;
+                
+                return (
+                  <Card key={user.id}>
+                    <CardHeader>
+                      <CardTitle className="text-base">{user.display_name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="text-sm text-muted-foreground">
+                        {permCount} permissões ativas
                       </div>
-                      <Button
-                        variant="outline"
+                      <Button 
+                        variant="outline" 
                         size="sm"
-                        onClick={() => openPermissions(user)}
-                        className="gap-1 mt-2 sm:mt-0"
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setEditPerms(userPerms);
+                          setIsPermOpen(true);
+                        }}
                       >
-                        <Pencil className="h-3 w-3" />
-                        Editar Permissões
+                        Ver Permissões
                       </Button>
-                    </div>
-                    <div className="border-t">
-                      <div className="p-4 space-y-3">
-                        {Object.entries(PERMISSION_GROUPS).map(([group, keys]) => (
-                          <div key={group}>
-                            <p className="text-xs font-semibold text-muted-foreground mb-2">{group}</p>
-                            <div className="space-y-2">
-                              {keys.map((key) => (
-                                <div key={key} className="flex items-center gap-2">
-                                  {user.permissions?.[key] ? (
-                                    <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                                  ) : (
-                                    <Circle className="h-4 w-4 text-muted-foreground/30 flex-shrink-0" />
-                                  )}
-                                  <span className="text-sm text-muted-foreground">{PERMISSION_LABELS[key]}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </TabsContent>
       </Tabs>
 
-      {/* Create User Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-xl">Criar Novo Usuário</DialogTitle>
-            <DialogDescription>
-              Preencha os dados para criar um novo usuário na plataforma
-            </DialogDescription>
+            <DialogTitle>Criar Novo Usuário</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="display_name" className="text-sm font-medium">Nome Completo</Label>
+          <div className="space-y-4">
+            <div>
+              <Label>Email *</Label>
               <Input
-                id="display_name"
-                value={newUser.display_name}
-                onChange={(e) => setNewUser((p) => ({ ...p, display_name: e.target.value }))}
-                placeholder="Ex: João Silva"
-                className="h-9"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">E-mail *</Label>
-              <Input
-                id="email"
                 type="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser((p) => ({ ...p, email: e.target.value }))}
-                placeholder="email@exemplo.com"
-                className="h-9"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="usuario@example.com"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">Senha *</Label>
+            <div>
+              <Label>Senha *</Label>
               <Input
-                id="password"
                 type="password"
-                value={newUser.password}
-                onChange={(e) => setNewUser((p) => ({ ...p, password: e.target.value }))}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="Mínimo 6 caracteres"
-                minLength={6}
-                className="h-9"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="role" className="text-sm font-medium">Perfil</Label>
-              <Select value={newUser.role} onValueChange={(v) => setNewUser((p) => ({ ...p, role: v as UserRole }))}>
-                <SelectTrigger id="role" className="h-9">
+            <div>
+              <Label>Nome Completo</Label>
+              <Input
+                value={formData.display_name}
+                onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                placeholder="João Silva"
+              />
+            </div>
+            <div>
+              <Label>Perfil</Label>
+              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}>
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(ROLE_LABELS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
-                  ))}
+                  <SelectItem value="usuario">Usuário</SelectItem>
+                  <SelectItem value="gerente">Gerente</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <DialogFooter className="mt-6">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
-            <Button
-              onClick={handleCreate}
-              disabled={saving || !newUser.email || !newUser.password}
-              className="gap-2"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Criar Usuário
+            <Button onClick={handleCreateUser} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+              Criar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Permissions Dialog */}
       <Dialog open={isPermOpen} onOpenChange={setIsPermOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl">Gerenciar Permissões</DialogTitle>
-            <DialogDescription>
-              {selectedUser?.display_name} ({selectedUser?.email})
-            </DialogDescription>
+            <DialogTitle>Permissões: {selectedUser?.display_name}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-6 mt-4">
-            {Object.entries(PERMISSION_GROUPS).map(([group, keys]) => (
+          <div className="space-y-6">
+            {Array.from(new Set(PERMISSIONS.map(p => p.group))).map((group) => (
               <div key={group}>
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <span>{group}</span>
-                </h3>
-                <div className="space-y-3">
-                  {keys.map((key) => (
-                    <div
-                      key={key}
-                      className="flex items-start gap-3 p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors"
-                    >
-                      <Switch
-                        checked={!!editPerms[key]}
-                        onCheckedChange={(v) => setEditPerms((p) => ({ ...p, [key]: v }))}
-                        className="mt-1"
+                <h4 className="font-semibold mb-3 text-sm">{group}</h4>
+                <div className="space-y-2">
+                  {PERMISSIONS.filter(p => p.group === group).map((perm) => (
+                    <div key={perm.key} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id={perm.key}
+                        checked={(editPerms[perm.key] === true) || false}
+                        onChange={(e) => setEditPerms({
+                          ...editPerms,
+                          user_id: selectedUser?.id || "",
+                          [perm.key]: e.target.checked,
+                        })}
+                        className="rounded"
                       />
-                      <div className="flex-1">
-                        <Label className="text-sm font-medium cursor-pointer">
-                          {PERMISSION_LABELS[key]}
-                        </Label>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {PERMISSION_DESCRIPTIONS[key]}
-                        </p>
-                      </div>
+                      <label htmlFor={perm.key} className="text-sm cursor-pointer">
+                        {perm.label}
+                      </label>
                     </div>
                   ))}
                 </div>
               </div>
             ))}
           </div>
-          <DialogFooter className="mt-6">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setIsPermOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSavePerms} disabled={saving} className="gap-2">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              Salvar Permissões
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Password Dialog */}
-      <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-xl">Alterar Senha</DialogTitle>
-            <DialogDescription>
-              {selectedUser?.display_name}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="new_password" className="text-sm font-medium">Nova Senha *</Label>
-              <Input
-                id="new_password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                minLength={6}
-                className="h-9"
-              />
-            </div>
-          </div>
-          <DialogFooter className="mt-6">
-            <Button variant="outline" onClick={() => setIsPasswordOpen(false)}>Cancelar</Button>
-            <Button
-              onClick={handleChangePassword}
-              disabled={saving || newPassword.length < 6}
-              className="gap-2"
-            >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
-              Alterar Senha
+            <Button onClick={handleSavePermissions} disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              Salvar
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -771,11 +527,5 @@ function AccessControl() {
     </div>
   );
 }
-// Re-export com Error Boundary
-const AccessControlPage = () => (
-  <ErrorBoundary>
-    <AccessControl />
-  </ErrorBoundary>
-);
 
-export default AccessControlPage;
+export default AccessControl;
