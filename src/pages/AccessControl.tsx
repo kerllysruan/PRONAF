@@ -5,22 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Shield, Plus, Trash2, Edit2, Loader2, Users, Lock, AlertCircle,
-  MoreVertical, CheckCircle2,
-} from "lucide-react";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle, MoreVertical, CheckCircle2, UserPlus2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import clsx from "clsx";
 
 interface User {
   id: string;
@@ -232,47 +224,28 @@ function AccessControl() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Tem certeza que deseja deletar este usuário?")) return;
-
+    if (!userId || userId === "null" || userId === null || userId === undefined) {
+      toast({
+        title: "Erro ao deletar",
+        description: "ID do usuário inválido.",
+        variant: "destructive"
+      });
+      return;
+    }
+    if (!window.confirm("Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.")) return;
     try {
       setSaving(true);
-      
-      // Delete in order: permissions first, then roles, then profiles
-      // Using RPC approach for safer cascading deletes
-      const { error: permError } = await supabase
-        .from("user_permissions")
-        .delete()
-        .eq("user_id", userId);
-
-      if (permError) throw new Error(`Erro ao deletar permissões: ${permError.message}`);
-
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId);
-
-      if (roleError) throw new Error(`Erro ao deletar role: ${roleError.message}`);
-
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("user_id", userId);
-
-      if (profileError) throw new Error(`Erro ao deletar perfil: ${profileError.message}`);
-
-      toast({ 
-        title: "Sucesso", 
-        description: "Usuário deletado com sucesso",
-        variant: "default"
-      });
+      // Remove da UI imediatamente
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      await supabase.from("user_permissions").delete().eq("user_id", userId);
+      await supabase.from("user_roles").delete().eq("user_id", userId);
+      await supabase.from("profiles").delete().eq("user_id", userId);
+      toast({ title: "Usuário removido", description: "Usuário e permissões excluídos.", variant: "default" });
       await fetchUsers();
     } catch (err: any) {
       console.error("Erro ao deletar usuário:", err);
-      toast({ 
-        title: "Erro ao deletar", 
-        description: err.message || "Erro ao deletar usuário", 
-        variant: "destructive" 
-      });
+      toast({ title: "Erro ao deletar", description: err.message || "Erro ao deletar usuário", variant: "destructive" });
+      await fetchUsers();
     } finally {
       setSaving(false);
     }
@@ -327,47 +300,46 @@ function AccessControl() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 max-w-5xl mx-auto px-2 md:px-0">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 mt-6">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="h-8 w-8" />
+          <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-2">
+            <Shield className="h-8 w-8 text-primary" />
             Controle de Acesso
           </h1>
-          <p className="text-muted-foreground">Gerencie usuários e permissões</p>
+          <p className="text-muted-foreground text-base mt-1">Gerencie usuários, permissões e perfis de acesso</p>
         </div>
         <Button onClick={() => {
           setFormData({ email: "", password: "", display_name: "", role: "usuario" });
           setIsCreateOpen(true);
-        }} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Usuário
+        }} className="gap-2 shadow-md" size="lg">
+          <UserPlus2 className="h-5 w-5" /> Novo Usuário
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+        <Card className="shadow-sm">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{users.length}</div>
+            <div className="text-3xl font-bold text-primary">{users.length}</div>
             <p className="text-sm text-muted-foreground">Usuários</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-sm">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{users.filter(u => u.role === "admin").length}</div>
+            <div className="text-3xl font-bold text-red-600">{users.filter(u => u.role === "admin").length}</div>
             <p className="text-sm text-muted-foreground">Administradores</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="shadow-sm">
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{users.filter(u => u.role === "gerente").length}</div>
+            <div className="text-3xl font-bold text-amber-600">{users.filter(u => u.role === "gerente").length}</div>
             <p className="text-sm text-muted-foreground">Gerentes</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="users">
-        <TabsList>
+      <Tabs defaultValue="users" className="mt-8">
+        <TabsList className="mb-4">
           <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" />Usuários</TabsTrigger>
           <TabsTrigger value="permissions"><Lock className="h-4 w-4 mr-2" />Permissões</TabsTrigger>
         </TabsList>
@@ -380,25 +352,21 @@ function AccessControl() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {users.map((user) => (
-                <Card key={user.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <Avatar>
-                          <AvatarFallback>
-                            {(user.display_name || user.email).substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h4 className="font-semibold">{user.display_name}</h4>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
-                          <div className="flex gap-2 mt-2">
-                            <Badge className={getRoleColor(user.role || "usuario")}>
-                              {getRoleLabel(user.role || "usuario")}
-                            </Badge>
-                          </div>
+                <Card key={user.id} className="shadow-sm hover:shadow-lg transition-shadow">
+                  <CardContent className="pt-6 pb-4 flex flex-col gap-3">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback>
+                          {(user.display_name || user.email).substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold truncate">{user.display_name}</h4>
+                        <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                        <div className="flex gap-2 mt-2">
+                          <Badge className={clsx(getRoleColor(user.role || "usuario"), "rounded px-2 py-0.5 text-xs")}>{getRoleLabel(user.role || "usuario")}</Badge>
                         </div>
                       </div>
                       <DropdownMenu>
@@ -413,15 +381,10 @@ function AccessControl() {
                             setEditPerms(permissions.get(user.id) || { user_id: user.id });
                             setIsPermOpen(true);
                           }}>
-                            <Lock className="h-4 w-4 mr-2" />
-                            Permissões
+                            <Lock className="h-4 w-4 mr-2" />Permissões
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Deletar
+                          <DropdownMenuItem onClick={() => handleDeleteUser(user.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />Deletar
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -441,30 +404,22 @@ function AccessControl() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {users.map((user) => {
                 const userPerms = permissions.get(user.id) || { user_id: user.id };
                 const permCount = Object.values(userPerms).filter(v => v === true).length;
-                
                 return (
-                  <Card key={user.id}>
+                  <Card key={user.id} className="shadow-sm">
                     <CardHeader>
-                      <CardTitle className="text-base">{user.display_name}</CardTitle>
+                      <CardTitle className="text-base font-semibold truncate">{user.display_name}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="text-sm text-muted-foreground">
-                        {permCount} permissões ativas
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="w-full"
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setEditPerms(userPerms);
-                          setIsPermOpen(true);
-                        }}
-                      >
+                      <div className="text-sm text-muted-foreground">{permCount} permissões ativas</div>
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => {
+                        setSelectedUser(user);
+                        setEditPerms(userPerms);
+                        setIsPermOpen(true);
+                      }}>
                         Ver Permissões
                       </Button>
                     </CardContent>

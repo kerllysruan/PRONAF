@@ -95,40 +95,62 @@ export function useProposals() {
   };
 
   const deleteProposal = async (id: string) => {
-    if (!confirm("Tem certeza que deseja deletar esta proposta?")) return;
-
+    if (!confirm("Tem certeza que deseja deletar esta proposta e todos os documentos?")) return;
     try {
-      // Deletar documents primeiro (por causa da foreign key)
+      if (!user) throw new Error("Usuário não autenticado");
+      if (!id) throw new Error("ID da proposta não é válido");
+
+      // Remove da UI imediatamente
+      setProposals((prev) => prev.filter((p) => p.id !== id));
+
+      // Deletar documents primeiro
       const { error: docsError } = await supabase
         .from("proposal_documents")
         .delete()
         .eq("proposal_id", id);
-
-      if (docsError) throw docsError;
+      if (docsError && docsError.code !== "PGRST116") throw docsError;
 
       // Depois deletar a proposta
       const { error: proposalError } = await supabase
         .from("proposals")
         .delete()
         .eq("id", id);
-
       if (proposalError) throw proposalError;
 
-      toast({ title: "Sucesso", description: "Proposta removida." });
+      toast({ title: "Sucesso", description: "Proposta e documentos removidos com sucesso", variant: "default" });
+      // Garante atualização (caso outro usuário tenha alterado)
       await fetchProposals();
     } catch (error: any) {
       console.error("Erro ao deletar proposta:", error);
-      toast({ 
-        title: "Erro ao excluir", 
-        description: error.message || "Erro ao deletar a proposta", 
-        variant: "destructive" 
-      });
+      toast({ title: "Erro ao excluir", description: error.message || "Erro ao deletar a proposta", variant: "destructive" });
+      // Recarrega para garantir consistência
+      await fetchProposals();
     }
   };
 
   const toggleDocument = async (docId: string, completed: boolean) => {
-    await supabase.from("proposal_documents").update({ completed }).eq("id", docId);
-    await fetchProposals();
+    try {
+      const { error } = await supabase
+        .from("proposal_documents")
+        .update({ completed })
+        .eq("id", docId);
+
+      if (error) throw error;
+      
+      toast({ 
+        title: "Sucesso", 
+        description: completed ? "Documento marcado como completo" : "Documento desmarcado",
+        variant: "default"
+      });
+      await fetchProposals();
+    } catch (error: any) {
+      console.error("Erro ao atualizar documento:", error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar documento",
+        variant: "destructive"
+      });
+    }
   };
 
   return { proposals, loading, createProposal, updateProposal, deleteProposal, toggleDocument, refetch: fetchProposals };

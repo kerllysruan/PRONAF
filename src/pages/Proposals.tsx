@@ -25,7 +25,7 @@ import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
 const PAGE_SIZE = 10;
 
 export default function Proposals() {
-  const { proposals, loading, createProposal, updateProposal, deleteProposal } = useProposals();
+  const { proposals, loading, createProposal, updateProposal, deleteProposal, refetch } = useProposals();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState("all");
@@ -103,6 +103,7 @@ export default function Proposals() {
       await createProposal(formData as any);
     }
     setIsDialogOpen(false);
+    await refetch();
   };
 
   if (loading) {
@@ -196,7 +197,7 @@ export default function Proposals() {
                       <TableCell>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteProposal(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <Button variant="ghost" size="icon" onClick={async () => { await deleteProposal(p.id); await refetch(); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
