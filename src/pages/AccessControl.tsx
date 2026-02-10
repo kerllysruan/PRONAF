@@ -217,15 +217,46 @@ function AccessControl() {
     if (!confirm("Tem certeza que deseja deletar este usuário?")) return;
 
     try {
-      await supabase.from("user_permissions").delete().eq("user_id", userId);
-      await supabase.from("user_roles").delete().eq("user_id", userId);
-      const { error } = await supabase.from("profiles").delete().eq("user_id", userId);
+      setSaving(true);
+      
+      // Delete in order: permissions first, then roles, then profiles
+      // Using RPC approach for safer cascading deletes
+      const { error: permError } = await supabase
+        .from("user_permissions")
+        .delete()
+        .eq("user_id", userId);
 
-      if (error) throw error;
-      toast({ title: "Sucesso", description: "Usuário deletado" });
+      if (permError) throw new Error(`Erro ao deletar permissões: ${permError.message}`);
+
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+
+      if (roleError) throw new Error(`Erro ao deletar role: ${roleError.message}`);
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("user_id", userId);
+
+      if (profileError) throw new Error(`Erro ao deletar perfil: ${profileError.message}`);
+
+      toast({ 
+        title: "Sucesso", 
+        description: "Usuário deletado com sucesso",
+        variant: "default"
+      });
       await fetchUsers();
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      console.error("Erro ao deletar usuário:", err);
+      toast({ 
+        title: "Erro ao deletar", 
+        description: err.message || "Erro ao deletar usuário", 
+        variant: "destructive" 
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
