@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useProposals } from "@/hooks/useProposals";
 import {
-  ProposalStatus, PronafLine, STATUS_LABELS, STATUS_COLORS, PRONAF_LINE_LABELS,
+  ProposalStatus, PronafLine, ProjectDesigner, STATUS_LABELS, STATUS_COLORS, PRONAF_LINE_LABELS, PROJECT_DESIGNER_LABELS,
 } from "@/types/proposal";
 import { format, parseISO, getMonth, getYear } from "date-fns";
 import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
@@ -36,7 +36,7 @@ export default function Proposals() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     producer_name: "", producer_cpf: "", producer_address: "", producer_phone: "",
-    pronaf_line: "custeio", requested_value: 0, status: "nova",
+    pronaf_line: "custeio", project_designer: "ney_medeiros", requested_value: 0, status: "nova",
     entry_date: new Date().toISOString().split("T")[0], notes: "",
   });
 
@@ -88,7 +88,7 @@ export default function Proposals() {
     setEditingId(null);
     setFormData({
       producer_name: "", producer_cpf: "", producer_address: "", producer_phone: "",
-      pronaf_line: "custeio", requested_value: 0, status: "nova",
+      pronaf_line: "custeio", project_designer: "ney_medeiros", requested_value: 0, status: "nova",
       entry_date: new Date().toISOString().split("T")[0], notes: "",
     });
     setIsDialogOpen(true);
@@ -99,7 +99,7 @@ export default function Proposals() {
     setFormData({
       producer_name: p.producer_name, producer_cpf: p.producer_cpf,
       producer_address: p.producer_address, producer_phone: p.producer_phone,
-      pronaf_line: p.pronaf_line, requested_value: Number(p.requested_value),
+      pronaf_line: p.pronaf_line, project_designer: p.project_designer || "ney_medeiros", requested_value: Number(p.requested_value),
       status: p.status, entry_date: p.entry_date, notes: p.notes || "",
     });
     setIsDialogOpen(true);
@@ -185,6 +185,7 @@ export default function Proposals() {
                   <TableHead>Produtor</TableHead>
                   <TableHead className="hidden md:table-cell">CPF</TableHead>
                   <TableHead>Linha</TableHead>
+                  <TableHead>Projetista</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden lg:table-cell">Data</TableHead>
@@ -208,6 +209,7 @@ export default function Proposals() {
                           {PRONAF_LINE_LABELS[p.pronaf_line as PronafLine] || p.pronaf_line}
                         </Badge>
                       </TableCell>
+                      <TableCell>{PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer || "-"}</TableCell>
                       <TableCell className="font-medium">{formatCurrency(Number(p.requested_value))}</TableCell>
                       <TableCell>
                         <Badge className={`${STATUS_COLORS[p.status as ProposalStatus] || ''} text-xs`}>
@@ -274,6 +276,17 @@ export default function Proposals() {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(PRONAF_LINE_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Projetista</Label>
+                <Select value={formData.project_designer} onValueChange={(v) => setFormData((f) => ({ ...f, project_designer: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(PROJECT_DESIGNER_LABELS).map(([key, label]) => (
                       <SelectItem key={key} value={key}>{label}</SelectItem>
                     ))}
                   </SelectContent>

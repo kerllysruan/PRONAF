@@ -12,6 +12,7 @@ export interface DbProposal {
   producer_address: string;
   producer_phone: string;
   pronaf_line: string;
+  project_designer?: string;
   requested_value: number;
   status: string;
   entry_date: string;

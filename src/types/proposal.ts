@@ -20,6 +20,12 @@ export type PronafLine =
   | 'pronaf_jovem'
   | 'investimento';
 
+export type ProjectDesigner =
+  | 'ney_medeiros'
+  | 'jairo_santana'
+  | 'cledson'
+  | 'jailson';
+
 export interface Producer {
   name: string;
   cpf: string;
@@ -31,6 +37,7 @@ export interface Proposal {
   id: string;
   producer: Producer;
   pronafLine: PronafLine;
+  projectDesigner?: ProjectDesigner;
   requestedValue: number;
   status: ProposalStatus;
   entryDate: string;
@@ -55,6 +62,13 @@ export interface Visit {
   status: VisitStatus;
   proposalId?: string;
 }
+
+export const PROJECT_DESIGNER_LABELS: Record<ProjectDesigner, string> = {
+  ney_medeiros: 'Ney Medeiros',
+  jairo_santana: 'Jairo Santana',
+  cledson: 'Cledson',
+  jailson: 'Jailson',
+};
 
 export const STATUS_LABELS: Record<ProposalStatus, string> = {
   nova: 'Nova',
