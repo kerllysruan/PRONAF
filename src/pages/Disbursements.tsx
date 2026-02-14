@@ -142,8 +142,8 @@ export default function Disbursements() {
       const stats = getProposalStats(selectedProp.id, Number(selectedProp.requested_value));
 
       // Se for total ou parcial, não pode exceder o restante
-      // (No caso de total, o valor já vem do restante, mas é bom validar)
-      if (amount > stats.remaining + 0.01) { // margem de erro float
+      // (No caso de total, o valor já vem do restante, mas é bom validar com margem de segurança float)
+      if (amount > stats.remaining + 0.05) { // margem de erro float (5 centavos para garantir)
         alert(`O valor não pode exceder o saldo restante da proposta (${formatCurrency(stats.remaining)})`);
         return;
       }
@@ -254,7 +254,12 @@ export default function Disbursements() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="destructive" size="sm" onClick={() => { deleteDisbursement(selectedDisbursement.id); setSelectedId(null); }}>
+              <Button variant="destructive" size="sm" onClick={() => {
+                if (confirm("Tem certeza que deseja excluir este desembolso?")) {
+                  deleteDisbursement(selectedDisbursement.id);
+                  setSelectedId(null);
+                }
+              }}>
                 <Trash2 className="h-4 w-4 mr-1" /> Excluir
               </Button>
             </div>
@@ -386,7 +391,12 @@ export default function Disbursements() {
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setSelectedId(d.id); }}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={(e) => { e.stopPropagation(); deleteDisbursement(d.id); }}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm("Tem certeza que deseja excluir este pedido de desembolso?")) {
+                                deleteDisbursement(d.id);
+                              }
+                            }}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -566,7 +576,8 @@ export default function Disbursements() {
                         onChange={(e) => {
                           if (disbursementType === 'parcial') {
                             const value = e.target.value.replace(/\D/g, '');
-                            setFormData((f) => ({ ...f, amount: value }));
+                            const floatValue = (Number(value) / 100).toFixed(2);
+                            setFormData((f) => ({ ...f, amount: floatValue }));
                           }
                         }}
                         placeholder="R$ 0,00"
