@@ -103,15 +103,13 @@ export function useProposals() {
       // Remove da UI imediatamente para feedback visual rápido
       setProposals((prev) => prev.filter((p) => p.id !== id));
 
-      // Deletar a proposta — ON DELETE CASCADE no banco remove os registros filhos automaticamente
-      const { error } = await supabase
-        .from("proposals")
-        .delete()
-        .eq("id", id);
+      // Deletar a proposta via função server-side (SECURITY DEFINER)
+      // A função verifica permissões e executa o DELETE com CASCADE no servidor
+      const { error } = await supabase.rpc("delete_proposal", { proposal_id: id });
       if (error) throw error;
 
       toast({ title: "Sucesso", description: "Proposta e todos os registros vinculados removidos com sucesso", variant: "default" });
-      
+
       // Atualiza para garantir sincronia
       await fetchProposals();
     } catch (error: any) {
@@ -130,9 +128,9 @@ export function useProposals() {
         .eq("id", docId);
 
       if (error) throw error;
-      
-      toast({ 
-        title: "Sucesso", 
+
+      toast({
+        title: "Sucesso",
         description: completed ? "Documento marcado como completo" : "Documento desmarcado",
         variant: "default"
       });
