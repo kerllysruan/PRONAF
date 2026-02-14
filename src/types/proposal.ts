@@ -1,6 +1,14 @@
 export type ProposalStatus = 'nova' | 'em_analise' | 'documentacao_pendente' | 'aprovada' | 'negada';
 
-export type PronafLine = 'custeio' | 'investimento' | 'mais_alimentos' | 'agroecologia' | 'eco' | 'floresta' | 'semiarido';
+export type PronafLine =
+  | 'custeio'
+  | 'custeio_renovacao'
+  | 'pronaf_mais_alimento'
+  | 'cartao_bnb'
+  | 'pronaf_a_368'
+  | 'pronaf_a_669'
+  | 'pronaf_jovem'
+  | 'investimento' | 'mais_alimentos' | 'agroecologia' | 'eco' | 'floresta' | 'semiarido'; // Kept for backward compatibility
 
 export interface Producer {
   name: string;
@@ -56,6 +64,13 @@ export const STATUS_COLORS: Record<ProposalStatus, string> = {
 
 export const PRONAF_LINE_LABELS: Record<PronafLine, string> = {
   custeio: 'Custeio',
+  custeio_renovacao: 'Custeio - Renovação',
+  pronaf_mais_alimento: 'Pronaf Mais - Alimento',
+  cartao_bnb: 'Cartão BNB',
+  pronaf_a_368: 'Pronaf A - 368',
+  pronaf_a_669: 'Pronaf A - 669',
+  pronaf_jovem: 'Pronaf Jovem',
+  // Legacy mappings not shown in UI dropdowns (implied filter by keys present)
   investimento: 'Investimento',
   mais_alimentos: 'Mais Alimentos',
   agroecologia: 'Agroecologia',
