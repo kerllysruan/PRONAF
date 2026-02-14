@@ -89,7 +89,7 @@ export function useProposals() {
     if (error) {
       toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Proposta atualizada!" });
+      toast({ title: "Proposta atualizada!", duration: 2000 });
       await fetchProposals();
     }
   };
