@@ -45,6 +45,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { DisbursementCharts } from "@/components/dashboard/DisbursementCharts";
+import { PROJECT_DESIGNER_LABELS } from "@/types/proposal";
 
 export default function Disbursements() {
   const { disbursements, loading: loadingD, createDisbursement, updateDisbursement, deleteDisbursement } = useDisbursements();
@@ -52,6 +53,7 @@ export default function Disbursements() {
   const { members, loading: loadingM } = useTeam();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [designerFilter, setDesignerFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [proposalSearch, setProposalSearch] = useState("");
   const [selectedProposal, setSelectedProposal] = useState<string | null>(null);
@@ -104,8 +106,16 @@ export default function Disbursements() {
   }, [disbursements]);
 
   const filtered = useMemo(() =>
-    disbursements.filter((d) => statusFilter === "all" || d.status === statusFilter),
-    [disbursements, statusFilter]);
+    disbursements.filter((d) => {
+      const proposal = proposals.find(p => p.id === d.proposal_id);
+      const designer = proposal?.project_designer;
+
+      const matchesStatus = statusFilter === "all" || d.status === statusFilter;
+      const matchesDesigner = designerFilter === "all" || designer === designerFilter;
+
+      return matchesStatus && matchesDesigner;
+    }),
+    [disbursements, statusFilter, designerFilter, proposals]);
 
   // Propostas com Contrato Assinado (status 'aprovada')
   const signedContractProposals = useMemo(() => {
@@ -329,7 +339,7 @@ export default function Disbursements() {
       </div>
 
       {/* Gráficos */}
-      <DisbursementCharts disbursements={disbursements} proposals={proposals} />
+      <DisbursementCharts disbursements={filtered} proposals={proposals} />
 
       {/* Progress */}
       {stats.total > 0 && (
@@ -360,6 +370,16 @@ export default function Disbursements() {
                 ))}
               </SelectContent>
             </Select>
+
+            <Select value={designerFilter} onValueChange={setDesignerFilter}>
+              <SelectTrigger className="w-48"><SelectValue placeholder="Projetista" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Projetistas</SelectItem>
+                {Object.entries(PROJECT_DESIGNER_LABELS).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -374,7 +394,7 @@ export default function Disbursements() {
                   <TableHead>Produtor</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="hidden md:table-cell">Solicitante</TableHead>
+                  <TableHead className="hidden md:table-cell">Projetista</TableHead>
                   <TableHead className="hidden lg:table-cell w-32">Progresso</TableHead>
                   <TableHead className="hidden md:table-cell">Data Pedido</TableHead>
                   <TableHead className="w-24">Ações</TableHead>
@@ -404,10 +424,12 @@ export default function Disbursements() {
                           </Badge>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          {member ? (
+                          {proposal?.project_designer ? (
                             <div className="flex items-center gap-1.5">
-                              <Avatar className="h-5 w-5"><AvatarFallback className="text-[9px]" style={{ backgroundColor: member.color, color: "white" }}>{getInitials(member.name)}</AvatarFallback></Avatar>
-                              <span className="text-xs">{member.name}</span>
+                              <Avatar className="h-5 w-5 bg-primary/10 text-primary">
+                                <AvatarFallback className="text-[9px]">{getInitials(PROJECT_DESIGNER_LABELS[proposal.project_designer])}</AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs font-medium">{PROJECT_DESIGNER_LABELS[proposal.project_designer]}</span>
                             </div>
                           ) : "—"}
                         </TableCell>
