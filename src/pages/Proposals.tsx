@@ -68,6 +68,16 @@ export default function Proposals() {
     return result;
   }, [proposals, searchTerm, statusFilter, filterMonth, filterYear, sortBy]);
 
+  const filteredForSum = useMemo(() => {
+    return proposals.filter((p) => {
+      const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+      const d = parseISO(p.entry_date);
+      const matchesMonth = filterMonth === "all" || getMonth(d) + 1 === Number(filterMonth);
+      const matchesYear = filterYear === "all" || getYear(d) === Number(filterYear);
+      return matchesStatus && matchesMonth && matchesYear;
+    });
+  }, [proposals, statusFilter, filterMonth, filterYear]);
+
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
@@ -157,10 +167,10 @@ export default function Proposals() {
         <Card className="border-0 shadow-md md:col-span-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Total Filtrado ({filtered.length} propostas):</span>
+              <span className="text-sm font-medium text-muted-foreground">Total Filtrado ({filteredForSum.length} propostas):</span>
             </div>
             <span className="text-2xl font-bold text-primary font-heading">
-              {formatCurrency(filtered.reduce((acc, curr) => acc + Number(curr.requested_value || 0), 0))}
+              {formatCurrency(filteredForSum.reduce((acc, curr) => acc + Number(curr.requested_value || 0), 0))}
             </span>
           </CardContent>
         </Card>
