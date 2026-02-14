@@ -8,7 +8,7 @@ export type PronafLine =
   | 'pronaf_a_368'
   | 'pronaf_a_669'
   | 'pronaf_jovem'
-  | 'investimento' | 'mais_alimentos' | 'agroecologia' | 'eco' | 'floresta' | 'semiarido'; // Kept for backward compatibility
+  | 'investimento';
 
 export interface Producer {
   name: string;
@@ -70,13 +70,7 @@ export const PRONAF_LINE_LABELS: Record<PronafLine, string> = {
   pronaf_a_368: 'Pronaf A - 368',
   pronaf_a_669: 'Pronaf A - 669',
   pronaf_jovem: 'Pronaf Jovem',
-  // Legacy mappings not shown in UI dropdowns (implied filter by keys present)
   investimento: 'Investimento',
-  mais_alimentos: 'Mais Alimentos',
-  agroecologia: 'Agroecologia',
-  eco: 'ECO',
-  floresta: 'Floresta',
-  semiarido: 'Semiárido',
 };
 
 export const VISIT_STATUS_LABELS: Record<VisitStatus, string> = {
