@@ -390,8 +390,8 @@ export default function Disbursements() {
                       <Card
                         key={p.id}
                         className={`cursor-pointer transition-all border-2 ${selectedProposal === p.id
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
                           }`}
                         onClick={() => {
                           setSelectedProposal(p.id);
