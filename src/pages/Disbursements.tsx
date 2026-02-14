@@ -44,6 +44,8 @@ import { useTeam } from "@/hooks/useTeam";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+import { DisbursementCharts } from "@/components/dashboard/DisbursementCharts";
+
 export default function Disbursements() {
   const { disbursements, loading: loadingD, createDisbursement, updateDisbursement, deleteDisbursement } = useDisbursements();
   const { proposals, loading: loadingP, updateProposal } = useProposals();
@@ -325,6 +327,9 @@ export default function Disbursements() {
           </Card>
         ))}
       </div>
+
+      {/* Gráficos */}
+      <DisbursementCharts disbursements={disbursements} proposals={proposals} />
 
       {/* Progress */}
       {stats.total > 0 && (
@@ -750,6 +755,6 @@ export default function Disbursements() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div >
   );
 }
