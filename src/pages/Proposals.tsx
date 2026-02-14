@@ -21,6 +21,7 @@ import {
 } from "@/types/proposal";
 import { format, parseISO, getMonth, getYear } from "date-fns";
 import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 const PAGE_SIZE = 10;
 
@@ -294,7 +295,7 @@ export default function Proposals() {
               </div>
               <div className="space-y-2">
                 <Label>Valor Solicitado</Label>
-                <Input type="number" value={formData.requested_value} onChange={(e) => setFormData((f) => ({ ...f, requested_value: parseFloat(e.target.value) || 0 }))} />
+                <CurrencyInput value={formData.requested_value} onChange={(v) => setFormData((f) => ({ ...f, requested_value: v }))} />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
