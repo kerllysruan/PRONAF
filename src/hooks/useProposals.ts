@@ -103,57 +103,12 @@ export function useProposals() {
       // Remove da UI imediatamente para feedback visual rápido
       setProposals((prev) => prev.filter((p) => p.id !== id));
 
-      // 1. Deletar comentários de tarefas vinculadas a esta proposta
-      // Primeiro buscamos as IDs das tarefas da proposta
-      const { data: proposalTasks } = await supabase
-        .from("document_tasks")
-        .select("id")
-        .eq("proposal_id", id);
-      
-      const taskIds = proposalTasks?.map(t => t.id) || [];
-      
-      if (taskIds.length > 0) {
-        const { error: commentsError } = await supabase
-          .from("task_comments")
-          .delete()
-          .in("task_id", taskIds);
-        if (commentsError) console.warn("Erro ao deletar comentários:", commentsError);
-      }
-
-      // 2. Deletar tarefas (document_tasks)
-      const { error: tasksError } = await supabase
-        .from("document_tasks")
-        .delete()
-        .eq("proposal_id", id);
-      if (tasksError) console.warn("Erro ao deletar tarefas:", tasksError);
-
-      // 3. Deletar desembolsos
-      const { error: disError } = await supabase
-        .from("disbursements")
-        .delete()
-        .eq("proposal_id", id);
-      if (disError) console.warn("Erro ao deletar desembolsos:", disError);
-
-      // 4. Deletar visitas
-      const { error: visitsError } = await supabase
-        .from("visits")
-        .delete()
-        .eq("proposal_id", id);
-      if (visitsError) console.warn("Erro ao deletar visitas:", visitsError);
-
-      // 5. Deletar documentos de checklist
-      const { error: docsError } = await supabase
-        .from("proposal_documents")
-        .delete()
-        .eq("proposal_id", id);
-      if (docsError && docsError.code !== "PGRST116") throw docsError;
-
-      // 6. Por fim, deletar a proposta
-      const { error: proposalError } = await supabase
+      // Deletar a proposta — ON DELETE CASCADE no banco remove os registros filhos automaticamente
+      const { error } = await supabase
         .from("proposals")
         .delete()
         .eq("id", id);
-      if (proposalError) throw proposalError;
+      if (error) throw error;
 
       toast({ title: "Sucesso", description: "Proposta e todos os registros vinculados removidos com sucesso", variant: "default" });
       
