@@ -95,35 +95,74 @@ export function useProposals() {
   };
 
   const deleteProposal = async (id: string) => {
-    if (!confirm("Tem certeza que deseja deletar esta proposta e todos os documentos?")) return;
+    if (!confirm("Tem certeza que deseja deletar esta proposta e todos os registros vinculados?")) return;
     try {
       if (!user) throw new Error("Usuário não autenticado");
       if (!id) throw new Error("ID da proposta não é válido");
 
-      // Remove da UI imediatamente
+      // Remove da UI imediatamente para feedback visual rápido
       setProposals((prev) => prev.filter((p) => p.id !== id));
 
-      // Deletar documents primeiro
+      // 1. Deletar comentários de tarefas vinculadas a esta proposta
+      // Primeiro buscamos as IDs das tarefas da proposta
+      const { data: proposalTasks } = await supabase
+        .from("document_tasks")
+        .select("id")
+        .eq("proposal_id", id);
+      
+      const taskIds = proposalTasks?.map(t => t.id) || [];
+      
+      if (taskIds.length > 0) {
+        const { error: commentsError } = await supabase
+          .from("task_comments")
+          .delete()
+          .in("task_id", taskIds);
+        if (commentsError) console.warn("Erro ao deletar comentários:", commentsError);
+      }
+
+      // 2. Deletar tarefas (document_tasks)
+      const { error: tasksError } = await supabase
+        .from("document_tasks")
+        .delete()
+        .eq("proposal_id", id);
+      if (tasksError) console.warn("Erro ao deletar tarefas:", tasksError);
+
+      // 3. Deletar desembolsos
+      const { error: disError } = await supabase
+        .from("disbursements")
+        .delete()
+        .eq("proposal_id", id);
+      if (disError) console.warn("Erro ao deletar desembolsos:", disError);
+
+      // 4. Deletar visitas
+      const { error: visitsError } = await supabase
+        .from("visits")
+        .delete()
+        .eq("proposal_id", id);
+      if (visitsError) console.warn("Erro ao deletar visitas:", visitsError);
+
+      // 5. Deletar documentos de checklist
       const { error: docsError } = await supabase
         .from("proposal_documents")
         .delete()
         .eq("proposal_id", id);
       if (docsError && docsError.code !== "PGRST116") throw docsError;
 
-      // Depois deletar a proposta
+      // 6. Por fim, deletar a proposta
       const { error: proposalError } = await supabase
         .from("proposals")
         .delete()
         .eq("id", id);
       if (proposalError) throw proposalError;
 
-      toast({ title: "Sucesso", description: "Proposta e documentos removidos com sucesso", variant: "default" });
-      // Garante atualização (caso outro usuário tenha alterado)
+      toast({ title: "Sucesso", description: "Proposta e todos os registros vinculados removidos com sucesso", variant: "default" });
+      
+      // Atualiza para garantir sincronia
       await fetchProposals();
     } catch (error: any) {
       console.error("Erro ao deletar proposta:", error);
       toast({ title: "Erro ao excluir", description: error.message || "Erro ao deletar a proposta", variant: "destructive" });
-      // Recarrega para garantir consistência
+      // Reverte/Recarrega em caso de erro
       await fetchProposals();
     }
   };
