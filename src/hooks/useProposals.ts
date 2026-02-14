@@ -57,6 +57,25 @@ export function useProposals() {
 
   useEffect(() => {
     fetchProposals();
+
+    const channel = supabase
+      .channel('proposals-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'proposals'
+        },
+        () => {
+          fetchProposals();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchProposals]);
 
   const createProposal = async (data: Omit<DbProposal, "id" | "user_id" | "created_at" | "updated_at">) => {
