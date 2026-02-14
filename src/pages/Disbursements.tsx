@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import {
   Plus, DollarSign, Loader2, Trash2, Eye, ArrowUpRight,
-  CheckCircle2, Clock, XCircle, FileText, Filter,
+  CheckCircle2, Clock, XCircle, FileText, Filter, Search,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,8 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   useDisbursements,
   DISBURSEMENT_STATUS_LABELS,
@@ -38,6 +40,8 @@ export default function Disbursements() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [proposalSearch, setProposalSearch] = useState("");
+  const [selectedProposal, setSelectedProposal] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     proposal_id: null as string | null,
@@ -75,6 +79,21 @@ export default function Disbursements() {
     disbursements.filter((d) => statusFilter === "all" || d.status === statusFilter),
     [disbursements, statusFilter]);
 
+  // Propostas com Contrato Assinado (status 'aprovada')
+  const signedContractProposals = useMemo(() => {
+    return proposals
+      .filter((p) => p.status === "aprovada")
+      .filter((p) => {
+        if (!proposalSearch.trim()) return true;
+        const search = proposalSearch.toLowerCase();
+        return (
+          p.producer_name.toLowerCase().includes(search) ||
+          p.producer_cpf.replace(/\D/g, '').includes(search.replace(/\D/g, ''))
+        );
+      })
+      .sort((a, b) => a.producer_name.localeCompare(b.producer_name));
+  }, [proposals, proposalSearch]);
+
   const selectedDisbursement = selectedId ? disbursements.find((d) => d.id === selectedId) : null;
 
   const handleSave = async () => {
@@ -93,6 +112,8 @@ export default function Disbursements() {
       request_date: new Date().toISOString().split("T")[0], expected_date: null,
       disbursed_date: null, bank_name: "", agency: "", account: "", notes: "",
     });
+    setProposalSearch("");
+    setSelectedProposal(null);
   };
 
   if (loadingD || loadingP || loadingM) {
@@ -327,65 +348,192 @@ export default function Disbursements() {
       </Card>
 
       {/* New Disbursement Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle className="font-heading">Novo Pedido de Desembolso</DialogTitle></DialogHeader>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-xl">Novo Pedido de Desembolso</DialogTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Selecione uma proposta com contrato assinado
+            </p>
+          </DialogHeader>
+
           <div className="space-y-4">
+            {/* Campo de Pesquisa */}
             <div>
-              <Label>Proposta *</Label>
-              <Select value={formData.proposal_id || ""} onValueChange={(v) => setFormData((f) => ({ ...f, proposal_id: v || null }))}>
-                <SelectTrigger><SelectValue placeholder="Selecionar proposta" /></SelectTrigger>
-                <SelectContent>
-                  {proposals.filter((p) => p.status === "aprovada").map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.producer_name} — {formatCurrency(Number(p.requested_value))}</SelectItem>
-                  ))}
-                  {proposals.filter((p) => p.status !== "aprovada").length > 0 && proposals.filter((p) => p.status === "aprovada").length === 0 && (
-                    <SelectItem value="" disabled>Nenhuma proposta aprovada</SelectItem>
+              <Label>Buscar Proposta por Nome ou CPF</Label>
+              <div className="relative mt-1.5">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Digite o nome ou CPF do produtor..."
+                  value={proposalSearch}
+                  onChange={(e) => setProposalSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+
+            {/* Lista de Propostas */}
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                {signedContractProposals.length} proposta(s) com contrato assinado
+              </Label>
+              <ScrollArea className="h-64 mt-2 border rounded-md">
+                <div className="p-2 space-y-2">
+                  {signedContractProposals.length === 0 ? (
+                    <div className="text-center text-sm text-muted-foreground py-12">
+                      {proposalSearch
+                        ? "Nenhuma proposta encontrada"
+                        : "Nenhuma proposta com contrato assinado"}
+                    </div>
+                  ) : (
+                    signedContractProposals.map((p) => (
+                      <Card
+                        key={p.id}
+                        className={`cursor-pointer transition-all border-2 ${selectedProposal === p.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                          }`}
+                        onClick={() => {
+                          setSelectedProposal(p.id);
+                          setFormData((f) => ({
+                            ...f,
+                            proposal_id: p.id,
+                            amount: String(p.requested_value),
+                          }));
+                        }}
+                      >
+                        <CardContent className="p-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="font-semibold text-sm">{p.producer_name}</p>
+                              <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                                CPF: {p.producer_cpf}
+                              </p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="outline" className="text-xs">
+                                  {format(parseISO(p.entry_date), "dd/MM/yyyy", { locale: ptBR })}
+                                </Badge>
+                                <span className="text-sm font-bold text-primary">
+                                  {formatCurrency(Number(p.requested_value))}
+                                </span>
+                              </div>
+                            </div>
+                            {selectedProposal === p.id && (
+                              <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
                   )}
-                </SelectContent>
-              </Select>
+                </div>
+              </ScrollArea>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Valor *</Label>
-                <Input type="number" value={formData.amount} onChange={(e) => setFormData((f) => ({ ...f, amount: e.target.value }))} placeholder="0,00" />
-              </div>
-              <div>
-                <Label>Solicitado por</Label>
-                <Select value={formData.requested_by || ""} onValueChange={(v) => setFormData((f) => ({ ...f, requested_by: v || null }))}>
-                  <SelectTrigger><SelectValue placeholder="Membro" /></SelectTrigger>
-                  <SelectContent>
-                    {members.map((m) => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Data do Pedido</Label>
-                <Input type="date" value={formData.request_date} onChange={(e) => setFormData((f) => ({ ...f, request_date: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Previsão Liberação</Label>
-                <Input type="date" value={formData.expected_date || ""} onChange={(e) => setFormData((f) => ({ ...f, expected_date: e.target.value || null }))} />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div><Label>Banco</Label><Input value={formData.bank_name} onChange={(e) => setFormData((f) => ({ ...f, bank_name: e.target.value }))} placeholder="Ex: BNB" /></div>
-              <div><Label>Agência</Label><Input value={formData.agency} onChange={(e) => setFormData((f) => ({ ...f, agency: e.target.value }))} placeholder="0001" /></div>
-              <div><Label>Conta</Label><Input value={formData.account} onChange={(e) => setFormData((f) => ({ ...f, account: e.target.value }))} placeholder="12345-6" /></div>
-            </div>
-            <div>
-              <Label>Observações</Label>
-              <Textarea value={formData.notes} onChange={(e) => setFormData((f) => ({ ...f, notes: e.target.value }))} rows={2} placeholder="Detalhes adicionais..." />
-            </div>
+
+            {/* Resto do Formulário - Aparece quando proposta selecionada */}
+            {selectedProposal && (
+              <>
+                <Separator />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Valor do Desembolso *</Label>
+                      <Input
+                        type="number"
+                        value={formData.amount}
+                        onChange={(e) => setFormData((f) => ({ ...f, amount: e.target.value }))}
+                        placeholder="0,00"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Valor preenchido automaticamente</p>
+                    </div>
+                    <div>
+                      <Label>Solicitado por</Label>
+                      <Select
+                        value={formData.requested_by || ""}
+                        onValueChange={(v) => setFormData((f) => ({ ...f, requested_by: v || null }))}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Membro" /></SelectTrigger>
+                        <SelectContent>
+                          {members.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Data do Pedido</Label>
+                      <Input
+                        type="date"
+                        value={formData.request_date}
+                        onChange={(e) => setFormData((f) => ({ ...f, request_date: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Previsão Liberação</Label>
+                      <Input
+                        type="date"
+                        value={formData.expected_date || ""}
+                        onChange={(e) => setFormData((f) => ({ ...f, expected_date: e.target.value || null }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label>Banco</Label>
+                      <Input
+                        value={formData.bank_name}
+                        onChange={(e) => setFormData((f) => ({ ...f, bank_name: e.target.value }))}
+                        placeholder="Ex: BNB"
+                      />
+                    </div>
+                    <div>
+                      <Label>Agência</Label>
+                      <Input
+                        value={formData.agency}
+                        onChange={(e) => setFormData((f) => ({ ...f, agency: e.target.value }))}
+                        placeholder="0001"
+                      />
+                    </div>
+                    <div>
+                      <Label>Conta</Label>
+                      <Input
+                        value={formData.account}
+                        onChange={(e) => setFormData((f) => ({ ...f, account: e.target.value }))}
+                        placeholder="12345-6"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Observações</Label>
+                    <Textarea
+                      value={formData.notes}
+                      onChange={(e) => setFormData((f) => ({ ...f, notes: e.target.value }))}
+                      rows={2}
+                      placeholder="Detalhes adicionais..."
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={!formData.amount || !formData.proposal_id}>Criar Pedido</Button>
+            <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={!selectedProposal || !formData.amount}
+            >
+              Criar Pedido
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-}
