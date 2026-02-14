@@ -117,13 +117,15 @@ export default function Disbursements() {
     }),
     [disbursements, statusFilter, designerFilter, proposals]);
 
-  // Propostas com Contrato Assinado (exclui 100% quitadas e liberadas)
+  // Propostas elegíveis para desembolso (aprovada, desembolso, contrato_liberado - exclui 100% quitadas)
   const signedContractProposals = useMemo(() => {
     const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const searchRaw = proposalSearch.trim();
 
+    const eligibleStatuses = ['aprovada', 'desembolso', 'contrato_liberado'];
+
     const baseFilter = (p: any) => {
-      if (p.status !== "aprovada") return false;
+      if (!eligibleStatuses.includes(p.status)) return false;
       // Excluir propostas 100% quitadas
       const pStats = getProposalStats(p.id, Number(p.requested_value));
       if (pStats.remaining <= 0) return false;
@@ -506,7 +508,7 @@ export default function Disbursements() {
             {/* Lista de Propostas */}
             <div>
               <Label className="text-xs text-muted-foreground">
-                {signedContractProposals.length} proposta(s) com contrato assinado
+                {signedContractProposals.length} proposta(s) elegível(is) para desembolso
               </Label>
               <ScrollArea className="h-64 mt-2 border rounded-md">
                 <div className="p-2 space-y-2">
@@ -552,15 +554,25 @@ export default function Disbursements() {
                                   {progress > 0 && <Badge variant="outline" className="text-xs text-primary border-primary/30">Desembolso Solicitado {Math.round(progress)}%</Badge>}
                                 </div>
 
-                                <div className="mt-3 space-y-1">
+                                <div className="mt-3 space-y-2">
                                   <div className="flex justify-between text-xs">
-                                    <span className="text-muted-foreground">Progresso do Desembolso</span>
-                                    <span className="font-medium">{Math.round(progress)}%</span>
+                                    <span className="text-muted-foreground font-medium">Progresso do Desembolso</span>
+                                    <span className="font-bold text-primary">{Math.round(progress)}%</span>
                                   </div>
-                                  <Progress value={progress} className="h-2" />
-                                  <div className="flex justify-between text-xs mt-1 font-medium">
-                                    <span className="text-blue-600">Usado: {formatCurrency(stats.used)}</span>
-                                    <span className="text-green-600">Restante: {formatCurrency(stats.remaining)}</span>
+                                  <Progress value={progress} className="h-2.5" />
+                                  <div className="grid grid-cols-3 gap-2 pt-1">
+                                    <div className="bg-blue-50 dark:bg-blue-950/30 rounded-md px-2 py-1.5 text-center">
+                                      <p className="text-[10px] text-muted-foreground">Solicitado</p>
+                                      <p className="text-xs font-bold text-blue-600">{formatCurrency(stats.used)}</p>
+                                    </div>
+                                    <div className="bg-green-50 dark:bg-green-950/30 rounded-md px-2 py-1.5 text-center">
+                                      <p className="text-[10px] text-muted-foreground">Restante</p>
+                                      <p className="text-xs font-bold text-green-600">{formatCurrency(stats.remaining)}</p>
+                                    </div>
+                                    <div className="bg-slate-50 dark:bg-slate-900/30 rounded-md px-2 py-1.5 text-center">
+                                      <p className="text-[10px] text-muted-foreground">Total</p>
+                                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{formatCurrency(Number(p.requested_value))}</p>
+                                    </div>
                                   </div>
                                 </div>
 

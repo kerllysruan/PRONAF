@@ -31,17 +31,15 @@ const STATUS_COLORS = {
 
 export function DisbursementCharts({ disbursements, proposals }: DisbursementChartsProps) {
 
-    // 1. Dados por Projetista (Solicitado vs Liberado)
+    // 1. Dados por Projetista (Solicitado vs Liberado vs Pendente)
     const designerData = useMemo(() => {
-        // Mapa inicial com todos os projetistas zerados
-        const map = new Map<string, { name: string, requested: number, released: number }>();
+        const map = new Map<string, { name: string, requested: number, released: number, pending: number }>();
 
         Object.entries(PROJECT_DESIGNER_LABELS).forEach(([key, label]) => {
-            map.set(key, { name: label.split(" ")[0], requested: 0, released: 0 }); // Usa primeiro nome
+            map.set(key, { name: label.split(" ")[0], requested: 0, released: 0, pending: 0 });
         });
 
-        // Adicionar categoria "Outros/Sistema"
-        map.set("others", { name: "Outros", requested: 0, released: 0 });
+        map.set("others", { name: "Outros", requested: 0, released: 0, pending: 0 });
 
         disbursements.forEach(d => {
             const proposal = proposals.find(p => p.id === d.proposal_id);
@@ -56,13 +54,18 @@ export function DisbursementCharts({ disbursements, proposals }: DisbursementCha
                 entry.requested += amount;
             }
 
-            // Liberado (apenas status liberado)
+            // Liberado
             if (d.status === 'liberado') {
                 entry.released += amount;
             }
+
+            // Pendente
+            if (d.status === 'pendente') {
+                entry.pending += amount;
+            }
         });
 
-        return Array.from(map.values()).filter(item => item.requested > 0 || item.released > 0);
+        return Array.from(map.values()).filter(item => item.requested > 0 || item.released > 0 || item.pending > 0);
     }, [disbursements, proposals]);
 
     // 2. Dados por Status (Círculo)
@@ -83,7 +86,7 @@ export function DisbursementCharts({ disbursements, proposals }: DisbursementCha
 
         return [
             { name: "Pendente", value: counts.pendente, color: STATUS_COLORS.pendente },
-            { name: "Aprovado", value: counts.aprovado, color: STATUS_COLORS.pendente }, // Reusing warning/info logic if needed, but lets use specific
+            { name: "Aprovado", value: counts.aprovado, color: STATUS_COLORS.aprovado },
             { name: "Liberado", value: counts.liberado, color: STATUS_COLORS.liberado },
             { name: "Negado", value: counts.negado, color: STATUS_COLORS.negado },
         ].filter(d => d.value > 0);
@@ -129,6 +132,13 @@ export function DisbursementCharts({ disbursements, proposals }: DisbursementCha
                                     verticalAlign="top"
                                     height={36}
                                     iconType="circle"
+                                />
+                                <Bar
+                                    name="Pendente"
+                                    dataKey="pending"
+                                    fill={COLORS.warning}
+                                    radius={[4, 4, 0, 0]}
+                                    barSize={30}
                                 />
                                 <Bar
                                     name="Solicitado"
