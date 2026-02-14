@@ -98,7 +98,6 @@ export function useProposals() {
   };
 
   const deleteProposal = async (id: string) => {
-    if (!confirm("Tem certeza que deseja deletar esta proposta e todos os registros vinculados?")) return;
     try {
       if (!user) throw new Error("Usuário não autenticado");
       if (!id) throw new Error("ID da proposta não é válido");

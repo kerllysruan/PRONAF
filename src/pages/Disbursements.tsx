@@ -15,6 +15,17 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
@@ -35,13 +46,16 @@ import { ptBR } from "date-fns/locale";
 
 export default function Disbursements() {
   const { disbursements, loading: loadingD, createDisbursement, updateDisbursement, deleteDisbursement } = useDisbursements();
-  const { proposals, loading: loadingP } = useProposals();
+  const { proposals, loading: loadingP, updateProposal } = useProposals();
   const { members, loading: loadingM } = useTeam();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [proposalSearch, setProposalSearch] = useState("");
   const [selectedProposal, setSelectedProposal] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   const [disbursementType, setDisbursementType] = useState<'total' | 'parcial'>('total');
 
@@ -144,7 +158,11 @@ export default function Disbursements() {
       // Se for total ou parcial, não pode exceder o restante
       // (No caso de total, o valor já vem do restante, mas é bom validar com margem de segurança float)
       if (amount > stats.remaining + 0.05) { // margem de erro float (5 centavos para garantir)
-        alert(`O valor não pode exceder o saldo restante da proposta (${formatCurrency(stats.remaining)})`);
+        toast({
+          title: "Valor Excedente",
+          description: `O valor não pode exceder o saldo restante da proposta (${formatCurrency(stats.remaining)})`,
+          variant: "destructive",
+        });
         return;
       }
     }
@@ -154,6 +172,12 @@ export default function Disbursements() {
       amount: amount,
       disbursement_type: disbursementType,
     } as any);
+
+    // Automação: Mudar status da proposta para 'desembolso' se ainda não estiver
+    if (selectedProp && selectedProp.status !== 'desembolso' && selectedProp.status !== 'contrato_liberado' && selectedProp.status !== 'liberado' && selectedProp.status !== 'concluida') {
+      await updateProposal(selectedProp.id, { status: 'desembolso' });
+    }
+
     setIsDialogOpen(false);
     resetForm();
   };
@@ -255,10 +279,8 @@ export default function Disbursements() {
                 </SelectContent>
               </Select>
               <Button variant="destructive" size="sm" onClick={() => {
-                if (confirm("Tem certeza que deseja excluir este desembolso?")) {
-                  deleteDisbursement(selectedDisbursement.id);
-                  setSelectedId(null);
-                }
+                setDeleteId(selectedDisbursement.id);
+                setIsDeleteAlertOpen(true);
               }}>
                 <Trash2 className="h-4 w-4 mr-1" /> Excluir
               </Button>
@@ -348,6 +370,7 @@ export default function Disbursements() {
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden md:table-cell">Solicitante</TableHead>
+                  <TableHead className="hidden lg:table-cell w-32">Progresso</TableHead>
                   <TableHead className="hidden md:table-cell">Data Pedido</TableHead>
                   <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
@@ -383,6 +406,16 @@ export default function Disbursements() {
                             </div>
                           ) : "—"}
                         </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          {proposal && (
+                            <div className="w-full max-w-[120px]">
+                              <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                                <span>{Math.round((getProposalStats(proposal.id, Number(proposal.requested_value)).used / Number(proposal.requested_value)) * 100)}%</span>
+                              </div>
+                              <Progress value={(getProposalStats(proposal.id, Number(proposal.requested_value)).used / Number(proposal.requested_value)) * 100} className="h-1.5" />
+                            </div>
+                          )}
+                        </TableCell>
                         <TableCell className="hidden md:table-cell text-sm">
                           {format(parseISO(d.request_date), "dd/MM/yyyy")}
                         </TableCell>
@@ -393,9 +426,8 @@ export default function Disbursements() {
                             </Button>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={(e) => {
                               e.stopPropagation();
-                              if (confirm("Tem certeza que deseja excluir este pedido de desembolso?")) {
-                                deleteDisbursement(d.id);
-                              }
+                              setDeleteId(d.id);
+                              setIsDeleteAlertOpen(true);
                             }}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -689,6 +721,35 @@ export default function Disbursements() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação não pode ser desfeita. Isso excluirá permanentemente o pedido de desembolso.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteId) {
+                  deleteDisbursement(deleteId);
+                  setIsDeleteAlertOpen(false);
+                  setDeleteId(null);
+                  if (selectedId === deleteId) {
+                    setSelectedId(null);
+                  }
+                }
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

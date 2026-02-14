@@ -14,6 +14,16 @@ import { Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle, MoreVertical, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import clsx from "clsx";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 interface User {
   id: string;
   email: string;
@@ -65,6 +75,8 @@ function AccessControl() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPermOpen, setIsPermOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -194,7 +206,7 @@ function AccessControl() {
 
     try {
       setSaving(true);
-      
+
       // Normalizar dados para evitar valores null ou inválidos
       const permissionsData = {
         can_view_dashboard: editPerms.can_view_dashboard === true,
@@ -228,7 +240,7 @@ function AccessControl() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
+  const confirmDeleteUser = (userId: string) => {
     if (!userId || userId === "null" || userId === null || userId === undefined) {
       toast({
         title: "Erro ao deletar",
@@ -237,14 +249,20 @@ function AccessControl() {
       });
       return;
     }
-    if (!window.confirm("Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.")) return;
+    setUserToDeleteId(userId);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const executeDeleteUser = async () => {
+    if (!userToDeleteId) return;
+
     try {
       setSaving(true);
       // Remove da UI imediatamente
-      setUsers((prev) => prev.filter((u) => u.id !== userId));
-      await supabase.from("user_permissions").delete().eq("user_id", userId);
-      await supabase.from("user_roles").delete().eq("user_id", userId);
-      await supabase.from("profiles").delete().eq("user_id", userId);
+      setUsers((prev) => prev.filter((u) => u.id !== userToDeleteId));
+      await supabase.from("user_permissions").delete().eq("user_id", userToDeleteId);
+      await supabase.from("user_roles").delete().eq("user_id", userToDeleteId);
+      await supabase.from("profiles").delete().eq("user_id", userToDeleteId);
       toast({ title: "Usuário removido", description: "Usuário e permissões excluídos.", variant: "default" });
       await fetchUsers();
     } catch (err: any) {
@@ -253,6 +271,8 @@ function AccessControl() {
       await fetchUsers();
     } finally {
       setSaving(false);
+      setIsDeleteAlertOpen(false);
+      setUserToDeleteId(null);
     }
   };
 
@@ -368,8 +388,8 @@ function AccessControl() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold truncate">{user.display_name} <span style={{color: 'red', fontSize: 10}}>{!user.id ? '[ID ausente]' : ''}</span></h4>
-                        <p className="text-sm text-muted-foreground truncate">{user.email} <span style={{color: 'red', fontSize: 10}}>{!user.id ? '[ID ausente]' : ''}</span></p>
+                        <h4 className="font-semibold truncate">{user.display_name} <span style={{ color: 'red', fontSize: 10 }}>{!user.id ? '[ID ausente]' : ''}</span></h4>
+                        <p className="text-sm text-muted-foreground truncate">{user.email} <span style={{ color: 'red', fontSize: 10 }}>{!user.id ? '[ID ausente]' : ''}</span></p>
                         <div className="flex gap-2 mt-2">
                           <Badge className={clsx(getRoleColor(user.role || "usuario"), "rounded px-2 py-0.5 text-xs")}>{getRoleLabel(user.role || "usuario")}</Badge>
                         </div>
@@ -388,8 +408,8 @@ function AccessControl() {
                           }}>
                             <Lock className="h-4 w-4 mr-2" />Permissões
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDeleteUser(user.id)} 
+                          <DropdownMenuItem
+                            onClick={() => confirmDeleteUser(user.id)}
                             className="text-destructive"
                             disabled={!user.id || user.id === "null" || user.id === null || user.id === undefined}
                           >
@@ -538,7 +558,28 @@ function AccessControl() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação excluirá permanentemente o usuário, suas permissões e acesso ao sistema.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={executeDeleteUser}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Excluir Definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div >
   );
 }
 
