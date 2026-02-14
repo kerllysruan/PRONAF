@@ -153,6 +153,19 @@ export default function Proposals() {
         </CardContent>
       </Card>
 
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-0 shadow-md md:col-span-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Total Filtrado ({filtered.length} propostas):</span>
+            </div>
+            <span className="text-2xl font-bold text-primary font-heading">
+              {formatCurrency(filtered.reduce((acc, curr) => acc + Number(curr.requested_value || 0), 0))}
+            </span>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card className="border-0 shadow-md">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
