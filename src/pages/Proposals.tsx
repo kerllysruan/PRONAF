@@ -114,7 +114,6 @@ export default function Proposals() {
       await createProposal(formData as any);
     }
     setIsDialogOpen(false);
-    await refetch();
   };
 
   if (loading) {
