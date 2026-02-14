@@ -6,113 +6,169 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
+    --background: 210 25% 98%;
+    --foreground: 220 30% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 220 30% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 220 30% 12%;
 
-    --primary: 215 70% 32%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 217 91% 42%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 25% 93%;
-    --secondary-foreground: 215 25% 25%;
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 220 25% 25%;
 
-    --muted: 210 20% 95%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 210 24% 96%;
+    --muted-foreground: 215 16% 46%;
 
-    --accent: 210 80% 55%;
+    --accent: 210 100% 62%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 35%;
+    --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 32 95% 56%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 199 89% 48%;
+    --info: 199 95% 58%;
     --info-foreground: 0 0% 100%;
 
-    --border: 214 20% 88%;
-    --input: 214 20% 88%;
-    --ring: 215 70% 32%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 217 91% 42%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 215 35% 18%;
-    --sidebar-foreground: 210 20% 85%;
-    --sidebar-primary: 210 80% 60%;
+    /* Status Colors - Corporate Modern */
+    --status-nova: 199 95% 58%;
+    --status-nova-foreground: 0 0% 100%;
+
+    --status-em-analise: 32 95% 56%;
+    --status-em-analise-foreground: 0 0% 100%;
+
+    --status-doc-pendente: 262 83% 58%;
+    --status-doc-pendente-foreground: 0 0% 100%;
+
+    --status-visita: 217 91% 60%;
+    --status-visita-foreground: 0 0% 100%;
+
+    --status-risco: 350 89% 60%;
+    --status-risco-foreground: 0 0% 100%;
+
+    --status-gerenciais: 215 25% 56%;
+    --status-gerenciais-foreground: 0 0% 100%;
+
+    --status-votacao: 243 75% 59%;
+    --status-votacao-foreground: 0 0% 100%;
+
+    --status-contrato: 142 76% 40%;
+    --status-contrato-foreground: 0 0% 100%;
+
+    --status-desembolso: 158 64% 37%;
+    --status-desembolso-foreground: 0 0% 100%;
+
+    --sidebar-background: 220 30% 14%;
+    --sidebar-foreground: 210 24% 88%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 30% 24%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 215 25% 25%;
-    --sidebar-ring: 210 80% 55%;
+    --sidebar-accent: 220 25% 20%;
+    --sidebar-accent-foreground: 210 24% 92%;
+    --sidebar-border: 220 25% 18%;
+    --sidebar-ring: 217 91% 60%;
 
-    --chart-1: 215 70% 32%;
-    --chart-2: 210 80% 55%;
-    --chart-3: 142 71% 35%;
-    --chart-4: 38 92% 50%;
-    --chart-5: 0 72% 51%;
+    --chart-1: 217 91% 42%;
+    --chart-2: 199 95% 58%;
+    --chart-3: 142 76% 36%;
+    --chart-4: 32 95% 56%;
+    --chart-5: 350 89% 60%;
   }
 
   .dark {
-    --background: 215 30% 10%;
-    --foreground: 210 20% 92%;
+    --background: 220 30% 8%;
+    --foreground: 210 24% 94%;
 
-    --card: 215 28% 14%;
-    --card-foreground: 210 20% 92%;
+    --card: 220 28% 12%;
+    --card-foreground: 210 24% 94%;
 
-    --popover: 215 28% 14%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 220 28% 12%;
+    --popover-foreground: 210 24% 94%;
 
-    --primary: 210 80% 55%;
-    --primary-foreground: 215 25% 10%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 220 30% 8%;
 
-    --secondary: 215 25% 20%;
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 220 25% 18%;
+    --secondary-foreground: 210 24% 92%;
 
-    --muted: 215 20% 18%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 220 22% 16%;
+    --muted-foreground: 215 16% 58%;
 
-    --accent: 210 80% 55%;
+    --accent: 210 100% 62%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 35%;
+    --success: 142 76% 40%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 50%;
+    --warning: 32 95% 56%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 199 89% 48%;
+    --info: 199 95% 58%;
     --info-foreground: 0 0% 100%;
 
-    --border: 215 20% 22%;
-    --input: 215 20% 22%;
-    --ring: 210 80% 55%;
+    --border: 220 22% 20%;
+    --input: 220 22% 20%;
+    --ring: 217 91% 60%;
 
-    --sidebar-background: 215 35% 12%;
-    --sidebar-foreground: 210 20% 80%;
-    --sidebar-primary: 210 80% 60%;
+    /* Status Colors - Corporate Modern Dark */
+    --status-nova: 199 95% 58%;
+    --status-nova-foreground: 0 0% 100%;
+
+    --status-em-analise: 32 95% 56%;
+    --status-em-analise-foreground: 0 0% 100%;
+
+    --status-doc-pendente: 262 83% 58%;
+    --status-doc-pendente-foreground: 0 0% 100%;
+
+    --status-visita: 217 91% 60%;
+    --status-visita-foreground: 0 0% 100%;
+
+    --status-risco: 350 89% 60%;
+    --status-risco-foreground: 0 0% 100%;
+
+    --status-gerenciais: 215 25% 56%;
+    --status-gerenciais-foreground: 0 0% 100%;
+
+    --status-votacao: 243 75% 59%;
+    --status-votacao-foreground: 0 0% 100%;
+
+    --status-contrato: 142 76% 44%;
+    --status-contrato-foreground: 0 0% 100%;
+
+    --status-desembolso: 158 64% 42%;
+    --status-desembolso-foreground: 0 0% 100%;
+
+    --sidebar-background: 220 30% 10%;
+    --sidebar-foreground: 210 24% 84%;
+    --sidebar-primary: 217 91% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 30% 18%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 215 25% 18%;
-    --sidebar-ring: 210 80% 55%;
+    --sidebar-accent: 220 25% 16%;
+    --sidebar-accent-foreground: 210 24% 92%;
+    --sidebar-border: 220 25% 16%;
+    --sidebar-ring: 217 91% 60%;
 
-    --chart-1: 210 80% 55%;
-    --chart-2: 215 70% 40%;
-    --chart-3: 142 71% 40%;
-    --chart-4: 38 92% 55%;
-    --chart-5: 0 72% 55%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 199 95% 58%;
+    --chart-3: 142 76% 44%;
+    --chart-4: 32 95% 56%;
+    --chart-5: 350 89% 60%;
   }
 }
 
@@ -126,7 +182,12 @@
     font-family: 'Inter', system-ui, sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   }
 }
@@ -135,24 +196,64 @@
   .scrollbar-thin {
     scrollbar-width: thin;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background: hsl(var(--muted-foreground) / 0.3);
     border-radius: 3px;
   }
 
   .glass-card {
-    background: hsl(var(--card) / 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold shadow-sm transition-all duration-200;
+    background: linear-gradient(135deg, var(--badge-from), var(--badge-to));
+  }
+
+  .status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px var(--badge-shadow);
+  }
+
+  .card-gradient {
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--muted)));
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .hover-lift {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px hsl(var(--primary) / 0.15);
   }
 }
 

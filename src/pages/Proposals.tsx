@@ -124,23 +124,23 @@ export default function Proposals() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold font-heading">Propostas</h1>
-          <p className="text-sm text-muted-foreground mt-1">Cadastro e gerenciamento de propostas PRONAF</p>
+          <h1 className="text-3xl font-bold font-heading tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Propostas</h1>
+          <p className="text-sm text-muted-foreground mt-2">Cadastro e gerenciamento de propostas PRONAF</p>
         </div>
-        <Button onClick={openNew} className="gap-2 shadow-md shadow-primary/20">
+        <Button onClick={openNew} className="gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all hover-lift">
           <Plus className="h-4 w-4" /> Nova Proposta
         </Button>
       </div>
 
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-4">
+      <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+        <CardContent className="p-5">
           <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar por nome ou CPF..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
+              <Input placeholder="Buscar por nome ou CPF..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 h-10" />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Filtrar status" /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-48 h-10"><SelectValue placeholder="Filtrar status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 {Object.entries(STATUS_LABELS).map(([key, label]) => (
@@ -150,7 +150,7 @@ export default function Proposals() {
             </Select>
             <MonthYearFilter month={filterMonth} year={filterYear} onMonthChange={setFilterMonth} onYearChange={setFilterYear} years={availableYears} />
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as "nome" | "data")}>
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger className="w-full sm:w-48 h-10">
                 <ArrowUpDown className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Ordenar por" />
               </SelectTrigger>
@@ -164,32 +164,38 @@ export default function Proposals() {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-0 shadow-md md:col-span-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">Total Filtrado ({filteredForSum.length} propostas):</span>
+        <Card className="border-0 shadow-lg md:col-span-3 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/10 dark:from-primary/10 dark:via-accent/10 dark:to-primary/20 hover-lift">
+          <CardContent className="p-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-lg">{filteredForSum.length}</span>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Filtrado</p>
+                <p className="text-sm text-muted-foreground mt-0.5">{filteredForSum.length} {filteredForSum.length === 1 ? 'proposta' : 'propostas'}</p>
+              </div>
             </div>
-            <span className="text-2xl font-bold text-primary font-heading">
+            <span className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent font-heading">
               {formatCurrency(filteredForSum.reduce((acc, curr) => acc + Number(curr.requested_value || 0), 0))}
             </span>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Produtor</TableHead>
-                  <TableHead className="hidden md:table-cell">CPF</TableHead>
-                  <TableHead>Linha</TableHead>
-                  <TableHead>Projetista</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden lg:table-cell">Data</TableHead>
-                  <TableHead className="w-24">Ações</TableHead>
+                <TableRow className="bg-gradient-to-r from-muted/50 to-muted/30">
+                  <TableHead className="font-semibold">Produtor</TableHead>
+                  <TableHead className="hidden md:table-cell font-semibold">CPF</TableHead>
+                  <TableHead className="font-semibold">Linha</TableHead>
+                  <TableHead className="font-semibold">Projetista</TableHead>
+                  <TableHead className="font-semibold">Valor</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="hidden lg:table-cell font-semibold">Data</TableHead>
+                  <TableHead className="w-24 font-semibold">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -201,28 +207,28 @@ export default function Proposals() {
                   </TableRow>
                 ) : (
                   paged.map((p) => (
-                    <TableRow key={p.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">{p.producer_name}</TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground text-sm">{p.producer_cpf}</TableCell>
+                    <TableRow key={p.id} className="hover:bg-gradient-to-r hover:from-muted/30 hover:to-transparent transition-all">
+                      <TableCell className="font-semibold">{p.producer_name}</TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground text-sm font-mono">{p.producer_cpf}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs font-medium">
                           {PRONAF_LINE_LABELS[p.pronaf_line as PronafLine] || p.pronaf_line}
                         </Badge>
                       </TableCell>
-                      <TableCell>{PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer || "-"}</TableCell>
-                      <TableCell className="font-medium">{formatCurrency(Number(p.requested_value))}</TableCell>
+                      <TableCell className="text-sm">{PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer || "-"}</TableCell>
+                      <TableCell className="font-bold text-primary">{formatCurrency(Number(p.requested_value))}</TableCell>
                       <TableCell>
-                        <Badge className={`${STATUS_COLORS[p.status as ProposalStatus] || ''} text-xs`}>
+                        <Badge className={`${STATUS_COLORS[p.status as ProposalStatus] || ''} text-xs font-semibold transition-transform hover:scale-105`}>
                           {STATUS_LABELS[p.status as ProposalStatus] || p.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground font-medium">
                         {format(parseISO(p.entry_date), "dd/MM/yyyy")}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteProposal(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                          <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive transition-colors" onClick={() => deleteProposal(p.id)}><Trash2 className="h-4 w-4" /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -232,13 +238,15 @@ export default function Proposals() {
             </Table>
           </div>
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t">
-              <p className="text-xs text-muted-foreground">{filtered.length} propostas • Página {page + 1} de {totalPages}</p>
-              <div className="flex gap-1">
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page === 0} onClick={() => setPage(page - 1)}>
+            <div className="flex items-center justify-between px-5 py-4 border-t bg-gradient-to-r from-muted/20 to-transparent">
+              <p className="text-sm text-muted-foreground font-medium">
+                <span className="font-semibold text-foreground">{filtered.length}</span> propostas • Página <span className="font-semibold text-foreground">{page + 1}</span> de <span className="font-semibold text-foreground">{totalPages}</span>
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="icon" className="h-9 w-9 hover-lift" disabled={page === 0} onClick={() => setPage(page - 1)}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="icon" className="h-8 w-8" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
+                <Button variant="outline" size="icon" className="h-9 w-9 hover-lift" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -250,7 +258,7 @@ export default function Proposals() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-heading">{editingId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
+            <DialogTitle className="font-heading text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{editingId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -314,8 +322,8 @@ export default function Proposals() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>{editingId ? "Salvar" : "Cadastrar"}</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="hover-lift">Cancelar</Button>
+            <Button onClick={handleSave} className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/25 hover-lift">{editingId ? "Salvar Alterações" : "Cadastrar Proposta"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

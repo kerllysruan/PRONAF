@@ -81,23 +81,24 @@ export const STATUS_LABELS: Record<ProposalStatus, string> = {
   contrato_liberado: 'Contrato Liberado',
   desembolso: 'Desembolso',
   // Legacy
-  aprovada: 'Aprovada',
+  aprovada: 'Contrato Assinado',
   negada: 'Negada',
 };
 
 export const STATUS_COLORS: Record<ProposalStatus, string> = {
-  nova: 'bg-info text-info-foreground',
-  em_analise: 'bg-warning text-warning-foreground',
-  documentacao_pendente: 'bg-accent text-accent-foreground',
-  visita_gerencial: 'bg-primary text-primary-foreground',
-  avaliacao_risco: 'bg-destructive text-destructive-foreground',
-  consideracoes_gerenciais: 'bg-muted text-muted-foreground',
-  votacao_sinc: 'bg-indigo-500 text-white',
-  contrato_liberado: 'bg-success text-success-foreground',
-  desembolso: 'bg-emerald-600 text-white',
+  // Modern gradient-based status colors with better visual hierarchy
+  nova: 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-sm shadow-cyan-500/30 border-0',
+  em_analise: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/30 border-0',
+  documentacao_pendente: 'bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-sm shadow-violet-500/30 border-0',
+  visita_gerencial: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-600/30 border-0',
+  avaliacao_risco: 'bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-sm shadow-rose-500/30 border-0',
+  consideracoes_gerenciais: 'bg-gradient-to-r from-slate-500 to-gray-600 text-white shadow-sm shadow-slate-500/30 border-0',
+  votacao_sinc: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm shadow-indigo-600/30 border-0',
+  contrato_liberado: 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-sm shadow-emerald-500/30 border-0',
+  desembolso: 'bg-gradient-to-r from-green-600 to-teal-600 text-white shadow-sm shadow-green-600/30 border-0',
   // Legacy
-  aprovada: 'bg-success text-success-foreground',
-  negada: 'bg-destructive text-destructive-foreground',
+  aprovada: 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-sm shadow-emerald-500/30 border-0',
+  negada: 'bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-sm shadow-rose-500/30 border-0',
 };
 
 export const PRONAF_LINE_LABELS: Record<PronafLine, string> = {
