@@ -9,6 +9,7 @@ export interface DbDisbursement {
   proposal_id: string | null;
   requested_by: string | null;
   amount: number;
+  disbursement_type: 'total' | 'parcial';
   status: string;
   request_date: string;
   expected_date: string | null;

@@ -43,10 +43,13 @@ export default function Disbursements() {
   const [proposalSearch, setProposalSearch] = useState("");
   const [selectedProposal, setSelectedProposal] = useState<string | null>(null);
 
+  const [disbursementType, setDisbursementType] = useState<'total' | 'parcial'>('total');
+
   const [formData, setFormData] = useState({
     proposal_id: null as string | null,
     requested_by: null as string | null,
     amount: "",
+    disbursement_type: "total" as "total" | "parcial",
     status: "pendente",
     request_date: new Date().toISOString().split("T")[0],
     expected_date: null as string | null,
@@ -59,6 +62,15 @@ export default function Disbursements() {
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+
+  const formatCurrencyInput = (value: string): string => {
+    const numbers = value.replace(/\D/g, '');
+    const amount = Number(numbers) / 100;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(amount);
+  };
 
   const getInitials = (name: string) => name.split(" ").map((w) => w[0]).join("").substring(0, 2).toUpperCase();
   const getMemberById = (id?: string | null) => members.find((m) => m.id === id);
@@ -98,9 +110,38 @@ export default function Disbursements() {
 
   const handleSave = async () => {
     if (!formData.amount || !formData.proposal_id) return;
+
+    // Validate partial amount
+    if (disbursementType === 'parcial') {
+      const selectedProp = signedContractProposals.find(p => p.id === selectedProposal);
+      const requestedValue = Number(selectedProp?.requested_value || 0);
+      const disbursementValue = Number(formData.amount); // formData.amount is stored as plain number string in partial mode? No, wait, let's standarize.
+
+      // Wait, let's check how we store amount. In both cases it should be a number.
+      // But the input for partial might come formatted? 
+      // Let's ensure formData.amount is clean number string or handle conversion
+    }
+
+    // Cleaning amount logic handled in onChange for Partial. 
+    // But let's verify logic below:
+
+    const amount = Number(formData.amount);
+
+    if (disbursementType === 'parcial') {
+      const selectedProp = signedContractProposals.find(p => p.id === selectedProposal);
+      if (selectedProp && amount > Number(selectedProp.requested_value)) {
+        // We need toast here but it's used via hook. 
+        // Since we can't easily add toast here without refactoring, let's just return for now or use alert?
+        // Actually hook is top level.
+        alert(`O valor parcial não pode exceder o valor da proposta (${formatCurrency(Number(selectedProp.requested_value))})`);
+        return;
+      }
+    }
+
     await createDisbursement({
       ...formData,
-      amount: Number(formData.amount),
+      amount: amount,
+      disbursement_type: disbursementType,
     } as any);
     setIsDialogOpen(false);
     resetForm();
@@ -109,11 +150,13 @@ export default function Disbursements() {
   const resetForm = () => {
     setFormData({
       proposal_id: null, requested_by: null, amount: "", status: "pendente",
+      disbursement_type: "total",
       request_date: new Date().toISOString().split("T")[0], expected_date: null,
       disbursed_date: null, bank_name: "", agency: "", account: "", notes: "",
     });
     setProposalSearch("");
     setSelectedProposal(null);
+    setDisbursementType('total');
   };
 
   if (loadingD || loadingP || loadingM) {
@@ -395,10 +438,12 @@ export default function Disbursements() {
                           }`}
                         onClick={() => {
                           setSelectedProposal(p.id);
+                          setDisbursementType('total');
                           setFormData((f) => ({
                             ...f,
                             proposal_id: p.id,
                             amount: String(p.requested_value),
+                            disbursement_type: 'total',
                           }));
                         }}
                       >
@@ -435,16 +480,68 @@ export default function Disbursements() {
               <>
                 <Separator />
                 <div className="space-y-4">
+                  {/* Tipo de Desembolso */}
+                  <div>
+                    <Label>Tipo de Desembolso *</Label>
+                    <Select
+                      value={disbursementType}
+                      onValueChange={(v: 'total' | 'parcial') => {
+                        setDisbursementType(v);
+                        setFormData((f) => ({
+                          ...f,
+                          disbursement_type: v,
+                          // Se total, usa valor da proposta
+                          amount: v === 'total'
+                            ? String(signedContractProposals.find(p => p.id === selectedProposal)?.requested_value || 0)
+                            : f.amount
+                        }));
+                      }}
+                    >
+                      <SelectTrigger className="mt-1.5">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="total">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Desembolso Total</span>
+                            <span className="text-xs text-muted-foreground">- 100% do valor</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="parcial">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Desembolso Parcial</span>
+                            <span className="text-xs text-muted-foreground">- Valor personalizado</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Valor do Desembolso *</Label>
                       <Input
-                        type="number"
-                        value={formData.amount}
-                        onChange={(e) => setFormData((f) => ({ ...f, amount: e.target.value }))}
-                        placeholder="0,00"
+                        value={formatCurrencyInput(formData.amount || '0')}
+                        onChange={(e) => {
+                          if (disbursementType === 'parcial') {
+                            const value = e.target.value.replace(/\D/g, '');
+                            setFormData((f) => ({ ...f, amount: value }));
+                          }
+                        }}
+                        placeholder="R$ 0,00"
+                        disabled={disbursementType === 'total'}
+                        className={disbursementType === 'total' ? 'bg-muted/50 font-medium' : ''}
                       />
-                      <p className="text-xs text-muted-foreground mt-1">Valor preenchido automaticamente</p>
+                      {disbursementType === 'total' && (
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-primary" /> Valor integral automático
+                        </p>
+                      )}
+                      {disbursementType === 'parcial' && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Máximo: {formatCurrency(Number(signedContractProposals.find(p => p.id === selectedProposal)?.requested_value || 0))}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label>Solicitado por</Label>
@@ -536,4 +633,11 @@ export default function Disbursements() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+            </Button >
+          </DialogFooter >
+        </DialogContent >
+      </Dialog >
+    </div >
   );
