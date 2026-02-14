@@ -117,18 +117,26 @@ export default function Disbursements() {
     }),
     [disbursements, statusFilter, designerFilter, proposals]);
 
-  // Propostas com Contrato Assinado (status 'aprovada')
+  // Propostas com Contrato Assinado (exclui 100% quitadas e liberadas)
   const signedContractProposals = useMemo(() => {
     const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const searchRaw = proposalSearch.trim();
 
-    if (!searchRaw) return proposals.filter((p) => p.status === "aprovada").sort((a, b) => a.producer_name.localeCompare(b.producer_name));
+    const baseFilter = (p: any) => {
+      if (p.status !== "aprovada") return false;
+      // Excluir propostas 100% quitadas
+      const pStats = getProposalStats(p.id, Number(p.requested_value));
+      if (pStats.remaining <= 0) return false;
+      return true;
+    };
+
+    if (!searchRaw) return proposals.filter(baseFilter).sort((a, b) => a.producer_name.localeCompare(b.producer_name));
 
     const search = normalize(searchRaw);
     const searchNums = searchRaw.replace(/\D/g, '');
 
     return proposals
-      .filter((p) => p.status === "aprovada")
+      .filter(baseFilter)
       .filter((p) => {
         const name = normalize(p.producer_name);
         const cpf = p.producer_cpf.replace(/\D/g, '');
@@ -512,7 +520,6 @@ export default function Disbursements() {
                     signedContractProposals.map((p) => {
                       const stats = getProposalStats(p.id, Number(p.requested_value));
                       const progress = (stats.used / Number(p.requested_value)) * 100;
-                      const isFullyPaid = stats.remaining <= 0;
 
                       return (
                         <Card
@@ -520,15 +527,14 @@ export default function Disbursements() {
                           className={`cursor-pointer transition-all border-2 ${selectedProposal === p.id
                             ? 'border-primary bg-primary/5'
                             : 'border-border hover:border-primary/50'
-                            } ${isFullyPaid ? 'opacity-60 grayscale' : ''}`}
+                            }`}
                           onClick={() => {
-                            if (isFullyPaid) return;
                             setSelectedProposal(p.id);
                             setDisbursementType('total');
                             setFormData((f) => ({
                               ...f,
                               proposal_id: p.id,
-                              amount: String(stats.remaining), // Pega só o RESTANTE
+                              amount: String(stats.remaining),
                               disbursement_type: 'total',
                             }));
                           }}
@@ -543,7 +549,7 @@ export default function Disbursements() {
                                       CPF: {p.producer_cpf}
                                     </p>
                                   </div>
-                                  {isFullyPaid && <Badge variant="secondary" className="text-xs">Quitado</Badge>}
+                                  {progress > 0 && <Badge variant="outline" className="text-xs text-primary border-primary/30">Desembolso Solicitado {Math.round(progress)}%</Badge>}
                                 </div>
 
                                 <div className="mt-3 space-y-1">
