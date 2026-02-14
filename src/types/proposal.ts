@@ -86,19 +86,31 @@ export const STATUS_LABELS: Record<ProposalStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<ProposalStatus, string> = {
-  // Modern gradient-based status colors with better visual hierarchy
-  nova: 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-sm shadow-cyan-500/30 border-0',
-  em_analise: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/30 border-0',
-  documentacao_pendente: 'bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-sm shadow-violet-500/30 border-0',
-  visita_gerencial: 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-600/30 border-0',
-  avaliacao_risco: 'bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-sm shadow-rose-500/30 border-0',
-  consideracoes_gerenciais: 'bg-gradient-to-r from-slate-500 to-gray-600 text-white shadow-sm shadow-slate-500/30 border-0',
-  votacao_sinc: 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm shadow-indigo-600/30 border-0',
-  contrato_liberado: 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-sm shadow-emerald-500/30 border-0',
-  desembolso: 'bg-gradient-to-r from-green-600 to-teal-600 text-white shadow-sm shadow-green-600/30 border-0',
+  // Paleta minimalista sofisticada - Apenas 5 cores base
+  // Azul (análise/progresso) | Verde (sucesso) | Âmbar (atenção) | Vermelho (crítico) | Cinza (neutro)
+
+  nova: 'bg-sky-50 text-sky-700 border border-sky-200/60 font-medium dark:bg-sky-950/30 dark:text-sky-400 dark:border-sky-800/60',
+
+  em_analise: 'bg-blue-50 text-blue-700 border border-blue-200/60 font-medium dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800/60',
+
+  documentacao_pendente: 'bg-amber-50 text-amber-700 border border-amber-200/60 font-medium dark:bg-amber-950/30 dark:text-amber-500 dark:border-amber-800/60',
+
+  visita_gerencial: 'bg-blue-50 text-blue-600 border border-blue-200/60 font-medium dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800/60',
+
+  avaliacao_risco: 'bg-rose-50 text-rose-700 border border-rose-200/60 font-medium dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800/60',
+
+  consideracoes_gerenciais: 'bg-slate-50 text-slate-700 border border-slate-200/60 font-medium dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-700/60',
+
+  votacao_sinc: 'bg-blue-100 text-blue-800 border border-blue-300/60 font-medium dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/60',
+
+  contrato_liberado: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-medium dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/60',
+
+  desembolso: 'bg-teal-50 text-teal-700 border border-teal-200/60 font-medium dark:bg-teal-950/30 dark:text-teal-400 dark:border-teal-800/60',
+
   // Legacy
-  aprovada: 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-sm shadow-emerald-500/30 border-0',
-  negada: 'bg-gradient-to-r from-rose-500 to-red-500 text-white shadow-sm shadow-rose-500/30 border-0',
+  aprovada: 'bg-green-50 text-green-700 border border-green-200/60 font-medium dark:bg-green-950/30 dark:text-green-400 dark:border-green-800/60',
+
+  negada: 'bg-red-50 text-red-700 border border-red-200/60 font-medium dark:bg-red-950/30 dark:text-red-400 dark:border-red-800/60',
 };
 
 export const PRONAF_LINE_LABELS: Record<PronafLine, string> = {

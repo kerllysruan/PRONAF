@@ -124,7 +124,7 @@ export default function Proposals() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-heading tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Propostas</h1>
+          <h1 className="text-3xl font-bold font-heading tracking-tight text-foreground">Propostas</h1>
           <p className="text-sm text-muted-foreground mt-2">Cadastro e gerenciamento de propostas PRONAF</p>
         </div>
         <Button onClick={openNew} className="gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all hover-lift">
@@ -218,7 +218,7 @@ export default function Proposals() {
                       <TableCell className="text-sm">{PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer || "-"}</TableCell>
                       <TableCell className="font-bold text-primary">{formatCurrency(Number(p.requested_value))}</TableCell>
                       <TableCell>
-                        <Badge className={`${STATUS_COLORS[p.status as ProposalStatus] || ''} text-xs font-semibold transition-transform hover:scale-105`}>
+                        <Badge className={`${STATUS_COLORS[p.status as ProposalStatus] || ''} text-xs px-3 py-1 rounded-full`}>
                           {STATUS_LABELS[p.status as ProposalStatus] || p.status}
                         </Badge>
                       </TableCell>
@@ -258,7 +258,7 @@ export default function Proposals() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-heading text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{editingId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
+            <DialogTitle className="font-heading text-xl">{editingId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -322,8 +322,8 @@ export default function Proposals() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="hover-lift">Cancelar</Button>
-            <Button onClick={handleSave} className="bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg shadow-primary/25 hover-lift">{editingId ? "Salvar Alterações" : "Cadastrar Proposta"}</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave}>{editingId ? "Salvar Alterações" : "Cadastrar Proposta"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

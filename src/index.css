@@ -6,169 +6,113 @@
 
 @layer base {
   :root {
-    --background: 210 25% 98%;
-    --foreground: 220 30% 12%;
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 30% 12%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 12%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 217 91% 42%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 32% 91%;
-    --secondary-foreground: 220 25% 25%;
+    --secondary: 220 13% 95%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 24% 96%;
-    --muted-foreground: 215 16% 46%;
+    --muted: 220 13% 95%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 210 100% 62%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 32 95% 56%;
+    --warning: 25 95% 53%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 199 95% 58%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 42%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
 
     --radius: 0.5rem;
 
-    /* Status Colors - Corporate Modern */
-    --status-nova: 199 95% 58%;
-    --status-nova-foreground: 0 0% 100%;
-
-    --status-em-analise: 32 95% 56%;
-    --status-em-analise-foreground: 0 0% 100%;
-
-    --status-doc-pendente: 262 83% 58%;
-    --status-doc-pendente-foreground: 0 0% 100%;
-
-    --status-visita: 217 91% 60%;
-    --status-visita-foreground: 0 0% 100%;
-
-    --status-risco: 350 89% 60%;
-    --status-risco-foreground: 0 0% 100%;
-
-    --status-gerenciais: 215 25% 56%;
-    --status-gerenciais-foreground: 0 0% 100%;
-
-    --status-votacao: 243 75% 59%;
-    --status-votacao-foreground: 0 0% 100%;
-
-    --status-contrato: 142 76% 40%;
-    --status-contrato-foreground: 0 0% 100%;
-
-    --status-desembolso: 158 64% 37%;
-    --status-desembolso-foreground: 0 0% 100%;
-
-    --sidebar-background: 220 30% 14%;
-    --sidebar-foreground: 210 24% 88%;
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 25% 20%;
-    --sidebar-accent-foreground: 210 24% 92%;
-    --sidebar-border: 220 25% 18%;
-    --sidebar-ring: 217 91% 60%;
-
-    --chart-1: 217 91% 42%;
-    --chart-2: 199 95% 58%;
-    --chart-3: 142 76% 36%;
-    --chart-4: 32 95% 56%;
-    --chart-5: 350 89% 60%;
-  }
-
-  .dark {
-    --background: 220 30% 8%;
-    --foreground: 210 24% 94%;
-
-    --card: 220 28% 12%;
-    --card-foreground: 210 24% 94%;
-
-    --popover: 220 28% 12%;
-    --popover-foreground: 210 24% 94%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 220 30% 8%;
-
-    --secondary: 220 25% 18%;
-    --secondary-foreground: 210 24% 92%;
-
-    --muted: 220 22% 16%;
-    --muted-foreground: 215 16% 58%;
-
-    --accent: 210 100% 62%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 142 76% 40%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 32 95% 56%;
-    --warning-foreground: 0 0% 100%;
-
-    --info: 199 95% 58%;
-    --info-foreground: 0 0% 100%;
-
-    --border: 220 22% 20%;
-    --input: 220 22% 20%;
-    --ring: 217 91% 60%;
-
-    /* Status Colors - Corporate Modern Dark */
-    --status-nova: 199 95% 58%;
-    --status-nova-foreground: 0 0% 100%;
-
-    --status-em-analise: 32 95% 56%;
-    --status-em-analise-foreground: 0 0% 100%;
-
-    --status-doc-pendente: 262 83% 58%;
-    --status-doc-pendente-foreground: 0 0% 100%;
-
-    --status-visita: 217 91% 60%;
-    --status-visita-foreground: 0 0% 100%;
-
-    --status-risco: 350 89% 60%;
-    --status-risco-foreground: 0 0% 100%;
-
-    --status-gerenciais: 215 25% 56%;
-    --status-gerenciais-foreground: 0 0% 100%;
-
-    --status-votacao: 243 75% 59%;
-    --status-votacao-foreground: 0 0% 100%;
-
-    --status-contrato: 142 76% 44%;
-    --status-contrato-foreground: 0 0% 100%;
-
-    --status-desembolso: 158 64% 42%;
-    --status-desembolso-foreground: 0 0% 100%;
-
-    --sidebar-background: 220 30% 10%;
-    --sidebar-foreground: 210 24% 84%;
-    --sidebar-primary: 217 91% 62%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 25% 16%;
-    --sidebar-accent-foreground: 210 24% 92%;
-    --sidebar-border: 220 25% 16%;
+    --sidebar-accent: 220 18% 20%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 18% 18%;
     --sidebar-ring: 217 91% 60%;
 
     --chart-1: 217 91% 60%;
-    --chart-2: 199 95% 58%;
-    --chart-3: 142 76% 44%;
-    --chart-4: 32 95% 56%;
-    --chart-5: 350 89% 60%;
+    --chart-2: 199 89% 48%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 25 95% 53%;
+    --chart-5: 0 72% 51%;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 13%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 13%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 220 18% 20%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 18% 18%;
+    --muted-foreground: 220 9% 60%;
+
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 25 95% 53%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 220 18% 20%;
+    --input: 220 18% 20%;
+    --ring: 217 91% 60%;
+
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 18% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 18% 15%;
+    --sidebar-ring: 217 91% 60%;
+
+    --chart-1: 217 91% 60%;
+    --chart-2: 199 89% 48%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 25 95% 53%;
+    --chart-5: 0 72% 51%;
   }
 }
 
