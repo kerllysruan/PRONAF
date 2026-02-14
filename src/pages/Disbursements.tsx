@@ -115,34 +115,36 @@ export default function Disbursements() {
       .sort((a, b) => a.producer_name.localeCompare(b.producer_name));
   }, [proposals, proposalSearch]);
 
+  const getProposalStats = (proposalId: string, totalValue: number) => {
+    const proposalDisbursements = disbursements.filter(
+      d => d.proposal_id === proposalId && d.status !== 'negado'
+    );
+    const used = proposalDisbursements.reduce((acc, d) => acc + Number(d.amount), 0);
+    const remaining = Math.max(0, totalValue - used);
+
+    const last = proposalDisbursements.sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+
+    return { used, remaining, last, count: proposalDisbursements.length };
+  };
+
   const selectedDisbursement = selectedId ? disbursements.find((d) => d.id === selectedId) : null;
 
   const handleSave = async () => {
     if (!formData.amount || !formData.proposal_id) return;
 
-    // Validate partial amount
-    if (disbursementType === 'parcial') {
-      const selectedProp = signedContractProposals.find(p => p.id === selectedProposal);
-      const requestedValue = Number(selectedProp?.requested_value || 0);
-      const disbursementValue = Number(formData.amount); // formData.amount is stored as plain number string in partial mode? No, wait, let's standarize.
-
-      // Wait, let's check how we store amount. In both cases it should be a number.
-      // But the input for partial might come formatted? 
-      // Let's ensure formData.amount is clean number string or handle conversion
-    }
-
-    // Cleaning amount logic handled in onChange for Partial. 
-    // But let's verify logic below:
-
     const amount = Number(formData.amount);
 
-    if (disbursementType === 'parcial') {
-      const selectedProp = signedContractProposals.find(p => p.id === selectedProposal);
-      if (selectedProp && amount > Number(selectedProp.requested_value)) {
-        // We need toast here but it's used via hook. 
-        // Since we can't easily add toast here without refactoring, let's just return for now or use alert?
-        // Actually hook is top level.
-        alert(`O valor parcial não pode exceder o valor da proposta (${formatCurrency(Number(selectedProp.requested_value))})`);
+    // Validação de segurança
+    const selectedProp = signedContractProposals.find(p => p.id === selectedProposal);
+    if (selectedProp) {
+      const stats = getProposalStats(selectedProp.id, Number(selectedProp.requested_value));
+
+      // Se for total ou parcial, não pode exceder o restante
+      // (No caso de total, o valor já vem do restante, mas é bom validar)
+      if (amount > stats.remaining + 0.01) { // margem de erro float
+        alert(`O valor não pode exceder o saldo restante da proposta (${formatCurrency(stats.remaining)})`);
         return;
       }
     }
@@ -438,47 +440,70 @@ export default function Disbursements() {
                         : "Nenhuma proposta com contrato assinado"}
                     </div>
                   ) : (
-                    signedContractProposals.map((p) => (
-                      <Card
-                        key={p.id}
-                        className={`cursor-pointer transition-all border-2 ${selectedProposal === p.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50'
-                          }`}
-                        onClick={() => {
-                          setSelectedProposal(p.id);
-                          setDisbursementType('total');
-                          setFormData((f) => ({
-                            ...f,
-                            proposal_id: p.id,
-                            amount: String(p.requested_value),
-                            disbursement_type: 'total',
-                          }));
-                        }}
-                      >
-                        <CardContent className="p-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <p className="font-semibold text-sm">{p.producer_name}</p>
-                              <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                                CPF: {p.producer_cpf}
-                              </p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {format(parseISO(p.entry_date), "dd/MM/yyyy", { locale: ptBR })}
-                                </Badge>
-                                <span className="text-sm font-bold text-primary">
-                                  {formatCurrency(Number(p.requested_value))}
-                                </span>
+                    signedContractProposals.map((p) => {
+                      const stats = getProposalStats(p.id, Number(p.requested_value));
+                      const progress = (stats.used / Number(p.requested_value)) * 100;
+                      const isFullyPaid = stats.remaining <= 0;
+
+                      return (
+                        <Card
+                          key={p.id}
+                          className={`cursor-pointer transition-all border-2 ${selectedProposal === p.id
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                            } ${isFullyPaid ? 'opacity-60 grayscale' : ''}`}
+                          onClick={() => {
+                            if (isFullyPaid) return;
+                            setSelectedProposal(p.id);
+                            setDisbursementType('total');
+                            setFormData((f) => ({
+                              ...f,
+                              proposal_id: p.id,
+                              amount: String(stats.remaining), // Pega só o RESTANTE
+                              disbursement_type: 'total',
+                            }));
+                          }}
+                        >
+                          <CardContent className="p-3">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <p className="font-semibold text-sm">{p.producer_name}</p>
+                                    <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                                      CPF: {p.producer_cpf}
+                                    </p>
+                                  </div>
+                                  {isFullyPaid && <Badge variant="secondary" className="text-xs">Quitado</Badge>}
+                                </div>
+
+                                <div className="mt-3 space-y-1">
+                                  <div className="flex justify-between text-xs">
+                                    <span className="text-muted-foreground">Progresso do Desembolso</span>
+                                    <span className="font-medium">{Math.round(progress)}%</span>
+                                  </div>
+                                  <Progress value={progress} className="h-2" />
+                                  <div className="flex justify-between text-xs mt-1 font-medium">
+                                    <span className="text-blue-600">Usado: {formatCurrency(stats.used)}</span>
+                                    <span className="text-green-600">Restante: {formatCurrency(stats.remaining)}</span>
+                                  </div>
+                                </div>
+
+                                {stats.last && (
+                                  <p className="text-[10px] text-muted-foreground mt-2 border-t pt-1">
+                                    Último: {format(parseISO(stats.last.created_at), "dd/MM/yy")} por {getMemberById(stats.last.requested_by)?.name || "Sistema"}
+                                  </p>
+                                )}
+
                               </div>
+                              {selectedProposal === p.id && (
+                                <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 ml-3" />
+                              )}
                             </div>
-                            {selectedProposal === p.id && (
-                              <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
+                          </CardContent>
+                        </Card>
+                      );
+                    })
                   )}
                 </div>
               </ScrollArea>
@@ -496,12 +521,19 @@ export default function Disbursements() {
                       value={disbursementType}
                       onValueChange={(v: 'total' | 'parcial') => {
                         setDisbursementType(v);
+                        const selectedProp = signedContractProposals.find(p => p.id === selectedProposal);
+                        let remaining = 0;
+                        if (selectedProp) {
+                          const stats = getProposalStats(selectedProp.id, Number(selectedProp.requested_value));
+                          remaining = stats.remaining;
+                        }
+
                         setFormData((f) => ({
                           ...f,
                           disbursement_type: v,
-                          // Se total, usa valor da proposta
+                          // Se total, usa valor RESTANTE da proposta
                           amount: v === 'total'
-                            ? String(signedContractProposals.find(p => p.id === selectedProposal)?.requested_value || 0)
+                            ? String(remaining)
                             : f.amount
                         }));
                       }}
@@ -512,8 +544,8 @@ export default function Disbursements() {
                       <SelectContent>
                         <SelectItem value="total">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">Desembolso Total</span>
-                            <span className="text-xs text-muted-foreground">- 100% do valor</span>
+                            <span className="font-medium">Desembolso Total (Restante)</span>
+                            <span className="text-xs text-muted-foreground">- Quitar saldo</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="parcial">
@@ -548,7 +580,12 @@ export default function Disbursements() {
                       )}
                       {disbursementType === 'parcial' && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          Máximo: {formatCurrency(Number(signedContractProposals.find(p => p.id === selectedProposal)?.requested_value || 0))}
+                          Máximo disponível: {formatCurrency(
+                            getProposalStats(
+                              selectedProposal!,
+                              Number(signedContractProposals.find(p => p.id === selectedProposal)?.requested_value || 0)
+                            ).remaining
+                          )}
                         </p>
                       )}
                     </div>
