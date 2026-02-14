@@ -1,4 +1,14 @@
-export type ProposalStatus = 'nova' | 'em_analise' | 'documentacao_pendente' | 'aprovada' | 'negada';
+export type ProposalStatus =
+  | 'nova'
+  | 'em_analise'
+  | 'documentacao_pendente'
+  | 'visita_gerencial'
+  | 'avaliacao_risco'
+  | 'consideracoes_gerenciais'
+  | 'votacao_sinc'
+  | 'contrato_liberado'
+  | 'desembolso'
+  | 'aprovada' | 'negada'; // Kept for backward compatibility
 
 export type PronafLine =
   | 'custeio'
@@ -50,6 +60,13 @@ export const STATUS_LABELS: Record<ProposalStatus, string> = {
   nova: 'Nova',
   em_analise: 'Em Análise',
   documentacao_pendente: 'Doc. Pendente',
+  visita_gerencial: 'Visita Gerencial',
+  avaliacao_risco: 'Avaliação De Risco',
+  consideracoes_gerenciais: 'Considerações Gerenciais',
+  votacao_sinc: 'Votação Sinc',
+  contrato_liberado: 'Contrato Liberado',
+  desembolso: 'Desembolso',
+  // Legacy
   aprovada: 'Aprovada',
   negada: 'Negada',
 };
@@ -58,6 +75,13 @@ export const STATUS_COLORS: Record<ProposalStatus, string> = {
   nova: 'bg-info text-info-foreground',
   em_analise: 'bg-warning text-warning-foreground',
   documentacao_pendente: 'bg-accent text-accent-foreground',
+  visita_gerencial: 'bg-primary text-primary-foreground',
+  avaliacao_risco: 'bg-destructive text-destructive-foreground',
+  consideracoes_gerenciais: 'bg-muted text-muted-foreground',
+  votacao_sinc: 'bg-indigo-500 text-white',
+  contrato_liberado: 'bg-success text-success-foreground',
+  desembolso: 'bg-emerald-600 text-white',
+  // Legacy
   aprovada: 'bg-success text-success-foreground',
   negada: 'bg-destructive text-destructive-foreground',
 };
