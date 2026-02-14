@@ -93,15 +93,24 @@ export default function Disbursements() {
 
   // Propostas com Contrato Assinado (status 'aprovada')
   const signedContractProposals = useMemo(() => {
+    const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const searchRaw = proposalSearch.trim();
+
+    if (!searchRaw) return proposals.filter((p) => p.status === "aprovada").sort((a, b) => a.producer_name.localeCompare(b.producer_name));
+
+    const search = normalize(searchRaw);
+    const searchNums = searchRaw.replace(/\D/g, '');
+
     return proposals
       .filter((p) => p.status === "aprovada")
       .filter((p) => {
-        if (!proposalSearch.trim()) return true;
-        const search = proposalSearch.toLowerCase();
-        return (
-          p.producer_name.toLowerCase().includes(search) ||
-          p.producer_cpf.replace(/\D/g, '').includes(search.replace(/\D/g, ''))
-        );
+        const name = normalize(p.producer_name);
+        const cpf = p.producer_cpf.replace(/\D/g, '');
+
+        const nameMatch = name.includes(search);
+        const cpfMatch = searchNums.length > 0 && cpf.includes(searchNums);
+
+        return nameMatch || cpfMatch;
       })
       .sort((a, b) => a.producer_name.localeCompare(b.producer_name));
   }, [proposals, proposalSearch]);
