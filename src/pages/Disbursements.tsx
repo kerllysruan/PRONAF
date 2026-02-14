@@ -635,9 +635,3 @@ export default function Disbursements() {
     </div>
   );
 }
-            </Button >
-          </DialogFooter >
-        </DialogContent >
-      </Dialog >
-    </div >
-  );
