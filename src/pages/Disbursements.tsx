@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   Plus, DollarSign, Loader2, Trash2, Eye, ArrowUpRight,
   CheckCircle2, Clock, XCircle, FileText, Filter, Search,
@@ -117,6 +117,24 @@ export default function Disbursements() {
     }),
     [disbursements, statusFilter, designerFilter, proposals]);
 
+  /* -------------------------------------------------------------------------- */
+  /*                             FUNÇÕES AUXILIARES                             */
+  /* -------------------------------------------------------------------------- */
+
+  const getProposalStats = useCallback((proposalId: string, totalValue: number) => {
+    const proposalDisbursements = disbursements.filter(
+      d => d.proposal_id === proposalId && d.status !== 'negado'
+    );
+    const used = proposalDisbursements.reduce((acc, d) => acc + Number(d.amount), 0);
+    const remaining = Math.max(0, totalValue - used);
+
+    const last = proposalDisbursements.sort((a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+
+    return { used, remaining, last, count: proposalDisbursements.length };
+  }, [disbursements]);
+
   // Propostas elegíveis para desembolso (aprovada, desembolso, contrato_liberado - exclui 100% quitadas)
   const signedContractProposals = useMemo(() => {
     const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -149,21 +167,9 @@ export default function Disbursements() {
         return nameMatch || cpfMatch;
       })
       .sort((a, b) => a.producer_name.localeCompare(b.producer_name));
-  }, [proposals, proposalSearch]);
+  }, [proposals, proposalSearch, getProposalStats]);
 
-  const getProposalStats = (proposalId: string, totalValue: number) => {
-    const proposalDisbursements = disbursements.filter(
-      d => d.proposal_id === proposalId && d.status !== 'negado'
-    );
-    const used = proposalDisbursements.reduce((acc, d) => acc + Number(d.amount), 0);
-    const remaining = Math.max(0, totalValue - used);
 
-    const last = proposalDisbursements.sort((a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    )[0];
-
-    return { used, remaining, last, count: proposalDisbursements.length };
-  };
 
   const selectedDisbursement = selectedId ? disbursements.find((d) => d.id === selectedId) : null;
 
