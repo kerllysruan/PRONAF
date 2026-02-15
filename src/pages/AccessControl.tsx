@@ -42,7 +42,7 @@ interface User {
 type UserRole = "usuario" | "gerente" | "admin";
 
 interface UserPermission {
-  [key: string]: string | boolean;
+  [key: string]: string | boolean | undefined;
   user_id: string;
   can_view_dashboard?: boolean;
   can_view_proposals?: boolean;
@@ -54,7 +54,13 @@ interface UserPermission {
   can_view_kanban?: boolean;
   can_view_documentation?: boolean;
   can_view_visits?: boolean;
+  can_manage_visits?: boolean;
+  can_view_tasks?: boolean;
+  can_manage_tasks?: boolean;
+  can_view_disbursements?: boolean;
+  can_manage_disbursements?: boolean;
   can_view_management?: boolean;
+  can_manage_users?: boolean;
   read_only?: boolean;
 }
 
@@ -63,13 +69,23 @@ const PERMISSIONS = [
   { key: "can_view_proposals", label: "Ver Propostas", description: "Acessar a listagem completa de propostas.", group: "Visualização", icon: Eye },
   { key: "can_view_kanban", label: "Ver Kanban", description: "Visualizar o quadro de propostas por fase.", group: "Visualização", icon: Eye },
   { key: "can_view_documentation", label: "Ver Documentação", description: "Acessar manuais e guias do sistema.", group: "Visualização", icon: Eye },
+  { key: "can_view_tasks", label: "Ver Tarefas", description: "Visualizar o quadro de tarefas e atividades.", group: "Visualização", icon: Eye },
+  { key: "can_view_disbursements", label: "Ver Desembolsos", description: "Visualizar listagem de pagamentos e solicitações.", group: "Visualização", icon: Eye },
   { key: "can_view_visits", label: "Ver Visitas", description: "Visualizar o calendário de visitas aos produtores.", group: "Visualização", icon: Eye },
+
   { key: "can_view_management", label: "Ver Gerenciamento", description: "Ver estatísticas avançadas e equipe.", group: "Administração", icon: Settings2 },
   { key: "can_view_access_control", label: "Controle de Acesso", description: "Gerenciar usuários e níveis de permissão.", group: "Administração", icon: ShieldCheck },
+  { key: "can_manage_users", label: "Gestão Total", description: "Permissão para criar, excluir e resetar senhas.", group: "Administração", icon: ShieldAlert },
+
   { key: "can_create_proposals", label: "Criar Propostas", description: "Cadastrar novas propostas de crédito no sistema.", group: "Operacional", icon: Edit3 },
   { key: "can_edit_proposals", label: "Editar Propostas", description: "Modificar informações de propostas existentes.", group: "Operacional", icon: Edit3 },
   { key: "can_delete_proposals", label: "Deletar Propostas", description: "Remover propostas (requer cautela).", group: "Operacional", icon: Trash2 },
   { key: "can_approve_proposals", label: "Aprovar Propostas", description: "Mudar status para 'Contrato Assinado'.", group: "Operacional", icon: CheckCircle2 },
+
+  { key: "can_manage_tasks", label: "Gerir Tarefas", description: "Criar, delegar e comentar em tarefas de equipe.", group: "Equipe", icon: Edit3 },
+  { key: "can_manage_disbursements", label: "Gerir Desembolsos", description: "Aprovar ou rejeitar solicitações de pagamento.", group: "Equipe", icon: DollarSign },
+  { key: "can_manage_visits", label: "Agendar Visitas", description: "Criar e modificar eventos no calendário de visitas.", group: "Equipe", icon: Edit3 },
+
   { key: "read_only", label: "Somente Leitura", description: "Bloqueia qualquer ação de escrita, independente das outras permissões.", group: "Segurança", icon: Lock },
 ];
 
@@ -82,6 +98,8 @@ function AccessControl() {
   const [error, setError] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPermOpen, setIsPermOpen] = useState(false);
+  const [isPasswordOpen, setIsPasswordOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
@@ -91,6 +109,8 @@ function AccessControl() {
     display_name: "",
     role: "usuario" as UserRole,
   });
+  const [newPassword, setNewPassword] = useState("");
+  const [editProfile, setEditProfile] = useState({ display_name: "" });
   const [editPerms, setEditPerms] = useState<UserPermission>({ user_id: "" });
   const [saving, setSaving] = useState(false);
 
@@ -161,21 +181,20 @@ function AccessControl() {
 
     try {
       setSaving(true);
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: { data: { display_name: formData.display_name } }
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: {
+          action: 'create',
+          email: formData.email,
+          password: formData.password,
+          display_name: formData.display_name,
+          role: formData.role
+        }
       });
 
-      if (authError) throw authError;
-      const userId = authData.user?.id;
-      if (!userId) throw new Error("Erro ao criar usuário");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      // O perfil normalmente é criado por trigger no DB, mas garantimos aqui se necessário
-      await supabase.from("user_roles").insert({ user_id: userId, role: formData.role as UserRole });
-      await supabase.from("user_permissions").insert({ user_id: userId });
-
-      toast({ title: "Sucesso", description: "Usuário criado com sucesso. Instruções enviadas por e-mail." });
+      toast({ title: "Sucesso", description: "Usuário criado com sucesso e perfil configurado." });
       setIsCreateOpen(false);
       setFormData({ email: "", password: "", display_name: "", role: "usuario" });
       await fetchUsers(true);
@@ -188,8 +207,12 @@ function AccessControl() {
 
   const handleUpdateRole = async (userId: string, role: UserRole) => {
     try {
-      const { error } = await supabase.from("user_roles").update({ role }).eq("user_id", userId);
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'update_role', user_id: userId, role }
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
       toast({ title: "Sucesso", description: "Perfil de acesso atualizado" });
       await fetchUsers(true);
     } catch (err: any) {
@@ -204,12 +227,13 @@ function AccessControl() {
       setSaving(true);
       const { user_id, id, created_at, updated_at, ...permissionsData } = editPerms as any;
 
-      const { error } = await supabase
-        .from("user_permissions")
-        .update(permissionsData)
-        .eq("user_id", selectedUser.id);
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'update_permissions', user_id: selectedUser.id, permissions: permissionsData }
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
       toast({ title: "Sucesso", description: "Permissões de rede atualizadas" });
       setIsPermOpen(false);
       await fetchUsers(true);
@@ -220,18 +244,61 @@ function AccessControl() {
     }
   };
 
+  const handleUpdatePassword = async () => {
+    if (!selectedUser || !newPassword) return;
+    try {
+      setSaving(true);
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'update_password', user_id: selectedUser.id, password: newPassword }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: "Sucesso", description: "Senha redefinida com sucesso." });
+      setIsPasswordOpen(false);
+      setNewPassword("");
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!selectedUser || !editProfile.display_name) return;
+    try {
+      setSaving(true);
+      // Perfis são públicos, então podemos editar direto se o RLS permitir ou via RPC
+      // Para manter a consistência, vamos via supabase direto se possível, 
+      // mas como o usuário é admin aqui, ele tem bypass via política is_admin que criamos
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: editProfile.display_name })
+        .eq("id", selectedUser.id);
+
+      if (error) throw error;
+
+      toast({ title: "Sucesso", description: "Perfil atualizado com sucesso." });
+      setIsProfileOpen(false);
+      await fetchUsers(true);
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const executeDeleteUser = async () => {
     if (!userToDeleteId) return;
     try {
       setSaving(true);
-      // RPC ou lógica administrativa para deletar da Auth seria ideal, 
-      // mas aqui limpamos o que temos acesso no Public
-      await Promise.all([
-        supabase.from("user_permissions").delete().eq("user_id", userToDeleteId),
-        supabase.from("user_roles").delete().eq("user_id", userToDeleteId),
-        supabase.from("profiles").delete().eq("user_id", userToDeleteId),
-      ]);
-      toast({ title: "Usuário removido", description: "Registros de perfil e permissões excluídos." });
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'delete', user_id: userToDeleteId }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast({ title: "Usuário removido", description: "Acesso e perfil excluídos permanentemente." });
       await fetchUsers(true);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -384,6 +451,19 @@ function AccessControl() {
                                 setIsPermOpen(true);
                               }}>
                                 <ShieldCheck className="h-4 w-4 text-primary" /> Editar Permissões
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-lg gap-2 p-3 font-medium text-sm" onClick={() => {
+                                setSelectedUser(user);
+                                setEditProfile({ display_name: user.display_name || "" });
+                                setIsProfileOpen(true);
+                              }}>
+                                <Edit3 className="h-4 w-4 text-primary" /> Editar Perfil
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-lg gap-2 p-3 font-medium text-sm" onClick={() => {
+                                setSelectedUser(user);
+                                setIsPasswordOpen(true);
+                              }}>
+                                <Lock className="h-4 w-4 text-primary" /> Alterar Senha
                               </DropdownMenuItem>
                               <DropdownMenuSeparator className="my-1" />
                               <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase opacity-50">Mudar Cargo</div>
@@ -575,7 +655,7 @@ function AccessControl() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl font-black font-heading text-red-600 italic">Revogar Acesso?</AlertDialogTitle>
             <AlertDialogDescription className="text-base font-medium">
-              Esta ação é rídiga. Recomenda-se desativar permissões antes de excluir o registro permanentemente.
+              Esta ação é rígida. Recomenda-se desativar permissões antes de excluir o registro permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
@@ -589,6 +669,85 @@ function AccessControl() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog para Alterar Senha */}
+      <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl shadow-3xl">
+          <DialogHeader className="p-8 bg-primary text-primary-foreground">
+            <div className="flex items-center gap-3">
+              <Lock className="h-8 w-8" />
+              <div>
+                <DialogTitle className="text-2xl font-black font-heading tracking-tight italic">
+                  Redefinir Senha
+                </DialogTitle>
+                <DialogDescription className="text-primary-foreground/80 font-medium">Reset de credencial: {selectedUser?.display_name}</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="p-8 space-y-6 bg-card">
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Nova Senha</Label>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  className="h-12 rounded-xl focus-visible:ring-primary shadow-inner bg-muted/20"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 pt-4">
+              <Button size="lg" onClick={handleUpdatePassword} disabled={saving || newPassword.length < 6} className="h-14 rounded-2xl font-black text-lg shadow-2xl shadow-primary/30 hover-lift">
+                {saving ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <ShieldCheck className="h-6 w-6 mr-2" />}
+                Confirmar Nova Senha
+              </Button>
+              <Button variant="ghost" onClick={() => setIsPasswordOpen(false)} className="rounded-xl h-11 text-muted-foreground hover:bg-muted/50 transition-all uppercase text-[10px] font-black tracking-widest">
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para Editar Perfil */}
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl shadow-3xl">
+          <DialogHeader className="p-8 bg-primary text-primary-foreground">
+            <div className="flex items-center gap-3">
+              <Edit3 className="h-8 w-8" />
+              <div>
+                <DialogTitle className="text-2xl font-black font-heading tracking-tight italic">
+                  Editar Perfil
+                </DialogTitle>
+                <DialogDescription className="text-primary-foreground/80 font-medium">Atualizando dados de: {selectedUser?.email}</DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="p-8 space-y-6 bg-card">
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Nome de Exibição</Label>
+                <Input
+                  value={editProfile.display_name}
+                  onChange={(e) => setEditProfile({ display_name: e.target.value })}
+                  placeholder="Ex: João da Silva"
+                  className="h-12 rounded-xl focus-visible:ring-primary shadow-inner bg-muted/20"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 pt-4">
+              <Button size="lg" onClick={handleUpdateProfile} disabled={saving || !editProfile.display_name} className="h-14 rounded-2xl font-black text-lg shadow-2xl shadow-primary/30 hover-lift">
+                {saving ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <CheckCircle2 className="h-6 w-6 mr-2" />}
+                Salvar Alterações
+              </Button>
+              <Button variant="ghost" onClick={() => setIsProfileOpen(false)} className="rounded-xl h-11 text-muted-foreground hover:bg-muted/50 transition-all uppercase text-[10px] font-black tracking-widest">
+                Descartar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

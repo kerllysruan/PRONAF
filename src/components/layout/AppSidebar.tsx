@@ -10,6 +10,7 @@ import {
   Shield,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   Sidebar,
   SidebarContent,
@@ -23,17 +24,26 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Propostas", url: "/propostas", icon: FileText },
-  { title: "Kanban", url: "/kanban", icon: Columns3 },
-  { title: "Documentação", url: "/documentacao", icon: FolderCheck },
-  { title: "Tarefas", url: "/tarefas", icon: ClipboardList },
-  { title: "Desembolsos", url: "/desembolsos", icon: DollarSign },
-  { title: "Gerenciamento", url: "/gerenciamento", icon: Settings },
-  { title: "Controle de Acesso", url: "/controle-acesso", icon: Shield },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, permission: "can_view_dashboard" },
+  { title: "Propostas", url: "/propostas", icon: FileText, permission: "can_view_proposals" },
+  { title: "Kanban", url: "/kanban", icon: Columns3, permission: "can_view_kanban" },
+  { title: "Documentação", url: "/documentacao", icon: FolderCheck, permission: "can_view_documentation" },
+  { title: "Tarefas", url: "/tarefas", icon: ClipboardList, permission: "can_view_tasks" },
+  { title: "Desembolsos", url: "/desembolsos", icon: DollarSign, permission: "can_view_disbursements" },
+  { title: "Gerenciamento", url: "/gerenciamento", icon: Settings, permission: "can_view_management" },
+  { title: "Controle de Acesso", url: "/controle-acesso", icon: Shield, permission: "can_view_access_control" },
 ];
 
 export function AppSidebar() {
+  const { permissions, isAdmin, loading } = usePermissions();
+
+  const filteredMenuItems = menuItems.filter(item => {
+    // Admins see everything
+    if (isAdmin) return true;
+    // For others, check specific permission
+    return permissions[item.permission as keyof typeof permissions];
+  });
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4 border-b border-sidebar-border">
@@ -54,12 +64,14 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-wider font-semibold">
-            Menu Principal
-          </SidebarGroupLabel>
+          <div className="px-4 py-2">
+            <SidebarGroupLabel className="text-sidebar-foreground/50 uppercase text-[10px] tracking-wider font-semibold">
+              Menu Principal
+            </SidebarGroupLabel>
+          </div>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {!loading && filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink
