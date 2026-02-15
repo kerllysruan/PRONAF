@@ -34,9 +34,9 @@ export function useProposals() {
   const [proposals, setProposals] = useState<(DbProposal & { documents: DbDocument[] })[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchProposals = useCallback(async () => {
+  const fetchProposals = useCallback(async (silent = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     const { data, error } = await supabase
       .from("proposals")
       .select("*, proposal_documents(*)")
@@ -52,7 +52,7 @@ export function useProposals() {
         }))
       );
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   }, [user, toast]);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export function useProposals() {
           table: 'proposals'
         },
         () => {
-          fetchProposals();
+          fetchProposals(true);
         }
       )
       .subscribe();
@@ -100,7 +100,7 @@ export function useProposals() {
     await supabase.from("proposal_documents").insert(docs);
 
     toast({ title: "Proposta cadastrada com sucesso!" });
-    await fetchProposals();
+    await fetchProposals(true);
     return newProposal;
   };
 
@@ -113,6 +113,8 @@ export function useProposals() {
       setProposals((prev) =>
         prev.map((p) => (p.id === id ? { ...p, ...data } : p))
       );
+      // Optional: fetch fresh data silently to ensure consistency
+      // await fetchProposals(true); 
     }
   };
 
@@ -132,12 +134,12 @@ export function useProposals() {
       toast({ title: "Sucesso", description: "Proposta e todos os registros vinculados removidos com sucesso", variant: "default" });
 
       // Atualiza para garantir sincronia
-      await fetchProposals();
+      await fetchProposals(true);
     } catch (error: any) {
       console.error("Erro ao deletar proposta:", error);
       toast({ title: "Erro ao excluir", description: error.message || "Erro ao deletar a proposta", variant: "destructive" });
       // Reverte/Recarrega em caso de erro
-      await fetchProposals();
+      await fetchProposals(true);
     }
   };
 
@@ -155,7 +157,7 @@ export function useProposals() {
         description: completed ? "Documento marcado como completo" : "Documento desmarcado",
         variant: "default"
       });
-      await fetchProposals();
+      await fetchProposals(true);
     } catch (error: any) {
       console.error("Erro ao atualizar documento:", error);
       toast({

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,7 @@ export default function Proposals() {
   }, [proposals]);
 
   const filtered = useMemo(() => {
-    setPage(0);
+    // Removed setPage(0) to prevent reset on data update
     let result = proposals.filter((p) => {
       const matchesSearch =
         p.producer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,6 +80,20 @@ export default function Proposals() {
 
     return result;
   }, [proposals, searchTerm, statusFilter, filterMonth, filterYear, sortBy]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, statusFilter, filterMonth, filterYear, sortBy]);
+
+  // Keep page valid if data shrinks
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+
+  useEffect(() => {
+    if (page > 0 && page >= totalPages) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [page, totalPages]);
 
   const filteredForSum = useMemo(() => {
     return proposals.filter((p) => {
