@@ -44,9 +44,9 @@ export function useDisbursements() {
   const [disbursements, setDisbursements] = useState<DbDisbursement[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchDisbursements = useCallback(async () => {
+  const fetchDisbursements = useCallback(async (silent = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     const { data, error } = await supabase
       .from("disbursements")
       .select("*")
@@ -57,11 +57,30 @@ export function useDisbursements() {
     } else {
       setDisbursements((data as DbDisbursement[]) || []);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   }, [user, toast]);
 
   useEffect(() => {
     fetchDisbursements();
+
+    const channel = supabase
+      .channel('disbursements-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'disbursements'
+        },
+        () => {
+          fetchDisbursements(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchDisbursements]);
 
   const createDisbursement = async (data: Omit<DbDisbursement, "id" | "user_id" | "created_at" | "updated_at">) => {
@@ -71,7 +90,7 @@ export function useDisbursements() {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Pedido de desembolso criado!" });
-      await fetchDisbursements();
+      await fetchDisbursements(true);
     }
   };
 
@@ -81,7 +100,7 @@ export function useDisbursements() {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Desembolso atualizado!" });
-      await fetchDisbursements();
+      await fetchDisbursements(true);
     }
   };
 
@@ -91,7 +110,7 @@ export function useDisbursements() {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Desembolso removido." });
-      await fetchDisbursements();
+      await fetchDisbursements(true);
     }
   };
 

@@ -21,9 +21,9 @@ export function useVisits() {
   const [visits, setVisits] = useState<DbVisit[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchVisits = useCallback(async () => {
+  const fetchVisits = useCallback(async (silent = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     const { data, error } = await supabase
       .from("visits")
       .select("*")
@@ -34,11 +34,30 @@ export function useVisits() {
     } else {
       setVisits(data || []);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   }, [user, toast]);
 
   useEffect(() => {
     fetchVisits();
+
+    const channel = supabase
+      .channel('visits-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'visits'
+        },
+        () => {
+          fetchVisits(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchVisits]);
 
   const createVisit = async (data: Omit<DbVisit, "id" | "user_id" | "created_at">) => {
@@ -48,7 +67,7 @@ export function useVisits() {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Visita agendada!" });
-      await fetchVisits();
+      await fetchVisits(true);
     }
   };
 
@@ -58,7 +77,7 @@ export function useVisits() {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Visita atualizada!" });
-      await fetchVisits();
+      await fetchVisits(true);
     }
   };
 
@@ -68,7 +87,7 @@ export function useVisits() {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Visita removida." });
-      await fetchVisits();
+      await fetchVisits(true);
     }
   };
 
