@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle,
   MoreVertical, CheckCircle2, UserPlus2, ShieldCheck, ShieldAlert,
-  Info, Eye, Edit3, Settings2, Fingerprint
+  Info, Eye, Edit3, Settings2, Fingerprint, DollarSign
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import {
