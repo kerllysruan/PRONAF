@@ -100,7 +100,7 @@ function AccessControl() {
       setError(null);
 
       const [profilesRes, rolesRes, permsRes] = await Promise.all([
-        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        supabase.from("profiles").select("*").order("updated_at", { ascending: false }),
         supabase.from("user_roles").select("*"),
         supabase.from("user_permissions").select("*"),
       ]);
@@ -112,20 +112,28 @@ function AccessControl() {
       const rolesMap = new Map((rolesRes.data || []).map((r: any) => [r.user_id, r.role]));
       const permsMap = new Map((permsRes.data || []).map((p: any) => [p.user_id, p]));
 
-      const mappedUsers: User[] = (profilesRes.data || []).map((profile: any) => ({
-        id: profile.user_id,
-        email: profile.email || "(sem email)",
-        display_name: profile.display_name || "Sem nome",
-        role: rolesMap.get(profile.user_id) || "usuario",
-        created_at: profile.created_at,
-      }));
+      const mappedUsers: User[] = (profilesRes.data || []).map((profile: any) => {
+        const uid = profile.user_id || profile.id;
+        return {
+          id: uid,
+          email: profile.email || "(sem email)",
+          display_name: profile.display_name || profile.full_name || "Sem nome",
+          role: rolesMap.get(uid) || "usuario",
+          created_at: profile.created_at || profile.updated_at,
+        };
+      });
 
       setUsers(mappedUsers);
       setPermissions(permsMap);
     } catch (err: any) {
       console.error("Erro ao buscar usuários:", err);
-      setError(err.message || "Erro ao carregar dados");
-      toast({ title: "Erro", description: "Não foi possível carregar os usuários", variant: "destructive" });
+      const msg = err.message || "Erro desconhecido ao carregar usuários";
+      setError(msg);
+      toast({
+        title: "Erro de Sincronização",
+        description: msg,
+        variant: "destructive"
+      });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -249,6 +257,30 @@ function AccessControl() {
       <Loader2 className="h-12 w-12 animate-spin text-primary" />
       <p className="text-muted-foreground animate-pulse font-medium">Sincronizando banco de dados...</p>
     </div>;
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-xl mx-auto mt-20">
+        <Card className="border-destructive shadow-2xl overflow-hidden rounded-2xl">
+          <CardHeader className="bg-destructive/10 border-b border-destructive/20">
+            <div className="flex items-center gap-3 text-destructive">
+              <AlertCircle className="h-6 w-6" />
+              <CardTitle>Erro de Conexão</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            <p className="text-muted-foreground">Não foi possível carregar a lista de usuários e permissões. Isso pode ocorrer se você não tiver privilégios de administrador.</p>
+            <div className="p-4 bg-muted rounded-xl border font-mono text-xs overflow-auto max-h-32">
+              {error}
+            </div>
+            <Button onClick={() => fetchUsers()} className="w-full gap-2">
+              <Loader2 className="h-4 w-4" /> Tentar Novamente
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
