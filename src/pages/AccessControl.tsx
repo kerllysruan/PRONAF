@@ -1,19 +1,22 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle, MoreVertical, CheckCircle2, UserPlus2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import clsx from "clsx";
-
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle,
+  MoreVertical, CheckCircle2, UserPlus2, ShieldCheck, ShieldAlert,
+  Info, Eye, Edit3, Settings2, Fingerprint
+} from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +27,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import clsx from "clsx";
+
 interface User {
   id: string;
   email: string;
@@ -52,22 +59,23 @@ interface UserPermission {
 }
 
 const PERMISSIONS = [
-  { key: "can_view_dashboard", label: "Ver Dashboard", group: "Visualização" },
-  { key: "can_view_proposals", label: "Ver Propostas", group: "Visualização" },
-  { key: "can_view_kanban", label: "Ver Kanban", group: "Visualização" },
-  { key: "can_view_documentation", label: "Ver Documentação", group: "Visualização" },
-  { key: "can_view_visits", label: "Ver Visitas", group: "Visualização" },
-  { key: "can_view_management", label: "Ver Gerenciamento", group: "Visualização" },
-  { key: "can_view_access_control", label: "Controle de Acesso", group: "Visualização" },
-  { key: "can_create_proposals", label: "Criar Propostas", group: "Edição" },
-  { key: "can_edit_proposals", label: "Editar Propostas", group: "Edição" },
-  { key: "can_delete_proposals", label: "Deletar Propostas", group: "Edição" },
-  { key: "can_approve_proposals", label: "Aprovar Propostas", group: "Edição" },
-  { key: "read_only", label: "Somente Leitura", group: "Segurança" },
+  { key: "can_view_dashboard", label: "Ver Dashboard", description: "Visualizar gráficos e indicadores de desempenho.", group: "Visualização", icon: Eye },
+  { key: "can_view_proposals", label: "Ver Propostas", description: "Acessar a listagem completa de propostas.", group: "Visualização", icon: Eye },
+  { key: "can_view_kanban", label: "Ver Kanban", description: "Visualizar o quadro de propostas por fase.", group: "Visualização", icon: Eye },
+  { key: "can_view_documentation", label: "Ver Documentação", description: "Acessar manuais e guias do sistema.", group: "Visualização", icon: Eye },
+  { key: "can_view_visits", label: "Ver Visitas", description: "Visualizar o calendário de visitas aos produtores.", group: "Visualização", icon: Eye },
+  { key: "can_view_management", label: "Ver Gerenciamento", description: "Ver estatísticas avançadas e equipe.", group: "Administração", icon: Settings2 },
+  { key: "can_view_access_control", label: "Controle de Acesso", description: "Gerenciar usuários e níveis de permissão.", group: "Administração", icon: ShieldCheck },
+  { key: "can_create_proposals", label: "Criar Propostas", description: "Cadastrar novas propostas de crédito no sistema.", group: "Operacional", icon: Edit3 },
+  { key: "can_edit_proposals", label: "Editar Propostas", description: "Modificar informações de propostas existentes.", group: "Operacional", icon: Edit3 },
+  { key: "can_delete_proposals", label: "Deletar Propostas", description: "Remover propostas (requer cautela).", group: "Operacional", icon: Trash2 },
+  { key: "can_approve_proposals", label: "Aprovar Propostas", description: "Mudar status para 'Contrato Assinado'.", group: "Operacional", icon: CheckCircle2 },
+  { key: "read_only", label: "Somente Leitura", description: "Bloqueia qualquer ação de escrita, independente das outras permissões.", group: "Segurança", icon: Lock },
 ];
 
 function AccessControl() {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [permissions, setPermissions] = useState<Map<string, UserPermission>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -86,63 +94,56 @@ function AccessControl() {
   const [editPerms, setEditPerms] = useState<UserPermission>({ user_id: "" });
   const [saving, setSaving] = useState(false);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*");
+      const [profilesRes, rolesRes, permsRes] = await Promise.all([
+        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        supabase.from("user_roles").select("*"),
+        supabase.from("user_permissions").select("*"),
+      ]);
 
-      if (profilesError) throw profilesError;
+      if (profilesRes.error) throw profilesRes.error;
+      if (rolesRes.error) throw rolesRes.error;
+      if (permsRes.error) throw permsRes.error;
 
-      const { data: rolesData, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("*");
+      const rolesMap = new Map((rolesRes.data || []).map((r: any) => [r.user_id, r.role]));
+      const permsMap = new Map((permsRes.data || []).map((p: any) => [p.user_id, p]));
 
-      if (rolesError) throw rolesError;
-
-      const { data: permsData, error: permsError } = await supabase
-        .from("user_permissions")
-        .select("*");
-
-      if (permsError) throw permsError;
-
-      const rolesMap = new Map((rolesData || []).map((r: any) => [r.user_id, r.role]));
-      const permsMap = new Map((permsData || []).map((p: any) => [p.user_id, p]));
-
-      const mappedUsers: User[] = (profilesData || []).map((profile: any) => {
-        if (!profile.user_id) {
-          console.warn("Perfil sem user_id detectado:", profile);
-        }
-        return {
-          id: profile.user_id,
-          email: profile.email || profile.user_id || "(sem email)",
-          display_name: profile.display_name || "Sem nome",
-          role: rolesMap.get(profile.user_id) || "usuario",
-          created_at: profile.created_at,
-        };
-      });
+      const mappedUsers: User[] = (profilesRes.data || []).map((profile: any) => ({
+        id: profile.user_id,
+        email: profile.email || "(sem email)",
+        display_name: profile.display_name || "Sem nome",
+        role: rolesMap.get(profile.user_id) || "usuario",
+        created_at: profile.created_at,
+      }));
 
       setUsers(mappedUsers);
       setPermissions(permsMap);
     } catch (err: any) {
       console.error("Erro ao buscar usuários:", err);
       setError(err.message || "Erro ao carregar dados");
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os usuários",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível carregar os usuários", variant: "destructive" });
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+
+    const profilesChannel = supabase.channel('profiles-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchUsers(true)).subscribe();
+    const rolesChannel = supabase.channel('roles-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, () => fetchUsers(true)).subscribe();
+    const permsChannel = supabase.channel('perms-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'user_permissions' }, () => fetchUsers(true)).subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(rolesChannel);
+      supabase.removeChannel(permsChannel);
+    };
+  }, [fetchUsers]);
 
   const handleCreateUser = async () => {
     if (!formData.email || !formData.password) {
@@ -155,30 +156,21 @@ function AccessControl() {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: { data: { display_name: formData.display_name } }
       });
 
       if (authError) throw authError;
       const userId = authData.user?.id;
       if (!userId) throw new Error("Erro ao criar usuário");
 
-      await supabase.from("profiles").insert({
-        user_id: userId,
-        display_name: formData.display_name || formData.email,
-      });
+      // O perfil normalmente é criado por trigger no DB, mas garantimos aqui se necessário
+      await supabase.from("user_roles").insert({ user_id: userId, role: formData.role as UserRole });
+      await supabase.from("user_permissions").insert({ user_id: userId });
 
-      await supabase.from("user_roles").insert({
-        user_id: userId,
-        role: formData.role as UserRole,
-      });
-
-      await supabase.from("user_permissions").insert({
-        user_id: userId,
-      });
-
-      toast({ title: "Sucesso", description: "Usuário criado com sucesso" });
+      toast({ title: "Sucesso", description: "Usuário criado com sucesso. Instruções enviadas por e-mail." });
       setIsCreateOpen(false);
       setFormData({ email: "", password: "", display_name: "", role: "usuario" });
-      await fetchUsers();
+      await fetchUsers(true);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
@@ -188,14 +180,10 @@ function AccessControl() {
 
   const handleUpdateRole = async (userId: string, role: UserRole) => {
     try {
-      const { error } = await supabase
-        .from("user_roles")
-        .update({ role: role as UserRole })
-        .eq("user_id", userId);
-
+      const { error } = await supabase.from("user_roles").update({ role }).eq("user_id", userId);
       if (error) throw error;
-      toast({ title: "Sucesso", description: "Perfil atualizado" });
-      await fetchUsers();
+      toast({ title: "Sucesso", description: "Perfil de acesso atualizado" });
+      await fetchUsers(true);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     }
@@ -206,22 +194,7 @@ function AccessControl() {
 
     try {
       setSaving(true);
-
-      // Normalizar dados para evitar valores null ou inválidos
-      const permissionsData = {
-        can_view_dashboard: editPerms.can_view_dashboard === true,
-        can_view_proposals: editPerms.can_view_proposals === true,
-        can_view_kanban: editPerms.can_view_kanban === true,
-        can_view_documentation: editPerms.can_view_documentation === true,
-        can_view_visits: editPerms.can_view_visits === true,
-        can_view_management: editPerms.can_view_management === true,
-        can_view_access_control: editPerms.can_view_access_control === true,
-        can_create_proposals: editPerms.can_create_proposals === true,
-        can_edit_proposals: editPerms.can_edit_proposals === true,
-        can_delete_proposals: editPerms.can_delete_proposals === true,
-        can_approve_proposals: editPerms.can_approve_proposals === true,
-        read_only: editPerms.read_only === true,
-      };
+      const { user_id, id, created_at, updated_at, ...permissionsData } = editPerms as any;
 
       const { error } = await supabase
         .from("user_permissions")
@@ -229,46 +202,31 @@ function AccessControl() {
         .eq("user_id", selectedUser.id);
 
       if (error) throw error;
-      toast({ title: "Sucesso", description: "Permissões atualizadas" });
+      toast({ title: "Sucesso", description: "Permissões de rede atualizadas" });
       setIsPermOpen(false);
-      await fetchUsers();
+      await fetchUsers(true);
     } catch (err: any) {
-      console.error("Erro ao salvar permissões:", err);
       toast({ title: "Erro", description: err.message || "Erro ao salvar permissões", variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
 
-  const confirmDeleteUser = (userId: string) => {
-    if (!userId || userId === "null" || userId === null || userId === undefined) {
-      toast({
-        title: "Erro ao deletar",
-        description: "ID do usuário inválido.",
-        variant: "destructive"
-      });
-      return;
-    }
-    setUserToDeleteId(userId);
-    setIsDeleteAlertOpen(true);
-  };
-
   const executeDeleteUser = async () => {
     if (!userToDeleteId) return;
-
     try {
       setSaving(true);
-      // Remove da UI imediatamente
-      setUsers((prev) => prev.filter((u) => u.id !== userToDeleteId));
-      await supabase.from("user_permissions").delete().eq("user_id", userToDeleteId);
-      await supabase.from("user_roles").delete().eq("user_id", userToDeleteId);
-      await supabase.from("profiles").delete().eq("user_id", userToDeleteId);
-      toast({ title: "Usuário removido", description: "Usuário e permissões excluídos.", variant: "default" });
-      await fetchUsers();
+      // RPC ou lógica administrativa para deletar da Auth seria ideal, 
+      // mas aqui limpamos o que temos acesso no Public
+      await Promise.all([
+        supabase.from("user_permissions").delete().eq("user_id", userToDeleteId),
+        supabase.from("user_roles").delete().eq("user_id", userToDeleteId),
+        supabase.from("profiles").delete().eq("user_id", userToDeleteId),
+      ]);
+      toast({ title: "Usuário removido", description: "Registros de perfil e permissões excluídos." });
+      await fetchUsers(true);
     } catch (err: any) {
-      console.error("Erro ao deletar usuário:", err);
-      toast({ title: "Erro ao deletar", description: err.message || "Erro ao deletar usuário", variant: "destructive" });
-      await fetchUsers();
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
       setIsDeleteAlertOpen(false);
@@ -276,310 +234,330 @@ function AccessControl() {
     }
   };
 
-  const getRoleColor = (role: string) => {
-    const colors: Record<string, string> = {
-      admin: "bg-red-100 text-red-800",
-      gerente: "bg-amber-100 text-amber-800",
-      usuario: "bg-blue-100 text-blue-800",
-    };
-    return colors[role] || "bg-gray-100 text-gray-800";
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case "admin": return <Badge className="bg-red-500 hover:bg-red-600 shadow-md shadow-red-500/20 gap-1"><ShieldAlert className="h-3 w-3" /> Admin</Badge>;
+      case "gerente": return <Badge className="bg-amber-500 hover:bg-amber-600 shadow-md shadow-amber-500/20 gap-1"><ShieldCheck className="h-3 w-3" /> Gerente</Badge>;
+      default: return <Badge variant="secondary" className="gap-1"><Fingerprint className="h-3 w-3" /> Usuário</Badge>;
+    }
   };
 
-  const getRoleLabel = (role: string) => {
-    const labels: Record<string, string> = {
-      admin: "Administrador",
-      gerente: "Gerente",
-      usuario: "Usuário",
-    };
-    return labels[role] || role;
-  };
+  const getInitials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-96">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <p>Carregando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="border-destructive">
-        <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <AlertCircle className="h-6 w-6 text-destructive flex-shrink-0 mt-1" />
-            <div>
-              <h3 className="font-semibold text-destructive">Erro</h3>
-              <p className="text-sm text-muted-foreground">{error}</p>
-              <Button onClick={fetchUsers} variant="outline" size="sm" className="mt-3">
-                Tentar Novamente
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <p className="text-muted-foreground animate-pulse font-medium">Sincronizando banco de dados...</p>
+    </div>;
   }
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto px-2 md:px-0">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 mt-6">
+    <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-2">
-            <Shield className="h-8 w-8 text-primary" />
+          <h1 className="text-4xl font-bold font-heading tracking-tight flex items-center gap-3">
+            <Shield className="h-10 w-10 text-primary" />
             Controle de Acesso
           </h1>
-          <p className="text-muted-foreground text-base mt-1">Gerencie usuários, permissões e perfis de acesso</p>
+          <p className="text-muted-foreground text-lg mt-2">Segurança e governança de dados da plataforma PRONAF.</p>
         </div>
-        <Button onClick={() => {
-          setFormData({ email: "", password: "", display_name: "", role: "usuario" });
-          setIsCreateOpen(true);
-        }} className="gap-2 shadow-md" size="lg">
-          <UserPlus2 className="h-5 w-5" /> Novo Usuário
+        <Button size="lg" onClick={() => setIsCreateOpen(true)} className="gap-2 shadow-xl shadow-primary/25 hover:shadow-2xl hover-lift">
+          <UserPlus2 className="h-5 w-5" /> Adicionar Usuário
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-        <Card className="shadow-sm">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="border-0 shadow-xl bg-gradient-to-br from-primary/10 to-transparent">
           <CardContent className="pt-6">
-            <div className="text-3xl font-bold text-primary">{users.length}</div>
-            <p className="text-sm text-muted-foreground">Usuários</p>
+            <div className="flex items-center gap-3 mb-2">
+              <Users className="h-5 w-5 text-primary" />
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Ativos</p>
+            </div>
+            <p className="text-4xl font-black font-heading">{users.length}</p>
           </CardContent>
         </Card>
-        <Card className="shadow-sm">
+        <Card className="border-0 shadow-xl">
           <CardContent className="pt-6">
-            <div className="text-3xl font-bold text-red-600">{users.filter(u => u.role === "admin").length}</div>
-            <p className="text-sm text-muted-foreground">Administradores</p>
+            <div className="flex items-center gap-3 mb-2">
+              <ShieldAlert className="h-5 w-5 text-red-500" />
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Admins</p>
+            </div>
+            <p className="text-4xl font-black font-heading text-red-500">{users.filter(u => u.role === "admin").length}</p>
           </CardContent>
         </Card>
-        <Card className="shadow-sm">
-          <CardContent className="pt-6">
-            <div className="text-3xl font-bold text-amber-600">{users.filter(u => u.role === "gerente").length}</div>
-            <p className="text-sm text-muted-foreground">Gerentes</p>
+        <Card className="border-0 shadow-xl lg:col-span-2 bg-gradient-to-r from-muted/50 to-transparent">
+          <CardContent className="pt-6 flex flex-col justify-center h-full">
+            <div className="flex items-center gap-2 mb-2 text-primary font-semibold italic text-sm">
+              <Info className="h-4 w-4" />
+              Dica Administrativa
+            </div>
+            <p className="text-sm text-muted-foreground">As permissões de rede são aplicadas em tempo real. Usuários administrativos têm bypass total.</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="users" className="mt-8">
-        <TabsList className="mb-4">
-          <TabsTrigger value="users"><Users className="h-4 w-4 mr-2" />Usuários</TabsTrigger>
-          <TabsTrigger value="permissions"><Lock className="h-4 w-4 mr-2" />Permissões</TabsTrigger>
+      <Tabs defaultValue="list" className="space-y-6">
+        <TabsList className="bg-muted p-1 rounded-xl">
+          <TabsTrigger value="list" className="rounded-lg gap-2 px-6">
+            <Users className="h-4 w-4" /> Usuários
+          </TabsTrigger>
+          <TabsTrigger value="matrix" className="rounded-lg gap-2 px-6">
+            <Lock className="h-4 w-4" /> Matriz de Permissões
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="users" className="space-y-4">
-          {users.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                Nenhum usuário encontrado
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {users.map((user) => (
-                <Card key={user.id} className="shadow-sm hover:shadow-lg transition-shadow">
-                  <CardContent className="pt-6 pb-4 flex flex-col gap-3">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback>
-                          {(user.display_name || user.email).substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold truncate">{user.display_name} <span style={{ color: 'red', fontSize: 10 }}>{!user.id ? '[ID ausente]' : ''}</span></h4>
-                        <p className="text-sm text-muted-foreground truncate">{user.email} <span style={{ color: 'red', fontSize: 10 }}>{!user.id ? '[ID ausente]' : ''}</span></p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge className={clsx(getRoleColor(user.role || "usuario"), "rounded px-2 py-0.5 text-xs")}>{getRoleLabel(user.role || "usuario")}</Badge>
+        <TabsContent value="list" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {users.map((user) => {
+              const isCurrent = user.id === currentUser?.id;
+              return (
+                <Card key={user.id} className={clsx(
+                  "border-0 shadow-lg hover:shadow-xl transition-all h-full overflow-hidden",
+                  isCurrent && "ring-2 ring-primary"
+                )}>
+                  <CardContent className="p-0">
+                    <div className="flex h-full">
+                      <div className={clsx(
+                        "w-2 shrink-0",
+                        user.role === "admin" ? "bg-red-500" : user.role === "gerente" ? "bg-amber-500" : "bg-primary"
+                      )} />
+                      <div className="flex-1 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                        <Avatar className="h-16 w-16 border-2 border-background shadow-lg">
+                          <AvatarFallback className="text-xl font-black bg-muted text-primary">
+                            {getInitials(user.display_name || user.email)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-2 min-w-0">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <h3 className="text-xl font-bold tracking-tight truncate max-w-[200px] sm:max-w-none">
+                              {user.display_name}
+                            </h3>
+                            {getRoleBadge(user.role || "usuario")}
+                            {isCurrent && <Badge variant="outline" className="border-primary text-primary bg-primary/5 uppercase text-[9px] font-black tracking-tighter">VOCÊ</Badge>}
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                          <p className="text-[10px] text-muted-foreground/60 font-mono uppercase">ID: {user.id}</p>
+                        </div>
+                        <div className="flex gap-2 shrink-0 ml-auto">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5">
+                                <MoreVertical className="h-5 w-5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-2xl p-2">
+                              <DropdownMenuItem className="rounded-lg gap-2 p-3 font-medium text-sm" onClick={() => {
+                                setSelectedUser(user);
+                                setEditPerms(permissions.get(user.id) || { user_id: user.id });
+                                setIsPermOpen(true);
+                              }}>
+                                <ShieldCheck className="h-4 w-4 text-primary" /> Editar Permissões
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="my-1" />
+                              <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase opacity-50">Mudar Cargo</div>
+                              <DropdownMenuItem className="rounded-lg gap-2 text-sm" onClick={() => handleUpdateRole(user.id, "usuario")}>
+                                <Fingerprint className="h-4 w-4" /> Tornar Usuário
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-lg gap-2 text-sm" onClick={() => handleUpdateRole(user.id, "gerente")}>
+                                <ShieldCheck className="h-4 w-4 text-amber-500" /> Tornar Gerente
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="rounded-lg gap-2 text-sm" onClick={() => handleUpdateRole(user.id, "admin")}>
+                                <ShieldAlert className="h-4 w-4 text-red-500" /> Tornar Admin
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="my-1" />
+                              <DropdownMenuItem className="rounded-lg gap-2 p-3 font-medium text-destructive text-sm" onClick={() => {
+                                setUserToDeleteId(user.id);
+                                setIsDeleteAlertOpen(true);
+                              }} disabled={isCurrent}>
+                                <Trash2 className="h-4 w-4" /> Excluir Registro
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedUser(user);
-                            setEditPerms(permissions.get(user.id) || { user_id: user.id });
-                            setIsPermOpen(true);
-                          }}>
-                            <Lock className="h-4 w-4 mr-2" />Permissões
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => confirmDeleteUser(user.id)}
-                            className="text-destructive"
-                            disabled={!user.id || user.id === "null" || user.id === null || user.id === undefined}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            {(!user.id || user.id === "null" || user.id === null || user.id === undefined) ? "ID inválido" : "Deletar"}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
         </TabsContent>
 
-        <TabsContent value="permissions" className="space-y-4">
-          {users.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center text-muted-foreground">
-                Nenhum usuário encontrado
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {users.map((user) => {
-                const userPerms = permissions.get(user.id) || { user_id: user.id };
-                const permCount = Object.values(userPerms).filter(v => v === true).length;
-                return (
-                  <Card key={user.id} className="shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-base font-semibold truncate">{user.display_name}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="text-sm text-muted-foreground">{permCount} permissões ativas</div>
-                      <Button variant="outline" size="sm" className="w-full" onClick={() => {
-                        setSelectedUser(user);
-                        setEditPerms(userPerms);
-                        setIsPermOpen(true);
-                      }}>
-                        Ver Permissões
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
+        <TabsContent value="matrix" className="space-y-6">
+          <Card className="border-0 shadow-lg overflow-hidden">
+            <CardHeader className="bg-muted/50">
+              <CardTitle className="font-heading">Explicação de Permissões</CardTitle>
+              <CardDescription>O sistema utiliza o modelo RBAC baseado em chaves individuais por usuário.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[500px]">
+                <div className="p-6 space-y-8">
+                  {Array.from(new Set(PERMISSIONS.map(p => p.group))).map((group) => (
+                    <div key={group} className="space-y-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-4 w-1 bg-primary rounded-full" />
+                        <h4 className="text-sm font-black uppercase tracking-widest text-primary/80">{group}</h4>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {PERMISSIONS.filter(p => p.group === group).map((perm) => (
+                          <div key={perm.key} className="flex gap-4 p-4 rounded-xl border bg-muted/20 hover:bg-muted/30 transition-colors">
+                            <div className="h-10 w-10 rounded-lg bg-background flex items-center justify-center shrink-0 shadow-sm border">
+                              <perm.icon className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="font-bold text-sm">{perm.label}</p>
+                              <p className="text-xs text-muted-foreground leading-relaxed">{perm.description}</p>
+                              <p className="text-[9px] font-mono text-muted-foreground/50 mt-2 uppercase tracking-tighter">CHAVE: {perm.key}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Criar Novo Usuário</DialogTitle>
+      <Dialog open={isPermOpen} onOpenChange={setIsPermOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-2xl shadow-2xl">
+          <DialogHeader className="p-6 bg-muted/50 border-b">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-12 w-12 shadow-lg">
+                <AvatarFallback className="font-bold bg-primary text-primary-foreground">
+                  {selectedUser ? getInitials(selectedUser.display_name || selectedUser.email) : "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <DialogTitle className="text-2xl font-black font-heading tracking-tight italic">
+                  Configurações de Rede
+                </DialogTitle>
+                <DialogDescription className="text-sm font-medium">Ajustando acessos de: {selectedUser?.display_name}</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Email *</Label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="usuario@example.com"
-              />
+          <ScrollArea className="flex-1 p-6">
+            <div className="space-y-8 pb-4">
+              {Array.from(new Set(PERMISSIONS.map(p => p.group))).map((group) => (
+                <div key={group} className="space-y-4">
+                  <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                    <Separator className="flex-1" />
+                    {group}
+                    <Separator className="flex-1" />
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {PERMISSIONS.filter(p => p.group === group).map((perm) => (
+                      <label
+                        key={perm.key}
+                        className={clsx(
+                          "flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer select-none",
+                          editPerms[perm.key] ? "border-primary bg-primary/5" : "border-transparent bg-muted/40 hover:bg-muted/60"
+                        )}
+                      >
+                        <div className={clsx(
+                          "h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all",
+                          editPerms[perm.key] ? "bg-primary border-primary" : "border-muted-foreground/30"
+                        )}>
+                          {editPerms[perm.key] && <CheckCircle2 className="h-4 w-4 text-white" />}
+                        </div>
+                        <input
+                          type="checkbox"
+                          className="hidden"
+                          checked={!!editPerms[perm.key]}
+                          onChange={(e) => setEditPerms(p => ({ ...p, [perm.key]: e.target.checked }))}
+                        />
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-bold leading-none">{perm.label}</p>
+                          <p className="text-[10px] text-muted-foreground line-clamp-1">{perm.description}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div>
-              <Label>Senha *</Label>
-              <Input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Mínimo 6 caracteres"
-              />
-            </div>
-            <div>
-              <Label>Nome Completo</Label>
-              <Input
-                value={formData.display_name}
-                onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-                placeholder="João Silva"
-              />
-            </div>
-            <div>
-              <Label>Perfil</Label>
-              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="usuario">Usuário</SelectItem>
-                  <SelectItem value="gerente">Gerente</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreateUser} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
-              Criar
+          </ScrollArea>
+          <DialogFooter className="p-6 bg-muted/30 border-t gap-3 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsPermOpen(false)} className="rounded-xl px-8 h-12 font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all">Cancelar</Button>
+            <Button onClick={handleSavePermissions} disabled={saving} className="rounded-xl px-10 h-12 font-bold shadow-xl shadow-primary/20 hover-lift">
+              {saving ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <ShieldCheck className="h-5 w-5 mr-2" />}
+              Aplicar Mudanças
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isPermOpen} onOpenChange={setIsPermOpen}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Permissões: {selectedUser?.display_name}</DialogTitle>
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl shadow-3xl">
+          <DialogHeader className="p-8 bg-primary text-primary-foreground">
+            <DialogTitle className="text-3xl font-black font-heading tracking-tight italic">
+              Acesso à Rede
+            </DialogTitle>
+            <DialogDescription className="text-primary-foreground/80 mt-2 font-medium">Cadastrar nova credencial de acesso ao sistema.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-6">
-            {Array.from(new Set(PERMISSIONS.map(p => p.group))).map((group) => (
-              <div key={group}>
-                <h4 className="font-semibold mb-3 text-sm">{group}</h4>
-                <div className="space-y-2">
-                  {PERMISSIONS.filter(p => p.group === group).map((perm) => (
-                    <div key={perm.key} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id={perm.key}
-                        checked={(editPerms[perm.key] === true) || false}
-                        onChange={(e) => setEditPerms({
-                          ...editPerms,
-                          user_id: selectedUser?.id || "",
-                          [perm.key]: e.target.checked,
-                        })}
-                        className="rounded"
-                      />
-                      <label htmlFor={perm.key} className="text-sm cursor-pointer">
-                        {perm.label}
-                      </label>
-                    </div>
-                  ))}
-                </div>
+          <div className="p-8 space-y-6 bg-card">
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Email Oficial</Label>
+                <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="usuario@pronaf.com.br" className="h-12 rounded-xl focus-visible:ring-primary shadow-inner bg-muted/20" />
               </div>
-            ))}
+              <div className="grid gap-2">
+                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Senha Segura</Label>
+                <Input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" className="h-12 rounded-xl focus-visible:ring-primary shadow-inner bg-muted/20" />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Nome de Exibição</Label>
+                <Input value={formData.display_name} onChange={(e) => setFormData({ ...formData, display_name: e.target.value })} placeholder="Ex: João Silva" className="h-12 rounded-xl focus-visible:ring-primary shadow-inner bg-muted/20" />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Nível do Perfil</Label>
+                <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}>
+                  <SelectTrigger className="h-12 rounded-xl bg-muted/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl p-2 border-2">
+                    <SelectItem value="usuario" className="rounded-lg h-10 mb-1">Usuário Padrão</SelectItem>
+                    <SelectItem value="gerente" className="rounded-lg h-10 mb-1">Gerente de Area</SelectItem>
+                    <SelectItem value="admin" className="rounded-lg h-10">Administrador Full</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 pt-4">
+              <Button size="lg" onClick={handleCreateUser} disabled={saving} className="h-14 rounded-2xl font-black text-lg shadow-2xl shadow-primary/30 hover-lift">
+                {saving ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <UserPlus2 className="h-6 w-6 mr-2" />}
+                Autorizar Acesso
+              </Button>
+              <Button variant="ghost" onClick={() => setIsCreateOpen(false)} className="rounded-xl h-11 text-muted-foreground hover:bg-muted/50 transition-all uppercase text-[10px] font-black tracking-widest">
+                Descartar
+              </Button>
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPermOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSavePermissions} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-              Salvar
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border-2">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Usuário?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação excluirá permanentemente o usuário, suas permissões e acesso ao sistema.
+            <AlertDialogTitle className="text-2xl font-black font-heading text-red-600 italic">Revogar Acesso?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base font-medium">
+              Esta ação é rídiga. Recomenda-se desativar permissões antes de excluir o registro permanentemente.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-xl h-12 font-bold">Manter Credencial</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 text-white hover:bg-red-700 rounded-xl h-12 font-bold shadow-xl shadow-red-600/20"
               onClick={executeDeleteUser}
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
-              Excluir Definitivamente
+              Excluir Registro
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div >
+    </div>
   );
 }
 
