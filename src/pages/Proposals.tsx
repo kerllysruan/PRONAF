@@ -101,6 +101,7 @@ export default function Proposals() {
       const d = parseISO(p.entry_date);
       const matchesMonth = filterMonth === "all" || getMonth(d) + 1 === Number(filterMonth);
       const matchesYear = filterYear === "all" || getYear(d) === Number(filterYear);
+      return matchesStatus && matchesMonth && matchesYear;
     });
   }, [proposals, statusFilter, filterMonth, filterYear]);
 
