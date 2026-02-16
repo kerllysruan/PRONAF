@@ -86,7 +86,7 @@ const PERMISSIONS = [
 
 function AccessControl() {
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isDeveloper } = useAuth();
   const { agencies } = useAgency();
   const [users, setUsers] = useState<User[]>([]);
   const [permissions, setPermissions] = useState<Map<string, UserPermission>>(new Map());
@@ -599,11 +599,11 @@ function AccessControl() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="usuario">Usuário</SelectItem>
+                  <SelectItem value="usuario">Visitante</SelectItem>
                   <SelectItem value="tecnico">Técnico</SelectItem>
-                  <SelectItem value="gerente">Gerente</SelectItem>
-                  <SelectItem value="admin">Gerente Geral</SelectItem>
-                  <SelectItem value="developer">Desenvolvedor</SelectItem>
+                  <SelectItem value="gerente">Gerente de Agência</SelectItem>
+                  {isDeveloper && <SelectItem value="admin">Gerente Geral</SelectItem>}
+                  {isDeveloper && <SelectItem value="developer">Desenvolvedor</SelectItem>}
                 </SelectContent>
               </Select>
             </div>
