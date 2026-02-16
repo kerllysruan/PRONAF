@@ -25,7 +25,7 @@ export interface DbDisbursement {
 export type DisbursementStatus = "pendente" | "aprovado" | "liberado" | "negado";
 
 export const DISBURSEMENT_STATUS_LABELS: Record<DisbursementStatus, string> = {
-  pendente: "Pendente",
+  pendente: "Pendente de solicitação desembolso",
   aprovado: "Aprovado",
   liberado: "Liberado",
   negado: "Negado",

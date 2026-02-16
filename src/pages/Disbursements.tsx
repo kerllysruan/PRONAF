@@ -450,13 +450,16 @@ export default function Disbursements() {
                           ) : "—"}
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
-                          {proposal && (
+                          {proposal && d.status !== 'pendente' && (
                             <div className="w-full max-w-[120px]">
                               <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
                                 <span>{Math.round((getProposalStats(proposal.id, Number(proposal.requested_value)).used / Number(proposal.requested_value)) * 100)}%</span>
                               </div>
                               <Progress value={(getProposalStats(proposal.id, Number(proposal.requested_value)).used / Number(proposal.requested_value)) * 100} className="h-1.5" />
                             </div>
+                          )}
+                          {d.status === 'pendente' && (
+                            <span className="text-xs text-muted-foreground/50 italic">Não iniciado</span>
                           )}
                         </TableCell>
                         <TableCell className="hidden md:table-cell text-sm">
