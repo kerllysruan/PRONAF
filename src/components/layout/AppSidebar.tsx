@@ -8,6 +8,7 @@ import {
   Wheat,
   Settings,
   Shield,
+  Building2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -32,6 +33,7 @@ const menuItems = [
   { title: "Desembolsos", url: "/desembolsos", icon: DollarSign, permission: "can_view_disbursements" },
   { title: "Gerenciamento", url: "/gerenciamento", icon: Settings, permission: "can_view_management" },
   { title: "Controle de Acesso", url: "/controle-acesso", icon: Shield, permission: "can_view_access_control" },
+  { title: "Gestão de Agências", url: "/admin/agencies", icon: Building2, permission: "is_admin" },
 ];
 
 export function AppSidebar() {

@@ -16,6 +16,7 @@ import Management from "./pages/Management";
 import AccessControl from "./pages/AccessControl";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import AdminAgencies from "./pages/AdminAgencies";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ const AppRoutes = () => (
     <Route path="/desembolsos" element={<ProtectedRoute><Disbursements /></ProtectedRoute>} />
     <Route path="/gerenciamento" element={<ProtectedRoute><Management /></ProtectedRoute>} />
     <Route path="/controle-acesso" element={<ProtectedRoute><AccessControl /></ProtectedRoute>} />
+    <Route path="/admin/agencies" element={<ProtectedRoute><AdminAgencies /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
