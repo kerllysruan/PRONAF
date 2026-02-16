@@ -85,10 +85,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) fetchUserData(session.user.id);
+      if (session?.user) await fetchUserData(session.user.id);
       else {
         setAgencyId(null);
         setRole(null);

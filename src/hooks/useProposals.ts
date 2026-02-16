@@ -48,10 +48,7 @@ export function useProposals() {
 
     // Apply agency filter
     if (effectiveAgencyId && effectiveAgencyId !== "all") {
-      console.log('[useProposals] Filtering by agency:', effectiveAgencyId);
       query = query.eq("agency_id", effectiveAgencyId);
-    } else {
-      console.log('[useProposals] No agency filter applied (showing all)');
     }
 
     const { data, error } = await query;
