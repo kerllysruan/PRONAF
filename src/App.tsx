@@ -18,6 +18,7 @@ import AccessControl from "./pages/AccessControl";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import AdminAgencies from "./pages/AdminAgencies";
+import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -54,15 +55,15 @@ function AuthRoute() {
 const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<AuthRoute />} />
-    <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    <Route path="/propostas" element={<ProtectedRoute><Proposals /></ProtectedRoute>} />
-    <Route path="/kanban" element={<ProtectedRoute><KanbanBoard /></ProtectedRoute>} />
-    <Route path="/documentacao" element={<ProtectedRoute><Documentation /></ProtectedRoute>} />
-    <Route path="/tarefas" element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
-    <Route path="/desembolsos" element={<ProtectedRoute><Disbursements /></ProtectedRoute>} />
-    <Route path="/gerenciamento" element={<ProtectedRoute><Management /></ProtectedRoute>} />
-    <Route path="/controle-acesso" element={<ProtectedRoute><AccessControl /></ProtectedRoute>} />
-    <Route path="/admin/agencies" element={<ProtectedRoute><AdminAgencies /></ProtectedRoute>} />
+    <Route path="/" element={<ProtectedRoute><PermissionGate permission="can_view_dashboard" showError><Dashboard /></PermissionGate></ProtectedRoute>} />
+    <Route path="/propostas" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><Proposals /></PermissionGate></ProtectedRoute>} />
+    <Route path="/kanban" element={<ProtectedRoute><PermissionGate permission="can_view_kanban" showError><KanbanBoard /></PermissionGate></ProtectedRoute>} />
+    <Route path="/documentacao" element={<ProtectedRoute><PermissionGate permission="can_view_documentation" showError><Documentation /></PermissionGate></ProtectedRoute>} />
+    <Route path="/tarefas" element={<ProtectedRoute><PermissionGate permission="can_view_tasks" showError><Tasks /></PermissionGate></ProtectedRoute>} />
+    <Route path="/desembolsos" element={<ProtectedRoute><PermissionGate permission="can_view_disbursements" showError><Disbursements /></PermissionGate></ProtectedRoute>} />
+    <Route path="/gerenciamento" element={<ProtectedRoute><PermissionGate permission="can_view_management" showError><Management /></PermissionGate></ProtectedRoute>} />
+    <Route path="/controle-acesso" element={<ProtectedRoute><PermissionGate permission="can_view_access_control" showError><AccessControl /></PermissionGate></ProtectedRoute>} />
+    <Route path="/admin/agencies" element={<ProtectedRoute><PermissionGate requireAdmin showError><AdminAgencies /></PermissionGate></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

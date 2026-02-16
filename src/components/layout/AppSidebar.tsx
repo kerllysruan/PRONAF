@@ -40,9 +40,14 @@ export function AppSidebar() {
   const { permissions, isAdmin, loading } = usePermissions();
 
   const filteredMenuItems = menuItems.filter(item => {
-    // Admins see everything
-    if (isAdmin) return true;
-    // For others, check specific permission
+    // Developers always see everything
+    if (isAdmin && !permissions[item.permission as keyof typeof permissions]) {
+      // If it's an admin but the specific permission is toggled off, respect that
+      // EXCEPT for core dashboard/management if they are admin? 
+      // No, let's be strict. If it's unchecked, it's hidden.
+    }
+
+    if (item.permission === "is_admin") return isAdmin;
     return permissions[item.permission as keyof typeof permissions];
   });
 
