@@ -608,7 +608,7 @@ function AccessControl() {
 
       {/* Permissions Dialog */}
       <Dialog open={isPermOpen} onOpenChange={setIsPermOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
+        <DialogContent className="max-w-xl h-[85vh] sm:h-[80vh] flex flex-col p-0 overflow-hidden border-2 shadow-2xl">
           <DialogHeader className="p-5 pb-3 border-b">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -638,7 +638,7 @@ function AccessControl() {
               </Button>
             </div>
           </DialogHeader>
-          <ScrollArea className="flex-1 px-5 py-4 bg-muted/20">
+          <div className="flex-1 overflow-y-auto px-5 py-4 bg-muted/20 border-b min-h-0 [scrollbar-width:thin] [scrollbar-color:theme(colors.primary/40)_transparent]">
             <div className="space-y-6 pb-4">
               {Array.from(new Set(PERMISSIONS.map(p => p.group))).map((group) => (
                 <div key={group}>
@@ -647,30 +647,30 @@ function AccessControl() {
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 px-2">{group}</p>
                     <Separator className="flex-1" />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {PERMISSIONS.filter(p => p.group === group).map((perm) => {
                       const isActive = !!editPerms[perm.key];
                       const Icon = perm.icon;
                       return (
                         <label
                           key={perm.key}
-                          className={`flex items-center gap-3 p-2.5 rounded-xl border-2 cursor-pointer transition-all duration-200 group/perm ${isActive
-                            ? "border-primary bg-primary/[0.03] shadow-sm"
+                          className={`flex items-center gap-2.5 p-2 rounded-xl border-2 cursor-pointer transition-all duration-200 group/perm ${isActive
+                            ? "border-primary bg-primary/[0.04] shadow-sm"
                             : "border-transparent bg-background hover:border-primary/20 hover:bg-primary/[0.01]"
                             }`}
                         >
-                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${isActive ? "bg-primary text-white shadow-primary/20" : "bg-muted text-muted-foreground group-hover/perm:bg-primary/10 group-hover/perm:text-primary"
+                          <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 transition-all ${isActive ? "bg-primary text-white" : "bg-muted text-muted-foreground group-hover/perm:bg-primary/10 group-hover/perm:text-primary"
                             }`}>
-                            <Icon className="h-4 w-4" />
+                            <Icon className="h-3.5 w-3.5" />
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <span className={`text-[13px] font-bold block truncate transition-colors ${isActive ? "text-primary" : "text-foreground/80"}`}>{perm.label}</span>
+                            <span className={`text-xs font-bold block truncate transition-colors ${isActive ? "text-primary" : "text-foreground/80"}`}>{perm.label}</span>
                           </div>
 
-                          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${isActive ? "bg-primary border-primary scale-110 shadow-sm" : "border-muted-foreground/20"
+                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${isActive ? "bg-primary border-primary scale-110 shadow-sm" : "border-muted-foreground/20"
                             }`}>
-                            {isActive && <CheckCircle2 className="h-3 w-3 text-white" strokeWidth={3} />}
+                            {isActive && <CheckCircle2 className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
                           </div>
                           <input
                             type="checkbox" className="hidden"
@@ -684,7 +684,7 @@ function AccessControl() {
                 </div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
           <div className="p-4 border-t flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setIsPermOpen(false)}>Cancelar</Button>
             <Button size="sm" onClick={handleSavePermissions} disabled={saving} className="gap-1.5">
