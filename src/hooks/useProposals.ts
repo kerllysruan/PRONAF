@@ -19,6 +19,7 @@ export interface DbProposal {
   notes: string;
   created_at: string;
   updated_at: string;
+  agency_id: string;
 }
 
 export interface DbDocument {
@@ -29,7 +30,7 @@ export interface DbDocument {
 }
 
 export function useProposals() {
-  const { user } = useAuth();
+  const { user, agencyId } = useAuth();
   const { toast } = useToast();
   const [proposals, setProposals] = useState<(DbProposal & { documents: DbDocument[] })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,11 +79,16 @@ export function useProposals() {
     };
   }, [fetchProposals]);
 
-  const createProposal = async (data: Omit<DbProposal, "id" | "user_id" | "created_at" | "updated_at">) => {
+  const createProposal = async (data: Omit<DbProposal, "id" | "user_id" | "created_at" | "updated_at" | "agency_id">) => {
     if (!user) return;
+    if (!agencyId) {
+      toast({ title: "Erro", description: "Agência não encontrada para o usuário.", variant: "destructive" });
+      return null;
+    }
+
     const { data: newProposal, error } = await supabase
       .from("proposals")
-      .insert({ ...data, user_id: user.id })
+      .insert({ ...data, user_id: user.id, agency_id: agencyId })
       .select()
       .single();
 
@@ -128,7 +134,7 @@ export function useProposals() {
 
       // Deletar a proposta via função server-side (SECURITY DEFINER)
       // A função verifica permissões e executa o DELETE com CASCADE no servidor
-      const { error } = await supabase.rpc("delete_proposal", { proposal_id: id });
+      const { error } = await supabase.rpc("delete_proposal" as any, { proposal_id: id });
       if (error) throw error;
 
       toast({ title: "Sucesso", description: "Proposta e todos os registros vinculados removidos com sucesso", variant: "default" });
