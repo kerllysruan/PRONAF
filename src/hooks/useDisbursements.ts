@@ -26,7 +26,7 @@ export type DisbursementStatus = "pendente" | "aprovado" | "liberado" | "negado"
 
 export const DISBURSEMENT_STATUS_LABELS: Record<DisbursementStatus, string> = {
   pendente: "Pendente de solicitação desembolso",
-  aprovado: "Aprovado",
+  aprovado: "Solicitado",
   liberado: "Liberado",
   negado: "Negado",
 };
