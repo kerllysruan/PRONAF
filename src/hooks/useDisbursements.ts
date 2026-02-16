@@ -42,7 +42,7 @@ export const DISBURSEMENT_STATUS_COLORS: Record<DisbursementStatus, string> = {
 
 export function useDisbursements() {
   const { user, agencyId } = useAuth();
-  const { selectedAgencyId } = useAgency();
+  const { effectiveAgencyId } = useAgency();
   const { toast } = useToast();
   const [disbursements, setDisbursements] = useState<DbDisbursement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,8 +56,8 @@ export function useDisbursements() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (selectedAgencyId && selectedAgencyId !== "all") {
-      query = query.eq("agency_id", selectedAgencyId);
+    if (effectiveAgencyId && effectiveAgencyId !== "all") {
+      query = query.eq("agency_id", effectiveAgencyId);
     }
 
     const { data, error } = await query;
@@ -68,7 +68,7 @@ export function useDisbursements() {
       setDisbursements((data as DbDisbursement[]) || []);
     }
     if (!silent) setLoading(false);
-  }, [user, toast, selectedAgencyId]);
+  }, [user, toast, effectiveAgencyId]);
 
   useEffect(() => {
     fetchDisbursements();

@@ -32,7 +32,7 @@ export interface DbDocument {
 
 export function useProposals() {
   const { user, agencyId } = useAuth();
-  const { selectedAgencyId } = useAgency();
+  const { effectiveAgencyId } = useAgency();
   const { toast } = useToast();
   const [proposals, setProposals] = useState<(DbProposal & { documents: DbDocument[] })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,8 +47,8 @@ export function useProposals() {
       .order("created_at", { ascending: false });
 
     // Apply agency filter
-    if (selectedAgencyId && selectedAgencyId !== "all") {
-      query = query.eq("agency_id", selectedAgencyId);
+    if (effectiveAgencyId && effectiveAgencyId !== "all") {
+      query = query.eq("agency_id", effectiveAgencyId);
     }
 
     const { data, error } = await query;
@@ -64,7 +64,7 @@ export function useProposals() {
       );
     }
     if (!silent) setLoading(false);
-  }, [user, toast, selectedAgencyId]);
+  }, [user, toast, effectiveAgencyId]);
 
   useEffect(() => {
     fetchProposals();

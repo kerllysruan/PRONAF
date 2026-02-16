@@ -29,7 +29,7 @@ export interface DbDocumentTask {
 
 export function useTeam() {
   const { user, agencyId } = useAuth();
-  const { selectedAgencyId } = useAgency();
+  const { effectiveAgencyId } = useAgency();
   const { toast } = useToast();
   const [members, setMembers] = useState<DbTeamMember[]>([]);
   const [tasks, setTasks] = useState<DbDocumentTask[]>([]);
@@ -42,9 +42,9 @@ export function useTeam() {
     let membersQuery = supabase.from("team_members").select("*").order("created_at");
     let tasksQuery = supabase.from("document_tasks").select("*").order("created_at", { ascending: false });
 
-    if (selectedAgencyId && selectedAgencyId !== "all") {
-      membersQuery = membersQuery.eq("agency_id", selectedAgencyId);
-      tasksQuery = tasksQuery.eq("agency_id", selectedAgencyId);
+    if (effectiveAgencyId && effectiveAgencyId !== "all") {
+      membersQuery = membersQuery.eq("agency_id", effectiveAgencyId);
+      tasksQuery = tasksQuery.eq("agency_id", effectiveAgencyId);
     }
 
     const [membersRes, tasksRes] = await Promise.all([
@@ -55,7 +55,7 @@ export function useTeam() {
     setMembers(membersRes.data || []);
     setTasks(tasksRes.data || []);
     if (!silent) setLoading(false);
-  }, [user, selectedAgencyId]);
+  }, [user, effectiveAgencyId]);
 
   useEffect(() => {
     fetchAll();

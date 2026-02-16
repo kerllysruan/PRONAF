@@ -12,12 +12,11 @@ import {
 import { Building2 } from "lucide-react";
 
 export function AgencySelector() {
-    const { isDeveloper, role } = useAuth();
+    const { isDeveloper } = useAuth();
     const { selectedAgencyId, setSelectedAgencyId, agencies } = useAgency();
 
-    const canSelectAgency = isDeveloper || role === 'admin';
-
-    if (!canSelectAgency) return null;
+    // Only developers can switch between agencies
+    if (!isDeveloper) return null;
 
     return (
         <div className="flex items-center gap-2">

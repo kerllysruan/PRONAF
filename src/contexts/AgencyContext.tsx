@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Agency {
     id: string;
@@ -12,22 +13,25 @@ interface AgencyContextType {
     setSelectedAgencyId: (id: string | 'all') => void;
     agencies: Agency[];
     refreshAgencies: () => Promise<void>;
+    /** The effective agency filter: for developers it follows the selector, for everyone else it's their bound agency */
+    effectiveAgencyId: string | 'all';
 }
 
 const AgencyContext = createContext<AgencyContextType | undefined>(undefined);
 
 export function AgencyProvider({ children }: { children: ReactNode }) {
+    const { isDeveloper, agencyId: userAgencyId } = useAuth();
     const [agencies, setAgencies] = useState<Agency[]>([]);
     const [selectedAgencyId, setSelectedAgencyId] = useState<string | 'all'>(() => {
         return localStorage.getItem('selectedAgencyId') || 'all';
     });
 
     const fetchAgencies = useCallback(async () => {
-        const { data } = await supabase
+        const { data } = await (supabase as any)
             .from('agencies')
             .select('id, name, code')
             .order('name');
-        if (data) setAgencies(data);
+        if (data) setAgencies(data as Agency[]);
     }, []);
 
     useEffect(() => {
@@ -50,12 +54,16 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('selectedAgencyId', selectedAgencyId);
     }, [selectedAgencyId]);
 
+    // Effective agency: developers use selector freely, everyone else is locked to their own agency
+    const effectiveAgencyId = isDeveloper ? selectedAgencyId : (userAgencyId || 'all');
+
     return (
         <AgencyContext.Provider value={{
             selectedAgencyId,
             setSelectedAgencyId,
             agencies,
-            refreshAgencies: fetchAgencies
+            refreshAgencies: fetchAgencies,
+            effectiveAgencyId,
         }}>
             {children}
         </AgencyContext.Provider>
