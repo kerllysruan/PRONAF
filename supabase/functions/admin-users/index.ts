@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -18,38 +17,19 @@ Deno.serve(async (req: Request) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Get the auth header
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      console.error("Missing Authorization header");
-      return new Response(JSON.stringify({ error: "Cabeçalho de autorização ausente" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader) throw new Error("Autorização ausente");
 
-    // Create a client with the caller's auth context
     const anonClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    // Verify the JWT and get the user
     const { data: { user: caller }, error: authError } = await anonClient.auth.getUser();
+    if (authError || !caller) throw new Error(`Autenticação falhou: ${authError?.message || 'Token inválido'}`);
 
-    if (authError || !caller) {
-      console.error("Auth error:", authError?.message);
-      return new Response(JSON.stringify({ error: "Não autenticado", details: authError?.message }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    console.log(`Processing request from: ${caller.email}`);
-
-    // Create admin client for sensitive operations
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify admin role - check both user_roles and permissions for redundancy
+    // Verify admin role
     const { data: roleData, error: roleError } = await adminClient
       .from("user_roles")
       .select("role")
@@ -57,51 +37,25 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (roleError || !roleData || roleData.role !== "admin") {
-      console.warn(`Access denied for ${caller.email}: Not an admin`);
-      return new Response(JSON.stringify({ error: "Acesso negado. Apenas administradores podem gerenciar usuários." }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      throw new Error("Acesso negado. Apenas administradores podem gerenciar usuários.");
     }
 
     const { action, ...payload } = await req.json();
-    console.log(`Action: ${action}`);
+    console.log(`Action: ${action} by ${caller.email}`);
 
     let responseData: any = { success: true };
 
     switch (action) {
       case "create": {
         const { email, password, display_name, role } = payload;
-        if (!email || !password) throw new Error("Email e senha são obrigatórios");
-
-        // 1. Create user in auth
         const { data: authUser, error: createError } = await adminClient.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: { display_name },
+          email, password, email_confirm: true, user_metadata: { display_name }
         });
+        if (createError) throw new Error(`Erro Auth: ${createError.message}`);
 
-        if (createError) throw createError;
         const userId = authUser.user.id;
-
-        // 2. Create profile
-        await adminClient.from("profiles").upsert({
-          id: userId,
-          user_id: userId,
-          email,
-          display_name: display_name || email.split("@")[0],
-          full_name: display_name || email.split("@")[0],
-        });
-
-        // 3. Set role
-        await adminClient.from("user_roles").upsert({
-          user_id: userId,
-          role: role || "usuario",
-        });
-
-        // 4. Set default permissions
-        const isStaff = (role === "admin" || role === "gerente");
+        await adminClient.from("profiles").upsert({ id: userId, user_id: userId, email, display_name, full_name: display_name });
+        await adminClient.from("user_roles").upsert({ user_id: userId, role: role || "usuario" });
         await adminClient.from("user_permissions").upsert({
           user_id: userId,
           can_view_dashboard: true,
@@ -111,17 +65,9 @@ Deno.serve(async (req: Request) => {
           can_view_tasks: true,
           can_view_disbursements: true,
           can_view_visits: true,
-          can_create_proposals: isStaff,
-          can_edit_proposals: isStaff,
-          can_delete_proposals: role === "admin",
-          can_approve_proposals: isStaff,
-          can_view_access_control: role === "admin",
-          can_view_management: isStaff,
-          can_manage_users: role === "admin",
-          can_manage_tasks: isStaff,
-          can_manage_disbursements: isStaff,
-          can_manage_visits: isStaff,
-          read_only: false,
+          can_create_proposals: (role === "admin" || role === "gerente"),
+          can_edit_proposals: (role === "admin" || role === "gerente"),
+          can_manage_users: (role === "admin")
         });
 
         responseData = { success: true, user: authUser.user };
@@ -130,68 +76,56 @@ Deno.serve(async (req: Request) => {
 
       case "update_role": {
         const { user_id, role } = payload;
-        if (!user_id || !role) throw new Error("ID e cargo são obrigatórios");
-
-        const { error: updateError } = await adminClient
-          .from("user_roles")
-          .upsert({ user_id, role }, { onConflict: "user_id" });
-
-        if (updateError) throw updateError;
-        break;
-      }
-
-      case "update_permissions": {
-        const { user_id, permissions } = payload;
-        if (!user_id || !permissions) throw new Error("ID e permissões são obrigatórios");
-
-        const { error: permError } = await adminClient
-          .from("user_permissions")
-          .upsert({ user_id, ...permissions }, { onConflict: "user_id" });
-
-        if (permError) throw permError;
+        const { error } = await adminClient.from("user_roles").upsert({ user_id, role }, { onConflict: "user_id" });
+        if (error) throw new Error(`Erro Role: ${error.message}`);
         break;
       }
 
       case "update_password": {
         const { user_id, password } = payload;
-        if (!user_id || !password) throw new Error("ID e senha são obrigatórios");
+        const { error } = await adminClient.auth.admin.updateUserById(user_id, { password });
+        if (error) throw new Error(`Erro Senha: ${error.message}`);
+        break;
+      }
 
-        const { error: pwError } = await adminClient.auth.admin.updateUserById(user_id, {
-          password,
-        });
-
-        if (pwError) throw pwError;
+      case "update_permissions": {
+        const { user_id, permissions } = payload;
+        const { error } = await adminClient.from("user_permissions").upsert({ user_id, ...permissions }, { onConflict: "user_id" });
+        if (error) throw new Error(`Erro Permissões: ${error.message}`);
         break;
       }
 
       case "delete": {
         const { user_id } = payload;
-        if (!user_id) throw new Error("ID do usuário é obrigatório");
-        if (user_id === caller.id) throw new Error("Você não pode excluir a si mesmo");
+        if (!user_id) throw new Error("user_id é obrigatório");
+        if (user_id === caller.id) throw new Error("Auto-exclusão não permitida");
 
-        // Delete dependencies first
+        console.log(`Deleting user ${user_id}...`);
+
+        await adminClient.from("proposals").update({ created_by: null }).eq("created_by", user_id);
+        await adminClient.from("disbursements").update({ requested_by: null, user_id: null }).or(`requested_by.eq.${user_id},user_id.eq.${user_id}`);
+        await adminClient.from("document_tasks").update({ user_id: null }).eq("user_id", user_id);
+
         await adminClient.from("user_permissions").delete().eq("user_id", user_id);
         await adminClient.from("user_roles").delete().eq("user_id", user_id);
         await adminClient.from("profiles").delete().eq("id", user_id);
 
         const { error: delError } = await adminClient.auth.admin.deleteUser(user_id);
-        if (delError) throw delError;
+        if (delError) throw new Error(`Erro ao remover da Autenticação: ${delError.message}`);
         break;
       }
 
       default:
-        throw new Error(`Ação desconhecida: ${action}`);
+        throw new Error(`Ação '${action}' não reconhecida`);
     }
 
     return new Response(JSON.stringify(responseData), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   } catch (error: any) {
-    console.error(`Error processing action:`, error.message);
-    return new Response(JSON.stringify({ error: error.message || "Erro interno do servidor" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error(`Edge Function Error:`, error.message);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
 });
