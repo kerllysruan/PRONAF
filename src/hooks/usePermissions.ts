@@ -7,8 +7,6 @@ export interface UserPermissions {
   can_view_proposals: boolean;
   can_view_kanban: boolean;
   can_view_documentation: boolean;
-  can_view_visits: boolean;
-  can_manage_visits: boolean;
   can_view_tasks: boolean;
   can_manage_tasks: boolean;
   can_view_disbursements: boolean;
@@ -32,7 +30,6 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   can_view_documentation: true,
   can_view_tasks: true,
   can_view_disbursements: true,
-  can_view_visits: true,
   can_view_management: true,
   can_view_access_control: false,
   can_manage_users: false,
@@ -42,7 +39,6 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   can_approve_proposals: false,
   can_manage_tasks: false,
   can_manage_disbursements: false,
-  can_manage_visits: false,
   can_view_agencies: true,
   can_manage_agencies: false,
   read_only: true, // Set to true as default for safety

@@ -52,8 +52,6 @@ interface UserPermission {
   can_view_access_control?: boolean;
   can_view_kanban?: boolean;
   can_view_documentation?: boolean;
-  can_view_visits?: boolean;
-  can_manage_visits?: boolean;
   can_view_tasks?: boolean;
   can_manage_tasks?: boolean;
   can_view_disbursements?: boolean;
@@ -72,7 +70,6 @@ const PERMISSIONS = [
   { key: "can_view_documentation", label: "Documentação", group: "Visualização", icon: Eye },
   { key: "can_view_tasks", label: "Tarefas", group: "Visualização", icon: Eye },
   { key: "can_view_disbursements", label: "Desembolsos", group: "Visualização", icon: Eye },
-  { key: "can_view_visits", label: "Visitas", group: "Visualização", icon: Eye },
   { key: "can_view_management", label: "Gerenciamento", group: "Administração", icon: Settings2 },
   { key: "can_view_access_control", label: "Controle Acesso", group: "Administração", icon: ShieldCheck },
   { key: "can_manage_users", label: "Gestão Usuários", group: "Administração", icon: ShieldAlert },
@@ -84,7 +81,6 @@ const PERMISSIONS = [
   { key: "can_approve_proposals", label: "Aprovar Propostas", group: "Operacional", icon: CheckCircle2 },
   { key: "can_manage_tasks", label: "Gerir Tarefas", group: "Equipe", icon: Edit3 },
   { key: "can_manage_disbursements", label: "Gerir Desembolsos", group: "Equipe", icon: DollarSign },
-  { key: "can_manage_visits", label: "Agendar Visitas", group: "Equipe", icon: Edit3 },
   { key: "read_only", label: "Somente Leitura", group: "Segurança", icon: Lock },
 ];
 

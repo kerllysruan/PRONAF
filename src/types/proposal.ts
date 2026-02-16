@@ -2,7 +2,6 @@ export type ProposalStatus =
   | 'nova'
   | 'em_analise'
   | 'documentacao_pendente'
-  | 'visita_gerencial'
   | 'avaliacao_risco'
   | 'consideracoes_gerenciais'
   | 'votacao_sinc'
@@ -52,18 +51,6 @@ export interface DocumentItem {
   completed: boolean;
 }
 
-export type VisitStatus = 'agendada' | 'realizada' | 'cancelada';
-
-export interface Visit {
-  id: string;
-  producerName: string;
-  date: string;
-  time: string;
-  objective: string;
-  status: VisitStatus;
-  proposalId?: string;
-}
-
 export const PROJECT_DESIGNER_LABELS: Record<ProjectDesigner, string> = {
   ney_medeiros: 'Ney Medeiros',
   jairo_santana: 'Jairo Santana',
@@ -75,7 +62,6 @@ export const STATUS_LABELS: Record<ProposalStatus, string> = {
   nova: 'Nova',
   em_analise: 'Em Análise',
   documentacao_pendente: 'Doc. Pendente',
-  visita_gerencial: 'Visita Gerencial',
   avaliacao_risco: 'Avaliação De Risco',
   consideracoes_gerenciais: 'Considerações Gerenciais',
   votacao_sinc: 'Votação Sinc',
@@ -96,8 +82,6 @@ export const STATUS_COLORS: Record<ProposalStatus, string> = {
   em_analise: 'bg-blue-50 text-blue-700 border border-blue-200/60 font-medium dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800/60',
 
   documentacao_pendente: 'bg-amber-50 text-amber-700 border border-amber-200/60 font-medium dark:bg-amber-950/30 dark:text-amber-500 dark:border-amber-800/60',
-
-  visita_gerencial: 'bg-blue-50 text-blue-600 border border-blue-200/60 font-medium dark:bg-blue-950/30 dark:text-blue-300 dark:border-blue-800/60',
 
   avaliacao_risco: 'bg-rose-50 text-rose-700 border border-rose-200/60 font-medium dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800/60',
 
@@ -126,12 +110,6 @@ export const PRONAF_LINE_LABELS: Record<PronafLine, string> = {
   pronaf_a_669: 'Pronaf A - 669',
   pronaf_jovem: 'Pronaf Jovem',
   investimento: 'Investimento',
-};
-
-export const VISIT_STATUS_LABELS: Record<VisitStatus, string> = {
-  agendada: 'Agendada',
-  realizada: 'Realizada',
-  cancelada: 'Cancelada',
 };
 
 export type TaskPriority = 'baixa' | 'media' | 'alta' | 'urgente';

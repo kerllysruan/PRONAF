@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { useProposals } from "@/hooks/useProposals";
-import { useVisits } from "@/hooks/useVisits";
 import { useTeam } from "@/hooks/useTeam";
 import { usePermissions } from "@/hooks/usePermissions";
 import { STATUS_LABELS } from "@/types/proposal";
@@ -26,7 +25,6 @@ import {
 
 export default function Management() {
   const { proposals, loading: lp } = useProposals();
-  const { visits, loading: lv } = useVisits();
   const { members, loading: lt, addMember, removeMember } = useTeam();
   const { permissions } = usePermissions();
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -42,7 +40,7 @@ export default function Management() {
 
   const getInitials = (name: string) => name.split(" ").map((w) => w[0]).join("").substring(0, 2).toUpperCase();
 
-  if (lp || lv || lt) {
+  if (lp || lt) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
@@ -68,7 +66,6 @@ export default function Management() {
             {[
               { icon: FileText, label: "Propostas", value: proposals.length, color: "primary" },
               { icon: TrendingUp, label: "Valor Total", value: `${(totalValue / 1000).toFixed(0)}k`, color: "success" },
-              { icon: CalendarDays, label: "Visitas", value: visits.length, color: "info" },
               { icon: Users, label: "Membros", value: members.length, color: "warning" },
             ].map((item) => (
               <Card key={item.label} className="border-0 shadow-md">

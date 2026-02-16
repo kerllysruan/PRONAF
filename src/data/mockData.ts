@@ -1,4 +1,4 @@
-import { Proposal, Visit, REQUIRED_DOCUMENTS } from '@/types/proposal';
+import { Proposal, REQUIRED_DOCUMENTS } from '@/types/proposal';
 
 function createDocuments(completedCount: number) {
   return REQUIRED_DOCUMENTS.map((name, i) => ({
@@ -32,7 +32,7 @@ export const mockProposals: Proposal[] = [
   {
     id: '3',
     producer: { name: 'Antônio Pereira', cpf: '456.789.123-00', address: 'Chácara Recanto, Km 12' },
-    pronafLine: 'mais_alimentos',
+    pronafLine: 'pronaf_mais_alimento',
     requestedValue: 32000,
     status: 'documentacao_pendente',
     entryDate: '2026-01-10',
@@ -42,7 +42,7 @@ export const mockProposals: Proposal[] = [
   {
     id: '4',
     producer: { name: 'Ana Santos', cpf: '321.654.987-00', address: 'Fazenda Esperança, BR-040' },
-    pronafLine: 'agroecologia',
+    pronafLine: 'custeio',
     requestedValue: 28000,
     status: 'nova',
     entryDate: '2026-01-28',
@@ -71,7 +71,7 @@ export const mockProposals: Proposal[] = [
   {
     id: '7',
     producer: { name: 'Pedro Souza', cpf: '147.258.369-00', address: 'Chácara do Cedro, Estrada Velha' },
-    pronafLine: 'eco',
+    pronafLine: 'custeio',
     requestedValue: 18000,
     status: 'nova',
     entryDate: '2026-02-01',
@@ -86,54 +86,6 @@ export const mockProposals: Proposal[] = [
     entryDate: '2025-12-18',
     notes: 'Custeio pecuário - bovinocultura de leite.',
     documents: createDocuments(10),
-  },
-];
-
-export const mockVisits: Visit[] = [
-  {
-    id: '1',
-    producerName: 'José da Silva',
-    date: '2026-02-10',
-    time: '09:00',
-    objective: 'Vistoria de lavoura para liberação de crédito',
-    status: 'agendada',
-    proposalId: '1',
-  },
-  {
-    id: '2',
-    producerName: 'Maria Oliveira',
-    date: '2026-02-07',
-    time: '14:00',
-    objective: 'Coleta de documentos pendentes',
-    status: 'agendada',
-    proposalId: '2',
-  },
-  {
-    id: '3',
-    producerName: 'Antônio Pereira',
-    date: '2026-02-05',
-    time: '10:30',
-    objective: 'Orientação sobre documentação do imóvel',
-    status: 'realizada',
-    proposalId: '3',
-  },
-  {
-    id: '4',
-    producerName: 'Ana Santos',
-    date: '2026-02-12',
-    time: '08:00',
-    objective: 'Levantamento inicial para proposta',
-    status: 'agendada',
-    proposalId: '4',
-  },
-  {
-    id: '5',
-    producerName: 'Carlos Mendes',
-    date: '2026-01-30',
-    time: '15:00',
-    objective: 'Informar sobre negativa da proposta',
-    status: 'cancelada',
-    proposalId: '5',
   },
 ];
 
