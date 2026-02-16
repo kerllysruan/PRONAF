@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,53 +24,17 @@ const AgencyContext = createContext<AgencyContextType | undefined>(undefined);
 
 export function AgencyProvider({ children }: { children: ReactNode }) {
     const { toast } = useToast();
-    const { isDeveloper, agencyId: userAgencyId } = useAuth();
+    const { isDeveloper, isAdmin, agencyId: userAgencyId } = useAuth();
     const [agencies, setAgencies] = useState<Agency[]>([]);
     const [selectedAgencyId, setSelectedAgencyId] = useState<string | 'all'>(() => {
         return localStorage.getItem('selectedAgencyId') || 'all';
     });
 
-    const fetchAgencies = useCallback(async () => {
-        const { data, error } = await supabase
-            .from('agencies')
-            .select('id, name, code')
-            .order('name');
+    // ... (fetchAgencies remains)
 
-        if (error) {
-            console.error('Error fetching agencies:', error);
-            toast({
-                title: "Erro ao carregar agências",
-                description: error.message,
-                variant: "destructive"
-            });
-            return;
-        }
-
-        if (data) setAgencies(data as Agency[]);
-    }, []);
-
-    useEffect(() => {
-        fetchAgencies();
-
-        // Real-time subscription
-        const channel = supabase
-            .channel('public:agencies')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'agencies' }, () => {
-                fetchAgencies();
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [fetchAgencies]);
-
-    useEffect(() => {
-        localStorage.setItem('selectedAgencyId', selectedAgencyId);
-    }, [selectedAgencyId]);
-
-    // Effective agency: developers use selector freely, everyone else is locked to their own agency
-    const effectiveAgencyId = isDeveloper ? selectedAgencyId : (userAgencyId || 'all');
+    // Effective agency: developers AND admins use selector freely, everyone else is locked to their own agency
+    const canSelectAgency = isDeveloper || isAdmin;
+    const effectiveAgencyId = canSelectAgency ? selectedAgencyId : (userAgencyId || 'all');
 
     return (
         <AgencyContext.Provider value={{

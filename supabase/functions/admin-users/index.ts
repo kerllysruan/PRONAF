@@ -135,7 +135,9 @@ Deno.serve(async (req: Request) => {
 
       case "update_agency": {
         const { user_id, agency_id } = payload;
-        const { error } = await adminClient.from("profiles").update({ agency_id }).eq("user_id", user_id);
+        // Handle empty string as null for UUID compatibility
+        const finalAgencyId = (agency_id === "" || agency_id === "none") ? null : agency_id;
+        const { error } = await adminClient.from("profiles").update({ agency_id: finalAgencyId }).eq("user_id", user_id);
         if (error) throw new Error(`Erro Agência: ${ error.message } `);
         break;
       }

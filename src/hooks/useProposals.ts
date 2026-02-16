@@ -48,7 +48,11 @@ export function useProposals() {
 
     // Apply agency filter
     if (effectiveAgencyId && effectiveAgencyId !== "all") {
+      // DEBUG: Toast to confirm filter application
+      // toast({ title: "Filtro Ativo", description: `Filtrando por agência: ${effectiveAgencyId}` });
       query = query.eq("agency_id", effectiveAgencyId);
+    } else {
+      // toast({ title: "Sem Filtro", description: "Mostrando todas as propostas" });
     }
 
     const { data, error } = await query;
