@@ -141,7 +141,7 @@ export default function Disbursements() {
     const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const searchRaw = proposalSearch.trim();
 
-    const eligibleStatuses = ['aprovada', 'desembolso', 'contrato_liberado'];
+    const eligibleStatuses = ['aprovada', 'desembolso', 'contrato_liberado', 'desembolso_solicitado'];
 
     const baseFilter = (p: any) => {
       if (!eligibleStatuses.includes(p.status)) return false;
@@ -339,6 +339,39 @@ export default function Disbursements() {
               <div><p className="text-xs text-muted-foreground">Observações</p><p className="text-sm mt-1">{selectedDisbursement.notes}</p></div>
             )}
 
+            {/* Histórico de outros desembolsos da mesma proposta */}
+            {proposal && (
+              <div className="pt-4 border-t">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                  <Clock className="h-3 w-3" /> Histórico desta Proposta
+                </h4>
+                <div className="space-y-2">
+                  {disbursements
+                    .filter(d => d.proposal_id === proposal.id && d.id !== selectedDisbursement.id)
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                    .map(other => (
+                      <div key={other.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50 border border-border/50">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-1 rounded-full ${DISBURSEMENT_STATUS_COLORS[other.status as DisbursementStatus]} bg-opacity-10 text-[10px]`}>
+                            <Badge variant="outline" className={`${DISBURSEMENT_STATUS_COLORS[other.status as DisbursementStatus]} border-0 text-[10px] h-4 px-1 capitalize`}>{other.status}</Badge>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold">{formatCurrency(other.amount)}</p>
+                            <p className="text-[10px] text-muted-foreground">{format(parseISO(other.request_date), "dd/MM/yyyy")}</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setSelectedId(other.id)}>
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  {disbursements.filter(d => d.proposal_id === proposal.id && d.id !== selectedDisbursement.id).length === 0 && (
+                    <p className="text-[11px] text-muted-foreground italic">Nenhum outro desembolso para esta proposta.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-2 pt-2">
               <Select value={selectedDisbursement.status} onValueChange={(v) => updateDisbursement(selectedDisbursement.id, { status: v })}>
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
@@ -524,6 +557,25 @@ export default function Disbursements() {
                                 <Eye className="h-4 w-4" />
                               </Button>
                             )}
+
+                            {/* Botão Plus para novo desembolso se houver saldo e não for pendente */}
+                            {proposal && d.status !== 'pendente' && getProposalStats(proposal.id, Number(proposal.requested_value)).remaining > 0.05 && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-indigo-600 hover:bg-indigo-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  resetForm();
+                                  setSelectedProposal(proposal.id);
+                                  setIsDialogOpen(true);
+                                }}
+                                title="Solicitar Novo Desembolso"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            )}
+
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={(e) => {
                               e.stopPropagation();
                               setDeleteId(d.id);
@@ -622,8 +674,11 @@ export default function Disbursements() {
                                         <p className="text-xs text-muted-foreground font-mono mt-0.5">
                                           CPF: {p.producer_cpf}
                                         </p>
+                                        <p className="text-[10px] text-primary font-medium mt-1">
+                                          Saldo para solicitar: {formatCurrency(stats.remaining)}
+                                        </p>
                                       </div>
-                                      {progress > 0 && <Badge variant="outline" className="text-xs text-primary border-primary/30">Desembolso Solicitado {Math.round(progress)}%</Badge>}
+                                      {progress > 0 && <Badge variant="outline" className="text-[10px] text-indigo-600 border-indigo-200 bg-indigo-50/50">Já solicitado {Math.round(progress)}%</Badge>}
                                     </div>
                                   </div>
                                   {selectedProposal === p.id && (
