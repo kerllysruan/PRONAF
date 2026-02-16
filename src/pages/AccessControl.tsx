@@ -38,7 +38,7 @@ interface User {
 }
 
 
-type UserRole = "usuario" | "gerente" | "admin" | "developer";
+type UserRole = "usuario" | "gerente" | "tecnico" | "admin" | "developer";
 
 interface UserPermission {
   [key: string]: string | boolean | undefined;
@@ -288,6 +288,7 @@ function AccessControl() {
     switch (role) {
       case "admin": return { label: "Admin", color: "bg-rose-500/10 text-rose-600 border-rose-200", dot: "bg-rose-500", icon: ShieldAlert };
       case "gerente": return { label: "Gerente", color: "bg-amber-500/10 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: ShieldCheck };
+      case "tecnico": return { label: "Técnico", color: "bg-blue-500/10 text-blue-600 border-blue-200", dot: "bg-blue-500", icon: Shield };
       case "developer": return { label: "Dev", color: "bg-indigo-500/10 text-indigo-700 border-indigo-200", dot: "bg-indigo-500", icon: Code2 };
       default: return { label: "Usuário", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400", icon: Fingerprint };
     }
@@ -306,6 +307,7 @@ function AccessControl() {
     total: users.length,
     admins: users.filter(u => u.role === "admin" || u.role === "developer").length,
     gerentes: users.filter(u => u.role === "gerente").length,
+    tecnicos: users.filter(u => u.role === "tecnico").length,
     usuarios: users.filter(u => u.role === "usuario").length,
   };
 
@@ -367,6 +369,7 @@ function AccessControl() {
           { label: "Total", value: stats.total, icon: Users, accent: "text-primary" },
           { label: "Admins", value: stats.admins, icon: ShieldAlert, accent: "text-rose-500" },
           { label: "Gerentes", value: stats.gerentes, icon: ShieldCheck, accent: "text-amber-600" },
+          { label: "Técnicos", value: stats.tecnicos, icon: Shield, accent: "text-blue-600" },
           { label: "Usuários", value: stats.usuarios, icon: Fingerprint, accent: "text-slate-500" },
         ].map(s => (
           <Card key={s.label} className="border shadow-sm">
@@ -404,6 +407,7 @@ function AccessControl() {
                 <SelectItem value="all">Todos os cargos</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="gerente">Gerente</SelectItem>
+                <SelectItem value="tecnico">Técnico</SelectItem>
                 <SelectItem value="usuario">Usuário</SelectItem>
               </SelectContent>
             </Select>
@@ -480,6 +484,7 @@ function AccessControl() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="usuario">Usuário</SelectItem>
+                          <SelectItem value="tecnico">Técnico</SelectItem>
                           <SelectItem value="gerente">Gerente</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="developer">Dev</SelectItem>
@@ -596,6 +601,7 @@ function AccessControl() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="usuario">Usuário</SelectItem>
+                  <SelectItem value="tecnico">Técnico</SelectItem>
                   <SelectItem value="gerente">Gerente</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
                   <SelectItem value="developer">Desenvolvedor</SelectItem>

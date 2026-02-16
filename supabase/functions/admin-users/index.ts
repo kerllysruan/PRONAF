@@ -45,6 +45,34 @@ Deno.serve(async (req: Request) => {
 
     let responseData: any = { success: true };
 
+    const getPermissionsForRole = (role: string) => {
+      const isStaff = (role === "admin" || role === "gerente" || role === "tecnico" || role === "developer");
+      const isAdminOrDev = (role === "admin" || role === "developer");
+
+      return {
+        can_view_dashboard: true,
+        can_view_proposals: true,
+        can_view_kanban: true,
+        can_view_documentation: true,
+        can_view_tasks: true,
+        can_view_disbursements: true,
+        can_view_visits: true,
+        can_view_agencies: true,
+        can_create_proposals: isStaff,
+        can_edit_proposals: isStaff,
+        can_delete_proposals: isAdminOrDev,
+        can_approve_proposals: isStaff,
+        can_view_access_control: isAdminOrDev,
+        can_view_management: isStaff,
+        can_manage_users: isAdminOrDev,
+        can_manage_agencies: isAdminOrDev,
+        can_manage_tasks: isStaff,
+        can_manage_disbursements: isStaff,
+        can_manage_visits: isStaff,
+        read_only: false,
+      };
+    };
+
     switch (action) {
       case "create": {
         const { email, password, display_name, role, agency_id } = payload;
@@ -54,8 +82,6 @@ Deno.serve(async (req: Request) => {
         if (createError) throw new Error(`Erro Auth: ${createError.message}`);
 
         const userId = authUser.user.id;
-        const isStaff = (role === "admin" || role === "gerente" || role === "developer");
-        const isDeveloper = (role === "developer");
 
         await adminClient.from("profiles").upsert({
           user_id: userId,
@@ -68,26 +94,7 @@ Deno.serve(async (req: Request) => {
         await adminClient.from("user_roles").upsert({ user_id: userId, role: role || "usuario" }, { onConflict: "user_id" });
         await adminClient.from("user_permissions").upsert({
           user_id: userId,
-          can_view_dashboard: true,
-          can_view_proposals: true,
-          can_view_kanban: true,
-          can_view_documentation: true,
-          can_view_tasks: true,
-          can_view_disbursements: true,
-          can_view_visits: true,
-          can_view_agencies: true,
-          can_create_proposals: isStaff,
-          can_edit_proposals: isStaff,
-          can_delete_proposals: (role === "admin" || isDeveloper),
-          can_approve_proposals: isStaff,
-          can_view_access_control: (role === "admin" || isDeveloper),
-          can_view_management: isStaff,
-          can_manage_users: (role === "admin" || isDeveloper),
-          can_manage_agencies: (role === "admin" || isDeveloper),
-          can_manage_tasks: isStaff,
-          can_manage_disbursements: isStaff,
-          can_manage_visits: isStaff,
-          read_only: false,
+          ...getPermissionsForRole(role || "usuario")
         }, { onConflict: "user_id" });
 
         responseData = { success: true, user: authUser.user };
@@ -96,8 +103,16 @@ Deno.serve(async (req: Request) => {
 
       case "update_role": {
         const { user_id, role } = payload;
-        const { error } = await adminClient.from("user_roles").upsert({ user_id, role }, { onConflict: "user_id" });
-        if (error) throw new Error(`Erro Role: ${error.message}`);
+        const { error: roleError } = await adminClient.from("user_roles").upsert({ user_id, role }, { onConflict: "user_id" });
+        if (roleError) throw new Error(`Erro Role: ${roleError.message}`);
+
+        // Auto-update permissions for the new role
+        const { error: permError } = await adminClient.from("user_permissions").upsert({
+          user_id,
+          ...getPermissionsForRole(role)
+        }, { onConflict: "user_id" });
+        if (permError) throw new Error(`Erro ao atualizar permissões automáticas: ${permError.message}`);
+
         break;
       }
 
