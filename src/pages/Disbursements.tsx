@@ -251,7 +251,7 @@ export default function Disbursements() {
     setFormData({
       proposal_id: d.proposal_id,
       requested_by: d.requested_by,
-      amount: String(d.amount),
+      amount: Number(d.amount).toFixed(2),
       disbursement_type: d.disbursement_type,
       status: d.status,
       request_date: d.request_date.split("T")[0],
@@ -705,7 +705,7 @@ export default function Disbursements() {
                           disbursement_type: v,
                           // Se total, usa valor TOTAL da proposta
                           amount: v === 'total'
-                            ? String(totalValue)
+                            ? totalValue.toFixed(2)
                             : f.amount
                         }));
                       }}
