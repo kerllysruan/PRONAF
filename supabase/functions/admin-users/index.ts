@@ -29,15 +29,15 @@ Deno.serve(async (req: Request) => {
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify admin role
+    // Verify admin/developer role
     const { data: roleData, error: roleError } = await adminClient
       .from("user_roles")
       .select("role")
       .eq("user_id", caller.id)
       .single();
 
-    if (roleError || !roleData || roleData.role !== "admin") {
-      throw new Error("Acesso negado. Apenas administradores podem gerenciar usuários.");
+    if (roleError || !roleData || (roleData.role !== "admin" && roleData.role !== "developer")) {
+      throw new Error("Acesso negado. Apenas administradores ou desenvolvedores podem gerenciar usuários.");
     }
 
     const { action, ...payload } = await req.json();
@@ -54,6 +54,9 @@ Deno.serve(async (req: Request) => {
         if (createError) throw new Error(`Erro Auth: ${createError.message}`);
 
         const userId = authUser.user.id;
+        const isStaff = (role === "admin" || role === "gerente" || role === "developer");
+        const isDeveloper = (role === "developer");
+
         await adminClient.from("profiles").upsert({ id: userId, user_id: userId, email, display_name, full_name: display_name });
         await adminClient.from("user_roles").upsert({ user_id: userId, role: role || "usuario" });
         await adminClient.from("user_permissions").upsert({
@@ -65,9 +68,17 @@ Deno.serve(async (req: Request) => {
           can_view_tasks: true,
           can_view_disbursements: true,
           can_view_visits: true,
-          can_create_proposals: (role === "admin" || role === "gerente"),
-          can_edit_proposals: (role === "admin" || role === "gerente"),
-          can_manage_users: (role === "admin")
+          can_create_proposals: isStaff,
+          can_edit_proposals: isStaff,
+          can_delete_proposals: (role === "admin" || isDeveloper),
+          can_approve_proposals: isStaff,
+          can_view_access_control: (role === "admin" || isDeveloper),
+          can_view_management: isStaff,
+          can_manage_users: (role === "admin" || isDeveloper),
+          can_manage_tasks: isStaff,
+          can_manage_disbursements: isStaff,
+          can_manage_visits: isStaff,
+          read_only: false,
         });
 
         responseData = { success: true, user: authUser.user };
