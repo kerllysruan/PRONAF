@@ -57,8 +57,15 @@ Deno.serve(async (req: Request) => {
         const isStaff = (role === "admin" || role === "gerente" || role === "developer");
         const isDeveloper = (role === "developer");
 
-        await adminClient.from("profiles").upsert({ id: userId, user_id: userId, email, display_name, full_name: display_name, agency_id });
-        await adminClient.from("user_roles").upsert({ user_id: userId, role: role || "usuario" });
+        await adminClient.from("profiles").upsert({
+          user_id: userId,
+          email,
+          display_name,
+          full_name: display_name,
+          agency_id
+        }, { onConflict: "user_id" });
+
+        await adminClient.from("user_roles").upsert({ user_id: userId, role: role || "usuario" }, { onConflict: "user_id" });
         await adminClient.from("user_permissions").upsert({
           user_id: userId,
           can_view_dashboard: true,
@@ -68,6 +75,7 @@ Deno.serve(async (req: Request) => {
           can_view_tasks: true,
           can_view_disbursements: true,
           can_view_visits: true,
+          can_view_agencies: true,
           can_create_proposals: isStaff,
           can_edit_proposals: isStaff,
           can_delete_proposals: (role === "admin" || isDeveloper),
@@ -75,11 +83,12 @@ Deno.serve(async (req: Request) => {
           can_view_access_control: (role === "admin" || isDeveloper),
           can_view_management: isStaff,
           can_manage_users: (role === "admin" || isDeveloper),
+          can_manage_agencies: (role === "admin" || isDeveloper),
           can_manage_tasks: isStaff,
           can_manage_disbursements: isStaff,
           can_manage_visits: isStaff,
           read_only: false,
-        });
+        }, { onConflict: "user_id" });
 
         responseData = { success: true, user: authUser.user };
         break;
@@ -94,7 +103,7 @@ Deno.serve(async (req: Request) => {
 
       case "update_agency": {
         const { user_id, agency_id } = payload;
-        const { error } = await adminClient.from("profiles").update({ agency_id }).eq("id", user_id);
+        const { error } = await adminClient.from("profiles").update({ agency_id }).eq("user_id", user_id);
         if (error) throw new Error(`Erro Agência: ${error.message}`);
         break;
       }
@@ -118,15 +127,13 @@ Deno.serve(async (req: Request) => {
         if (!user_id) throw new Error("user_id é obrigatório");
         if (user_id === caller.id) throw new Error("Auto-exclusão não permitida");
 
-        console.log(`Deleting user ${user_id}...`);
-
         await adminClient.from("proposals").update({ created_by: null }).eq("created_by", user_id);
         await adminClient.from("disbursements").update({ requested_by: null, user_id: null }).or(`requested_by.eq.${user_id},user_id.eq.${user_id}`);
         await adminClient.from("document_tasks").update({ user_id: null }).eq("user_id", user_id);
 
         await adminClient.from("user_permissions").delete().eq("user_id", user_id);
         await adminClient.from("user_roles").delete().eq("user_id", user_id);
-        await adminClient.from("profiles").delete().eq("id", user_id);
+        await adminClient.from("profiles").delete().eq("user_id", user_id);
 
         const { error: delError } = await adminClient.auth.admin.deleteUser(user_id);
         if (delError) throw new Error(`Erro ao remover da Autenticação: ${delError.message}`);
