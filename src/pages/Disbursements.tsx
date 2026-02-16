@@ -170,6 +170,11 @@ export default function Disbursements() {
       .sort((a, b) => a.producer_name.localeCompare(b.producer_name));
   }, [proposals, proposalSearch, getProposalStats]);
 
+  const selectedProp = useMemo(() =>
+    proposals.find(p => p.id === selectedProposal),
+    [proposals, selectedProposal]
+  );
+
 
 
   const selectedDisbursement = selectedId ? disbursements.find((d) => d.id === selectedId) : null;
@@ -197,10 +202,14 @@ export default function Disbursements() {
     }
 
     if (editingId) {
+      // Se estiver iniciando um desembolso pendente, muda status para aprovado
+      const newStatus = formData.status === 'pendente' ? 'aprovado' : formData.status;
+
       await updateDisbursement(editingId, {
         ...formData,
         amount: amount,
         disbursement_type: disbursementType,
+        status: newStatus,
       } as any);
     } else {
       await createDisbursement({
@@ -537,119 +546,145 @@ export default function Disbursements() {
 
       {/* New Disbursement Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto font-sans">
           <DialogHeader>
-            <DialogTitle className="font-heading text-xl">Novo Pedido de Desembolso</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <DollarSign className="h-5 w-5 text-primary" />
+              {editingId
+                ? `Iniciar Desembolso: ${selectedProp?.producer_name || ""}`
+                : "Novo Pedido de Desembolso"}
+            </DialogTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Selecione uma proposta com contrato assinado
+              {!editingId
+                ? "Selecione uma proposta com contrato assinado"
+                : "Confirme os dados bancários e o valor para enviar a solicitação"}
             </p>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {/* Campo de Pesquisa */}
-            <div>
-              <Label>Buscar Proposta por Nome ou CPF</Label>
-              <div className="relative mt-1.5">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Digite o nome ou CPF do produtor..."
-                  value={proposalSearch}
-                  onChange={(e) => setProposalSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-
-            {/* Lista de Propostas */}
-            <div>
-              <Label className="text-xs text-muted-foreground">
-                {signedContractProposals.length} proposta(s) elegível(is) para desembolso
-              </Label>
-              <ScrollArea className="h-64 mt-2 border rounded-md">
-                <div className="p-2 space-y-2">
-                  {signedContractProposals.length === 0 ? (
-                    <div className="text-center text-sm text-muted-foreground py-12">
-                      {proposalSearch
-                        ? "Nenhuma proposta encontrada"
-                        : "Nenhuma proposta com contrato assinado"}
-                    </div>
-                  ) : (
-                    signedContractProposals.map((p) => {
-                      const stats = getProposalStats(p.id, Number(p.requested_value));
-                      const progress = (stats.used / Number(p.requested_value)) * 100;
-
-                      return (
-                        <Card
-                          key={p.id}
-                          className={`cursor-pointer transition-all border-2 ${selectedProposal === p.id
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
-                            }`}
-                          onClick={() => {
-                            setSelectedProposal(p.id);
-                            setDisbursementType('total');
-                            setFormData((f) => ({
-                              ...f,
-                              proposal_id: p.id,
-                              amount: String(stats.remaining),
-                              disbursement_type: 'total',
-                            }));
-                          }}
-                        >
-                          <CardContent className="p-3">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex justify-between items-start">
-                                  <div>
-                                    <p className="font-semibold text-sm">{p.producer_name}</p>
-                                    <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                                      CPF: {p.producer_cpf}
-                                    </p>
-                                  </div>
-                                  {progress > 0 && <Badge variant="outline" className="text-xs text-primary border-primary/30">Desembolso Solicitado {Math.round(progress)}%</Badge>}
-                                </div>
-
-                                <div className="mt-3 space-y-2">
-                                  <div className="flex justify-between text-xs">
-                                    <span className="text-muted-foreground font-medium">Progresso do Desembolso</span>
-                                    <span className="font-bold text-primary">{Math.round(progress)}%</span>
-                                  </div>
-                                  <Progress value={progress} className="h-2.5" />
-                                  <div className="grid grid-cols-3 gap-2 pt-1">
-                                    <div className="bg-blue-50 dark:bg-blue-950/30 rounded-md px-2 py-1.5 text-center">
-                                      <p className="text-[10px] text-muted-foreground">Solicitado</p>
-                                      <p className="text-xs font-bold text-blue-600">{formatCurrency(stats.used)}</p>
-                                    </div>
-                                    <div className="bg-green-50 dark:bg-green-950/30 rounded-md px-2 py-1.5 text-center">
-                                      <p className="text-[10px] text-muted-foreground">Restante</p>
-                                      <p className="text-xs font-bold text-green-600">{formatCurrency(stats.remaining)}</p>
-                                    </div>
-                                    <div className="bg-slate-50 dark:bg-slate-900/30 rounded-md px-2 py-1.5 text-center">
-                                      <p className="text-[10px] text-muted-foreground">Total</p>
-                                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">{formatCurrency(Number(p.requested_value))}</p>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {stats.last && (
-                                  <p className="text-[10px] text-muted-foreground mt-2 border-t pt-1">
-                                    Último: {format(parseISO(stats.last.created_at), "dd/MM/yy")} por {getMemberById(stats.last.requested_by)?.name || "Sistema"}
-                                  </p>
-                                )}
-
-                              </div>
-                              {selectedProposal === p.id && (
-                                <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 ml-3" />
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })
-                  )}
+          <div className="space-y-6 pt-4">
+            {/* Seleção de Proposta ou Resumo (se editando) */}
+            {!editingId ? (
+              <>
+                <div className="space-y-2">
+                  <Label>Buscar Proposta por Nome ou CPF</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Digite o nome ou CPF do produtor..."
+                      value={proposalSearch}
+                      onChange={(e) => setProposalSearch(e.target.value)}
+                      className="pl-9 h-11"
+                    />
+                  </div>
                 </div>
-              </ScrollArea>
-            </div>
+
+                {/* Lista de Propostas */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">
+                    {signedContractProposals.length} proposta(s) elegível(is) para desembolso
+                  </Label>
+                  <ScrollArea className="h-48 border rounded-md">
+                    <div className="p-2 space-y-2">
+                      {signedContractProposals.length === 0 ? (
+                        <div className="text-center text-sm text-muted-foreground py-12">
+                          {proposalSearch
+                            ? "Nenhuma proposta encontrada"
+                            : "Nenhuma proposta com contrato assinado"}
+                        </div>
+                      ) : (
+                        signedContractProposals.map((p) => {
+                          const stats = getProposalStats(p.id, Number(p.requested_value));
+                          const progress = (stats.used / Number(p.requested_value)) * 100;
+
+                          return (
+                            <Card
+                              key={p.id}
+                              className={`cursor-pointer transition-all border-2 ${selectedProposal === p.id
+                                ? 'border-primary bg-primary/5'
+                                : 'border-border hover:border-primary/50'
+                                }`}
+                              onClick={() => {
+                                setSelectedProposal(p.id);
+                                setDisbursementType('total');
+                                setFormData((f) => ({
+                                  ...f,
+                                  proposal_id: p.id,
+                                  amount: String(stats.remaining),
+                                  disbursement_type: 'total',
+                                }));
+                              }}
+                            >
+                              <CardContent className="p-3">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex justify-between items-start">
+                                      <div>
+                                        <p className="font-semibold text-sm">{p.producer_name}</p>
+                                        <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                                          CPF: {p.producer_cpf}
+                                        </p>
+                                      </div>
+                                      {progress > 0 && <Badge variant="outline" className="text-xs text-primary border-primary/30">Desembolso Solicitado {Math.round(progress)}%</Badge>}
+                                    </div>
+                                  </div>
+                                  {selectedProposal === p.id && (
+                                    <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 ml-3" />
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })
+                      )}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </>
+            ) : (
+              selectedProp && (
+                <Card className="bg-muted/30 border-primary/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                        {getInitials(selectedProp.producer_name)}
+                      </div>
+                      <div>
+                        <p className="font-bold text-sm leading-none">{selectedProp.producer_name}</p>
+                        <p className="text-xs text-muted-foreground mt-1 font-mono">CPF: {selectedProp.producer_cpf}</p>
+                      </div>
+                    </div>
+
+                    {(() => {
+                      const stats = getProposalStats(selectedProp.id, Number(selectedProp.requested_value));
+                      const progress = (stats.used / Number(selectedProp.requested_value)) * 100;
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">Progresso do Desembolso</span>
+                            <span className="font-bold">{Math.round(progress)}%</span>
+                          </div>
+                          <Progress value={progress} className="h-2" />
+                          <div className="grid grid-cols-3 gap-2 text-center pt-2">
+                            <div className="bg-background rounded px-2 py-1.5 border">
+                              <p className="text-[10px] text-muted-foreground">Já Pago</p>
+                              <p className="text-xs font-bold font-mono">{formatCurrency(stats.used)}</p>
+                            </div>
+                            <div className="bg-primary/5 rounded px-2 py-1.5 border border-primary/20">
+                              <p className="text-[10px] text-primary/70">Restante</p>
+                              <p className="text-xs font-bold text-primary font-mono">{formatCurrency(stats.remaining)}</p>
+                            </div>
+                            <div className="bg-background rounded px-2 py-1.5 border">
+                              <p className="text-[10px] text-muted-foreground">Original</p>
+                              <p className="text-xs font-bold font-mono">{formatCurrency(Number(selectedProp.requested_value))}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              )
+            )}
 
             {/* Resto do Formulário - Aparece quando proposta selecionada */}
             {selectedProposal && (
@@ -657,8 +692,8 @@ export default function Disbursements() {
                 <Separator />
                 <div className="space-y-4">
                   {/* Tipo de Desembolso */}
-                  <div>
-                    <Label>Tipo de Desembolso *</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Tipo de Desembolso *</Label>
                     <Select
                       value={disbursementType}
                       onValueChange={(v: 'total' | 'parcial') => {
@@ -680,7 +715,7 @@ export default function Disbursements() {
                         }));
                       }}
                     >
-                      <SelectTrigger className="mt-1.5">
+                      <SelectTrigger className="h-11">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -700,9 +735,9 @@ export default function Disbursements() {
                     </Select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Valor do Desembolso *</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Valor do Desembolso *</Label>
                       <Input
                         value={formatCurrencyInput(formData.amount || '0')}
                         onChange={(e) => {
@@ -714,31 +749,31 @@ export default function Disbursements() {
                         }}
                         placeholder="R$ 0,00"
                         disabled={disbursementType === 'total'}
-                        className={disbursementType === 'total' ? 'bg-muted/50 font-medium' : ''}
+                        className={`h-11 font-mono ${disbursementType === 'total' ? 'bg-muted/50 font-bold' : ''}`}
                       />
                       {disbursementType === 'total' && (
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3 text-primary" /> Valor integral automático
+                        <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-primary" /> Valor integral do saldo restante
                         </p>
                       )}
                       {disbursementType === 'parcial' && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Máximo disponível: {formatCurrency(
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          Máximo disponível: <span className="font-bold">{formatCurrency(
                             getProposalStats(
                               selectedProposal!,
-                              Number(signedContractProposals.find(p => p.id === selectedProposal)?.requested_value || 0)
+                              Number(proposals.find(p => p.id === selectedProposal)?.requested_value || 0)
                             ).remaining
-                          )}
+                          )}</span>
                         </p>
                       )}
                     </div>
-                    <div>
-                      <Label>Solicitado por</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Solicitado por</Label>
                       <Select
                         value={formData.requested_by || ""}
                         onValueChange={(v) => setFormData((f) => ({ ...f, requested_by: v || null }))}
                       >
-                        <SelectTrigger><SelectValue placeholder="Membro" /></SelectTrigger>
+                        <SelectTrigger className="h-11"><SelectValue placeholder="Selecione um membro" /></SelectTrigger>
                         <SelectContent>
                           {members.map((m) => (
                             <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
@@ -748,59 +783,65 @@ export default function Disbursements() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Data do Pedido</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Data do Pedido</Label>
                       <Input
                         type="date"
                         value={formData.request_date}
+                        className="h-11"
                         onChange={(e) => setFormData((f) => ({ ...f, request_date: e.target.value }))}
                       />
                     </div>
-                    <div>
-                      <Label>Previsão Liberação</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Previsão de Liberação</Label>
                       <Input
                         type="date"
                         value={formData.expected_date || ""}
+                        className="h-11"
                         onChange={(e) => setFormData((f) => ({ ...f, expected_date: e.target.value || null }))}
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label>Banco</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Banco</Label>
                       <Input
                         value={formData.bank_name}
                         onChange={(e) => setFormData((f) => ({ ...f, bank_name: e.target.value }))}
                         placeholder="Ex: BNB"
+                        className="h-11"
                       />
                     </div>
-                    <div>
-                      <Label>Agência</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Agência</Label>
                       <Input
                         value={formData.agency}
                         onChange={(e) => setFormData((f) => ({ ...f, agency: e.target.value }))}
                         placeholder="0001"
+                        className="h-11"
                       />
                     </div>
-                    <div>
-                      <Label>Conta</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Conta</Label>
                       <Input
                         value={formData.account}
                         onChange={(e) => setFormData((f) => ({ ...f, account: e.target.value }))}
                         placeholder="12345-6"
+                        className="h-11"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <Label>Observações</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Observações</Label>
                     <Textarea
                       value={formData.notes}
                       onChange={(e) => setFormData((f) => ({ ...f, notes: e.target.value }))}
-                      rows={2}
-                      placeholder="Detalhes adicionais..."
+                      placeholder="Alguma observação importante sobre este desembolso?"
+                      className="resize-none"
+                      rows={3}
                     />
                   </div>
                 </div>
@@ -808,15 +849,16 @@ export default function Disbursements() {
             )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }}>
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={() => { setIsDialogOpen(false); resetForm(); }} className="h-11 px-6">
               Cancelar
             </Button>
             <Button
               onClick={handleSave}
               disabled={!selectedProposal || !formData.amount}
+              className="h-11 px-8 font-bold"
             >
-              Criar Pedido
+              {editingId ? "Finalizar Solicitação" : "Criar Pedido"}
             </Button>
           </DialogFooter>
         </DialogContent>
