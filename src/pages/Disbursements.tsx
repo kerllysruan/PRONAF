@@ -213,10 +213,15 @@ export default function Disbursements() {
         status: newStatus,
       } as any);
     } else {
+      // Se já houver desembolsos anteriores, o novo pedido entra automaticamente como 'aprovado' (Solicitado)
+      const existing = disbursements.filter(d => d.proposal_id === formData.proposal_id);
+      const initialStatus = existing.length > 0 ? 'aprovado' : 'pendente';
+
       await createDisbursement({
         ...formData,
         amount: amount,
         disbursement_type: disbursementType,
+        status: initialStatus,
       } as any);
     }
 
@@ -574,60 +579,69 @@ export default function Disbursements() {
                               </Button>
                             )}
 
-                            e.stopPropagation();
-                            resetForm();
-                            const pStats = getProposalStats(proposal.id, Number(proposal.requested_value));
-                            setSelectedProposal(proposal.id);
-                            setIsProposalLocked(true);
+                            {/* Botão Plus para novo desembolso se houver saldo e não for pendente */}
+                            {proposal && d.status !== 'pendente' && getProposalStats(proposal.id, Number(proposal.requested_value)).remaining > 0.05 && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-indigo-600 hover:bg-indigo-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  resetForm();
+                                  const pStats = getProposalStats(proposal.id, Number(proposal.requested_value));
+                                  setSelectedProposal(proposal.id);
+                                  setIsProposalLocked(true);
 
                                   // Auto-fill bank details from last disbursement
                                   const existingDisbursements = disbursements.filter(d => d.proposal_id === proposal.id);
-                            let bankDetails = {bank_name: "", agency: "", account: "" };
+                                  let bankDetails = { bank_name: "", agency: "", account: "" };
                                   if (existingDisbursements.length > 0) {
-                                    const last = existingDisbursements.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-                            bankDetails = {
-                              bank_name: last.bank_name || "",
-                            agency: last.agency || "",
-                            account: last.account || ""
+                                    const existingDisbursementsSorted = [...existingDisbursements].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+                                    const last = existingDisbursementsSorted[0];
+                                    bankDetails = {
+                                      bank_name: last.bank_name || "",
+                                      agency: last.agency || "",
+                                      account: last.account || ""
                                     };
                                   }
 
-                            setDisbursementType('total');
+                                  const hasHistory = existingDisbursements.length > 0;
+                                  setDisbursementType(hasHistory ? 'parcial' : 'total');
                                   setFormData((f) => ({
-                              ...f,
-                              proposal_id: proposal.id,
-                            amount: pStats.remaining.toFixed(2),
-                            disbursement_type: 'total',
-                            ...bankDetails
+                                    ...f,
+                                    proposal_id: proposal.id,
+                                    amount: pStats.remaining.toFixed(2),
+                                    disbursement_type: hasHistory ? 'parcial' : 'total',
+                                    ...bankDetails
                                   }));
-                            setIsDialogOpen(true);
+                                  setIsDialogOpen(true);
                                 }}
-                            title="Solicitar Novo Desembolso"
+                                title="Solicitar Novo Desembolso"
                               >
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                                <Plus className="h-4 w-4" />
+                              </Button>
                             )}
 
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteId(d.id);
-                            setIsDeleteAlertOpen(true);
-                          }}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(d.id);
+                              setIsDeleteAlertOpen(true);
+                            }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
-              );
+                    );
                   })
                 )}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* New Disbursement Dialog */ }
+      {/* New Disbursement Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto font-sans">
           <DialogHeader>
@@ -688,7 +702,7 @@ export default function Disbursements() {
                                 }`}
                               onClick={() => {
                                 setSelectedProposal(p.id);
-                                
+
                                 // Auto-fill bank details
                                 const existingDisbursements = disbursements.filter(d => d.proposal_id === p.id);
                                 let bankDetails = { bank_name: "", agency: "", account: "" };
@@ -701,12 +715,13 @@ export default function Disbursements() {
                                   };
                                 }
 
-                                setDisbursementType('total');
+                                const hasHistory = existingDisbursements.length > 0;
+                                setDisbursementType(hasHistory ? 'parcial' : 'total');
                                 setFormData((f) => ({
                                   ...f,
                                   proposal_id: p.id,
                                   amount: String(stats.remaining),
-                                  disbursement_type: 'total',
+                                  disbursement_type: hasHistory ? 'parcial' : 'total',
                                   ...bankDetails
                                 }));
                               }}
@@ -760,13 +775,13 @@ export default function Disbursements() {
                       return (
                         <div className="space-y-4">
                           <div className="space-y-2">
-                             <div className="flex justify-between text-xs mb-1">
+                            <div className="flex justify-between text-xs mb-1">
                               <span className="text-muted-foreground">Progresso do Desembolso</span>
                               <span className="font-bold">{Math.round(progress)}%</span>
                             </div>
                             <Progress value={progress} className="h-2" />
                           </div>
-                          
+
                           <div className="grid grid-cols-3 gap-2 text-center">
                             <div className="bg-background rounded px-2 py-1.5 border">
                               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Já Solicitado</p>
@@ -810,9 +825,9 @@ export default function Disbursements() {
 
                     {isProposalLocked && !editingId && (
                       <div className="mt-4 flex justify-end">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="text-xs text-muted-foreground hover:text-primary h-7"
                           onClick={() => {
                             setIsProposalLocked(false);
@@ -842,29 +857,30 @@ export default function Disbursements() {
                       onValueChange={(v: 'total' | 'parcial') => {
                         setDisbursementType(v);
                         const selectedProp = signedContractProposals.find(p => p.id === selectedProposal);
-                        let totalValue = 0;
+                        let remaining = 0;
                         if (selectedProp) {
-                          totalValue = Number(selectedProp.requested_value);
+                          const stats = getProposalStats(selectedProp.id, Number(selectedProp.requested_value));
+                          remaining = stats.remaining;
                         }
 
                         setFormData((f) => ({
                           ...f,
                           disbursement_type: v,
-                          // Se total, usa valor TOTAL da proposta
+                          // Se total, usa o SALDO RESTANTE
                           amount: v === 'total'
-                            ? totalValue.toFixed(2)
+                            ? remaining.toFixed(2)
                             : f.amount
                         }));
                       }}
                     >
-                      <SelectTrigger className="h-11">
+                      <SelectTrigger className="h-11" disabled={disbursements.some(d => d.proposal_id === selectedProposal)}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="total">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">Desembolso Total</span>
-                            <span className="text-xs text-muted-foreground">- Valor integral</span>
+                            <span className="text-xs text-muted-foreground">- Saldo restante</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="parcial">
@@ -895,7 +911,7 @@ export default function Disbursements() {
                       />
                       {disbursementType === 'total' && (
                         <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3 text-primary" /> Valor integral da proposta
+                          <CheckCircle2 className="h-3 w-3 text-primary" /> Saldo restante da proposta
                         </p>
                       )}
                       {disbursementType === 'parcial' && (
