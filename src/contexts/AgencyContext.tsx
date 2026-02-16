@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useToast } from "@/hooks/use-toast";
 
 export interface Agency {
     id: string;
@@ -20,6 +21,7 @@ interface AgencyContextType {
 const AgencyContext = createContext<AgencyContextType | undefined>(undefined);
 
 export function AgencyProvider({ children }: { children: ReactNode }) {
+    const { toast } = useToast();
     const { isDeveloper, agencyId: userAgencyId } = useAuth();
     const [agencies, setAgencies] = useState<Agency[]>([]);
     const [selectedAgencyId, setSelectedAgencyId] = useState<string | 'all'>(() => {
@@ -27,10 +29,21 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
     });
 
     const fetchAgencies = useCallback(async () => {
-        const { data } = await (supabase as any)
+        const { data, error } = await supabase
             .from('agencies')
             .select('id, name, code')
             .order('name');
+
+        if (error) {
+            console.error('Error fetching agencies:', error);
+            toast({
+                title: "Erro ao carregar agências",
+                description: error.message,
+                variant: "destructive"
+            });
+            return;
+        }
+
         if (data) setAgencies(data as Agency[]);
     }, []);
 

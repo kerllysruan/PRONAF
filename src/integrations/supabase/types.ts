@@ -14,59 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
+      agencies: {
+        Row: {
+          code: string | null
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       disbursements: {
         Row: {
           account: string | null
           agency: string | null
+          agency_id: string | null
           amount: number
           bank_name: string | null
           created_at: string
           disbursed_date: string | null
+          disbursement_type: string
           expected_date: string | null
           id: string
           notes: string | null
-          proposal_id: string | null
+          proposal_id: string
           request_date: string
           requested_by: string | null
-          status: string
+          status: Database["public"]["Enums"]["disbursement_status"]
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           account?: string | null
           agency?: string | null
-          amount?: number
+          agency_id?: string | null
+          amount: number
           bank_name?: string | null
           created_at?: string
           disbursed_date?: string | null
+          disbursement_type?: string
           expected_date?: string | null
           id?: string
           notes?: string | null
-          proposal_id?: string | null
+          proposal_id: string
           request_date?: string
           requested_by?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["disbursement_status"]
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           account?: string | null
           agency?: string | null
+          agency_id?: string | null
           amount?: number
           bank_name?: string | null
           created_at?: string
           disbursed_date?: string | null
+          disbursement_type?: string
           expected_date?: string | null
           id?: string
           notes?: string | null
-          proposal_id?: string | null
+          proposal_id?: string
           request_date?: string
           requested_by?: string | null
-          status?: string
+          status?: Database["public"]["Enums"]["disbursement_status"]
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "disbursements_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "disbursements_proposal_id_fkey"
             columns: ["proposal_id"]
@@ -74,77 +108,57 @@ export type Database = {
             referencedRelation: "proposals"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "disbursements_requested_by_fkey"
-            columns: ["requested_by"]
-            isOneToOne: false
-            referencedRelation: "team_members"
-            referencedColumns: ["id"]
-          },
         ]
       }
       document_tasks: {
         Row: {
+          agency_id: string | null
           assigned_to: string | null
-          created_at: string
+          created_at: string | null
           description: string | null
           document_name: string | null
           due_date: string | null
           id: string
-          parent_task_id: string | null
-          priority: string
-          progress: number
+          priority: string | null
           proposal_id: string | null
-          status: string
+          status: string | null
           title: string
-          updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          agency_id?: string | null
           assigned_to?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           document_name?: string | null
           due_date?: string | null
           id?: string
-          parent_task_id?: string | null
-          priority?: string
-          progress?: number
+          priority?: string | null
           proposal_id?: string | null
-          status?: string
+          status?: string | null
           title: string
-          updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          agency_id?: string | null
           assigned_to?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           document_name?: string | null
           due_date?: string | null
           id?: string
-          parent_task_id?: string | null
-          priority?: string
-          progress?: number
+          priority?: string | null
           proposal_id?: string | null
-          status?: string
+          status?: string | null
           title?: string
-          updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "document_tasks_assigned_to_fkey"
-            columns: ["assigned_to"]
+            foreignKeyName: "document_tasks_agency_id_fkey"
+            columns: ["agency_id"]
             isOneToOne: false
-            referencedRelation: "team_members"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "document_tasks_parent_task_id_fkey"
-            columns: ["parent_task_id"]
-            isOneToOne: false
-            referencedRelation: "document_tasks"
+            referencedRelation: "agencies"
             referencedColumns: ["id"]
           },
           {
@@ -158,46 +172,75 @@ export type Database = {
       }
       profiles: {
         Row: {
-          created_at: string
+          agency_id: string | null
+          avatar_url: string | null
+          color: string | null
+          cpf: string | null
+          created_at: string | null
           display_name: string | null
+          email: string | null
+          full_name: string | null
           id: string
-          updated_at: string
-          user_id: string
+          phone: string | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
+          agency_id?: string | null
+          avatar_url?: string | null
+          color?: string | null
+          cpf?: string | null
+          created_at?: string | null
           display_name?: string | null
-          id?: string
-          updated_at?: string
-          agency_id: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
+          agency_id?: string | null
+          avatar_url?: string | null
+          color?: string | null
+          cpf?: string | null
+          created_at?: string | null
           display_name?: string | null
+          email?: string | null
+          full_name?: string | null
           id?: string
-          updated_at?: string
-          user_id?: string
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       proposal_documents: {
         Row: {
-          completed: boolean
-          created_at: string
+          completed: boolean | null
+          created_at: string | null
           id: string
           name: string
           proposal_id: string
         }
         Insert: {
-          completed?: boolean
-          created_at?: string
+          completed?: boolean | null
+          created_at?: string | null
           id?: string
           name: string
           proposal_id: string
         }
         Update: {
-          completed?: boolean
-          created_at?: string
+          completed?: boolean | null
+          created_at?: string | null
           id?: string
           name?: string
           proposal_id?: string
@@ -214,178 +257,292 @@ export type Database = {
       }
       proposals: {
         Row: {
-          created_at: string
-          entry_date: string
+          activity_id: string | null
+          activity_start_date: string | null
+          agency_code: string | null
+          agency_id: string | null
+          agency_name: string | null
+          agreement: string | null
+          category: string | null
+          central: string | null
+          central_date: string | null
+          client_size: string | null
+          created_at: string | null
+          created_by: string | null
+          credit_program: string | null
+          credit_purpose: string | null
+          culture: string | null
+          current_state: string | null
+          entry_date: string | null
+          guarantee_type: string | null
           id: string
+          judicial_deadline: string | null
+          last_analyst: string | null
+          microcredit: string | null
           notes: string | null
+          originator: string | null
+          owner: string | null
+          poa_prd_subject: string | null
           producer_address: string | null
           producer_cpf: string
           producer_name: string
           producer_phone: string | null
-          pronaf_line: string
+          project_designer:
+          | Database["public"]["Enums"]["project_designer_enum"]
+          | null
+          pronaf_line: Database["public"]["Enums"]["pronaf_line"] | null
+          proposal_number: string | null
+          registration_start_date: string | null
+          registration_task: string | null
+          renegotiation_type: string | null
+          request_type: string | null
           requested_value: number
-          status: string
-          updated_at: string
-          created_by: string
-          agency_id: string
+          requesting_unit: string | null
+          resource_application: string | null
+          roc_type: string | null
+          sicad: string | null
+          special_treatment: string | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["proposal_status"] | null
+          superintendency_code: string | null
+          superintendency_name: string | null
+          task: string | null
+          technical_summary: string | null
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          entry_date?: string
+          activity_id?: string | null
+          activity_start_date?: string | null
+          agency_code?: string | null
+          agency_id?: string | null
+          agency_name?: string | null
+          agreement?: string | null
+          category?: string | null
+          central?: string | null
+          central_date?: string | null
+          client_size?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          credit_program?: string | null
+          credit_purpose?: string | null
+          culture?: string | null
+          current_state?: string | null
+          entry_date?: string | null
+          guarantee_type?: string | null
           id?: string
+          judicial_deadline?: string | null
+          last_analyst?: string | null
+          microcredit?: string | null
           notes?: string | null
+          originator?: string | null
+          owner?: string | null
+          poa_prd_subject?: string | null
           producer_address?: string | null
           producer_cpf: string
           producer_name: string
           producer_phone?: string | null
-          pronaf_line?: string
+          project_designer?:
+          | Database["public"]["Enums"]["project_designer_enum"]
+          | null
+          pronaf_line?: Database["public"]["Enums"]["pronaf_line"] | null
+          proposal_number?: string | null
+          registration_start_date?: string | null
+          registration_task?: string | null
+          renegotiation_type?: string | null
+          request_type?: string | null
           requested_value?: number
-          status?: string
-          updated_at?: string
-          created_by: string
-          agency_id: string
+          requesting_unit?: string | null
+          resource_application?: string | null
+          roc_type?: string | null
+          sicad?: string | null
+          special_treatment?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"] | null
+          superintendency_code?: string | null
+          superintendency_name?: string | null
+          task?: string | null
+          technical_summary?: string | null
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
-          entry_date?: string
+          activity_id?: string | null
+          activity_start_date?: string | null
+          agency_code?: string | null
+          agency_id?: string | null
+          agency_name?: string | null
+          agreement?: string | null
+          category?: string | null
+          central?: string | null
+          central_date?: string | null
+          client_size?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          credit_program?: string | null
+          credit_purpose?: string | null
+          culture?: string | null
+          current_state?: string | null
+          entry_date?: string | null
+          guarantee_type?: string | null
           id?: string
+          judicial_deadline?: string | null
+          last_analyst?: string | null
+          microcredit?: string | null
           notes?: string | null
+          originator?: string | null
+          owner?: string | null
+          poa_prd_subject?: string | null
           producer_address?: string | null
           producer_cpf?: string
           producer_name?: string
           producer_phone?: string | null
-          pronaf_line?: string
+          project_designer?:
+          | Database["public"]["Enums"]["project_designer_enum"]
+          | null
+          pronaf_line?: Database["public"]["Enums"]["pronaf_line"] | null
+          proposal_number?: string | null
+          registration_start_date?: string | null
+          registration_task?: string | null
+          renegotiation_type?: string | null
+          request_type?: string | null
           requested_value?: number
-          status?: string
-          updated_at?: string
-          created_by?: string
-          agency_id?: string
-        }
-        Relationships: []
-      }
-      task_comments: {
-        Row: {
-          content: string
-          created_at: string
-          id: string
-          member_id: string | null
-          task_id: string
-          user_id: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: string
-          member_id?: string | null
-          task_id: string
-          user_id: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: string
-          member_id?: string | null
-          task_id?: string
-          user_id?: string
+          requesting_unit?: string | null
+          resource_application?: string | null
+          roc_type?: string | null
+          sicad?: string | null
+          special_treatment?: string | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["proposal_status"] | null
+          superintendency_code?: string | null
+          superintendency_name?: string | null
+          task?: string | null
+          technical_summary?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "task_comments_member_id_fkey"
-            columns: ["member_id"]
+            foreignKeyName: "proposals_agency_id_fkey"
+            columns: ["agency_id"]
             isOneToOne: false
-            referencedRelation: "team_members"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "task_comments_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "document_tasks"
+            referencedRelation: "agencies"
             referencedColumns: ["id"]
           },
         ]
       }
       team_members: {
         Row: {
-          color: string
-          created_at: string
+          agency_id: string | null
+          color: string | null
+          created_at: string | null
           id: string
           name: string
           role: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
-          color?: string
-          created_at?: string
+          agency_id?: string | null
+          color?: string | null
+          created_at?: string | null
           id?: string
           name: string
           role: string
-          user_id: string
-          agency_id: string
+          user_id?: string | null
         }
         Update: {
-          color?: string
-          created_at?: string
+          agency_id?: string | null
+          color?: string | null
+          created_at?: string | null
           id?: string
           name?: string
           role?: string
-          user_id?: string
+          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "team_members_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_permissions: {
         Row: {
-          can_approve_proposals: boolean
-          can_create_proposals: boolean
-          can_delete_proposals: boolean
-          can_edit_proposals: boolean
-          can_view_access_control: boolean
-          can_view_dashboard: boolean
-          can_view_documentation: boolean
-          can_view_kanban: boolean
-          can_view_management: boolean
-          can_view_proposals: boolean
-          can_view_visits: boolean
-          created_at: string
+          can_approve_proposals: boolean | null
+          can_create_proposals: boolean | null
+          can_delete_proposals: boolean | null
+          can_edit_proposals: boolean | null
+          can_manage_agencies: boolean | null
+          can_manage_disbursements: boolean | null
+          can_manage_tasks: boolean | null
+          can_manage_users: boolean | null
+          can_manage_visits: boolean | null
+          can_view_access_control: boolean | null
+          can_view_agencies: boolean | null
+          can_view_dashboard: boolean | null
+          can_view_disbursements: boolean | null
+          can_view_documentation: boolean | null
+          can_view_kanban: boolean | null
+          can_view_management: boolean | null
+          can_view_proposals: boolean | null
+          can_view_tasks: boolean | null
+          can_view_visits: boolean | null
+          created_at: string | null
           id: string
-          read_only: boolean
-          updated_at: string
+          read_only: boolean | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          can_approve_proposals?: boolean
-          can_create_proposals?: boolean
-          can_delete_proposals?: boolean
-          can_edit_proposals?: boolean
-          can_view_access_control?: boolean
-          can_view_dashboard?: boolean
-          can_view_documentation?: boolean
-          can_view_kanban?: boolean
-          can_view_management?: boolean
-          can_view_proposals?: boolean
-          can_view_visits?: boolean
-          created_at?: string
+          can_approve_proposals?: boolean | null
+          can_create_proposals?: boolean | null
+          can_delete_proposals?: boolean | null
+          can_edit_proposals?: boolean | null
+          can_manage_agencies?: boolean | null
+          can_manage_disbursements?: boolean | null
+          can_manage_tasks?: boolean | null
+          can_manage_users?: boolean | null
+          can_manage_visits?: boolean | null
+          can_view_access_control?: boolean | null
+          can_view_agencies?: boolean | null
+          can_view_dashboard?: boolean | null
+          can_view_disbursements?: boolean | null
+          can_view_documentation?: boolean | null
+          can_view_kanban?: boolean | null
+          can_view_management?: boolean | null
+          can_view_proposals?: boolean | null
+          can_view_tasks?: boolean | null
+          can_view_visits?: boolean | null
+          created_at?: string | null
           id?: string
-          read_only?: boolean
-          updated_at?: string
+          read_only?: boolean | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          can_approve_proposals?: boolean
-          can_create_proposals?: boolean
-          can_delete_proposals?: boolean
-          can_edit_proposals?: boolean
-          can_view_access_control?: boolean
-          can_view_dashboard?: boolean
-          can_view_documentation?: boolean
-          can_view_kanban?: boolean
-          can_view_management?: boolean
-          can_view_proposals?: boolean
-          can_view_visits?: boolean
-          created_at?: string
+          can_approve_proposals?: boolean | null
+          can_create_proposals?: boolean | null
+          can_delete_proposals?: boolean | null
+          can_edit_proposals?: boolean | null
+          can_manage_agencies?: boolean | null
+          can_manage_disbursements?: boolean | null
+          can_manage_tasks?: boolean | null
+          can_manage_users?: boolean | null
+          can_manage_visits?: boolean | null
+          can_view_access_control?: boolean | null
+          can_view_agencies?: boolean | null
+          can_view_dashboard?: boolean | null
+          can_view_disbursements?: boolean | null
+          can_view_documentation?: boolean | null
+          can_view_kanban?: boolean | null
+          can_view_management?: boolean | null
+          can_view_proposals?: boolean | null
+          can_view_tasks?: boolean | null
+          can_view_visits?: boolean | null
+          created_at?: string | null
           id?: string
-          read_only?: boolean
-          updated_at?: string
+          read_only?: boolean | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -413,42 +570,49 @@ export type Database = {
       }
       visits: {
         Row: {
-          created_at: string
-          date: string
+          agency_id: string | null
+          created_at: string | null
           id: string
-          objective: string
-          producer_name: string
+          producer_name: string | null
           proposal_id: string | null
-          status: string
-          time: string
-          updated_at: string
-          user_id: string
+          report: string | null
+          status: string | null
+          time: string | null
+          visit_date: string
+          visitor_name: string | null
         }
         Insert: {
-          created_at?: string
-          date: string
+          agency_id?: string | null
+          created_at?: string | null
           id?: string
-          objective: string
-          producer_name: string
+          producer_name?: string | null
           proposal_id?: string | null
-          status?: string
-          time?: string
-          updated_at?: string
-          user_id: string
+          report?: string | null
+          status?: string | null
+          time?: string | null
+          visit_date: string
+          visitor_name?: string | null
         }
         Update: {
-          created_at?: string
-          date?: string
+          agency_id?: string | null
+          created_at?: string | null
           id?: string
-          objective?: string
-          producer_name?: string
+          producer_name?: string | null
           proposal_id?: string | null
-          status?: string
-          time?: string
-          updated_at?: string
-          user_id?: string
+          report?: string | null
+          status?: string | null
+          time?: string | null
+          visit_date?: string
+          visitor_name?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "visits_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "visits_proposal_id_fkey"
             columns: ["proposal_id"]
@@ -463,17 +627,46 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      delete_proposal: { Args: { proposal_id: string }; Returns: undefined }
+      get_auth_user_id: { Args: { email_input: string }; Returns: string }
+      get_user_agency: { Args: never; Returns: string }
+      is_admin: { Args: { check_user_id: string }; Returns: boolean }
+      is_developer: { Args: { check_user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "gerente" | "usuario" | "developer"
+      app_role: "admin" | "gerente" | "tecnico" | "usuario" | "developer"
+      disbursement_status: "pendente" | "aprovado" | "liberado" | "negado"
+      project_designer_enum:
+      | "ney_medeiros"
+      | "jairo_santana"
+      | "cledson"
+      | "jailson"
+      pronaf_line:
+      | "custeio"
+      | "investimento"
+      | "mulher"
+      | "jovem"
+      | "eco"
+      | "agroindustria"
+      | "custeio_renovacao"
+      | "pronaf_mais_alimento"
+      | "cartao_bnb"
+      | "pronaf_a_368"
+      | "pronaf_a_669"
+      | "pronaf_jovem"
+      proposal_status:
+      | "nova"
+      | "em_analise"
+      | "documentacao_pendente"
+      | "aprovada"
+      | "negada"
+      | "visita_gerencial"
+      | "avaliacao_risco"
+      | "consideracoes_gerenciais"
+      | "votacao_sinc"
+      | "contrato_liberado"
+      | "desembolso"
+      | "desembolso_solicitado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -601,7 +794,42 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "gerente", "usuario"],
+      app_role: ["admin", "gerente", "tecnico", "usuario", "developer"],
+      disbursement_status: ["pendente", "aprovado", "liberado", "negado"],
+      project_designer_enum: [
+        "ney_medeiros",
+        "jairo_santana",
+        "cledson",
+        "jailson",
+      ],
+      pronaf_line: [
+        "custeio",
+        "investimento",
+        "mulher",
+        "jovem",
+        "eco",
+        "agroindustria",
+        "custeio_renovacao",
+        "pronaf_mais_alimento",
+        "cartao_bnb",
+        "pronaf_a_368",
+        "pronaf_a_669",
+        "pronaf_jovem",
+      ],
+      proposal_status: [
+        "nova",
+        "em_analise",
+        "documentacao_pendente",
+        "aprovada",
+        "negada",
+        "visita_gerencial",
+        "avaliacao_risco",
+        "consideracoes_gerenciais",
+        "votacao_sinc",
+        "contrato_liberado",
+        "desembolso",
+        "desembolso_solicitado",
+      ],
     },
   },
 } as const
