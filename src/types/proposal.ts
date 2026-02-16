@@ -8,6 +8,7 @@ export type ProposalStatus =
   | 'votacao_sinc'
   | 'contrato_liberado'
   | 'desembolso'
+  | 'desembolso_solicitado'
   | 'aprovada' | 'negada'; // Kept for backward compatibility
 
 export type PronafLine =
@@ -80,6 +81,7 @@ export const STATUS_LABELS: Record<ProposalStatus, string> = {
   votacao_sinc: 'Votação Sinc',
   contrato_liberado: 'Contrato Liberado',
   desembolso: 'Desembolso',
+  desembolso_solicitado: 'Desembolso Solicitado',
   // Legacy
   aprovada: 'Contrato Assinado',
   negada: 'Negada',
@@ -106,6 +108,8 @@ export const STATUS_COLORS: Record<ProposalStatus, string> = {
   contrato_liberado: 'bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-medium dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/60',
 
   desembolso: 'bg-teal-50 text-teal-700 border border-teal-200/60 font-medium dark:bg-teal-950/30 dark:text-teal-400 dark:border-teal-800/60',
+
+  desembolso_solicitado: 'bg-indigo-50 text-indigo-700 border border-indigo-200/60 font-medium dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-800/60',
 
   // Legacy
   aprovada: 'bg-green-50 text-green-700 border border-green-200/60 font-medium dark:bg-green-950/30 dark:text-green-400 dark:border-green-800/60',

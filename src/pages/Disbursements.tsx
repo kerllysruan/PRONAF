@@ -217,11 +217,14 @@ export default function Disbursements() {
         amount: amount,
         disbursement_type: disbursementType,
       } as any);
+    }
 
-      // Automação: Mudar status da proposta para 'desembolso' se ainda não estiver
-      if (selectedProp && selectedProp.status !== 'desembolso' && selectedProp.status !== 'contrato_liberado' && selectedProp.status !== 'liberado' && selectedProp.status !== 'concluida') {
-        await updateProposal(selectedProp.id, { status: 'desembolso' });
-      }
+    // Automação: Mudar status da proposta para 'desembolso_solicitado' se ainda não estiver em um estágio avançado
+    if (selectedProp &&
+      selectedProp.status !== 'desembolso_solicitado' &&
+      selectedProp.status !== 'liberado' &&
+      selectedProp.status !== 'concluida') {
+      await updateProposal(selectedProp.id, { status: 'desembolso_solicitado' } as any);
     }
 
     setIsDialogOpen(false);
