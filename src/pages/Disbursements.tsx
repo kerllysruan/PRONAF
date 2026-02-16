@@ -232,8 +232,8 @@ export default function Disbursements() {
     setFormData({
       proposal_id: null, requested_by: null, amount: "", status: "pendente",
       disbursement_type: "total",
-      request_date: new Date().toISOString().split("T")[0], expected_date: null,
-      disbursed_date: null, bank_name: "", agency: "", account: "", notes: "",
+      request_date: new Date().toISOString().split("T")[0],
+      disbursed_date: null, notes: "",
     });
     setProposalSearch("");
     setSelectedProposal(null);
@@ -255,11 +255,7 @@ export default function Disbursements() {
       disbursement_type: d.disbursement_type,
       status: d.status,
       request_date: d.request_date.split("T")[0],
-      expected_date: d.expected_date ? d.expected_date.split("T")[0] : null,
       disbursed_date: d.disbursed_date ? d.disbursed_date.split("T")[0] : null,
-      bank_name: d.bank_name || "",
-      agency: d.agency || "",
-      account: d.account || "",
       notes: d.notes || "",
     });
     setIsDialogOpen(true);
@@ -699,18 +695,17 @@ export default function Disbursements() {
                       onValueChange={(v: 'total' | 'parcial') => {
                         setDisbursementType(v);
                         const selectedProp = signedContractProposals.find(p => p.id === selectedProposal);
-                        let remaining = 0;
+                        let totalValue = 0;
                         if (selectedProp) {
-                          const stats = getProposalStats(selectedProp.id, Number(selectedProp.requested_value));
-                          remaining = stats.remaining;
+                          totalValue = Number(selectedProp.requested_value);
                         }
 
                         setFormData((f) => ({
                           ...f,
                           disbursement_type: v,
-                          // Se total, usa valor RESTANTE da proposta
+                          // Se total, usa valor TOTAL da proposta
                           amount: v === 'total'
-                            ? String(remaining)
+                            ? String(totalValue)
                             : f.amount
                         }));
                       }}
@@ -721,8 +716,8 @@ export default function Disbursements() {
                       <SelectContent>
                         <SelectItem value="total">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">Desembolso Total (Restante)</span>
-                            <span className="text-xs text-muted-foreground">- Quitar saldo</span>
+                            <span className="font-medium">Desembolso Total</span>
+                            <span className="text-xs text-muted-foreground">- Valor integral</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="parcial">
@@ -753,7 +748,7 @@ export default function Disbursements() {
                       />
                       {disbursementType === 'total' && (
                         <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3 text-primary" /> Valor integral do saldo restante
+                          <CheckCircle2 className="h-3 w-3 text-primary" /> Valor integral da proposta
                         </p>
                       )}
                       {disbursementType === 'parcial' && (
@@ -783,55 +778,14 @@ export default function Disbursements() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Data do Pedido</Label>
-                      <Input
-                        type="date"
-                        value={formData.request_date}
-                        className="h-11"
-                        onChange={(e) => setFormData((f) => ({ ...f, request_date: e.target.value }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Previsão de Liberação</Label>
-                      <Input
-                        type="date"
-                        value={formData.expected_date || ""}
-                        className="h-11"
-                        onChange={(e) => setFormData((f) => ({ ...f, expected_date: e.target.value || null }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Banco</Label>
-                      <Input
-                        value={formData.bank_name}
-                        onChange={(e) => setFormData((f) => ({ ...f, bank_name: e.target.value }))}
-                        placeholder="Ex: BNB"
-                        className="h-11"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Agência</Label>
-                      <Input
-                        value={formData.agency}
-                        onChange={(e) => setFormData((f) => ({ ...f, agency: e.target.value }))}
-                        placeholder="0001"
-                        className="h-11"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Conta</Label>
-                      <Input
-                        value={formData.account}
-                        onChange={(e) => setFormData((f) => ({ ...f, account: e.target.value }))}
-                        placeholder="12345-6"
-                        className="h-11"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold">Data do Pedido</Label>
+                    <Input
+                      type="date"
+                      value={formData.request_date}
+                      className="h-11"
+                      onChange={(e) => setFormData((f) => ({ ...f, request_date: e.target.value }))}
+                    />
                   </div>
 
                   <div className="space-y-2">
