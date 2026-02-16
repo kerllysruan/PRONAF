@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import {
   Plus, DollarSign, Loader2, Trash2, Eye, ArrowUpRight,
-  CheckCircle2, Clock, XCircle, FileText, Filter, Search,
+  CheckCircle2, Clock, XCircle, FileText, Filter, Search, Play,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,7 @@ export default function Disbursements() {
   const { toast } = useToast();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [disbursementType, setDisbursementType] = useState<'total' | 'parcial'>('total');
 
@@ -195,15 +196,23 @@ export default function Disbursements() {
       }
     }
 
-    await createDisbursement({
-      ...formData,
-      amount: amount,
-      disbursement_type: disbursementType,
-    } as any);
+    if (editingId) {
+      await updateDisbursement(editingId, {
+        ...formData,
+        amount: amount,
+        disbursement_type: disbursementType,
+      } as any);
+    } else {
+      await createDisbursement({
+        ...formData,
+        amount: amount,
+        disbursement_type: disbursementType,
+      } as any);
 
-    // Automação: Mudar status da proposta para 'desembolso' se ainda não estiver
-    if (selectedProp && selectedProp.status !== 'desembolso' && selectedProp.status !== 'contrato_liberado' && selectedProp.status !== 'liberado' && selectedProp.status !== 'concluida') {
-      await updateProposal(selectedProp.id, { status: 'desembolso' });
+      // Automação: Mudar status da proposta para 'desembolso' se ainda não estiver
+      if (selectedProp && selectedProp.status !== 'desembolso' && selectedProp.status !== 'contrato_liberado' && selectedProp.status !== 'liberado' && selectedProp.status !== 'concluida') {
+        await updateProposal(selectedProp.id, { status: 'desembolso' });
+      }
     }
 
     setIsDialogOpen(false);
@@ -220,6 +229,31 @@ export default function Disbursements() {
     setProposalSearch("");
     setSelectedProposal(null);
     setDisbursementType('total');
+    setEditingId(null);
+  };
+
+  const openEdit = (d: any) => {
+    const proposal = proposals.find(p => p.id === d.proposal_id);
+    if (!proposal) return;
+
+    setEditingId(d.id);
+    setSelectedProposal(d.proposal_id);
+    setDisbursementType(d.disbursement_type as 'total' | 'parcial');
+    setFormData({
+      proposal_id: d.proposal_id,
+      requested_by: d.requested_by,
+      amount: String(d.amount),
+      disbursement_type: d.disbursement_type,
+      status: d.status,
+      request_date: d.request_date.split("T")[0],
+      expected_date: d.expected_date ? d.expected_date.split("T")[0] : null,
+      disbursed_date: d.disbursed_date ? d.disbursed_date.split("T")[0] : null,
+      bank_name: d.bank_name || "",
+      agency: d.agency || "",
+      account: d.account || "",
+      notes: d.notes || "",
+    });
+    setIsDialogOpen(true);
   };
 
   if (loadingD || loadingP || loadingM) {
@@ -467,9 +501,21 @@ export default function Disbursements() {
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setSelectedId(d.id); }}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
+                            {d.status === 'pendente' ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-primary hover:bg-primary/10"
+                                onClick={(e) => { e.stopPropagation(); openEdit(d); }}
+                                title="Iniciar Desembolso"
+                              >
+                                <Play className="h-4 w-4 fill-current" />
+                              </Button>
+                            ) : (
+                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setSelectedId(d.id); }}>
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={(e) => {
                               e.stopPropagation();
                               setDeleteId(d.id);
