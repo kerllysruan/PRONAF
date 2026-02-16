@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAgency } from "@/contexts/AgencyContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Plus, Building2, Users, ArrowRightLeft, Loader2, Trash2 } from "lucide-react";
 import {
     AlertDialog,
@@ -54,6 +55,7 @@ interface UserProfile {
 
 export default function AdminAgencies() {
     const { agencies, refreshAgencies } = useAgency();
+    const { permissions } = usePermissions();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -187,9 +189,11 @@ export default function AdminAgencies() {
                         Administração de agências e usuários vinculados
                     </p>
                 </div>
-                <Button onClick={() => setIsCreateOpen(true)} className="gap-2 shadow-md shadow-primary/20">
-                    <Plus className="h-4 w-4" /> Nova Agência
-                </Button>
+                {permissions.can_manage_agencies && (
+                    <Button onClick={() => setIsCreateOpen(true)} className="gap-2 shadow-md shadow-primary/20">
+                        <Plus className="h-4 w-4" /> Nova Agência
+                    </Button>
+                )}
             </div>
 
             {/* Stats */}
@@ -253,7 +257,7 @@ export default function AdminAgencies() {
                                         <TableCell className="font-medium">{user.full_name || "Sem nome"}</TableCell>
                                         <TableCell>{user.email || "-"}</TableCell>
                                         <TableCell className="text-right">
-                                            <Button variant="outline" size="sm" className="gap-1" onClick={() => openMoveDialog(user)}>
+                                            <Button variant="outline" size="sm" className="gap-1" onClick={() => openMoveDialog(user)} disabled={!permissions.can_manage_agencies}>
                                                 <ArrowRightLeft className="h-3 w-3" /> Atribuir
                                             </Button>
                                         </TableCell>
@@ -283,17 +287,19 @@ export default function AdminAgencies() {
                                             {agencyUsers.length} usuário{agencyUsers.length !== 1 ? "s" : ""}
                                         </Badge>
                                     </CardTitle>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => {
-                                            setAgencyToDelete(agency);
-                                            setIsDeleteOpen(true);
-                                        }}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    {permissions.can_manage_agencies && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => {
+                                                setAgencyToDelete(agency);
+                                                setIsDeleteOpen(true);
+                                            }}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             </CardHeader>
                             <CardContent className="p-0">
@@ -313,7 +319,7 @@ export default function AdminAgencies() {
                                                 <TableCell>{user.email || "-"}</TableCell>
                                                 <TableCell>{user.cpf || "-"}</TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => openMoveDialog(user)}>
+                                                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => openMoveDialog(user)} disabled={!permissions.can_manage_agencies}>
                                                         <ArrowRightLeft className="h-3 w-3" /> Mover
                                                     </Button>
                                                 </TableCell>

@@ -12,6 +12,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { useProposals, DbDocument } from "@/hooks/useProposals";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   STATUS_LABELS, PRONAF_LINE_LABELS, STATUS_COLORS,
   type ProposalStatus, type PronafLine,
@@ -23,6 +24,7 @@ import {
 
 export default function Documentation() {
   const { proposals, loading, toggleDocument } = useProposals();
+  const { permissions } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [docFilter, setDocFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -133,16 +135,16 @@ export default function Documentation() {
                   return (
                     <div
                       key={doc.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-150 ${
-                        isCompleted
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-150 ${isCompleted
                           ? "bg-success/5 border-success/20"
                           : "bg-destructive/5 border-destructive/20"
-                      }`}
+                        }`}
                     >
                       <Checkbox
                         checked={isCompleted}
                         onCheckedChange={(checked) => handleToggle(doc.id, !!checked)}
                         id={doc.id}
+                        disabled={!permissions.can_edit_proposals}
                       />
                       <label
                         htmlFor={doc.id}

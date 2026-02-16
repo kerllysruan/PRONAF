@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { useProposals } from "@/hooks/useProposals";
 import { useVisits } from "@/hooks/useVisits";
 import { useTeam } from "@/hooks/useTeam";
+import { usePermissions } from "@/hooks/usePermissions";
 import { STATUS_LABELS } from "@/types/proposal";
 import {
   Settings, Users, BarChart3, Plus, Trash2, FileText, CalendarDays, TrendingUp, UserPlus, Bell, Loader2,
@@ -27,6 +28,7 @@ export default function Management() {
   const { proposals, loading: lp } = useProposals();
   const { visits, loading: lv } = useVisits();
   const { members, loading: lt, addMember, removeMember } = useTeam();
+  const { permissions } = usePermissions();
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [newMember, setNewMember] = useState({ name: "", role: "" });
 
@@ -57,8 +59,8 @@ export default function Management() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview" className="gap-2"><BarChart3 className="h-4 w-4" /><span className="hidden sm:inline">Visão Geral</span></TabsTrigger>
-          <TabsTrigger value="team" className="gap-2"><Users className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span></TabsTrigger>
-          <TabsTrigger value="settings" className="gap-2"><Settings className="h-4 w-4" /><span className="hidden sm:inline">Config</span></TabsTrigger>
+          <TabsTrigger value="team" className="gap-2" disabled={!permissions.can_manage_users}><Users className="h-4 w-4" /><span className="hidden sm:inline">Equipe</span></TabsTrigger>
+          <TabsTrigger value="settings" className="gap-2" disabled={!permissions.can_manage_users}><Settings className="h-4 w-4" /><span className="hidden sm:inline">Config</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -100,28 +102,30 @@ export default function Management() {
         <TabsContent value="team" className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-heading font-semibold">Membros da Equipe</h2>
-            <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="gap-2"><UserPlus className="h-4 w-4" /> Adicionar</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle className="font-heading">Novo Membro</DialogTitle></DialogHeader>
-                <div className="space-y-4 mt-2">
-                  <div><Label>Nome</Label><Input value={newMember.name} onChange={(e) => setNewMember((p) => ({ ...p, name: e.target.value }))} placeholder="Nome completo" /></div>
-                  <div><Label>Cargo</Label>
-                    <Select value={newMember.role} onValueChange={(v) => setNewMember((p) => ({ ...p, role: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Selecionar cargo" /></SelectTrigger>
-                      <SelectContent>
-                        {["Gerente", "Analista", "Técnico", "Assistente", "Estagiário"].map((r) => (
-                          <SelectItem key={r} value={r}>{r}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+            {permissions.can_manage_users && (
+              <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="gap-2"><UserPlus className="h-4 w-4" /> Adicionar</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle className="font-heading">Novo Membro</DialogTitle></DialogHeader>
+                  <div className="space-y-4 mt-2">
+                    <div><Label>Nome</Label><Input value={newMember.name} onChange={(e) => setNewMember((p) => ({ ...p, name: e.target.value }))} placeholder="Nome completo" /></div>
+                    <div><Label>Cargo</Label>
+                      <Select value={newMember.role} onValueChange={(v) => setNewMember((p) => ({ ...p, role: v }))}>
+                        <SelectTrigger><SelectValue placeholder="Selecionar cargo" /></SelectTrigger>
+                        <SelectContent>
+                          {["Gerente", "Analista", "Técnico", "Assistente", "Estagiário"].map((r) => (
+                            <SelectItem key={r} value={r}>{r}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button onClick={handleAddMember} disabled={!newMember.name || !newMember.role} className="w-full">Adicionar Membro</Button>
                   </div>
-                  <Button onClick={handleAddMember} disabled={!newMember.name || !newMember.role} className="w-full">Adicionar Membro</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -144,9 +148,11 @@ export default function Management() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-[10px]">{member.role}</Badge>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => removeMember(member.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {permissions.can_manage_users && (
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => removeMember(member.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -169,7 +175,7 @@ export default function Management() {
                     <p className="text-sm font-medium">{item.label}</p>
                     <p className="text-xs text-muted-foreground">{item.desc}</p>
                   </div>
-                  <Switch />
+                  <Switch disabled={!permissions.can_manage_users} />
                 </div>
               ))}
             </CardContent>
