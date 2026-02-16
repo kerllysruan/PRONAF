@@ -337,11 +337,7 @@ export default function Disbursements() {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div><p className="text-xs text-muted-foreground">Banco</p><p className="text-sm font-medium">{selectedDisbursement.bank_name || "—"}</p></div>
-              <div><p className="text-xs text-muted-foreground">Agência</p><p className="text-sm font-medium">{selectedDisbursement.agency || "—"}</p></div>
-              <div><p className="text-xs text-muted-foreground">Conta</p><p className="text-sm font-medium">{selectedDisbursement.account || "—"}</p></div>
-            </div>
+
             {selectedDisbursement.notes && (
               <div><p className="text-xs text-muted-foreground">Observações</p><p className="text-sm mt-1">{selectedDisbursement.notes}</p></div>
             )}
@@ -592,19 +588,7 @@ export default function Disbursements() {
                                   setSelectedProposal(proposal.id);
                                   setIsProposalLocked(true);
 
-                                  // Auto-fill bank details from last disbursement
                                   const existingDisbursements = disbursements.filter(d => d.proposal_id === proposal.id);
-                                  let bankDetails = { bank_name: "", agency: "", account: "" };
-                                  if (existingDisbursements.length > 0) {
-                                    const existingDisbursementsSorted = [...existingDisbursements].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-                                    const last = existingDisbursementsSorted[0];
-                                    bankDetails = {
-                                      bank_name: last.bank_name || "",
-                                      agency: last.agency || "",
-                                      account: last.account || ""
-                                    };
-                                  }
-
                                   const hasHistory = existingDisbursements.length > 0;
                                   setDisbursementType(hasHistory ? 'parcial' : 'total');
                                   setFormData((f) => ({
@@ -612,7 +596,9 @@ export default function Disbursements() {
                                     proposal_id: proposal.id,
                                     amount: pStats.remaining.toFixed(2),
                                     disbursement_type: hasHistory ? 'parcial' : 'total',
-                                    ...bankDetails
+                                    bank_name: "",
+                                    agency: "",
+                                    account: ""
                                   }));
                                   setIsDialogOpen(true);
                                 }}
@@ -703,17 +689,8 @@ export default function Disbursements() {
                               onClick={() => {
                                 setSelectedProposal(p.id);
 
-                                // Auto-fill bank details
+                                // Auto-fill bank details removed
                                 const existingDisbursements = disbursements.filter(d => d.proposal_id === p.id);
-                                let bankDetails = { bank_name: "", agency: "", account: "" };
-                                if (existingDisbursements.length > 0) {
-                                  const last = existingDisbursements.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
-                                  bankDetails = {
-                                    bank_name: last.bank_name || "",
-                                    agency: last.agency || "",
-                                    account: last.account || ""
-                                  };
-                                }
 
                                 const hasHistory = existingDisbursements.length > 0;
                                 setDisbursementType(hasHistory ? 'parcial' : 'total');
@@ -722,7 +699,7 @@ export default function Disbursements() {
                                   proposal_id: p.id,
                                   amount: String(stats.remaining),
                                   disbursement_type: hasHistory ? 'parcial' : 'total',
-                                  ...bankDetails
+                                  // ...bankDetails removed
                                 }));
                               }}
                             >
@@ -941,35 +918,9 @@ export default function Disbursements() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Banco</Label>
-                      <Input
-                        value={formData.bank_name}
-                        onChange={(e) => setFormData((f) => ({ ...f, bank_name: e.target.value }))}
-                        placeholder="Nome do Banco"
-                        className="h-11"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Agência</Label>
-                      <Input
-                        value={formData.agency}
-                        onChange={(e) => setFormData((f) => ({ ...f, agency: e.target.value }))}
-                        placeholder="0000-0"
-                        className="h-11"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Conta</Label>
-                      <Input
-                        value={formData.account}
-                        onChange={(e) => setFormData((f) => ({ ...f, account: e.target.value }))}
-                        placeholder="00000-0"
-                        className="h-11"
-                      />
-                    </div>
-                  </div>
+
+
+                  {/* Bank fields removed */}
 
                   <div className="space-y-2">
                     <Label className="text-sm font-semibold">Data do Pedido</Label>
