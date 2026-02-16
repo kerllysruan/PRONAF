@@ -113,8 +113,8 @@ export function useProposals() {
       setProposals((prev) =>
         prev.map((p) => (p.id === id ? { ...p, ...data } : p))
       );
-      // Optional: fetch fresh data silently to ensure consistency
-      // await fetchProposals(true); 
+      // Ensure real-time consistency across files that may depend on this (like Disbursements)
+      await fetchProposals(true);
     }
   };
 

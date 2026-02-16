@@ -483,12 +483,14 @@ export default function Disbursements() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Produtor</TableHead>
-                  <TableHead>Valor</TableHead>
+                  <TableHead className="hidden sm:table-cell">Vlr Proposta</TableHead>
+                  <TableHead className="hidden md:table-cell text-indigo-600">Acumulado</TableHead>
+                  <TableHead>Pedido Atual</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden md:table-cell">Projetista</TableHead>
                   <TableHead className="hidden lg:table-cell w-32">Progresso</TableHead>
-                  <TableHead className="hidden md:table-cell">Data Pedido</TableHead>
-                  <TableHead className="w-24">Ações</TableHead>
+                  <TableHead className="hidden md:table-cell">Data</TableHead>
+                  <TableHead className="w-24 text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -505,12 +507,18 @@ export default function Disbursements() {
                     return (
                       <TableRow key={d.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => setSelectedId(d.id)}>
                         <TableCell>
-                          <p className="font-medium text-sm">{proposal?.producer_name || "—"}</p>
-                          <p className="text-xs text-muted-foreground">{proposal?.producer_cpf || ""}</p>
+                          <p className="font-semibold text-sm leading-tight">{proposal?.producer_name || "—"}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono">{proposal?.producer_cpf || ""}</p>
                         </TableCell>
-                        <TableCell className="font-semibold text-sm">{formatCurrency(Number(d.amount))}</TableCell>
+                        <TableCell className="hidden sm:table-cell font-medium text-xs text-muted-foreground italic">
+                          {formatCurrency(Number(proposal?.requested_value || 0))}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell font-bold text-xs text-indigo-600">
+                          {formatCurrency(getProposalStats(d.proposal_id || "", Number(proposal?.requested_value || 0)).used)}
+                        </TableCell>
+                        <TableCell className="font-bold text-sm text-primary">{formatCurrency(Number(d.amount))}</TableCell>
                         <TableCell>
-                          <Badge className={`${DISBURSEMENT_STATUS_COLORS[d.status as DisbursementStatus]} text-xs`}>
+                          <Badge className={`${DISBURSEMENT_STATUS_COLORS[d.status as DisbursementStatus]} text-[10px] h-5 px-1.5`}>
                             {DISBURSEMENT_STATUS_LABELS[d.status as DisbursementStatus]}
                           </Badge>
                         </TableCell>
@@ -527,21 +535,27 @@ export default function Disbursements() {
                         <TableCell className="hidden lg:table-cell">
                           {proposal && d.status !== 'pendente' && (
                             <div className="w-full max-w-[120px]">
-                              <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                                <span>{Math.round((getProposalStats(proposal.id, Number(proposal.requested_value)).used / Number(proposal.requested_value)) * 100)}%</span>
-                              </div>
-                              <Progress value={(getProposalStats(proposal.id, Number(proposal.requested_value)).used / Number(proposal.requested_value)) * 100} className="h-1.5" />
+                              {Number(proposal.requested_value) > 0 ? (
+                                <>
+                                  <div className="flex justify-between text-[10px] text-muted-foreground mb-1 font-medium">
+                                    <span>{Math.min(100, Math.round((getProposalStats(proposal.id, Number(proposal.requested_value)).used / Number(proposal.requested_value)) * 100))}%</span>
+                                  </div>
+                                  <Progress value={Math.min(100, (getProposalStats(proposal.id, Number(proposal.requested_value)).used / Number(proposal.requested_value)) * 100)} className="h-1.5" />
+                                </>
+                              ) : (
+                                <span className="text-[10px] text-destructive italic">Valor não definido</span>
+                              )}
                             </div>
                           )}
                           {d.status === 'pendente' && (
                             <span className="text-xs text-muted-foreground/50 italic">Não iniciado</span>
                           )}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-sm">
-                          {format(parseISO(d.request_date), "dd/MM/yyyy")}
+                        <TableCell className="hidden md:table-cell text-[11px] font-mono">
+                          {format(parseISO(d.request_date), "dd/MM/yy")}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
                             {d.status === 'pendente' ? (
                               <Button
                                 variant="ghost"
