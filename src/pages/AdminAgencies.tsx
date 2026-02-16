@@ -53,7 +53,7 @@ interface UserProfile {
 }
 
 export default function AdminAgencies() {
-    const { agencies } = useAgency();
+    const { agencies, refreshAgencies } = useAgency();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -109,6 +109,7 @@ export default function AdminAgencies() {
             setNewAgencyName("");
             setNewAgencyCode("");
             setIsCreateOpen(false);
+            refreshAgencies();
             fetchData();
         }
         setSaving(false);
@@ -150,6 +151,7 @@ export default function AdminAgencies() {
             toast({ title: "Sucesso", description: `Agência "${agencyToDelete.name}" excluída com sucesso!` });
             setIsDeleteOpen(false);
             setAgencyToDelete(null);
+            refreshAgencies();
             fetchData();
         }
         setSaving(false);
