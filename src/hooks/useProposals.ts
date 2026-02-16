@@ -6,7 +6,7 @@ import { REQUIRED_DOCUMENTS } from "@/types/proposal";
 
 export interface DbProposal {
   id: string;
-  user_id: string;
+  created_by: string;
   producer_name: string;
   producer_cpf: string;
   producer_address: string;
@@ -79,7 +79,7 @@ export function useProposals() {
     };
   }, [fetchProposals]);
 
-  const createProposal = async (data: Omit<DbProposal, "id" | "user_id" | "created_at" | "updated_at" | "agency_id">) => {
+  const createProposal = async (data: Omit<DbProposal, "id" | "created_by" | "created_at" | "updated_at" | "agency_id">) => {
     if (!user) return;
     if (!agencyId) {
       toast({ title: "Erro", description: "Agência não encontrada para o usuário.", variant: "destructive" });
@@ -88,7 +88,7 @@ export function useProposals() {
 
     const { data: newProposal, error } = await supabase
       .from("proposals")
-      .insert({ ...data, user_id: user.id, agency_id: agencyId })
+      .insert({ ...data, created_by: user.id, agency_id: agencyId })
       .select()
       .single();
 
