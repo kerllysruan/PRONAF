@@ -18,7 +18,7 @@ import {
   Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle,
   CheckCircle2, UserPlus, ShieldCheck, ShieldAlert,
   Eye, Edit3, Settings2, Fingerprint, DollarSign, Search,
-  KeyRound, UserCog, ChevronRight, Activity, Building2, CheckSquare
+  KeyRound, UserCog, ChevronRight, Activity, Building2, CheckSquare, Code2
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -38,7 +38,7 @@ interface User {
 }
 
 
-type UserRole = "usuario" | "gerente" | "admin";
+type UserRole = "usuario" | "gerente" | "admin" | "developer";
 
 interface UserPermission {
   [key: string]: string | boolean | undefined;
@@ -183,6 +183,10 @@ function AccessControl() {
   };
 
   const handleUpdateRole = async (userId: string, role: UserRole) => {
+    // Optimistic update
+    const previousUsers = [...users];
+    setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
+
     try {
       const { data, error } = await supabase.functions.invoke('admin-users', {
         body: { action: 'update_role', user_id: userId, role }
@@ -190,30 +194,43 @@ function AccessControl() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "Cargo atualizado", description: `Definido como ${role}.` });
-      await fetchUsers(true);
     } catch (err: any) {
+      setUsers(previousUsers); // Rollback
       toast({ title: "Erro", description: err.message, variant: "destructive" });
+      await fetchUsers(true);
     }
   };
 
   const handleUpdateAgency = async (userId: string, agencyId: string) => {
+    // Optimistic update
+    const previousUsers = [...users];
+    setUsers(users.map(u => u.id === userId ? { ...u, agency_id: agencyId || undefined } : u));
+
     try {
       const { data, error } = await supabase.functions.invoke('admin-users', {
-        body: { action: 'update_agency', user_id: userId, agency_id: agencyId }
+        body: { action: 'update_agency', user_id: userId, agency_id: agencyId || null }
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "Agência atualizada", description: "Usuário vinculado à nova agência." });
-      await fetchUsers(true);
     } catch (err: any) {
+      setUsers(previousUsers); // Rollback
       toast({ title: "Erro", description: err.message, variant: "destructive" });
+      await fetchUsers(true);
     }
   };
 
   const handleSavePermissions = async () => {
     if (!selectedUser) return;
+    setSaving(true);
+
+    // Optimistic update
+    const previousPerms = new Map(permissions);
+    const newPermsMap = new Map(permissions);
+    newPermsMap.set(selectedUser.id, editPerms);
+    setPermissions(newPermsMap);
+
     try {
-      setSaving(true);
       const { user_id, id, created_at, updated_at, ...permissionsData } = editPerms as any;
       const { data, error } = await supabase.functions.invoke('admin-users', {
         body: { action: 'update_permissions', user_id: selectedUser.id, permissions: permissionsData }
@@ -222,8 +239,8 @@ function AccessControl() {
       if (data?.error) throw new Error(data.error);
       toast({ title: "Permissões salvas", description: "Alterações aplicadas com sucesso." });
       setIsPermOpen(false);
-      await fetchUsers(true);
     } catch (err: any) {
+      setPermissions(previousPerms); // Rollback
       toast({ title: "Erro", description: err.message || "Erro ao salvar", variant: "destructive" });
     } finally { setSaving(false); }
   };
@@ -271,6 +288,7 @@ function AccessControl() {
     switch (role) {
       case "admin": return { label: "Admin", color: "bg-rose-500/10 text-rose-600 border-rose-200", dot: "bg-rose-500", icon: ShieldAlert };
       case "gerente": return { label: "Gerente", color: "bg-amber-500/10 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: ShieldCheck };
+      case "developer": return { label: "Dev", color: "bg-indigo-500/10 text-indigo-700 border-indigo-200", dot: "bg-indigo-500", icon: Code2 };
       default: return { label: "Usuário", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400", icon: Fingerprint };
     }
   };
@@ -286,7 +304,7 @@ function AccessControl() {
 
   const stats = {
     total: users.length,
-    admins: users.filter(u => u.role === "admin").length,
+    admins: users.filter(u => u.role === "admin" || u.role === "developer").length,
     gerentes: users.filter(u => u.role === "gerente").length,
     usuarios: users.filter(u => u.role === "usuario").length,
   };
@@ -464,6 +482,7 @@ function AccessControl() {
                           <SelectItem value="usuario">Usuário</SelectItem>
                           <SelectItem value="gerente">Gerente</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="developer">Dev</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -579,6 +598,7 @@ function AccessControl() {
                   <SelectItem value="usuario">Usuário</SelectItem>
                   <SelectItem value="gerente">Gerente</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="developer">Desenvolvedor</SelectItem>
                 </SelectContent>
               </Select>
             </div>
