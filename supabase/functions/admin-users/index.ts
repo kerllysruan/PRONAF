@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
 
     switch (action) {
       case "create": {
-        const { email, password, display_name, role } = payload;
+        const { email, password, display_name, role, agency_id } = payload;
         const { data: authUser, error: createError } = await adminClient.auth.admin.createUser({
           email, password, email_confirm: true, user_metadata: { display_name }
         });
@@ -57,7 +57,7 @@ Deno.serve(async (req: Request) => {
         const isStaff = (role === "admin" || role === "gerente" || role === "developer");
         const isDeveloper = (role === "developer");
 
-        await adminClient.from("profiles").upsert({ id: userId, user_id: userId, email, display_name, full_name: display_name });
+        await adminClient.from("profiles").upsert({ id: userId, user_id: userId, email, display_name, full_name: display_name, agency_id });
         await adminClient.from("user_roles").upsert({ user_id: userId, role: role || "usuario" });
         await adminClient.from("user_permissions").upsert({
           user_id: userId,
@@ -89,6 +89,13 @@ Deno.serve(async (req: Request) => {
         const { user_id, role } = payload;
         const { error } = await adminClient.from("user_roles").upsert({ user_id, role }, { onConflict: "user_id" });
         if (error) throw new Error(`Erro Role: ${error.message}`);
+        break;
+      }
+
+      case "update_agency": {
+        const { user_id, agency_id } = payload;
+        const { error } = await adminClient.from("profiles").update({ agency_id }).eq("id", user_id);
+        if (error) throw new Error(`Erro Agência: ${error.message}`);
         break;
       }
 

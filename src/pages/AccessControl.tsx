@@ -33,6 +33,13 @@ interface User {
   display_name?: string;
   role?: string;
   created_at: string;
+  agency_id?: string;
+}
+
+interface Agency {
+  id: string;
+  name: string;
+  code: string;
 }
 
 type UserRole = "usuario" | "gerente" | "admin";
@@ -85,11 +92,13 @@ function AccessControl() {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [agencies, setAgencies] = useState<Agency[]>([]);
   const [permissions, setPermissions] = useState<Map<string, UserPermission>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
+  const [filterAgency, setFilterAgency] = useState<string>("all");
 
   // Dialogs
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -100,7 +109,7 @@ function AccessControl() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    email: "", password: "", display_name: "", role: "usuario" as UserRole,
+    email: "", password: "", display_name: "", role: "usuario" as UserRole, agency_id: "",
   });
   const [newPassword, setNewPassword] = useState("");
   const [editPerms, setEditPerms] = useState<UserPermission>({ user_id: "" });
@@ -110,14 +119,18 @@ function AccessControl() {
     try {
       if (!silent) setLoading(true);
       setError(null);
-      const [profilesRes, rolesRes, permsRes] = await Promise.all([
+      const [profilesRes, rolesRes, permsRes, agenciesRes] = await Promise.all([
         supabase.from("profiles").select("*").order("updated_at", { ascending: false }),
         supabase.from("user_roles").select("*"),
         supabase.from("user_permissions").select("*"),
+        supabase.from("agencies").select("*"),
       ]);
       if (profilesRes.error) throw profilesRes.error;
       if (rolesRes.error) throw rolesRes.error;
       if (permsRes.error) throw permsRes.error;
+      if (agenciesRes.error) throw agenciesRes.error;
+
+      setAgencies(agenciesRes.data || []);
 
       const rolesMap = new Map((rolesRes.data || []).map((r: any) => [r.user_id, r.role]));
       const permsMap = new Map((permsRes.data || []).map((p: any) => [p.user_id, p]));
@@ -130,6 +143,7 @@ function AccessControl() {
           display_name: profile.display_name || profile.full_name || "Sem nome",
           role: rolesMap.get(uid) || "usuario",
           created_at: profile.created_at || profile.updated_at,
+          agency_id: profile.agency_id,
         };
       });
       setUsers(mappedUsers);
@@ -159,13 +173,13 @@ function AccessControl() {
     try {
       setSaving(true);
       const { data, error } = await supabase.functions.invoke('admin-users', {
-        body: { action: 'create', email: formData.email, password: formData.password, display_name: formData.display_name, role: formData.role }
+        body: { action: 'create', email: formData.email, password: formData.password, display_name: formData.display_name, role: formData.role, agency_id: formData.agency_id }
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "Sucesso", description: "Usuário criado e configurado." });
       setIsCreateOpen(false);
-      setFormData({ email: "", password: "", display_name: "", role: "usuario" });
+      setFormData({ email: "", password: "", display_name: "", role: "usuario", agency_id: "" });
       await fetchUsers(true);
     } catch (err: any) {
       toast({ title: "Erro ao criar", description: err.message, variant: "destructive" });
@@ -180,6 +194,20 @@ function AccessControl() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "Cargo atualizado", description: `Definido como ${role}.` });
+      await fetchUsers(true);
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleUpdateAgency = async (userId: string, agencyId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'update_agency', user_id: userId, agency_id: agencyId }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Agência atualizada", description: "Usuário vinculado à nova agência." });
       await fetchUsers(true);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -256,7 +284,8 @@ function AccessControl() {
       u.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchRole = filterRole === "all" || u.role === filterRole;
-    return matchSearch && matchRole;
+    const matchAgency = filterAgency === "all" || u.agency_id === filterAgency;
+    return matchSearch && matchRole && matchAgency;
   });
 
   const stats = {
@@ -364,6 +393,17 @@ function AccessControl() {
                 <SelectItem value="usuario">Usuário</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={filterAgency} onValueChange={setFilterAgency}>
+              <SelectTrigger className="w-full sm:w-[180px] h-9 bg-background">
+                <SelectValue placeholder="Filtrar agência" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as agências</SelectItem>
+                {agencies.map(a => (
+                  <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -372,6 +412,7 @@ function AccessControl() {
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[280px]">Usuário</TableHead>
                 <TableHead>Cargo</TableHead>
+                <TableHead>Agência</TableHead>
                 <TableHead className="hidden md:table-cell">Permissões</TableHead>
                 <TableHead className="text-right w-[220px]">Ações</TableHead>
               </TableRow>
@@ -427,6 +468,21 @@ function AccessControl() {
                           <SelectItem value="usuario">Usuário</SelectItem>
                           <SelectItem value="gerente">Gerente</SelectItem>
                           <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={user.agency_id || ""}
+                        onValueChange={(v) => handleUpdateAgency(user.id, v)}
+                      >
+                        <SelectTrigger className="h-7 w-[160px] text-xs border rounded-md">
+                          <SelectValue placeholder="Sem agência" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {agencies.map(a => (
+                            <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
@@ -530,6 +586,19 @@ function AccessControl() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Agência</Label>
+              <Select value={formData.agency_id} onValueChange={(v) => setFormData({ ...formData, agency_id: v })}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Selecione uma agência" />
+                </SelectTrigger>
+                <SelectContent>
+                  {agencies.map(a => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
@@ -569,8 +638,8 @@ function AccessControl() {
                         <label
                           key={perm.key}
                           className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${isActive
-                              ? "border-primary/40 bg-primary/5"
-                              : "border-transparent bg-muted/40 hover:bg-muted/60"
+                            ? "border-primary/40 bg-primary/5"
+                            : "border-transparent bg-muted/40 hover:bg-muted/60"
                             }`}
                         >
                           <div className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${isActive ? "bg-primary border-primary" : "border-muted-foreground/30"
