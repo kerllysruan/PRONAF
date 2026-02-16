@@ -35,6 +35,9 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 
 const PAGE_SIZE = 10;
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+
 export default function Proposals() {
   const { proposals, loading, createProposal, updateProposal, deleteProposal, refetch } = useProposals();
   const [searchTerm, setSearchTerm] = useState("");
