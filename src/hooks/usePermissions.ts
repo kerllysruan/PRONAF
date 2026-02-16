@@ -20,6 +20,8 @@ export interface UserPermissions {
   can_edit_proposals: boolean;
   can_delete_proposals: boolean;
   can_approve_proposals: boolean;
+  can_view_agencies: boolean;
+  can_manage_agencies: boolean;
   read_only: boolean;
 }
 
@@ -41,6 +43,8 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   can_manage_tasks: false,
   can_manage_disbursements: false,
   can_manage_visits: false,
+  can_view_agencies: true,
+  can_manage_agencies: false,
   read_only: false,
 };
 

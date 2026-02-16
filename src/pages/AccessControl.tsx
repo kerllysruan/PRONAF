@@ -18,7 +18,7 @@ import {
   Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle,
   CheckCircle2, UserPlus, ShieldCheck, ShieldAlert,
   Eye, Edit3, Settings2, Fingerprint, DollarSign, Search,
-  KeyRound, UserCog, ChevronRight, Activity
+  KeyRound, UserCog, ChevronRight, Activity, Building2, CheckSquare
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -60,6 +60,8 @@ interface UserPermission {
   can_manage_disbursements?: boolean;
   can_view_management?: boolean;
   can_manage_users?: boolean;
+  can_view_agencies?: boolean;
+  can_manage_agencies?: boolean;
   read_only?: boolean;
 }
 
@@ -74,6 +76,8 @@ const PERMISSIONS = [
   { key: "can_view_management", label: "Gerenciamento", group: "Administração", icon: Settings2 },
   { key: "can_view_access_control", label: "Controle Acesso", group: "Administração", icon: ShieldCheck },
   { key: "can_manage_users", label: "Gestão Usuários", group: "Administração", icon: ShieldAlert },
+  { key: "can_view_agencies", label: "Visualizar Agências", group: "Administração", icon: Building2 },
+  { key: "can_manage_agencies", label: "Gerir Agências", group: "Administração", icon: Building2 },
   { key: "can_create_proposals", label: "Criar Propostas", group: "Operacional", icon: Edit3 },
   { key: "can_edit_proposals", label: "Editar Propostas", group: "Operacional", icon: Edit3 },
   { key: "can_delete_proposals", label: "Deletar Propostas", group: "Operacional", icon: Trash2 },
@@ -606,44 +610,73 @@ function AccessControl() {
       <Dialog open={isPermOpen} onOpenChange={setIsPermOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="p-5 pb-3 border-b">
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 border">
-                <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
-                  {selectedUser ? getInitials(selectedUser.display_name || selectedUser.email) : "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <DialogTitle className="text-base">Permissões de Acesso</DialogTitle>
-                <DialogDescription className="text-xs">{selectedUser?.display_name} • {selectedUser?.email}</DialogDescription>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10 border shadow-sm">
+                  <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                    {selectedUser ? getInitials(selectedUser.display_name || selectedUser.email) : "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <DialogTitle className="text-base font-bold">Permissões de Acesso</DialogTitle>
+                  <DialogDescription className="text-xs">{selectedUser?.display_name} • {selectedUser?.email}</DialogDescription>
+                </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-[11px] gap-1.5 font-bold uppercase tracking-wider"
+                onClick={() => {
+                  const allTrue = PERMISSIONS.every(p => !!editPerms[p.key]);
+                  const newState = { ...editPerms };
+                  PERMISSIONS.forEach(p => newState[p.key] = !allTrue);
+                  setEditPerms(newState);
+                }}
+              >
+                <CheckSquare className="h-3.5 w-3.5" />
+                {PERMISSIONS.every(p => !!editPerms[p.key]) ? "Desmarcar Tudo" : "Marcar Tudo"}
+              </Button>
             </div>
           </DialogHeader>
-          <ScrollArea className="flex-1 px-5 py-4">
-            <div className="space-y-6">
+          <ScrollArea className="flex-1 px-5 py-4 bg-muted/20">
+            <div className="space-y-6 pb-4">
               {Array.from(new Set(PERMISSIONS.map(p => p.group))).map((group) => (
                 <div key={group}>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2.5">{group}</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Separator className="flex-1" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 px-2">{group}</p>
+                    <Separator className="flex-1" />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {PERMISSIONS.filter(p => p.group === group).map((perm) => {
                       const isActive = !!editPerms[perm.key];
+                      const Icon = perm.icon;
                       return (
                         <label
                           key={perm.key}
-                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${isActive
-                            ? "border-primary/40 bg-primary/5"
-                            : "border-transparent bg-muted/40 hover:bg-muted/60"
+                          className={`flex items-center gap-3 p-2.5 rounded-xl border-2 cursor-pointer transition-all duration-200 group/perm ${isActive
+                            ? "border-primary bg-primary/[0.03] shadow-sm"
+                            : "border-transparent bg-background hover:border-primary/20 hover:bg-primary/[0.01]"
                             }`}
                         >
-                          <div className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${isActive ? "bg-primary border-primary" : "border-muted-foreground/30"
+                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 transition-all ${isActive ? "bg-primary text-white shadow-primary/20" : "bg-muted text-muted-foreground group-hover/perm:bg-primary/10 group-hover/perm:text-primary"
                             }`}>
-                            {isActive && <CheckCircle2 className="h-3 w-3 text-white" />}
+                            <Icon className="h-4 w-4" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <span className={`text-[13px] font-bold block truncate transition-colors ${isActive ? "text-primary" : "text-foreground/80"}`}>{perm.label}</span>
+                          </div>
+
+                          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${isActive ? "bg-primary border-primary scale-110 shadow-sm" : "border-muted-foreground/20"
+                            }`}>
+                            {isActive && <CheckCircle2 className="h-3 w-3 text-white" strokeWidth={3} />}
                           </div>
                           <input
                             type="checkbox" className="hidden"
                             checked={isActive}
                             onChange={(e) => setEditPerms(p => ({ ...p, [perm.key]: e.target.checked }))}
                           />
-                          <span className="text-sm font-medium">{perm.label}</span>
                         </label>
                       );
                     })}
