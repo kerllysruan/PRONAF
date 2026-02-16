@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useAgency } from "@/contexts/AgencyContext";
 import {
   Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle,
   CheckCircle2, UserPlus, ShieldCheck, ShieldAlert,
@@ -36,11 +37,6 @@ interface User {
   agency_id?: string;
 }
 
-interface Agency {
-  id: string;
-  name: string;
-  code: string;
-}
 
 type UserRole = "usuario" | "gerente" | "admin";
 
@@ -91,8 +87,8 @@ const PERMISSIONS = [
 function AccessControl() {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
+  const { agencies } = useAgency();
   const [users, setUsers] = useState<User[]>([]);
-  const [agencies, setAgencies] = useState<Agency[]>([]);
   const [permissions, setPermissions] = useState<Map<string, UserPermission>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,18 +115,14 @@ function AccessControl() {
     try {
       if (!silent) setLoading(true);
       setError(null);
-      const [profilesRes, rolesRes, permsRes, agenciesRes] = await Promise.all([
+      const [profilesRes, rolesRes, permsRes] = await Promise.all([
         supabase.from("profiles").select("*").order("updated_at", { ascending: false }),
         supabase.from("user_roles").select("*"),
         supabase.from("user_permissions").select("*"),
-        supabase.from("agencies").select("*"),
       ]);
       if (profilesRes.error) throw profilesRes.error;
       if (rolesRes.error) throw rolesRes.error;
       if (permsRes.error) throw permsRes.error;
-      if (agenciesRes.error) throw agenciesRes.error;
-
-      setAgencies(agenciesRes.data || []);
 
       const rolesMap = new Map((rolesRes.data || []).map((r: any) => [r.user_id, r.role]));
       const permsMap = new Map((permsRes.data || []).map((p: any) => [p.user_id, p]));

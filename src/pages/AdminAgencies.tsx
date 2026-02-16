@@ -29,6 +29,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAgency } from "@/contexts/AgencyContext";
 import { Plus, Building2, Users, ArrowRightLeft, Loader2, Trash2 } from "lucide-react";
 import {
     AlertDialog,
@@ -41,12 +42,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface Agency {
-    id: string;
-    name: string;
-    code: string;
-    created_at: string;
-}
+import { Agency } from "@/contexts/AgencyContext";
 
 interface UserProfile {
     id: string;
@@ -57,7 +53,7 @@ interface UserProfile {
 }
 
 export default function AdminAgencies() {
-    const [agencies, setAgencies] = useState<Agency[]>([]);
+    const { agencies } = useAgency();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -83,16 +79,6 @@ export default function AdminAgencies() {
 
     const fetchData = async () => {
         setLoading(true);
-        const { data: agenciesData, error: agenciesError } = await supabase
-            .from("agencies")
-            .select("*")
-            .order("name");
-
-        if (agenciesError) {
-            toast({ title: "Erro", description: "Falha ao carregar agências: " + agenciesError.message, variant: "destructive" });
-        } else {
-            setAgencies(agenciesData || []);
-        }
 
         const { data: usersData, error: usersError } = await supabase
             .from("profiles")

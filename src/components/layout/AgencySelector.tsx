@@ -13,22 +13,7 @@ import { Building2 } from "lucide-react";
 
 export function AgencySelector() {
     const { isDeveloper } = useAuth();
-    const { selectedAgencyId, setSelectedAgencyId } = useAgency();
-    const [agencies, setAgencies] = useState<{ id: string; name: string }[]>([]);
-
-    useEffect(() => {
-        if (!isDeveloper) return;
-
-        const fetchAgencies = async () => {
-            const { data } = await supabase
-                .from("agencies")
-                .select("id, name")
-                .order("name");
-            if (data) setAgencies(data);
-        };
-
-        fetchAgencies();
-    }, [isDeveloper]);
+    const { selectedAgencyId, setSelectedAgencyId, agencies } = useAgency();
 
     if (!isDeveloper) return null;
 
