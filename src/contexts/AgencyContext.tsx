@@ -70,6 +70,15 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
     // Effective agency: developers use selector freely, everyone else is locked to their own agency
     const effectiveAgencyId = isDeveloper ? selectedAgencyId : (userAgencyId || 'all');
 
+    useEffect(() => {
+        console.log('[AgencyContext] State changed:', {
+            isDeveloper,
+            userAgencyId,
+            selectedAgencyId,
+            effectiveAgencyId
+        });
+    }, [isDeveloper, userAgencyId, selectedAgencyId, effectiveAgencyId]);
+
     return (
         <AgencyContext.Provider value={{
             selectedAgencyId,
