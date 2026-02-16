@@ -7,29 +7,25 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle,
-  MoreVertical, CheckCircle2, UserPlus2, ShieldCheck, ShieldAlert,
-  Info, Eye, Edit3, Settings2, Fingerprint, DollarSign
+  CheckCircle2, UserPlus, ShieldCheck, ShieldAlert,
+  Eye, Edit3, Settings2, Fingerprint, DollarSign, Search,
+  KeyRound, UserCog, ChevronRight, Activity
 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import clsx from "clsx";
 
 interface User {
   id: string;
@@ -65,28 +61,24 @@ interface UserPermission {
 }
 
 const PERMISSIONS = [
-  { key: "can_view_dashboard", label: "Ver Dashboard", description: "Visualizar gráficos e indicadores de desempenho.", group: "Visualização", icon: Eye },
-  { key: "can_view_proposals", label: "Ver Propostas", description: "Acessar a listagem completa de propostas.", group: "Visualização", icon: Eye },
-  { key: "can_view_kanban", label: "Ver Kanban", description: "Visualizar o quadro de propostas por fase.", group: "Visualização", icon: Eye },
-  { key: "can_view_documentation", label: "Ver Documentação", description: "Acessar manuais e guias do sistema.", group: "Visualização", icon: Eye },
-  { key: "can_view_tasks", label: "Ver Tarefas", description: "Visualizar o quadro de tarefas e atividades.", group: "Visualização", icon: Eye },
-  { key: "can_view_disbursements", label: "Ver Desembolsos", description: "Visualizar listagem de pagamentos e solicitações.", group: "Visualização", icon: Eye },
-  { key: "can_view_visits", label: "Ver Visitas", description: "Visualizar o calendário de visitas aos produtores.", group: "Visualização", icon: Eye },
-
-  { key: "can_view_management", label: "Ver Gerenciamento", description: "Ver estatísticas avançadas e equipe.", group: "Administração", icon: Settings2 },
-  { key: "can_view_access_control", label: "Controle de Acesso", description: "Gerenciar usuários e níveis de permissão.", group: "Administração", icon: ShieldCheck },
-  { key: "can_manage_users", label: "Gestão Total", description: "Permissão para criar, excluir e resetar senhas.", group: "Administração", icon: ShieldAlert },
-
-  { key: "can_create_proposals", label: "Criar Propostas", description: "Cadastrar novas propostas de crédito no sistema.", group: "Operacional", icon: Edit3 },
-  { key: "can_edit_proposals", label: "Editar Propostas", description: "Modificar informações de propostas existentes.", group: "Operacional", icon: Edit3 },
-  { key: "can_delete_proposals", label: "Deletar Propostas", description: "Remover propostas (requer cautela).", group: "Operacional", icon: Trash2 },
-  { key: "can_approve_proposals", label: "Aprovar Propostas", description: "Mudar status para 'Contrato Assinado'.", group: "Operacional", icon: CheckCircle2 },
-
-  { key: "can_manage_tasks", label: "Gerir Tarefas", description: "Criar, delegar e comentar em tarefas de equipe.", group: "Equipe", icon: Edit3 },
-  { key: "can_manage_disbursements", label: "Gerir Desembolsos", description: "Aprovar ou rejeitar solicitações de pagamento.", group: "Equipe", icon: DollarSign },
-  { key: "can_manage_visits", label: "Agendar Visitas", description: "Criar e modificar eventos no calendário de visitas.", group: "Equipe", icon: Edit3 },
-
-  { key: "read_only", label: "Somente Leitura", description: "Bloqueia qualquer ação de escrita, independente das outras permissões.", group: "Segurança", icon: Lock },
+  { key: "can_view_dashboard", label: "Dashboard", group: "Visualização", icon: Eye },
+  { key: "can_view_proposals", label: "Propostas", group: "Visualização", icon: Eye },
+  { key: "can_view_kanban", label: "Kanban", group: "Visualização", icon: Eye },
+  { key: "can_view_documentation", label: "Documentação", group: "Visualização", icon: Eye },
+  { key: "can_view_tasks", label: "Tarefas", group: "Visualização", icon: Eye },
+  { key: "can_view_disbursements", label: "Desembolsos", group: "Visualização", icon: Eye },
+  { key: "can_view_visits", label: "Visitas", group: "Visualização", icon: Eye },
+  { key: "can_view_management", label: "Gerenciamento", group: "Administração", icon: Settings2 },
+  { key: "can_view_access_control", label: "Controle Acesso", group: "Administração", icon: ShieldCheck },
+  { key: "can_manage_users", label: "Gestão Usuários", group: "Administração", icon: ShieldAlert },
+  { key: "can_create_proposals", label: "Criar Propostas", group: "Operacional", icon: Edit3 },
+  { key: "can_edit_proposals", label: "Editar Propostas", group: "Operacional", icon: Edit3 },
+  { key: "can_delete_proposals", label: "Deletar Propostas", group: "Operacional", icon: Trash2 },
+  { key: "can_approve_proposals", label: "Aprovar Propostas", group: "Operacional", icon: CheckCircle2 },
+  { key: "can_manage_tasks", label: "Gerir Tarefas", group: "Equipe", icon: Edit3 },
+  { key: "can_manage_disbursements", label: "Gerir Desembolsos", group: "Equipe", icon: DollarSign },
+  { key: "can_manage_visits", label: "Agendar Visitas", group: "Equipe", icon: Edit3 },
+  { key: "read_only", label: "Somente Leitura", group: "Segurança", icon: Lock },
 ];
 
 function AccessControl() {
@@ -96,21 +88,21 @@ function AccessControl() {
   const [permissions, setPermissions] = useState<Map<string, UserPermission>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState<string>("all");
+
+  // Dialogs
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPermOpen, setIsPermOpen] = useState(false);
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null);
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    display_name: "",
-    role: "usuario" as UserRole,
+    email: "", password: "", display_name: "", role: "usuario" as UserRole,
   });
   const [newPassword, setNewPassword] = useState("");
-  const [editProfile, setEditProfile] = useState({ display_name: "" });
   const [editPerms, setEditPerms] = useState<UserPermission>({ user_id: "" });
   const [saving, setSaving] = useState(false);
 
@@ -118,13 +110,11 @@ function AccessControl() {
     try {
       if (!silent) setLoading(true);
       setError(null);
-
       const [profilesRes, rolesRes, permsRes] = await Promise.all([
         supabase.from("profiles").select("*").order("updated_at", { ascending: false }),
         supabase.from("user_roles").select("*"),
         supabase.from("user_permissions").select("*"),
       ]);
-
       if (profilesRes.error) throw profilesRes.error;
       if (rolesRes.error) throw rolesRes.error;
       if (permsRes.error) throw permsRes.error;
@@ -142,18 +132,12 @@ function AccessControl() {
           created_at: profile.created_at || profile.updated_at,
         };
       });
-
       setUsers(mappedUsers);
       setPermissions(permsMap);
     } catch (err: any) {
-      console.error("Erro ao buscar usuários:", err);
-      const msg = err.message || "Erro desconhecido ao carregar usuários";
+      const msg = err.message || "Erro ao carregar usuários";
       setError(msg);
-      toast({
-        title: "Erro de Sincronização",
-        description: msg,
-        variant: "destructive"
-      });
+      toast({ title: "Erro", description: msg, variant: "destructive" });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -161,48 +145,31 @@ function AccessControl() {
 
   useEffect(() => {
     fetchUsers();
-
-    const profilesChannel = supabase.channel('profiles-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchUsers(true)).subscribe();
-    const rolesChannel = supabase.channel('roles-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, () => fetchUsers(true)).subscribe();
-    const permsChannel = supabase.channel('perms-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'user_permissions' }, () => fetchUsers(true)).subscribe();
-
-    return () => {
-      supabase.removeChannel(profilesChannel);
-      supabase.removeChannel(rolesChannel);
-      supabase.removeChannel(permsChannel);
-    };
+    const ch1 = supabase.channel('ac-profiles').on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchUsers(true)).subscribe();
+    const ch2 = supabase.channel('ac-roles').on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, () => fetchUsers(true)).subscribe();
+    const ch3 = supabase.channel('ac-perms').on('postgres_changes', { event: '*', schema: 'public', table: 'user_permissions' }, () => fetchUsers(true)).subscribe();
+    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); supabase.removeChannel(ch3); };
   }, [fetchUsers]);
 
   const handleCreateUser = async () => {
     if (!formData.email || !formData.password) {
-      toast({ title: "Erro", description: "Email e senha são obrigatórios", variant: "destructive" });
+      toast({ title: "Erro", description: "Email e senha são obrigatórios.", variant: "destructive" });
       return;
     }
-
     try {
       setSaving(true);
       const { data, error } = await supabase.functions.invoke('admin-users', {
-        body: {
-          action: 'create',
-          email: formData.email,
-          password: formData.password,
-          display_name: formData.display_name,
-          role: formData.role
-        }
+        body: { action: 'create', email: formData.email, password: formData.password, display_name: formData.display_name, role: formData.role }
       });
-
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Sucesso", description: "Usuário criado com sucesso e perfil configurado." });
+      toast({ title: "Sucesso", description: "Usuário criado e configurado." });
       setIsCreateOpen(false);
       setFormData({ email: "", password: "", display_name: "", role: "usuario" });
       await fetchUsers(true);
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+      toast({ title: "Erro ao criar", description: err.message, variant: "destructive" });
+    } finally { setSaving(false); }
   };
 
   const handleUpdateRole = async (userId: string, role: UserRole) => {
@@ -212,8 +179,7 @@ function AccessControl() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Sucesso", description: "Perfil de acesso atualizado" });
+      toast({ title: "Cargo atualizado", description: `Definido como ${role}.` });
       await fetchUsers(true);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -222,26 +188,20 @@ function AccessControl() {
 
   const handleSavePermissions = async () => {
     if (!selectedUser) return;
-
     try {
       setSaving(true);
       const { user_id, id, created_at, updated_at, ...permissionsData } = editPerms as any;
-
       const { data, error } = await supabase.functions.invoke('admin-users', {
         body: { action: 'update_permissions', user_id: selectedUser.id, permissions: permissionsData }
       });
-
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Sucesso", description: "Permissões de rede atualizadas" });
+      toast({ title: "Permissões salvas", description: "Alterações aplicadas com sucesso." });
       setIsPermOpen(false);
       await fetchUsers(true);
     } catch (err: any) {
-      toast({ title: "Erro", description: err.message || "Erro ao salvar permissões", variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+      toast({ title: "Erro", description: err.message || "Erro ao salvar", variant: "destructive" });
+    } finally { setSaving(false); }
   };
 
   const handleUpdatePassword = async () => {
@@ -253,39 +213,12 @@ function AccessControl() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Sucesso", description: "Senha redefinida com sucesso." });
+      toast({ title: "Senha redefinida", description: "Nova senha ativa." });
       setIsPasswordOpen(false);
       setNewPassword("");
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleUpdateProfile = async () => {
-    if (!selectedUser || !editProfile.display_name) return;
-    try {
-      setSaving(true);
-      // Perfis são públicos, então podemos editar direto se o RLS permitir ou via RPC
-      // Para manter a consistência, vamos via supabase direto se possível, 
-      // mas como o usuário é admin aqui, ele tem bypass via política is_admin que criamos
-      const { error } = await supabase
-        .from("profiles")
-        .update({ display_name: editProfile.display_name })
-        .eq("id", selectedUser.id);
-
-      if (error) throw error;
-
-      toast({ title: "Sucesso", description: "Perfil atualizado com sucesso." });
-      setIsProfileOpen(false);
-      await fetchUsers(true);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const executeDeleteUser = async () => {
@@ -297,8 +230,7 @@ function AccessControl() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-
-      toast({ title: "Usuário removido", description: "Acesso e perfil excluídos permanentemente." });
+      toast({ title: "Usuário excluído", description: "Registro removido permanentemente." });
       await fetchUsers(true);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -309,40 +241,58 @@ function AccessControl() {
     }
   };
 
-  const getRoleBadge = (role: string) => {
+  const getInitials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
+
+  const getRoleConfig = (role: string) => {
     switch (role) {
-      case "admin": return <Badge className="bg-red-500 hover:bg-red-600 shadow-md shadow-red-500/20 gap-1"><ShieldAlert className="h-3 w-3" /> Admin</Badge>;
-      case "gerente": return <Badge className="bg-amber-500 hover:bg-amber-600 shadow-md shadow-amber-500/20 gap-1"><ShieldCheck className="h-3 w-3" /> Gerente</Badge>;
-      default: return <Badge variant="secondary" className="gap-1"><Fingerprint className="h-3 w-3" /> Usuário</Badge>;
+      case "admin": return { label: "Admin", color: "bg-rose-500/10 text-rose-600 border-rose-200", dot: "bg-rose-500", icon: ShieldAlert };
+      case "gerente": return { label: "Gerente", color: "bg-amber-500/10 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: ShieldCheck };
+      default: return { label: "Usuário", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400", icon: Fingerprint };
     }
   };
 
-  const getInitials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
+  const filteredUsers = users.filter(u => {
+    const matchSearch = !searchTerm ||
+      u.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchRole = filterRole === "all" || u.role === filterRole;
+    return matchSearch && matchRole;
+  });
+
+  const stats = {
+    total: users.length,
+    admins: users.filter(u => u.role === "admin").length,
+    gerentes: users.filter(u => u.role === "gerente").length,
+    usuarios: users.filter(u => u.role === "usuario").length,
+  };
 
   if (loading) {
-    return <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-      <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      <p className="text-muted-foreground animate-pulse font-medium">Sincronizando banco de dados...</p>
-    </div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <div className="relative">
+          <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground font-medium">Carregando dados de acesso...</p>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="max-w-xl mx-auto mt-20">
-        <Card className="border-destructive shadow-2xl overflow-hidden rounded-2xl">
-          <CardHeader className="bg-destructive/10 border-b border-destructive/20">
-            <div className="flex items-center gap-3 text-destructive">
-              <AlertCircle className="h-6 w-6" />
-              <CardTitle>Erro de Conexão</CardTitle>
+      <div className="max-w-lg mx-auto mt-20">
+        <Card className="border-destructive/30">
+          <CardContent className="pt-8 pb-8 text-center space-y-4">
+            <div className="h-14 w-14 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto">
+              <AlertCircle className="h-7 w-7 text-destructive" />
             </div>
-          </CardHeader>
-          <CardContent className="pt-6 space-y-4">
-            <p className="text-muted-foreground">Não foi possível carregar a lista de usuários e permissões. Isso pode ocorrer se você não tiver privilégios de administrador.</p>
-            <div className="p-4 bg-muted rounded-xl border font-mono text-xs overflow-auto max-h-32">
-              {error}
+            <div>
+              <h3 className="text-lg font-semibold mb-1">Erro de conexão</h3>
+              <p className="text-sm text-muted-foreground">{error}</p>
             </div>
-            <Button onClick={() => fetchUsers()} className="w-full gap-2">
-              <Loader2 className="h-4 w-4" /> Tentar Novamente
+            <Button onClick={() => fetchUsers()} variant="outline" className="gap-2">
+              Tentar novamente
             </Button>
           </CardContent>
         </Card>
@@ -351,403 +301,357 @@ function AccessControl() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-bold font-heading tracking-tight flex items-center gap-3">
-            <Shield className="h-10 w-10 text-primary" />
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2.5">
+            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Shield className="h-5 w-5 text-primary" />
+            </div>
             Controle de Acesso
           </h1>
-          <p className="text-muted-foreground text-lg mt-2">Segurança e governança de dados da plataforma PRONAF.</p>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie usuários, permissões e níveis de acesso.</p>
         </div>
-        <Button size="lg" onClick={() => setIsCreateOpen(true)} className="gap-2 shadow-xl shadow-primary/25 hover:shadow-2xl hover-lift">
-          <UserPlus2 className="h-5 w-5" /> Adicionar Usuário
+        <Button onClick={() => setIsCreateOpen(true)} className="gap-2 h-10 px-5 shadow-sm">
+          <UserPlus className="h-4 w-4" /> Novo Usuário
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-xl bg-gradient-to-br from-primary/10 to-transparent">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 mb-2">
-              <Users className="h-5 w-5 text-primary" />
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Total Ativos</p>
-            </div>
-            <p className="text-4xl font-black font-heading">{users.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-xl">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3 mb-2">
-              <ShieldAlert className="h-5 w-5 text-red-500" />
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Admins</p>
-            </div>
-            <p className="text-4xl font-black font-heading text-red-500">{users.filter(u => u.role === "admin").length}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-xl lg:col-span-2 bg-gradient-to-r from-muted/50 to-transparent">
-          <CardContent className="pt-6 flex flex-col justify-center h-full">
-            <div className="flex items-center gap-2 mb-2 text-primary font-semibold italic text-sm">
-              <Info className="h-4 w-4" />
-              Dica Administrativa
-            </div>
-            <p className="text-sm text-muted-foreground">As permissões de rede são aplicadas em tempo real. Usuários administrativos têm bypass total.</p>
-          </CardContent>
-        </Card>
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Total", value: stats.total, icon: Users, accent: "text-primary" },
+          { label: "Admins", value: stats.admins, icon: ShieldAlert, accent: "text-rose-500" },
+          { label: "Gerentes", value: stats.gerentes, icon: ShieldCheck, accent: "text-amber-600" },
+          { label: "Usuários", value: stats.usuarios, icon: Fingerprint, accent: "text-slate-500" },
+        ].map(s => (
+          <Card key={s.label} className="border shadow-sm">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className={`h-10 w-10 rounded-lg bg-muted/60 flex items-center justify-center shrink-0`}>
+                <s.icon className={`h-5 w-5 ${s.accent}`} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold leading-none">{s.value}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <Tabs defaultValue="list" className="space-y-6">
-        <TabsList className="bg-muted p-1 rounded-xl">
-          <TabsTrigger value="list" className="rounded-lg gap-2 px-6">
-            <Users className="h-4 w-4" /> Usuários
-          </TabsTrigger>
-          <TabsTrigger value="matrix" className="rounded-lg gap-2 px-6">
-            <Lock className="h-4 w-4" /> Matriz de Permissões
-          </TabsTrigger>
-        </TabsList>
+      {/* Filters & Table */}
+      <Card className="border shadow-sm overflow-hidden">
+        <CardHeader className="pb-3 border-b bg-muted/30">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome ou email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-9 bg-background"
+              />
+            </div>
+            <Select value={filterRole} onValueChange={setFilterRole}>
+              <SelectTrigger className="w-full sm:w-[160px] h-9 bg-background">
+                <SelectValue placeholder="Filtrar cargo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os cargos</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="gerente">Gerente</SelectItem>
+                <SelectItem value="usuario">Usuário</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[280px]">Usuário</TableHead>
+                <TableHead>Cargo</TableHead>
+                <TableHead className="hidden md:table-cell">Permissões</TableHead>
+                <TableHead className="text-right w-[220px]">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
+                    <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                    <p className="font-medium">Nenhum usuário encontrado</p>
+                  </TableCell>
+                </TableRow>
+              ) : filteredUsers.map((user) => {
+                const isCurrent = user.id === currentUser?.id;
+                const roleConfig = getRoleConfig(user.role || "usuario");
+                const userPerms = permissions.get(user.id);
+                const activePermsCount = userPerms ? PERMISSIONS.filter(p => userPerms[p.key] === true).length : 0;
 
-        <TabsContent value="list" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {users.map((user) => {
-              const isCurrent = user.id === currentUser?.id;
-              return (
-                <Card key={user.id} className={clsx(
-                  "border-0 shadow-lg hover:shadow-xl transition-all h-full overflow-hidden",
-                  isCurrent && "ring-2 ring-primary"
-                )}>
-                  <CardContent className="p-0">
-                    <div className="flex h-full">
-                      <div className={clsx(
-                        "w-2 shrink-0",
-                        user.role === "admin" ? "bg-red-500" : user.role === "gerente" ? "bg-amber-500" : "bg-primary"
-                      )} />
-                      <div className="flex-1 p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                        <Avatar className="h-16 w-16 border-2 border-background shadow-lg">
-                          <AvatarFallback className="text-xl font-black bg-muted text-primary">
+                return (
+                  <TableRow key={user.id} className="group">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9 border">
+                          <AvatarFallback className="text-xs font-semibold bg-muted">
                             {getInitials(user.display_name || user.email)}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1 space-y-2 min-w-0">
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <h3 className="text-xl font-bold tracking-tight truncate max-w-[200px] sm:max-w-none">
-                              {user.display_name}
-                            </h3>
-                            {getRoleBadge(user.role || "usuario")}
-                            {isCurrent && <Badge variant="outline" className="border-primary text-primary bg-primary/5 uppercase text-[9px] font-black tracking-tighter">VOCÊ</Badge>}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm truncate max-w-[160px]">{user.display_name}</p>
+                            {isCurrent && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/30 text-primary">
+                                Você
+                              </Badge>
+                            )}
                           </div>
-                          <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                          <p className="text-[10px] text-muted-foreground/60 font-mono uppercase">ID: {user.id}</p>
-                        </div>
-                        <div className="flex gap-2 shrink-0 ml-auto">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/5">
-                                <MoreVertical className="h-5 w-5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-2xl p-2">
-                              <DropdownMenuItem className="rounded-lg gap-2 p-3 font-medium text-sm" onClick={() => {
-                                setSelectedUser(user);
-                                setEditPerms(permissions.get(user.id) || { user_id: user.id });
-                                setIsPermOpen(true);
-                              }}>
-                                <ShieldCheck className="h-4 w-4 text-primary" /> Editar Permissões
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="rounded-lg gap-2 p-3 font-medium text-sm" onClick={() => {
-                                setSelectedUser(user);
-                                setEditProfile({ display_name: user.display_name || "" });
-                                setIsProfileOpen(true);
-                              }}>
-                                <Edit3 className="h-4 w-4 text-primary" /> Editar Perfil
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="rounded-lg gap-2 p-3 font-medium text-sm" onClick={() => {
-                                setSelectedUser(user);
-                                setIsPasswordOpen(true);
-                              }}>
-                                <Lock className="h-4 w-4 text-primary" /> Alterar Senha
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator className="my-1" />
-                              <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase opacity-50">Mudar Cargo</div>
-                              <DropdownMenuItem className="rounded-lg gap-2 text-sm" onClick={() => handleUpdateRole(user.id, "usuario")}>
-                                <Fingerprint className="h-4 w-4" /> Tornar Usuário
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="rounded-lg gap-2 text-sm" onClick={() => handleUpdateRole(user.id, "gerente")}>
-                                <ShieldCheck className="h-4 w-4 text-amber-500" /> Tornar Gerente
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="rounded-lg gap-2 text-sm" onClick={() => handleUpdateRole(user.id, "admin")}>
-                                <ShieldAlert className="h-4 w-4 text-red-500" /> Tornar Admin
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator className="my-1" />
-                              <DropdownMenuItem className="rounded-lg gap-2 p-3 font-medium text-destructive text-sm" onClick={() => {
-                                setUserToDeleteId(user.id);
-                                setIsDeleteAlertOpen(true);
-                              }} disabled={isCurrent}>
-                                <Trash2 className="h-4 w-4" /> Excluir Registro
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="matrix" className="space-y-6">
-          <Card className="border-0 shadow-lg overflow-hidden">
-            <CardHeader className="bg-muted/50">
-              <CardTitle className="font-heading">Explicação de Permissões</CardTitle>
-              <CardDescription>O sistema utiliza o modelo RBAC baseado em chaves individuais por usuário.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="h-[500px]">
-                <div className="p-6 space-y-8">
-                  {Array.from(new Set(PERMISSIONS.map(p => p.group))).map((group) => (
-                    <div key={group} className="space-y-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="h-4 w-1 bg-primary rounded-full" />
-                        <h4 className="text-sm font-black uppercase tracking-widest text-primary/80">{group}</h4>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {PERMISSIONS.filter(p => p.group === group).map((perm) => (
-                          <div key={perm.key} className="flex gap-4 p-4 rounded-xl border bg-muted/20 hover:bg-muted/30 transition-colors">
-                            <div className="h-10 w-10 rounded-lg bg-background flex items-center justify-center shrink-0 shadow-sm border">
-                              <perm.icon className="h-5 w-5 text-primary" />
-                            </div>
-                            <div className="space-y-1">
-                              <p className="font-bold text-sm">{perm.label}</p>
-                              <p className="text-xs text-muted-foreground leading-relaxed">{perm.description}</p>
-                              <p className="text-[9px] font-mono text-muted-foreground/50 mt-2 uppercase tracking-tighter">CHAVE: {perm.key}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={isPermOpen} onOpenChange={setIsPermOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-2xl shadow-2xl">
-          <DialogHeader className="p-6 bg-muted/50 border-b">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12 shadow-lg">
-                <AvatarFallback className="font-bold bg-primary text-primary-foreground">
-                  {selectedUser ? getInitials(selectedUser.display_name || selectedUser.email) : "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <DialogTitle className="text-2xl font-black font-heading tracking-tight italic">
-                  Configurações de Rede
-                </DialogTitle>
-                <DialogDescription className="text-sm font-medium">Ajustando acessos de: {selectedUser?.display_name}</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          <ScrollArea className="flex-1 p-6">
-            <div className="space-y-8 pb-4">
-              {Array.from(new Set(PERMISSIONS.map(p => p.group))).map((group) => (
-                <div key={group} className="space-y-4">
-                  <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                    <Separator className="flex-1" />
-                    {group}
-                    <Separator className="flex-1" />
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {PERMISSIONS.filter(p => p.group === group).map((perm) => (
-                      <label
-                        key={perm.key}
-                        className={clsx(
-                          "flex items-center gap-4 p-4 rounded-xl border-2 transition-all cursor-pointer select-none",
-                          editPerms[perm.key] ? "border-primary bg-primary/5" : "border-transparent bg-muted/40 hover:bg-muted/60"
-                        )}
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={user.role || "usuario"}
+                        onValueChange={(v) => handleUpdateRole(user.id, v as UserRole)}
                       >
-                        <div className={clsx(
-                          "h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all",
-                          editPerms[perm.key] ? "bg-primary border-primary" : "border-muted-foreground/30"
-                        )}>
-                          {editPerms[perm.key] && <CheckCircle2 className="h-4 w-4 text-white" />}
-                        </div>
-                        <input
-                          type="checkbox"
-                          className="hidden"
-                          checked={!!editPerms[perm.key]}
-                          onChange={(e) => setEditPerms(p => ({ ...p, [perm.key]: e.target.checked }))}
-                        />
-                        <div className="space-y-0.5">
-                          <p className="text-sm font-bold leading-none">{perm.label}</p>
-                          <p className="text-[10px] text-muted-foreground line-clamp-1">{perm.description}</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                        <SelectTrigger className={`h-7 w-[120px] text-xs font-medium border rounded-md ${roleConfig.color}`}>
+                          <div className="flex items-center gap-1.5">
+                            <div className={`h-1.5 w-1.5 rounded-full ${roleConfig.dot}`} />
+                            <SelectValue />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="usuario">Usuário</SelectItem>
+                          <SelectItem value="gerente">Gerente</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="flex items-center gap-1.5">
+                        <Activity className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
+                          {activePermsCount}/{PERMISSIONS.length} ativas
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-8 px-2.5 text-xs gap-1.5"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setEditPerms(permissions.get(user.id) || { user_id: user.id });
+                            setIsPermOpen(true);
+                          }}
+                        >
+                          <UserCog className="h-3.5 w-3.5" /> Permissões
+                        </Button>
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-8 px-2.5 text-xs gap-1.5"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setNewPassword("");
+                            setIsPasswordOpen(true);
+                          }}
+                        >
+                          <KeyRound className="h-3.5 w-3.5" /> Senha
+                        </Button>
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          disabled={isCurrent}
+                          onClick={() => {
+                            setUserToDeleteId(user.id);
+                            setIsDeleteAlertOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Create User Dialog */}
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <UserPlus className="h-5 w-5 text-primary" /> Novo Usuário
+            </DialogTitle>
+            <DialogDescription>Cadastre uma nova credencial de acesso ao sistema.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Email</Label>
+              <Input
+                type="email" value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="usuario@email.com" className="h-10"
+              />
             </div>
-          </ScrollArea>
-          <DialogFooter className="p-6 bg-muted/30 border-t gap-3 sm:gap-0">
-            <Button variant="outline" onClick={() => setIsPermOpen(false)} className="rounded-xl px-8 h-12 font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all">Cancelar</Button>
-            <Button onClick={handleSavePermissions} disabled={saving} className="rounded-xl px-10 h-12 font-bold shadow-xl shadow-primary/20 hover-lift">
-              {saving ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <ShieldCheck className="h-5 w-5 mr-2" />}
-              Aplicar Mudanças
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Senha</Label>
+              <Input
+                type="password" value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Mínimo 6 caracteres" className="h-10"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Nome de exibição</Label>
+              <Input
+                value={formData.display_name}
+                onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                placeholder="Ex: João Silva" className="h-10"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-muted-foreground">Cargo</Label>
+              <Select value={formData.role} onValueChange={(v) => setFormData({ ...formData, role: v as UserRole })}>
+                <SelectTrigger className="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="usuario">Usuário</SelectItem>
+                  <SelectItem value="gerente">Gerente</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateUser} disabled={saving} className="gap-2">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              Criar Usuário
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl shadow-3xl">
-          <DialogHeader className="p-8 bg-primary text-primary-foreground">
-            <DialogTitle className="text-3xl font-black font-heading tracking-tight italic">
-              Acesso à Rede
-            </DialogTitle>
-            <DialogDescription className="text-primary-foreground/80 mt-2 font-medium">Cadastrar nova credencial de acesso ao sistema.</DialogDescription>
+      {/* Permissions Dialog */}
+      <Dialog open={isPermOpen} onOpenChange={setIsPermOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-5 pb-3 border-b">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 border">
+                <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                  {selectedUser ? getInitials(selectedUser.display_name || selectedUser.email) : "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <DialogTitle className="text-base">Permissões de Acesso</DialogTitle>
+                <DialogDescription className="text-xs">{selectedUser?.display_name} • {selectedUser?.email}</DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
-          <div className="p-8 space-y-6 bg-card">
-            <div className="space-y-4">
-              <div className="grid gap-2">
-                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Email Oficial</Label>
-                <Input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="usuario@pronaf.com.br" className="h-12 rounded-xl focus-visible:ring-primary shadow-inner bg-muted/20" />
-              </div>
-              <div className="grid gap-2">
-                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Senha Segura</Label>
-                <Input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" className="h-12 rounded-xl focus-visible:ring-primary shadow-inner bg-muted/20" />
-              </div>
-              <div className="grid gap-2">
-                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Nome de Exibição</Label>
-                <Input value={formData.display_name} onChange={(e) => setFormData({ ...formData, display_name: e.target.value })} placeholder="Ex: João Silva" className="h-12 rounded-xl focus-visible:ring-primary shadow-inner bg-muted/20" />
-              </div>
-              <div className="grid gap-2">
-                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Nível do Perfil</Label>
-                <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}>
-                  <SelectTrigger className="h-12 rounded-xl bg-muted/20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl p-2 border-2">
-                    <SelectItem value="usuario" className="rounded-lg h-10 mb-1">Usuário Padrão</SelectItem>
-                    <SelectItem value="gerente" className="rounded-lg h-10 mb-1">Gerente de Area</SelectItem>
-                    <SelectItem value="admin" className="rounded-lg h-10">Administrador Full</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <ScrollArea className="flex-1 px-5 py-4">
+            <div className="space-y-6">
+              {Array.from(new Set(PERMISSIONS.map(p => p.group))).map((group) => (
+                <div key={group}>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2.5">{group}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {PERMISSIONS.filter(p => p.group === group).map((perm) => {
+                      const isActive = !!editPerms[perm.key];
+                      return (
+                        <label
+                          key={perm.key}
+                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${isActive
+                              ? "border-primary/40 bg-primary/5"
+                              : "border-transparent bg-muted/40 hover:bg-muted/60"
+                            }`}
+                        >
+                          <div className={`h-4 w-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${isActive ? "bg-primary border-primary" : "border-muted-foreground/30"
+                            }`}>
+                            {isActive && <CheckCircle2 className="h-3 w-3 text-white" />}
+                          </div>
+                          <input
+                            type="checkbox" className="hidden"
+                            checked={isActive}
+                            onChange={(e) => setEditPerms(p => ({ ...p, [perm.key]: e.target.checked }))}
+                          />
+                          <span className="text-sm font-medium">{perm.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex flex-col gap-3 pt-4">
-              <Button size="lg" onClick={handleCreateUser} disabled={saving} className="h-14 rounded-2xl font-black text-lg shadow-2xl shadow-primary/30 hover-lift">
-                {saving ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <UserPlus2 className="h-6 w-6 mr-2" />}
-                Autorizar Acesso
-              </Button>
-              <Button variant="ghost" onClick={() => setIsCreateOpen(false)} className="rounded-xl h-11 text-muted-foreground hover:bg-muted/50 transition-all uppercase text-[10px] font-black tracking-widest">
-                Descartar
-              </Button>
-            </div>
+          </ScrollArea>
+          <div className="p-4 border-t flex justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsPermOpen(false)}>Cancelar</Button>
+            <Button size="sm" onClick={handleSavePermissions} disabled={saving} className="gap-1.5">
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+              Salvar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Password Dialog */}
+      <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <KeyRound className="h-4 w-4 text-primary" /> Redefinir Senha
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Definir nova senha para {selectedUser?.display_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5 py-2">
+            <Label className="text-xs font-medium text-muted-foreground">Nova senha</Label>
+            <Input
+              type="password" value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Mínimo 6 caracteres" className="h-10"
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" size="sm" onClick={() => setIsPasswordOpen(false)}>Cancelar</Button>
+            <Button size="sm" onClick={handleUpdatePassword} disabled={saving || newPassword.length < 6} className="gap-1.5">
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent className="rounded-2xl border-2">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black font-heading text-red-600 italic">Revogar Acesso?</AlertDialogTitle>
-            <AlertDialogDescription className="text-base font-medium">
-              Esta ação é rígida. Recomenda-se desativar permissões antes de excluir o registro permanentemente.
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" /> Excluir usuário?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é irreversível. O usuário será removido do sistema junto com todas as suas permissões, roles e perfil.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="rounded-xl h-12 font-bold">Manter Credencial</AlertDialogCancel>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700 rounded-xl h-12 font-bold shadow-xl shadow-red-600/20"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={executeDeleteUser}
             >
-              Excluir Registro
+              Excluir permanentemente
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Dialog para Alterar Senha */}
-      <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
-        <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl shadow-3xl">
-          <DialogHeader className="p-8 bg-primary text-primary-foreground">
-            <div className="flex items-center gap-3">
-              <Lock className="h-8 w-8" />
-              <div>
-                <DialogTitle className="text-2xl font-black font-heading tracking-tight italic">
-                  Redefinir Senha
-                </DialogTitle>
-                <DialogDescription className="text-primary-foreground/80 font-medium">Reset de credencial: {selectedUser?.display_name}</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="p-8 space-y-6 bg-card">
-            <div className="space-y-4">
-              <div className="grid gap-2">
-                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Nova Senha</Label>
-                <Input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  className="h-12 rounded-xl focus-visible:ring-primary shadow-inner bg-muted/20"
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-3 pt-4">
-              <Button size="lg" onClick={handleUpdatePassword} disabled={saving || newPassword.length < 6} className="h-14 rounded-2xl font-black text-lg shadow-2xl shadow-primary/30 hover-lift">
-                {saving ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <ShieldCheck className="h-6 w-6 mr-2" />}
-                Confirmar Nova Senha
-              </Button>
-              <Button variant="ghost" onClick={() => setIsPasswordOpen(false)} className="rounded-xl h-11 text-muted-foreground hover:bg-muted/50 transition-all uppercase text-[10px] font-black tracking-widest">
-                Cancelar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog para Editar Perfil */}
-      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-        <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl shadow-3xl">
-          <DialogHeader className="p-8 bg-primary text-primary-foreground">
-            <div className="flex items-center gap-3">
-              <Edit3 className="h-8 w-8" />
-              <div>
-                <DialogTitle className="text-2xl font-black font-heading tracking-tight italic">
-                  Editar Perfil
-                </DialogTitle>
-                <DialogDescription className="text-primary-foreground/80 font-medium">Atualizando dados de: {selectedUser?.email}</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="p-8 space-y-6 bg-card">
-            <div className="space-y-4">
-              <div className="grid gap-2">
-                <Label className="text-xs font-black uppercase tracking-widest opacity-70">Nome de Exibição</Label>
-                <Input
-                  value={editProfile.display_name}
-                  onChange={(e) => setEditProfile({ display_name: e.target.value })}
-                  placeholder="Ex: João da Silva"
-                  className="h-12 rounded-xl focus-visible:ring-primary shadow-inner bg-muted/20"
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-3 pt-4">
-              <Button size="lg" onClick={handleUpdateProfile} disabled={saving || !editProfile.display_name} className="h-14 rounded-2xl font-black text-lg shadow-2xl shadow-primary/30 hover-lift">
-                {saving ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : <CheckCircle2 className="h-6 w-6 mr-2" />}
-                Salvar Alterações
-              </Button>
-              <Button variant="ghost" onClick={() => setIsProfileOpen(false)} className="rounded-xl h-11 text-muted-foreground hover:bg-muted/50 transition-all uppercase text-[10px] font-black tracking-widest">
-                Descartar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
