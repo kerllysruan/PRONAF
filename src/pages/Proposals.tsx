@@ -33,6 +33,8 @@ import { format, parseISO, getMonth, getYear } from "date-fns";
 import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
 import { CurrencyInput } from "@/components/ui/currency-input";
 
+import { usePermissions } from "@/hooks/usePermissions";
+
 const PAGE_SIZE = 10;
 
 const formatCurrency = (value: number) =>
@@ -40,6 +42,7 @@ const formatCurrency = (value: number) =>
 
 export default function Proposals() {
   const { proposals, loading, createProposal, updateProposal, deleteProposal, refetch } = useProposals();
+  const { permissions } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [designerFilter, setDesignerFilter] = useState<string>("all");
@@ -158,9 +161,11 @@ export default function Proposals() {
           <h1 className="text-3xl font-bold font-heading tracking-tight text-foreground">Propostas</h1>
           <p className="text-sm text-muted-foreground mt-2">Cadastro e gerenciamento de propostas PRONAF</p>
         </div>
-        <Button onClick={openNew} className="gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all hover-lift">
-          <Plus className="h-4 w-4" /> Nova Proposta
-        </Button>
+        {permissions.can_create_proposals && (
+          <Button onClick={openNew} className="gap-2 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all hover-lift">
+            <Plus className="h-4 w-4" /> Nova Proposta
+          </Button>
+        )}
       </div>
 
       <Card className="border-0 shadow-sm bg-card/60 backdrop-blur-sm">
@@ -271,7 +276,9 @@ export default function Proposals() {
                   <TableHead className="py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70 text-right">Valor</TableHead>
                   <TableHead className="py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70 text-center">Status</TableHead>
                   <TableHead className="hidden lg:table-cell py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70">Data</TableHead>
-                  <TableHead className="w-24 py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70 text-right">Ações</TableHead>
+                  {(permissions.can_edit_proposals || permissions.can_delete_proposals) && (
+                    <TableHead className="w-24 py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70 text-right">Ações</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -310,12 +317,16 @@ export default function Proposals() {
                         <span className="text-xs font-medium text-muted-foreground/70">{format(parseISO(p.entry_date), "dd/MM/yyyy")}</span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive transition-colors" onClick={() => {
-                            setDeleteId(p.id);
-                            setIsDeleteAlertOpen(true);
-                          }}><Trash2 className="h-4 w-4" /></Button>
+                        <div className="flex gap-1 justify-end">
+                          {permissions.can_edit_proposals && (
+                            <Button variant="ghost" size="icon" className="hover:bg-primary/10 hover:text-primary transition-colors" onClick={() => openEdit(p)}><Pencil className="h-4 w-4" /></Button>
+                          )}
+                          {permissions.can_delete_proposals && (
+                            <Button variant="ghost" size="icon" className="hover:bg-destructive/10 hover:text-destructive transition-colors" onClick={() => {
+                              setDeleteId(p.id);
+                              setIsDeleteAlertOpen(true);
+                            }}><Trash2 className="h-4 w-4" /></Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -440,6 +451,6 @@ export default function Proposals() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div >
   );
 }

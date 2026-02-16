@@ -43,6 +43,7 @@ import { useProposals } from "@/hooks/useProposals";
 import { useTeam } from "@/hooks/useTeam";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { usePermissions } from "@/hooks/usePermissions";
 
 import { DisbursementCharts } from "@/components/dashboard/DisbursementCharts";
 import { PROJECT_DESIGNER_LABELS } from "@/types/proposal";
@@ -51,6 +52,7 @@ export default function Disbursements() {
   const { disbursements, loading: loadingD, createDisbursement, updateDisbursement, deleteDisbursement } = useDisbursements();
   const { proposals, loading: loadingP, updateProposal } = useProposals();
   const { members, loading: loadingM } = useTeam();
+  const { permissions } = usePermissions();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [designerFilter, setDesignerFilter] = useState<string>("all");
@@ -376,7 +378,11 @@ export default function Disbursements() {
             )}
 
             <div className="flex gap-2 pt-2">
-              <Select value={selectedDisbursement.status} onValueChange={(v) => updateDisbursement(selectedDisbursement.id, { status: v })}>
+              <Select
+                value={selectedDisbursement.status}
+                onValueChange={(v) => updateDisbursement(selectedDisbursement.id, { status: v })}
+                disabled={!permissions.can_manage_disbursements}
+              >
                 <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {Object.entries(DISBURSEMENT_STATUS_LABELS).map(([k, v]) => (
@@ -384,12 +390,14 @@ export default function Disbursements() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="destructive" size="sm" onClick={() => {
-                setDeleteId(selectedDisbursement.id);
-                setIsDeleteAlertOpen(true);
-              }}>
-                <Trash2 className="h-4 w-4 mr-1" /> Excluir
-              </Button>
+              {permissions.can_manage_disbursements && (
+                <Button variant="destructive" size="sm" onClick={() => {
+                  setDeleteId(selectedDisbursement.id);
+                  setIsDeleteAlertOpen(true);
+                }}>
+                  <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -404,9 +412,11 @@ export default function Disbursements() {
           <h1 className="text-2xl font-bold font-heading">Controle de Desembolso</h1>
           <p className="text-sm text-muted-foreground mt-1">Gestão de pedidos e liberação de recursos</p>
         </div>
-        <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="gap-2 shadow-md shadow-primary/20">
-          <Plus className="h-4 w-4" /> Novo Pedido
-        </Button>
+        {permissions.can_manage_disbursements && (
+          <Button onClick={() => { resetForm(); setIsDialogOpen(true); }} className="gap-2 shadow-md shadow-primary/20">
+            <Plus className="h-4 w-4" /> Novo Pedido
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -566,6 +576,7 @@ export default function Disbursements() {
                                 className="h-8 w-8 text-primary hover:bg-primary/10"
                                 onClick={(e) => { e.stopPropagation(); openEdit(d); }}
                                 title="Iniciar Desembolso"
+                                disabled={!permissions.can_manage_disbursements}
                               >
                                 <Play className="h-4 w-4 fill-current" />
                               </Button>
@@ -576,7 +587,7 @@ export default function Disbursements() {
                             )}
 
                             {/* Botão Plus para novo desembolso se houver saldo e não for pendente */}
-                            {proposal && d.status !== 'pendente' && getProposalStats(proposal.id, Number(proposal.requested_value)).remaining > 0.05 && (
+                            {proposal && d.status !== 'pendente' && getProposalStats(proposal.id, Number(proposal.requested_value)).remaining > 0.05 && permissions.can_manage_disbursements && (
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -608,13 +619,15 @@ export default function Disbursements() {
                               </Button>
                             )}
 
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteId(d.id);
-                              setIsDeleteAlertOpen(true);
-                            }}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {permissions.can_manage_disbursements && (
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteId(d.id);
+                                setIsDeleteAlertOpen(true);
+                              }}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

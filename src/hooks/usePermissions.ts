@@ -36,16 +36,16 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   can_view_management: true,
   can_view_access_control: false,
   can_manage_users: false,
-  can_create_proposals: true,
-  can_edit_proposals: true,
-  can_delete_proposals: true,
+  can_create_proposals: false,
+  can_edit_proposals: false,
+  can_delete_proposals: false,
   can_approve_proposals: false,
   can_manage_tasks: false,
   can_manage_disbursements: false,
   can_manage_visits: false,
   can_view_agencies: true,
   can_manage_agencies: false,
-  read_only: false,
+  read_only: true, // Set to true as default for safety
 };
 
 export function usePermissions() {

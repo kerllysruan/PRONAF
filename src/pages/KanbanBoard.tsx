@@ -9,6 +9,7 @@ import {
   ProposalStatus, STATUS_LABELS, STATUS_COLORS, PRONAF_LINE_LABELS, PronafLine,
 } from "@/types/proposal";
 import { GripVertical, Loader2 } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const COLUMNS: ProposalStatus[] = ["nova", "em_analise", "documentacao_pendente", "aprovada", "negada"];
 
@@ -22,6 +23,7 @@ const COLUMN_GRADIENT: Record<ProposalStatus, string> = {
 
 export default function KanbanBoard() {
   const { proposals, loading, updateProposal } = useProposals();
+  const { permissions } = usePermissions();
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -80,6 +82,7 @@ export default function KanbanBoard() {
                                 <Select
                                   value={proposal.status}
                                   onValueChange={(v) => moveProposal(proposal.id, v as ProposalStatus)}
+                                  disabled={!permissions.can_edit_proposals}
                                 >
                                   <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                                   <SelectContent>

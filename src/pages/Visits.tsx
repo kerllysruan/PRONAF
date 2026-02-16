@@ -13,6 +13,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useVisits } from "@/hooks/useVisits";
+import { usePermissions } from "@/hooks/usePermissions";
 import { VisitStatus, VISIT_STATUS_LABELS } from "@/types/proposal";
 import { format, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -25,6 +26,7 @@ const VISIT_STATUS_COLORS: Record<VisitStatus, string> = {
 
 export default function Visits() {
   const { visits, loading, createVisit, updateVisit, deleteVisit } = useVisits();
+  const { permissions } = usePermissions();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -67,9 +69,11 @@ export default function Visits() {
           <h1 className="text-2xl font-bold font-heading">Agenda de Visitas</h1>
           <p className="text-sm text-muted-foreground mt-1">Calendário e controle de visitas</p>
         </div>
-        <Button onClick={() => { setFormData({ producer_name: "", date: new Date().toISOString().split("T")[0], time: "09:00", objective: "", status: "agendada", proposal_id: null }); setIsDialogOpen(true); }} className="gap-2 shadow-md shadow-primary/20">
-          <Plus className="h-4 w-4" /> Nova Visita
-        </Button>
+        {permissions.can_manage_visits && (
+          <Button onClick={() => { setFormData({ producer_name: "", date: new Date().toISOString().split("T")[0], time: "09:00", objective: "", status: "agendada", proposal_id: null }); setIsDialogOpen(true); }} className="gap-2 shadow-md shadow-primary/20">
+            <Plus className="h-4 w-4" /> Nova Visita
+          </Button>
+        )}
       </div>
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
@@ -112,7 +116,11 @@ export default function Visits() {
                       <p className="text-sm font-medium">{visit.producer_name}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{visit.objective}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <Select value={visit.status} onValueChange={(v) => updateVisit(visit.id, { status: v })}>
+                        <Select
+                          value={visit.status}
+                          onValueChange={(v) => updateVisit(visit.id, { status: v })}
+                          disabled={!permissions.can_manage_visits}
+                        >
                           <SelectTrigger className="h-7 w-32 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {Object.entries(VISIT_STATUS_LABELS).map(([key, label]) => (
@@ -120,9 +128,11 @@ export default function Visits() {
                             ))}
                           </SelectContent>
                         </Select>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteVisit(visit.id)}>
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                        </Button>
+                        {permissions.can_manage_visits && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteVisit(visit.id)}>
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                     <Badge className={`${VISIT_STATUS_COLORS[visit.status as VisitStatus]} text-[10px] shrink-0`}>
