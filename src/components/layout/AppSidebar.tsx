@@ -40,15 +40,16 @@ export function AppSidebar() {
   const { permissions, isAdmin, loading } = usePermissions();
 
   const filteredMenuItems = menuItems.filter(item => {
-    // Developers always see everything
-    if (isAdmin && !permissions[item.permission as keyof typeof permissions]) {
-      // If it's an admin but the specific permission is toggled off, respect that
-      // EXCEPT for core dashboard/management if they are admin? 
-      // No, let's be strict. If it's unchecked, it's hidden.
-    }
-
+    // 1. If it's a hardcoded admin route, check role
     if (item.permission === "is_admin") return isAdmin;
-    return permissions[item.permission as keyof typeof permissions];
+
+    // 2. Check the specific permission flag
+    const hasPermission = !!permissions[item.permission as keyof typeof permissions];
+
+    // 3. Developers and Admins see everything unless explicitly disabled
+    // But for a better "automatic" experience, let's respect the flag strictly
+    // as it's what's shown in the Access Control panel.
+    return hasPermission;
   });
 
   return (

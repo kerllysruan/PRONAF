@@ -65,7 +65,8 @@ export function usePermissions() {
 
     if (permRes.data) {
       const { id, user_id, created_at, updated_at, ...perms } = permRes.data as any;
-      setPermissions(perms);
+      // Merge with defaults to ensure missing columns don't break the UI
+      setPermissions(prev => ({ ...prev, ...perms }));
     }
 
     let userRole = roleRes.data?.role || "usuario";
@@ -76,7 +77,28 @@ export function usePermissions() {
 
   useEffect(() => {
     fetchPermissions();
-  }, [fetchPermissions]);
+
+    if (!user) return;
+
+    // Real-time permission changes
+    const channel = supabase
+      .channel(`perms-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_permissions',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => fetchPermissions()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchPermissions, user]);
 
   const isAdmin = role === "admin" || role === "developer";
   const isDeveloper = role === "developer";
