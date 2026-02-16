@@ -691,6 +691,7 @@ export default function Disbursements() {
 
                                 // Auto-fill bank details removed
                                 const existingDisbursements = disbursements.filter(d => d.proposal_id === p.id);
+                                const lastD = existingDisbursements.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
                                 const hasHistory = existingDisbursements.length > 0;
                                 setDisbursementType(hasHistory ? 'parcial' : 'total');
@@ -699,7 +700,9 @@ export default function Disbursements() {
                                   proposal_id: p.id,
                                   amount: String(stats.remaining),
                                   disbursement_type: hasHistory ? 'parcial' : 'total',
-                                  // ...bankDetails removed
+                                  bank_name: lastD?.bank_name || "",
+                                  agency: lastD?.agency || "",
+                                  account: lastD?.account || "",
                                 }));
                               }}
                             >
@@ -920,7 +923,35 @@ export default function Disbursements() {
 
 
 
-                  {/* Bank fields removed */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Banco</Label>
+                      <Input
+                        value={formData.bank_name}
+                        onChange={(e) => setFormData((f) => ({ ...f, bank_name: e.target.value }))}
+                        placeholder="Ex: Banco do Brasil"
+                        className="h-11"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Agência</Label>
+                      <Input
+                        value={formData.agency}
+                        onChange={(e) => setFormData((f) => ({ ...f, agency: e.target.value }))}
+                        placeholder="Ex: 1234-5"
+                        className="h-11"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Conta</Label>
+                      <Input
+                        value={formData.account}
+                        onChange={(e) => setFormData((f) => ({ ...f, account: e.target.value }))}
+                        placeholder="Ex: 12345-6"
+                        className="h-11"
+                      />
+                    </div>
+                  </div>
 
                   <div className="space-y-2">
                     <Label className="text-sm font-semibold">Data do Pedido</Label>

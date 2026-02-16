@@ -7,6 +7,7 @@ import { useToast } from "./use-toast";
 export interface DbVisit {
   id: string;
   user_id: string;
+  agency_id: string;
   producer_name: string;
   date: string;
   time: string;
@@ -17,7 +18,7 @@ export interface DbVisit {
 }
 
 export function useVisits() {
-  const { user } = useAuth();
+  const { user, agencyId } = useAuth();
   const { selectedAgencyId } = useAgency();
   const { toast } = useToast();
   const [visits, setVisits] = useState<DbVisit[]>([]);
@@ -29,11 +30,11 @@ export function useVisits() {
 
     let query = supabase
       .from("visits")
-      .select("*, proposals!inner(agency_id)")
+      .select("*")
       .order("date", { ascending: true });
 
     if (selectedAgencyId && selectedAgencyId !== "all") {
-      query = query.eq("proposals.agency_id", selectedAgencyId);
+      query = query.eq("agency_id", selectedAgencyId);
     }
 
     const { data, error } = await query;
@@ -69,9 +70,9 @@ export function useVisits() {
     };
   }, [fetchVisits]);
 
-  const createVisit = async (data: Omit<DbVisit, "id" | "user_id" | "created_at">) => {
+  const createVisit = async (data: Omit<DbVisit, "id" | "user_id" | "created_at" | "agency_id">) => {
     if (!user) return;
-    const { error } = await supabase.from("visits").insert({ ...data, user_id: user.id });
+    const { error } = await supabase.from("visits").insert({ ...data, user_id: user.id, agency_id: agencyId });
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {

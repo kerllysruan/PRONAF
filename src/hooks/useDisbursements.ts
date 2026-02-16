@@ -21,6 +21,7 @@ export interface DbDisbursement {
   notes: string;
   created_at: string;
   updated_at: string;
+  agency_id: string;
 }
 
 export type DisbursementStatus = "pendente" | "aprovado" | "liberado" | "negado";
@@ -40,7 +41,7 @@ export const DISBURSEMENT_STATUS_COLORS: Record<DisbursementStatus, string> = {
 };
 
 export function useDisbursements() {
-  const { user } = useAuth();
+  const { user, agencyId } = useAuth();
   const { selectedAgencyId } = useAgency();
   const { toast } = useToast();
   const [disbursements, setDisbursements] = useState<DbDisbursement[]>([]);
@@ -52,11 +53,11 @@ export function useDisbursements() {
 
     let query = supabase
       .from("disbursements")
-      .select("*, proposals!inner(agency_id)")
+      .select("*")
       .order("created_at", { ascending: false });
 
     if (selectedAgencyId && selectedAgencyId !== "all") {
-      query = query.eq("proposals.agency_id", selectedAgencyId);
+      query = query.eq("agency_id", selectedAgencyId);
     }
 
     const { data, error } = await query;
@@ -92,9 +93,9 @@ export function useDisbursements() {
     };
   }, [fetchDisbursements]);
 
-  const createDisbursement = async (data: Omit<DbDisbursement, "id" | "user_id" | "created_at" | "updated_at">) => {
+  const createDisbursement = async (data: Omit<DbDisbursement, "id" | "user_id" | "created_at" | "updated_at" | "agency_id">) => {
     if (!user) return;
-    const { error } = await supabase.from("disbursements").insert({ ...data, user_id: user.id } as any);
+    const { error } = await supabase.from("disbursements").insert({ ...data, user_id: user.id, agency_id: agencyId } as any);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {

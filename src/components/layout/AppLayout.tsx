@@ -10,7 +10,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, role } = useAuth();
 
   return (
     <SidebarProvider>

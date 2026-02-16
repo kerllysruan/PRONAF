@@ -24,10 +24,11 @@ export interface DbDocumentTask {
   proposal_id: string | null;
   document_name: string;
   created_at: string;
+  agency_id: string;
 }
 
 export function useTeam() {
-  const { user } = useAuth();
+  const { user, agencyId } = useAuth();
   const { selectedAgencyId } = useAgency();
   const { toast } = useToast();
   const [members, setMembers] = useState<DbTeamMember[]>([]);
@@ -39,11 +40,11 @@ export function useTeam() {
     if (!silent) setLoading(true);
 
     let membersQuery = supabase.from("team_members").select("*").order("created_at");
-    let tasksQuery = supabase.from("document_tasks").select("*, proposals!inner(agency_id)").order("created_at", { ascending: false });
+    let tasksQuery = supabase.from("document_tasks").select("*").order("created_at", { ascending: false });
 
     if (selectedAgencyId && selectedAgencyId !== "all") {
       membersQuery = membersQuery.eq("agency_id", selectedAgencyId);
-      tasksQuery = tasksQuery.eq("proposals.agency_id", selectedAgencyId);
+      tasksQuery = tasksQuery.eq("agency_id", selectedAgencyId);
     }
 
     const [membersRes, tasksRes] = await Promise.all([
@@ -87,9 +88,9 @@ export function useTeam() {
     if (!error) { toast({ title: "Membro removido." }); await fetchAll(true); }
   };
 
-  const createTask = async (data: Omit<DbDocumentTask, "id" | "user_id" | "created_at">) => {
+  const createTask = async (data: Omit<DbDocumentTask, "id" | "user_id" | "created_at" | "agency_id">) => {
     if (!user) return;
-    const { error } = await supabase.from("document_tasks").insert({ ...data, user_id: user.id });
+    const { error } = await supabase.from("document_tasks").insert({ ...data, user_id: user.id, agency_id: agencyId });
     if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
     else { toast({ title: "Tarefa criada!" }); await fetchAll(true); }
   };
