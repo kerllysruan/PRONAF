@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useAgency } from "@/contexts/AgencyContext";
 import { useToast } from "./use-toast";
 
 export interface DbTeamMember {
@@ -27,6 +28,7 @@ export interface DbDocumentTask {
 
 export function useTeam() {
   const { user } = useAuth();
+  const { selectedAgencyId } = useAgency();
   const { toast } = useToast();
   const [members, setMembers] = useState<DbTeamMember[]>([]);
   const [tasks, setTasks] = useState<DbDocumentTask[]>([]);
@@ -35,14 +37,24 @@ export function useTeam() {
   const fetchAll = useCallback(async (silent = false) => {
     if (!user) return;
     if (!silent) setLoading(true);
+
+    let membersQuery = supabase.from("team_members").select("*").order("created_at");
+    let tasksQuery = supabase.from("document_tasks").select("*, proposals!inner(agency_id)").order("created_at", { ascending: false });
+
+    if (selectedAgencyId && selectedAgencyId !== "all") {
+      membersQuery = membersQuery.eq("agency_id", selectedAgencyId);
+      tasksQuery = tasksQuery.eq("proposals.agency_id", selectedAgencyId);
+    }
+
     const [membersRes, tasksRes] = await Promise.all([
-      supabase.from("team_members").select("*").order("created_at"),
-      supabase.from("document_tasks").select("*").order("created_at", { ascending: false }),
+      membersQuery,
+      tasksQuery,
     ]);
+
     setMembers(membersRes.data || []);
     setTasks(tasksRes.data || []);
     if (!silent) setLoading(false);
-  }, [user]);
+  }, [user, selectedAgencyId]);
 
   useEffect(() => {
     fetchAll();

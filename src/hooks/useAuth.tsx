@@ -8,6 +8,8 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   agencyId: string | null;
+  role: string | null;
+  isDeveloper: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,6 +18,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signOut: async () => { },
   agencyId: null,
+  role: null,
+  isDeveloper: false,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -23,23 +27,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [agencyId, setAgencyId] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchAgency = async (uid: string) => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('agency_id')
-        .eq('id', uid)
-        .single();
-      if (data) setAgencyId((data as any).agency_id);
+    const fetchUserData = async (uid: string) => {
+      const [{ data: profile }, { data: roleData }] = await Promise.all([
+        supabase.from('profiles').select('agency_id').eq('id', uid).single(),
+        supabase.from('user_roles').select('role').eq('user_id', uid).maybeSingle()
+      ]);
+
+      if (profile) setAgencyId((profile as any).agency_id);
+      if (roleData) setRole(roleData.role);
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        if (session?.user) fetchAgency(session.user.id);
-        else setAgencyId(null);
+        if (session?.user) fetchUserData(session.user.id);
+        else {
+          setAgencyId(null);
+          setRole(null);
+        }
         setLoading(false);
       }
     );
@@ -47,8 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) fetchAgency(session.user.id);
-      else setAgencyId(null);
+      if (session?.user) fetchUserData(session.user.id);
+      else {
+        setAgencyId(null);
+        setRole(null);
+      }
       setLoading(false);
     });
 
@@ -58,10 +70,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setAgencyId(null);
+    setRole(null);
   };
 
+  const isDeveloper = role === 'developer';
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut, agencyId }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, agencyId, role, isDeveloper }}>
       {children}
     </AuthContext.Provider>
   );

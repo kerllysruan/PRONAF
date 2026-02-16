@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useAgency } from "@/contexts/AgencyContext";
 import { useToast } from "./use-toast";
 
 export interface DbVisit {
@@ -17,6 +18,7 @@ export interface DbVisit {
 
 export function useVisits() {
   const { user } = useAuth();
+  const { selectedAgencyId } = useAgency();
   const { toast } = useToast();
   const [visits, setVisits] = useState<DbVisit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,10 +26,17 @@ export function useVisits() {
   const fetchVisits = useCallback(async (silent = false) => {
     if (!user) return;
     if (!silent) setLoading(true);
-    const { data, error } = await supabase
+
+    let query = supabase
       .from("visits")
-      .select("*")
+      .select("*, proposals!inner(agency_id)")
       .order("date", { ascending: true });
+
+    if (selectedAgencyId && selectedAgencyId !== "all") {
+      query = query.eq("proposals.agency_id", selectedAgencyId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       toast({ title: "Erro ao carregar visitas", description: error.message, variant: "destructive" });
@@ -35,7 +44,7 @@ export function useVisits() {
       setVisits(data || []);
     }
     if (!silent) setLoading(false);
-  }, [user, toast]);
+  }, [user, toast, selectedAgencyId]);
 
   useEffect(() => {
     fetchVisits();

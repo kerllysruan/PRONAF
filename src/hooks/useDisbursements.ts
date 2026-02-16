@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useAgency } from "@/contexts/AgencyContext";
 import { useToast } from "./use-toast";
 
 export interface DbDisbursement {
@@ -40,6 +41,7 @@ export const DISBURSEMENT_STATUS_COLORS: Record<DisbursementStatus, string> = {
 
 export function useDisbursements() {
   const { user } = useAuth();
+  const { selectedAgencyId } = useAgency();
   const { toast } = useToast();
   const [disbursements, setDisbursements] = useState<DbDisbursement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,10 +49,17 @@ export function useDisbursements() {
   const fetchDisbursements = useCallback(async (silent = false) => {
     if (!user) return;
     if (!silent) setLoading(true);
-    const { data, error } = await supabase
+
+    let query = supabase
       .from("disbursements")
-      .select("*")
+      .select("*, proposals!inner(agency_id)")
       .order("created_at", { ascending: false });
+
+    if (selectedAgencyId && selectedAgencyId !== "all") {
+      query = query.eq("proposals.agency_id", selectedAgencyId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       toast({ title: "Erro ao carregar desembolsos", description: error.message, variant: "destructive" });
@@ -58,7 +67,7 @@ export function useDisbursements() {
       setDisbursements((data as DbDisbursement[]) || []);
     }
     if (!silent) setLoading(false);
-  }, [user, toast]);
+  }, [user, toast, selectedAgencyId]);
 
   useEffect(() => {
     fetchDisbursements();

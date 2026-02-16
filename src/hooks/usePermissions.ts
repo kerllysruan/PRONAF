@@ -63,9 +63,9 @@ export function usePermissions() {
       const { id, user_id, created_at, updated_at, ...perms } = permRes.data as any;
       setPermissions(perms);
     }
-    if (roleRes.data) {
-      setRole(roleRes.data.role);
-    }
+
+    let userRole = roleRes.data?.role || "usuario";
+    setRole(userRole);
 
     setLoading(false);
   }, [user]);
@@ -74,7 +74,8 @@ export function usePermissions() {
     fetchPermissions();
   }, [fetchPermissions]);
 
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "developer";
+  const isDeveloper = role === "developer";
 
-  return { permissions, role, isAdmin, loading, refetch: fetchPermissions };
+  return { permissions, role, isAdmin, isDeveloper, loading, refetch: fetchPermissions };
 }

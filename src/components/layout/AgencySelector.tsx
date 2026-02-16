@@ -1,0 +1,56 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAgency } from "@/contexts/AgencyContext";
+import { useAuth } from "@/hooks/useAuth";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Building2 } from "lucide-react";
+
+export function AgencySelector() {
+    const { isDeveloper } = useAuth();
+    const { selectedAgencyId, setSelectedAgencyId } = useAgency();
+    const [agencies, setAgencies] = useState<{ id: string; name: string }[]>([]);
+
+    useEffect(() => {
+        if (!isDeveloper) return;
+
+        const fetchAgencies = async () => {
+            const { data } = await supabase
+                .from("agencies")
+                .select("id, name")
+                .order("name");
+            if (data) setAgencies(data);
+        };
+
+        fetchAgencies();
+    }, [isDeveloper]);
+
+    if (!isDeveloper) return null;
+
+    return (
+        <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <Select
+                value={selectedAgencyId}
+                onValueChange={(value) => setSelectedAgencyId(value)}
+            >
+                <SelectTrigger className="w-[180px] h-8 text-xs bg-background/50 border-muted-foreground/20">
+                    <SelectValue placeholder="Selecionar Agência" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">Todas as Agências</SelectItem>
+                    {agencies.map((agency) => (
+                        <SelectItem key={agency.id} value={agency.id}>
+                            {agency.name}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+    );
+}

@@ -1,5 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
+import { AgencySelector } from "./AgencySelector";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
@@ -19,9 +20,10 @@ export function AppLayout({ children }: AppLayoutProps) {
           <header className="h-14 flex items-center border-b bg-card/80 backdrop-blur-sm px-4 gap-3 shrink-0 sticky top-0 z-10">
             <SidebarTrigger />
             <div className="h-5 w-px bg-border" />
-            <span className="text-sm font-medium text-muted-foreground">
+            <span className="text-sm font-medium text-muted-foreground mr-2">
               Gerenciador PRONAF
             </span>
+            <AgencySelector />
             <div className="ml-auto flex items-center gap-3">
               <span className="text-xs text-muted-foreground hidden sm:block">
                 {user?.email}

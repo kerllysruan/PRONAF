@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useAgency } from "@/contexts/AgencyContext";
 import { useToast } from "./use-toast";
 import { REQUIRED_DOCUMENTS } from "@/types/proposal";
 
@@ -31,6 +32,7 @@ export interface DbDocument {
 
 export function useProposals() {
   const { user, agencyId } = useAuth();
+  const { selectedAgencyId } = useAgency();
   const { toast } = useToast();
   const [proposals, setProposals] = useState<(DbProposal & { documents: DbDocument[] })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,10 +40,18 @@ export function useProposals() {
   const fetchProposals = useCallback(async (silent = false) => {
     if (!user) return;
     if (!silent) setLoading(true);
-    const { data, error } = await supabase
+
+    let query = supabase
       .from("proposals")
       .select("*, proposal_documents(*)")
       .order("created_at", { ascending: false });
+
+    // Apply agency filter
+    if (selectedAgencyId && selectedAgencyId !== "all") {
+      query = query.eq("agency_id", selectedAgencyId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       toast({ title: "Erro ao carregar propostas", description: error.message, variant: "destructive" });
@@ -54,7 +64,7 @@ export function useProposals() {
       );
     }
     if (!silent) setLoading(false);
-  }, [user, toast]);
+  }, [user, toast, selectedAgencyId]);
 
   useEffect(() => {
     fetchProposals();
