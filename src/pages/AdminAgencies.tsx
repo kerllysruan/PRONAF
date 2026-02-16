@@ -29,7 +29,17 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Building2, Users, ArrowRightLeft, Loader2 } from "lucide-react";
+import { Plus, Building2, Users, ArrowRightLeft, Loader2, Trash2 } from "lucide-react";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Agency {
     id: string;
@@ -62,6 +72,10 @@ export default function AdminAgencies() {
     const [isMoveOpen, setIsMoveOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const [targetAgencyId, setTargetAgencyId] = useState("");
+
+    // Delete Agency Dialog
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [agencyToDelete, setAgencyToDelete] = useState<Agency | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -130,6 +144,26 @@ export default function AdminAgencies() {
             setIsMoveOpen(false);
             setSelectedUser(null);
             setTargetAgencyId("");
+            fetchData();
+        }
+        setSaving(false);
+    };
+
+    const handleDeleteAgency = async () => {
+        if (!agencyToDelete) return;
+        setSaving(true);
+
+        const { error } = await supabase
+            .from("agencies")
+            .delete()
+            .eq("id", agencyToDelete.id);
+
+        if (error) {
+            toast({ title: "Erro", description: "Falha ao excluir agência: " + error.message, variant: "destructive" });
+        } else {
+            toast({ title: "Sucesso", description: `Agência "${agencyToDelete.name}" excluída com sucesso!` });
+            setIsDeleteOpen(false);
+            setAgencyToDelete(null);
             fetchData();
         }
         setSaving(false);
@@ -261,6 +295,17 @@ export default function AdminAgencies() {
                                             {agencyUsers.length} usuário{agencyUsers.length !== 1 ? "s" : ""}
                                         </Badge>
                                     </CardTitle>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        onClick={() => {
+                                            setAgencyToDelete(agency);
+                                            setIsDeleteOpen(true);
+                                        }}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </div>
                             </CardHeader>
                             <CardContent className="p-0">
@@ -375,6 +420,33 @@ export default function AdminAgencies() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Delete Agency Confirmation */}
+            <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <Trash2 className="h-5 w-5 text-destructive" /> Excluir Agência?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tem certeza que deseja excluir a agência <strong>{agencyToDelete?.name}</strong>?
+                            Os usuários e dados vinculados a ela serão desvinculados, mas não serão excluídos.
+                            Esta ação é irreversível.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setAgencyToDelete(null)}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={handleDeleteAgency}
+                            disabled={saving}
+                        >
+                            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                            Excluir permanentemente
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
