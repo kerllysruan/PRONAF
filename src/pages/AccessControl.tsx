@@ -194,6 +194,7 @@ function AccessControl() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "Cargo atualizado", description: `Definido como ${role}.` });
+      await fetchUsers(true);
     } catch (err: any) {
       setUsers(previousUsers); // Rollback
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -213,6 +214,7 @@ function AccessControl() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "Agência atualizada", description: "Usuário vinculado à nova agência." });
+      await fetchUsers(true);
     } catch (err: any) {
       setUsers(previousUsers); // Rollback
       toast({ title: "Erro", description: err.message, variant: "destructive" });
@@ -239,6 +241,7 @@ function AccessControl() {
       if (data?.error) throw new Error(data.error);
       toast({ title: "Permissões salvas", description: "Alterações aplicadas com sucesso." });
       setIsPermOpen(false);
+      await fetchUsers(true);
     } catch (err: any) {
       setPermissions(previousPerms); // Rollback
       toast({ title: "Erro", description: err.message || "Erro ao salvar", variant: "destructive" });
