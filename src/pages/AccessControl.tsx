@@ -286,10 +286,10 @@ function AccessControl() {
   const getRoleConfig = (role: string) => {
     switch (role) {
       case "admin": return { label: "Gerente Geral", color: "bg-rose-500/10 text-rose-600 border-rose-200", dot: "bg-rose-500", icon: ShieldAlert };
-      case "gerente": return { label: "Gerente", color: "bg-amber-500/10 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: ShieldCheck };
+      case "gerente": return { label: "Gerente de Agência", color: "bg-amber-500/10 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: ShieldCheck };
       case "tecnico": return { label: "Técnico", color: "bg-blue-500/10 text-blue-600 border-blue-200", dot: "bg-blue-500", icon: Shield };
-      case "developer": return { label: "Dev", color: "bg-indigo-500/10 text-indigo-700 border-indigo-200", dot: "bg-indigo-500", icon: Code2 };
-      default: return { label: "Usuário", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400", icon: Fingerprint };
+      case "developer": return { label: "Desenvolvedor", color: "bg-indigo-500/10 text-indigo-700 border-indigo-200", dot: "bg-indigo-500", icon: Code2 };
+      default: return { label: "Visitante", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400", icon: Fingerprint };
     }
   };
 
@@ -367,9 +367,9 @@ function AccessControl() {
         {[
           { label: "Total", value: stats.total, icon: Users, accent: "text-primary" },
           { label: "Gerentes Gerais", value: stats.admins, icon: ShieldAlert, accent: "text-rose-500" },
-          { label: "Gerentes", value: stats.gerentes, icon: ShieldCheck, accent: "text-amber-600" },
+          { label: "G. de Agência", value: stats.gerentes, icon: ShieldCheck, accent: "text-amber-600" },
           { label: "Técnicos", value: stats.tecnicos, icon: Shield, accent: "text-blue-600" },
-          { label: "Usuários", value: stats.usuarios, icon: Fingerprint, accent: "text-slate-500" },
+          { label: "Visitantes", value: stats.usuarios, icon: Fingerprint, accent: "text-slate-500" },
         ].map(s => (
           <Card key={s.label} className="border shadow-sm">
             <CardContent className="p-4 flex items-center gap-3">
@@ -405,9 +405,9 @@ function AccessControl() {
               <SelectContent>
                 <SelectItem value="all">Todos os cargos</SelectItem>
                 <SelectItem value="admin">Gerente Geral</SelectItem>
-                <SelectItem value="gerente">Gerente</SelectItem>
+                <SelectItem value="gerente">Gerente de Agência</SelectItem>
                 <SelectItem value="tecnico">Técnico</SelectItem>
-                <SelectItem value="usuario">Usuário</SelectItem>
+                <SelectItem value="usuario">Visitante</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterAgency} onValueChange={setFilterAgency}>
@@ -482,11 +482,11 @@ function AccessControl() {
                           </div>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="usuario">Usuário</SelectItem>
+                          <SelectItem value="usuario">Visitante</SelectItem>
                           <SelectItem value="tecnico">Técnico</SelectItem>
-                          <SelectItem value="gerente">Gerente</SelectItem>
-                          <SelectItem value="admin">Gerente Geral</SelectItem>
-                          <SelectItem value="developer">Dev</SelectItem>
+                          <SelectItem value="gerente">Gerente de Agência</SelectItem>
+                          {isDeveloper && <SelectItem value="admin">Gerente Geral</SelectItem>}
+                          {isDeveloper && <SelectItem value="developer">Desenvolvedor</SelectItem>}
                         </SelectContent>
                       </Select>
                     </TableCell>

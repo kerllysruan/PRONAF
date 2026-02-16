@@ -31,10 +31,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fetchUserData = async (uid: string) => {
-      const [{ data: profile }, { data: roleData }] = await Promise.all([
-        supabase.from('profiles').select('agency_id').eq('user_id', uid).single(),
-        supabase.from('user_roles').select('role').eq('user_id', uid).maybeSingle()
-      ]);
+      // Robust profile fetch: user_id is the preferred link, but id might be synced
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('agency_id')
+        .or(`user_id.eq.${uid},id.eq.${uid}`)
+        .maybeSingle();
+
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', uid)
+        .maybeSingle();
 
       if (profile) setAgencyId((profile as any).agency_id);
       if (roleData) setRole(roleData.role);

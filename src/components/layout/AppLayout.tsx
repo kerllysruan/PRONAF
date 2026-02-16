@@ -32,8 +32,8 @@ export function AppLayout({ children }: AppLayoutProps) {
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
                   {role === 'developer' ? 'Desenvolvedor' :
                     role === 'admin' ? 'Gerente Geral' :
-                      role === 'gerente' ? 'Gerente' :
-                        role === 'tecnico' ? 'Técnico' : 'Usuário'}
+                      role === 'gerente' ? 'Gerente de Agência' :
+                        role === 'tecnico' ? 'Técnico' : 'Visitante'}
                 </span>
               </div>
               <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="h-8 w-8">

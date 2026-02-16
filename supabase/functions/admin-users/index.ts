@@ -75,6 +75,12 @@ Deno.serve(async (req: Request) => {
     switch (action) {
       case "create": {
         const { email, password, display_name, role, agency_id } = payload;
+        
+        // SECURITY: Only developers can create Gerentes Gerais (admin role)
+        if (role === "admin" && roleData.role !== "developer") {
+          throw new Error("Acesso negado. Apenas desenvolvedores podem atribuir o cargo de Gerente Geral.");
+        }
+
         const { data: authUser, error: createError } = await adminClient.auth.admin.createUser({
           email, password, email_confirm: true, user_metadata: { display_name }
         });
@@ -82,13 +88,15 @@ Deno.serve(async (req: Request) => {
 
         const userId = authUser.user.id;
 
+        // Ensure id and user_id are both set to the UID for RLS consistency
         await adminClient.from("profiles").upsert({
+          id: userId,
           user_id: userId,
           email,
           display_name,
           full_name: display_name,
           agency_id
-        }, { onConflict: "user_id" });
+        }, { onConflict: "id" });
 
         await adminClient.from("user_roles").upsert({ user_id: userId, role: role || "usuario" }, { onConflict: "user_id" });
         await adminClient.from("user_permissions").upsert({
@@ -102,6 +110,16 @@ Deno.serve(async (req: Request) => {
 
       case "update_role": {
         const { user_id, role } = payload;
+
+        // SECURITY: Only developers can promote to or demote from Gerente Geral (admin role)
+        const { data: targetRoleData } = await adminClient.from("user_roles").select("role").eq("user_id", user_id).single();
+        const isTargetAdmin = targetRoleData?.role === "admin";
+        const isNewAdmin = role === "admin";
+
+        if ((isTargetAdmin || isNewAdmin) && roleData.role !== "developer") {
+          throw new Error("Acesso negado. Apenas desenvolvedores podem gerenciar o cargo de Gerente Geral.");
+        }
+
         const { error: roleError } = await adminClient.from("user_roles").upsert({ user_id, role }, { onConflict: "user_id" });
         if (roleError) throw new Error(`Erro Role: ${ roleError.message } `);
 
