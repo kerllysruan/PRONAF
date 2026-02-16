@@ -124,7 +124,7 @@ export default function Disbursements() {
 
   const getProposalStats = useCallback((proposalId: string, totalValue: number) => {
     const proposalDisbursements = disbursements.filter(
-      d => d.proposal_id === proposalId && d.status !== 'negado'
+      d => d.proposal_id === proposalId && d.status !== 'negado' && d.status !== 'pendente'
     );
     const used = proposalDisbursements.reduce((acc, d) => acc + Number(d.amount), 0);
     const remaining = Math.max(0, totalValue - used);
@@ -666,15 +666,15 @@ export default function Disbursements() {
                           <Progress value={progress} className="h-2" />
                           <div className="grid grid-cols-3 gap-2 text-center pt-2">
                             <div className="bg-background rounded px-2 py-1.5 border">
-                              <p className="text-[10px] text-muted-foreground">Já Pago</p>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Já Solicitado</p>
                               <p className="text-xs font-bold font-mono">{formatCurrency(stats.used)}</p>
                             </div>
                             <div className="bg-primary/5 rounded px-2 py-1.5 border border-primary/20">
-                              <p className="text-[10px] text-primary/70">Restante</p>
+                              <p className="text-[10px] text-primary/70 uppercase tracking-wider font-semibold">Restante</p>
                               <p className="text-xs font-bold text-primary font-mono">{formatCurrency(stats.remaining)}</p>
                             </div>
                             <div className="bg-background rounded px-2 py-1.5 border">
-                              <p className="text-[10px] text-muted-foreground">Original</p>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Valor Total da Proposta</p>
                               <p className="text-xs font-bold font-mono">{formatCurrency(Number(selectedProp.requested_value))}</p>
                             </div>
                           </div>
