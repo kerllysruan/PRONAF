@@ -492,13 +492,14 @@ function AccessControl() {
                     </TableCell>
                     <TableCell>
                       <Select
-                        value={user.agency_id || ""}
-                        onValueChange={(v) => handleUpdateAgency(user.id, v)}
+                        value={user.agency_id || "none"}
+                        onValueChange={(v) => handleUpdateAgency(user.id, v === "none" ? "" : v)}
                       >
                         <SelectTrigger className="h-7 w-[160px] text-xs border rounded-md">
                           <SelectValue placeholder="Sem agência" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="none">Sem agência</SelectItem>
                           {agencies.map(a => (
                             <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                           ))}
@@ -609,11 +610,12 @@ function AccessControl() {
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Agência</Label>
-              <Select value={formData.agency_id} onValueChange={(v) => setFormData({ ...formData, agency_id: v })}>
+              <Select value={formData.agency_id || "none"} onValueChange={(v) => setFormData({ ...formData, agency_id: v === "none" ? "" : v })}>
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Selecione uma agência" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">Sem agência</SelectItem>
                   {agencies.map(a => (
                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                   ))}
