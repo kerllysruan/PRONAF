@@ -39,6 +39,7 @@ export default function Proposals() {
   const { proposals, loading, createProposal, updateProposal, deleteProposal, refetch } = useProposals();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [designerFilter, setDesignerFilter] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
   const [sortBy, setSortBy] = useState<"nome" | "data">("data");
@@ -65,10 +66,11 @@ export default function Proposals() {
         p.producer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.producer_cpf.includes(searchTerm);
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+      const matchesDesigner = designerFilter === "all" || p.project_designer === designerFilter;
       const d = parseISO(p.entry_date);
       const matchesMonth = filterMonth === "all" || getMonth(d) + 1 === Number(filterMonth);
       const matchesYear = filterYear === "all" || getYear(d) === Number(filterYear);
-      return matchesSearch && matchesStatus && matchesMonth && matchesYear;
+      return matchesSearch && matchesStatus && matchesDesigner && matchesMonth && matchesYear;
     });
 
     // Aplicar ordenamento
@@ -84,7 +86,7 @@ export default function Proposals() {
   // Reset page when filters change
   useEffect(() => {
     setPage(0);
-  }, [searchTerm, statusFilter, filterMonth, filterYear, sortBy]);
+  }, [searchTerm, statusFilter, designerFilter, filterMonth, filterYear, sortBy]);
 
   // Keep page valid if data shrinks
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -98,12 +100,13 @@ export default function Proposals() {
   const filteredForSum = useMemo(() => {
     return proposals.filter((p) => {
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
+      const matchesDesigner = designerFilter === "all" || p.project_designer === designerFilter;
       const d = parseISO(p.entry_date);
       const matchesMonth = filterMonth === "all" || getMonth(d) + 1 === Number(filterMonth);
       const matchesYear = filterYear === "all" || getYear(d) === Number(filterYear);
-      return matchesStatus && matchesMonth && matchesYear;
+      return matchesStatus && matchesDesigner && matchesMonth && matchesYear;
     });
-  }, [proposals, statusFilter, filterMonth, filterYear]);
+  }, [proposals, statusFilter, designerFilter, filterMonth, filterYear]);
 
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
@@ -157,52 +160,97 @@ export default function Proposals() {
         </Button>
       </div>
 
-      <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-        <CardContent className="p-5">
-          <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar por nome ou CPF..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9 h-10" />
+      <Card className="border-0 shadow-sm bg-card/60 backdrop-blur-sm">
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row gap-3">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input
+                placeholder="Buscar por nome ou CPF..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-11 bg-background/50 border-muted-foreground/20 focus-visible:ring-primary/30 rounded-xl transition-all shadow-sm"
+              />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-48 h-10"><SelectValue placeholder="Filtrar status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>{label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <MonthYearFilter month={filterMonth} year={filterYear} onMonthChange={setFilterMonth} onYearChange={setFilterYear} years={availableYears} />
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as "nome" | "data")}>
-              <SelectTrigger className="w-full sm:w-48 h-10">
-                <ArrowUpDown className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="data">Mais Recentes</SelectItem>
-                <SelectItem value="nome">Ordem Alfabética</SelectItem>
-              </SelectContent>
-            </Select>
+
+            <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[180px] h-11 rounded-xl bg-background/50 border-muted-foreground/20 hover:border-primary/30 transition-all font-medium">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-primary/10 shadow-2xl">
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <MonthYearFilter
+                month={filterMonth}
+                year={filterYear}
+                onMonthChange={setFilterMonth}
+                onYearChange={setFilterYear}
+                years={availableYears}
+              />
+
+              <Select value={designerFilter} onValueChange={setDesignerFilter}>
+                <SelectTrigger className="w-full sm:w-[180px] h-11 rounded-xl bg-background/50 border-muted-foreground/20 hover:border-primary/30 transition-all font-medium">
+                  <SelectValue placeholder="Projetista" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-primary/10 shadow-2xl">
+                  <SelectItem value="all">Todos os projetistas</SelectItem>
+                  {Object.entries(PROJECT_DESIGNER_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as "nome" | "data")}>
+                <SelectTrigger className="w-full sm:w-[180px] h-11 rounded-xl bg-background/50 border-muted-foreground/20 hover:border-primary/30 transition-all font-medium">
+                  <ArrowUpDown className="h-4 w-4 mr-2 opacity-50" />
+                  <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-primary/10 shadow-2xl">
+                  <SelectItem value="data">Mais Recentes</SelectItem>
+                  <SelectItem value="nome">Ordem Alfabética</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-0 shadow-lg md:col-span-3 bg-gradient-to-br from-primary/5 via-accent/5 to-primary/10 dark:from-primary/10 dark:via-accent/10 dark:to-primary/20 hover-lift">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">{filteredForSum.length}</span>
+      <div className="grid gap-4 md:grid-cols-1">
+        <Card className="border-0 shadow-sm bg-gradient-to-r from-primary/5 via-primary/[0.02] to-transparent overflow-hidden relative">
+          <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+            <DollarSign className="h-32 w-32 -mr-8 -mt-8" />
+          </div>
+          <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                <span className="text-xl font-bold font-heading">{filteredForSum.length}</span>
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Filtrado</p>
-                <p className="text-sm text-muted-foreground mt-0.5">{filteredForSum.length} {filteredForSum.length === 1 ? 'proposta' : 'propostas'}</p>
+                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">Volume Total em Propostas</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="secondary" className="bg-primary/5 text-primary border-primary/10 text-[10px] uppercase font-bold px-2 py-0">
+                    {filteredForSum.length} {filteredForSum.length === 1 ? 'registro' : 'registros'}
+                  </Badge>
+                  {statusFilter !== "all" && (
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground px-2 py-0 border-muted-foreground/20">
+                      Filtro: {STATUS_LABELS[statusFilter as ProposalStatus]}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
-            <span className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent font-heading">
-              {formatCurrency(filteredForSum.reduce((acc, curr) => acc + Number(curr.requested_value || 0), 0))}
-            </span>
+            <div className="text-right">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Montante Financeiro</p>
+              <span className="text-4xl font-black bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent font-heading tracking-tight italic">
+                {formatCurrency(filteredForSum.reduce((acc, curr) => acc + Number(curr.requested_value || 0), 0))}
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -212,15 +260,15 @@ export default function Proposals() {
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gradient-to-r from-muted/50 to-muted/30">
-                  <TableHead className="font-semibold">Produtor</TableHead>
-                  <TableHead className="hidden md:table-cell font-semibold">CPF</TableHead>
-                  <TableHead className="font-semibold">Linha</TableHead>
-                  <TableHead className="font-semibold">Projetista</TableHead>
-                  <TableHead className="font-semibold">Valor</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="hidden lg:table-cell font-semibold">Data</TableHead>
-                  <TableHead className="w-24 font-semibold">Ações</TableHead>
+                <TableRow className="bg-muted/30 border-b border-muted-foreground/10">
+                  <TableHead className="py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70">Produtor</TableHead>
+                  <TableHead className="hidden md:table-cell py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70">CPF</TableHead>
+                  <TableHead className="py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70">Linha</TableHead>
+                  <TableHead className="py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70">Projetista</TableHead>
+                  <TableHead className="py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70 text-right">Valor</TableHead>
+                  <TableHead className="py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70 text-center">Status</TableHead>
+                  <TableHead className="hidden lg:table-cell py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70">Data</TableHead>
+                  <TableHead className="w-24 py-4 text-[11px] font-black uppercase tracking-wider text-muted-foreground/70 text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -232,23 +280,31 @@ export default function Proposals() {
                   </TableRow>
                 ) : (
                   paged.map((p) => (
-                    <TableRow key={p.id} className="hover:bg-gradient-to-r hover:from-muted/30 hover:to-transparent transition-all">
-                      <TableCell className="font-semibold">{p.producer_name}</TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground text-sm font-mono">{p.producer_cpf}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs font-medium">
+                    <TableRow key={p.id} className="group hover:bg-muted/20 transition-all border-b border-muted-foreground/5 last:border-0">
+                      <TableCell className="py-4">
+                        <p className="font-bold text-sm tracking-tight text-foreground/90 group-hover:text-primary transition-colors">{p.producer_name}</p>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell py-4">
+                        <span className="text-xs font-mono text-muted-foreground/60">{p.producer_cpf}</span>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Badge variant="outline" className="text-[10px] font-bold uppercase py-0 px-2 border-primary/10 bg-primary/[0.02] text-muted-foreground whitespace-nowrap">
                           {PRONAF_LINE_LABELS[p.pronaf_line as PronafLine] || p.pronaf_line}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm">{PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer || "-"}</TableCell>
-                      <TableCell className="font-bold text-primary">{formatCurrency(Number(p.requested_value))}</TableCell>
-                      <TableCell>
-                        <Badge className={`${STATUS_COLORS[p.status as ProposalStatus] || ''} text-xs px-3 py-1 rounded-full`}>
+                      <TableCell className="py-4">
+                        <span className="text-xs font-medium text-muted-foreground">{PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer || "-"}</span>
+                      </TableCell>
+                      <TableCell className="py-4 text-right">
+                        <span className="font-black text-sm text-primary tracking-tighter">{formatCurrency(Number(p.requested_value))}</span>
+                      </TableCell>
+                      <TableCell className="py-4 text-center">
+                        <Badge className={`${STATUS_COLORS[p.status as ProposalStatus] || ''} text-[10px] font-black uppercase px-2.5 py-0.5 rounded-lg border-0 shadow-sm whitespace-nowrap`}>
                           {STATUS_LABELS[p.status as ProposalStatus] || p.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground font-medium">
-                        {format(parseISO(p.entry_date), "dd/MM/yyyy")}
+                      <TableCell className="hidden lg:table-cell py-4">
+                        <span className="text-xs font-medium text-muted-foreground/70">{format(parseISO(p.entry_date), "dd/MM/yyyy")}</span>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
