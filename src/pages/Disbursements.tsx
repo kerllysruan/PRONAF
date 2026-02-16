@@ -61,6 +61,7 @@ export default function Disbursements() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isProposalLocked, setIsProposalLocked] = useState(false);
 
   const [disbursementType, setDisbursementType] = useState<'total' | 'parcial'>('total');
 
@@ -240,6 +241,7 @@ export default function Disbursements() {
     });
     setProposalSearch("");
     setSelectedProposal(null);
+    setIsProposalLocked(false);
     setDisbursementType('total');
     setEditingId(null);
   };
@@ -581,7 +583,16 @@ export default function Disbursements() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   resetForm();
+                                  const pStats = getProposalStats(proposal.id, Number(proposal.requested_value));
                                   setSelectedProposal(proposal.id);
+                                  setIsProposalLocked(true);
+                                  setDisbursementType('total');
+                                  setFormData((f) => ({
+                                    ...f,
+                                    proposal_id: proposal.id,
+                                    amount: pStats.remaining.toFixed(2),
+                                    disbursement_type: 'total',
+                                  }));
                                   setIsDialogOpen(true);
                                 }}
                                 title="Solicitar Novo Desembolso"
@@ -627,8 +638,8 @@ export default function Disbursements() {
           </DialogHeader>
 
           <div className="space-y-6 pt-4">
-            {/* Seleção de Proposta ou Resumo (se editando) */}
-            {!editingId ? (
+            {/* Seleção de Proposta ou Resumo (se editando ou clicado em +) */}
+            {(!selectedProposal || (!isProposalLocked && !editingId)) ? (
               <>
                 <div className="space-y-2">
                   <Label>Buscar Proposta por Nome ou CPF</Label>
@@ -726,13 +737,16 @@ export default function Disbursements() {
                       const stats = getProposalStats(selectedProp.id, Number(selectedProp.requested_value));
                       const progress = (stats.used / Number(selectedProp.requested_value)) * 100;
                       return (
-                        <div className="space-y-3">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-muted-foreground">Progresso do Desembolso</span>
-                            <span className="font-bold">{Math.round(progress)}%</span>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                             <div className="flex justify-between text-xs mb-1">
+                              <span className="text-muted-foreground">Progresso do Desembolso</span>
+                              <span className="font-bold">{Math.round(progress)}%</span>
+                            </div>
+                            <Progress value={progress} className="h-2" />
                           </div>
-                          <Progress value={progress} className="h-2" />
-                          <div className="grid grid-cols-3 gap-2 text-center pt-2">
+                          
+                          <div className="grid grid-cols-3 gap-2 text-center">
                             <div className="bg-background rounded px-2 py-1.5 border">
                               <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Já Solicitado</p>
                               <p className="text-xs font-bold font-mono">{formatCurrency(stats.used)}</p>
@@ -742,13 +756,53 @@ export default function Disbursements() {
                               <p className="text-xs font-bold text-primary font-mono">{formatCurrency(stats.remaining)}</p>
                             </div>
                             <div className="bg-background rounded px-2 py-1.5 border">
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Valor Total da Proposta</p>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Total Proposta</p>
                               <p className="text-xs font-bold font-mono">{formatCurrency(Number(selectedProp.requested_value))}</p>
                             </div>
                           </div>
+
+                          {/* Histórico Simplificado dentro do Diálogo */}
+                          {disbursements.filter(d => d.proposal_id === selectedProp.id).length > (editingId ? 1 : 0) && (
+                            <div className="pt-2">
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Desembolsos Anteriores</p>
+                              <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
+                                {disbursements
+                                  .filter(d => d.proposal_id === selectedProp.id && d.id !== editingId)
+                                  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                                  .map(prev => (
+                                    <div key={prev.id} className="flex items-center justify-between p-2 rounded bg-background border text-xs">
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className={`${DISBURSEMENT_STATUS_COLORS[prev.status as DisbursementStatus]} border-0 text-[9px] h-4 px-1`}>
+                                          {DISBURSEMENT_STATUS_LABELS[prev.status as DisbursementStatus]}
+                                        </Badge>
+                                        <span className="font-semibold">{formatCurrency(prev.amount)}</span>
+                                      </div>
+                                      <span className="text-[10px] text-muted-foreground">{format(parseISO(prev.request_date), "dd/MM/yyyy")}</span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
+
+                    {isProposalLocked && !editingId && (
+                      <div className="mt-4 flex justify-end">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-xs text-muted-foreground hover:text-primary h-7"
+                          onClick={() => {
+                            setIsProposalLocked(false);
+                            setSelectedProposal(null);
+                            setFormData(f => ({ ...f, proposal_id: null, amount: "" }));
+                          }}
+                        >
+                          Trocar Proposta
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )
