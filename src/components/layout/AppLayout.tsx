@@ -31,7 +31,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </span>
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
                   {role === 'developer' ? 'Desenvolvedor' :
-                    role === 'admin' ? 'Administrador' :
+                    role === 'admin' ? 'Gerente Geral' :
                       role === 'gerente' ? 'Gerente' :
                         role === 'tecnico' ? 'Técnico' : 'Usuário'}
                 </span>

@@ -38,7 +38,7 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (roleError || !roleData || (roleData.role !== "admin" && roleData.role !== "developer")) {
-      throw new Error("Acesso negado. Apenas administradores ou desenvolvedores podem gerenciar usuários.");
+      throw new Error("Acesso negado. Apenas gerentes gerais ou desenvolvedores podem gerenciar usuários.");
     }
 
     const { action, ...payload } = await req.json();

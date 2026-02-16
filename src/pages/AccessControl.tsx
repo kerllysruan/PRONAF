@@ -285,7 +285,7 @@ function AccessControl() {
 
   const getRoleConfig = (role: string) => {
     switch (role) {
-      case "admin": return { label: "Admin", color: "bg-rose-500/10 text-rose-600 border-rose-200", dot: "bg-rose-500", icon: ShieldAlert };
+      case "admin": return { label: "Gerente Geral", color: "bg-rose-500/10 text-rose-600 border-rose-200", dot: "bg-rose-500", icon: ShieldAlert };
       case "gerente": return { label: "Gerente", color: "bg-amber-500/10 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: ShieldCheck };
       case "tecnico": return { label: "Técnico", color: "bg-blue-500/10 text-blue-600 border-blue-200", dot: "bg-blue-500", icon: Shield };
       case "developer": return { label: "Dev", color: "bg-indigo-500/10 text-indigo-700 border-indigo-200", dot: "bg-indigo-500", icon: Code2 };
@@ -366,7 +366,7 @@ function AccessControl() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Total", value: stats.total, icon: Users, accent: "text-primary" },
-          { label: "Admins", value: stats.admins, icon: ShieldAlert, accent: "text-rose-500" },
+          { label: "Gerentes Gerais", value: stats.admins, icon: ShieldAlert, accent: "text-rose-500" },
           { label: "Gerentes", value: stats.gerentes, icon: ShieldCheck, accent: "text-amber-600" },
           { label: "Técnicos", value: stats.tecnicos, icon: Shield, accent: "text-blue-600" },
           { label: "Usuários", value: stats.usuarios, icon: Fingerprint, accent: "text-slate-500" },
@@ -404,7 +404,7 @@ function AccessControl() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os cargos</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="admin">Gerente Geral</SelectItem>
                 <SelectItem value="gerente">Gerente</SelectItem>
                 <SelectItem value="tecnico">Técnico</SelectItem>
                 <SelectItem value="usuario">Usuário</SelectItem>
@@ -485,7 +485,7 @@ function AccessControl() {
                           <SelectItem value="usuario">Usuário</SelectItem>
                           <SelectItem value="tecnico">Técnico</SelectItem>
                           <SelectItem value="gerente">Gerente</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="admin">Gerente Geral</SelectItem>
                           <SelectItem value="developer">Dev</SelectItem>
                         </SelectContent>
                       </Select>
@@ -602,7 +602,7 @@ function AccessControl() {
                   <SelectItem value="usuario">Usuário</SelectItem>
                   <SelectItem value="tecnico">Técnico</SelectItem>
                   <SelectItem value="gerente">Gerente</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="admin">Gerente Geral</SelectItem>
                   <SelectItem value="developer">Desenvolvedor</SelectItem>
                 </SelectContent>
               </Select>
