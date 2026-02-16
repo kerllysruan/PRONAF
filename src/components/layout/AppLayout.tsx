@@ -25,10 +25,18 @@ export function AppLayout({ children }: AppLayoutProps) {
             </span>
             <AgencySelector />
             <div className="ml-auto flex items-center gap-3">
-              <span className="text-xs text-muted-foreground hidden sm:block">
-                {user?.email}
-              </span>
-              <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
+              <div className="flex flex-col items-end hidden sm:flex">
+                <span className="text-xs font-medium text-foreground">
+                  {user?.email}
+                </span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                  {role === 'developer' ? 'Desenvolvedor' :
+                    role === 'admin' ? 'Administrador' :
+                      role === 'gerente' ? 'Gerente' :
+                        role === 'tecnico' ? 'Técnico' : 'Usuário'}
+                </span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="h-8 w-8">
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>

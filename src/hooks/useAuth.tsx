@@ -44,8 +44,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        if (session?.user) fetchUserData(session.user.id);
-        else {
+        if (session?.user) {
+          fetchUserData(session.user.id);
+
+          // Subscribe to role changes for the current user
+          const roleChannel = supabase
+            .channel(`user-role-${session.user.id}`)
+            .on(
+              'postgres_changes',
+              {
+                event: '*',
+                schema: 'public',
+                table: 'user_roles',
+                filter: `user_id=eq.${session.user.id}`
+              },
+              (payload: any) => {
+                if (payload.new && payload.new.role) {
+                  setRole(payload.new.role);
+                }
+              }
+            )
+            .subscribe();
+
+          return () => {
+            supabase.removeChannel(roleChannel);
+          };
+        } else {
           setAgencyId(null);
           setRole(null);
         }
@@ -64,7 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
