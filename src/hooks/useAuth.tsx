@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchUserData = async (uid: string) => {
       const [{ data: profile }, { data: roleData }] = await Promise.all([
-        supabase.from('profiles').select('agency_id').eq('id', uid).single(),
+        supabase.from('profiles').select('agency_id').eq('user_id', uid).single(),
         supabase.from('user_roles').select('role').eq('user_id', uid).maybeSingle()
       ]);
 

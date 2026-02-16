@@ -144,10 +144,11 @@ export default function Proposals() {
     if (!formData.producer_name.trim() || !formData.producer_cpf.trim()) return;
     if (editingId) {
       await updateProposal(editingId, formData);
+      setIsDialogOpen(false);
     } else {
-      await createProposal(formData as any);
+      const result = await createProposal(formData as any);
+      if (result) setIsDialogOpen(false);
     }
-    setIsDialogOpen(false);
   };
 
   if (loading) {
