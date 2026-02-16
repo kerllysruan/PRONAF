@@ -6,10 +6,12 @@ import {
 } from "@/components/ui/select";
 import { useProposals } from "@/hooks/useProposals";
 import {
-  ProposalStatus, STATUS_LABELS, STATUS_COLORS, PRONAF_LINE_LABELS, PronafLine,
+  ProposalStatus, STATUS_LABELS, STATUS_COLORS, PRONAF_LINE_LABELS, PronafLine, PROJECT_DESIGNER_LABELS,
 } from "@/types/proposal";
 import { GripVertical, Loader2 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
+import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
+import { getMonth, getYear, parseISO } from "date-fns";
 
 const COLUMNS: ProposalStatus[] = ["nova", "em_analise", "documentacao_pendente", "aprovada", "negada"];
 
@@ -24,6 +26,9 @@ const COLUMN_GRADIENT: Record<ProposalStatus, string> = {
 export default function KanbanBoard() {
   const { proposals, loading, updateProposal } = useProposals();
   const { permissions } = usePermissions();
+  const [filterMonth, setFilterMonth] = useState("all");
+  const [filterYear, setFilterYear] = useState("all");
+  const [designerFilter, setDesignerFilter] = useState("all");
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -32,8 +37,23 @@ export default function KanbanBoard() {
     updateProposal(id, { status: newStatus });
   };
 
+  const availableYears = useMemo(() => {
+    const years = new Set(proposals.map((p) => String(getYear(parseISO(p.entry_date)))));
+    return Array.from(years).sort().reverse();
+  }, [proposals]);
+
+  const filteredProposals = useMemo(() => {
+    return proposals.filter((p) => {
+      const d = parseISO(p.entry_date);
+      const matchesDesigner = designerFilter === "all" || p.project_designer === designerFilter;
+      const matchesMonth = filterMonth === "all" || getMonth(d) + 1 === Number(filterMonth);
+      const matchesYear = filterYear === "all" || getYear(d) === Number(filterYear);
+      return matchesDesigner && matchesMonth && matchesYear;
+    });
+  }, [proposals, designerFilter, filterMonth, filterYear]);
+
   const getColumnProposals = (status: ProposalStatus) =>
-    proposals.filter((p) => p.status === status);
+    filteredProposals.filter((p) => p.status === status);
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -41,9 +61,32 @@ export default function KanbanBoard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold font-heading">Quadro Kanban</h1>
-        <p className="text-sm text-muted-foreground mt-1">Visualize e mova propostas entre status</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold font-heading">Quadro Kanban</h1>
+          <p className="text-sm text-muted-foreground mt-1">Visualize e mova propostas entre status</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <MonthYearFilter
+            month={filterMonth}
+            year={filterYear}
+            onMonthChange={setFilterMonth}
+            onYearChange={setFilterYear}
+            years={availableYears}
+          />
+          <Select value={designerFilter} onValueChange={setDesignerFilter}>
+            <SelectTrigger className="w-[180px] h-9 text-xs">
+              <SelectValue placeholder="Projetista" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os projetistas</SelectItem>
+              {Object.entries(PROJECT_DESIGNER_LABELS).map(([key, label]) => (
+                <SelectItem key={key} value={key}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin">

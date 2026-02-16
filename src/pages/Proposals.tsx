@@ -87,7 +87,7 @@ export default function Proposals() {
     }
 
     return result;
-  }, [proposals, searchTerm, statusFilter, filterMonth, filterYear, sortBy]);
+  }, [proposals, searchTerm, statusFilter, designerFilter, filterMonth, filterYear, sortBy]);
 
   // Reset page when filters change
   useEffect(() => {
