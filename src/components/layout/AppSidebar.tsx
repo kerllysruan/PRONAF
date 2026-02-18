@@ -33,7 +33,7 @@ const menuItems = [
   { title: "Desembolsos", url: "/desembolsos", icon: DollarSign, permission: "can_view_disbursements" },
   { title: "Gerenciamento", url: "/gerenciamento", icon: Settings, permission: "can_view_management" },
   { title: "Controle de Acesso", url: "/controle-acesso", icon: Shield, permission: "can_view_access_control" },
-  { title: "Gestão de Agências", url: "/admin/agencies", icon: Building2, permission: "is_admin" },
+  { title: "Gestão de Agências", url: "/admin/agencies", icon: Building2, permission: "can_manage_agencies" },
 ];
 
 export function AppSidebar() {

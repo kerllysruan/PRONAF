@@ -18,7 +18,7 @@ import {
   Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle,
   CheckCircle2, UserPlus, ShieldCheck, ShieldAlert,
   Eye, Edit3, Settings2, Fingerprint, DollarSign, Search,
-  KeyRound, UserCog, ChevronRight, Activity, Building2, CheckSquare, Code2
+  KeyRound, UserCog, ChevronRight, Activity, Building2, CheckSquare, Code2, FileText
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -38,7 +38,7 @@ interface User {
 }
 
 
-type UserRole = "usuario" | "gerente" | "tecnico" | "admin" | "developer";
+type UserRole = "usuario" | "manager" | "analyst" | "financial" | "admin" | "developer";
 
 interface UserPermission {
   [key: string]: string | boolean | undefined;
@@ -286,10 +286,11 @@ function AccessControl() {
   const getRoleConfig = (role: string) => {
     switch (role) {
       case "admin": return { label: "Gerente Geral", color: "bg-rose-500/10 text-rose-600 border-rose-200", dot: "bg-rose-500", icon: ShieldAlert };
-      case "gerente": return { label: "Gerente de Agência", color: "bg-amber-500/10 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: ShieldCheck };
-      case "tecnico": return { label: "Técnico", color: "bg-blue-500/10 text-blue-600 border-blue-200", dot: "bg-blue-500", icon: Shield };
+      case "manager": return { label: "Gerente de Negócios", color: "bg-amber-500/10 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: ShieldCheck };
+      case "analyst": return { label: "Analista", color: "bg-blue-500/10 text-blue-600 border-blue-200", dot: "bg-blue-500", icon: FileText };
+      case "financial": return { label: "Desembolso", color: "bg-emerald-500/10 text-emerald-600 border-emerald-200", dot: "bg-emerald-500", icon: DollarSign };
       case "developer": return { label: "Desenvolvedor", color: "bg-indigo-500/10 text-indigo-700 border-indigo-200", dot: "bg-indigo-500", icon: Code2 };
-      default: return { label: "Visitante", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400", icon: Fingerprint };
+      default: return { label: "Usuário", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400", icon: Fingerprint };
     }
   };
 
@@ -305,8 +306,9 @@ function AccessControl() {
   const stats = {
     total: users.length,
     admins: users.filter(u => u.role === "admin" || u.role === "developer").length,
-    gerentes: users.filter(u => u.role === "gerente").length,
-    tecnicos: users.filter(u => u.role === "tecnico").length,
+    managers: users.filter(u => u.role === "manager").length,
+    analysts: users.filter(u => u.role === "analyst").length,
+    financials: users.filter(u => u.role === "financial").length,
     usuarios: users.filter(u => u.role === "usuario").length,
   };
 
@@ -369,7 +371,6 @@ function AccessControl() {
           { label: "Gerentes Gerais", value: stats.admins, icon: ShieldAlert, accent: "text-rose-500" },
           { label: "G. de Agência", value: stats.gerentes, icon: ShieldCheck, accent: "text-amber-600" },
           { label: "Técnicos", value: stats.tecnicos, icon: Shield, accent: "text-blue-600" },
-          { label: "Visitantes", value: stats.usuarios, icon: Fingerprint, accent: "text-slate-500" },
         ].map(s => (
           <Card key={s.label} className="border shadow-sm">
             <CardContent className="p-4 flex items-center gap-3">
@@ -405,9 +406,10 @@ function AccessControl() {
               <SelectContent>
                 <SelectItem value="all">Todos os cargos</SelectItem>
                 <SelectItem value="admin">Gerente Geral</SelectItem>
-                <SelectItem value="gerente">Gerente de Agência</SelectItem>
-                <SelectItem value="tecnico">Técnico</SelectItem>
-                <SelectItem value="usuario">Visitante</SelectItem>
+                <SelectItem value="manager">Gerente de Negócios</SelectItem>
+                <SelectItem value="analyst">Analista</SelectItem>
+                <SelectItem value="financial">Desembolso</SelectItem>
+                <SelectItem value="usuario">Usuário</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filterAgency} onValueChange={setFilterAgency}>
@@ -482,9 +484,10 @@ function AccessControl() {
                           </div>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="usuario">Visitante</SelectItem>
-                          <SelectItem value="tecnico">Técnico</SelectItem>
-                          <SelectItem value="gerente">Gerente de Agência</SelectItem>
+                          <SelectItem value="usuario">Usuário</SelectItem>
+                          <SelectItem value="manager">Gerente de Negócios</SelectItem>
+                          <SelectItem value="analyst">Analista</SelectItem>
+                          <SelectItem value="financial">Desembolso</SelectItem>
                           {isDeveloper && <SelectItem value="admin">Gerente Geral</SelectItem>}
                           {isDeveloper && <SelectItem value="developer">Desenvolvedor</SelectItem>}
                         </SelectContent>
@@ -600,9 +603,10 @@ function AccessControl() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="usuario">Visitante</SelectItem>
-                  <SelectItem value="tecnico">Técnico</SelectItem>
-                  <SelectItem value="gerente">Gerente de Agência</SelectItem>
+                  <SelectItem value="usuario">Usuário</SelectItem>
+                  <SelectItem value="manager">Gerente de Negócios</SelectItem>
+                  <SelectItem value="analyst">Analista</SelectItem>
+                  <SelectItem value="financial">Desembolso</SelectItem>
                   {isDeveloper && <SelectItem value="admin">Gerente Geral</SelectItem>}
                   {isDeveloper && <SelectItem value="developer">Desenvolvedor</SelectItem>}
                 </SelectContent>
