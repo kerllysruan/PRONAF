@@ -21,6 +21,25 @@ export interface DbProposal {
   created_at: string;
   updated_at: string;
   agency_id: string;
+  // Campos extraídos do PDF
+  sicad?: string;
+  credit_program?: string;
+  request_type?: string;
+  agency_code?: string;
+  agency_name?: string;
+  task?: string;
+  central_date?: string;
+  activity_start_date?: string;
+  last_analyst?: string;
+  owner?: string;
+  originator?: string;
+  current_state?: string;
+  category?: string;
+  client_size?: string;
+  proposal_number?: string;
+  credit_purpose?: string;
+  resource_application?: string;
+  special_treatment?: string;
 }
 
 export interface DbDocument {

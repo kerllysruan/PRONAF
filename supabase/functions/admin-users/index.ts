@@ -318,8 +318,17 @@ Deno.serve(async (req: Request) => {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   } catch (error: any) {
-    console.error(`Edge Function Error: `, error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error(`Edge Function Error:`, error.message);
+    if (error.stack) console.error(error.stack);
+
+    // Return a more detailed error if available
+    const errorMessage = error.message || "Unknown error";
+    const errorDetails = error.details || error.hint || null;
+
+    return new Response(JSON.stringify({
+      error: errorMessage,
+      details: errorDetails
+    }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }

@@ -58,6 +58,10 @@ export default function Proposals() {
     producer_name: "", producer_cpf: "", producer_address: "", producer_phone: "",
     pronaf_line: "custeio", project_designer: "ney_medeiros", requested_value: 0, status: "nova",
     entry_date: new Date().toISOString().split("T")[0], notes: "",
+    sicad: "", credit_program: "", request_type: "", agency_code: "", agency_name: "",
+    task: "", central_date: "", activity_start_date: "", last_analyst: "",
+    owner: "", originator: "", current_state: "", category: "", client_size: "",
+    proposal_number: "", credit_purpose: "", resource_application: "", special_treatment: "",
   });
 
   const availableYears = useMemo(() => {
@@ -125,6 +129,10 @@ export default function Proposals() {
       producer_name: "", producer_cpf: "", producer_address: "", producer_phone: "",
       pronaf_line: "custeio", project_designer: "ney_medeiros", requested_value: 0, status: "nova",
       entry_date: new Date().toISOString().split("T")[0], notes: "",
+      sicad: "", credit_program: "", request_type: "", agency_code: "", agency_name: "",
+      task: "", central_date: "", activity_start_date: "", last_analyst: "",
+      owner: "", originator: "", current_state: "", category: "", client_size: "",
+      proposal_number: "", credit_purpose: "", resource_application: "", special_treatment: "",
     });
     setIsDialogOpen(true);
   };
@@ -136,6 +144,15 @@ export default function Proposals() {
       producer_address: p.producer_address, producer_phone: p.producer_phone,
       pronaf_line: p.pronaf_line, project_designer: p.project_designer || "ney_medeiros", requested_value: Number(p.requested_value),
       status: p.status, entry_date: p.entry_date, notes: p.notes || "",
+      sicad: p.sicad || "", credit_program: p.credit_program || "", request_type: p.request_type || "",
+      agency_code: p.agency_code || "", agency_name: p.agency_name || "",
+      task: p.task || "", central_date: p.central_date || "",
+      activity_start_date: p.activity_start_date || "", last_analyst: p.last_analyst || "",
+      owner: p.owner || "", originator: p.originator || "",
+      current_state: p.current_state || "", category: p.category || "",
+      client_size: p.client_size || "", proposal_number: p.proposal_number || "",
+      credit_purpose: p.credit_purpose || "", resource_application: p.resource_application || "",
+      special_treatment: p.special_treatment || "",
     });
     setIsDialogOpen(true);
   };
@@ -359,65 +376,137 @@ export default function Proposals() {
           <DialogHeader>
             <DialogTitle className="font-heading text-xl">{editingId ? "Editar Proposta" : "Nova Proposta"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Nome do Produtor *</Label>
-                <Input value={formData.producer_name} onChange={(e) => setFormData((f) => ({ ...f, producer_name: e.target.value }))} placeholder="Nome completo" />
-              </div>
-              <div className="space-y-2">
-                <Label>CPF *</Label>
-                <Input value={formData.producer_cpf} onChange={(e) => setFormData((f) => ({ ...f, producer_cpf: e.target.value }))} placeholder="000.000.000-00" />
-              </div>
-              <div className="space-y-2">
-                <Label>Data de Entrada</Label>
-                <Input type="date" value={formData.entry_date} onChange={(e) => setFormData((f) => ({ ...f, entry_date: e.target.value }))} />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Endereço</Label>
-                <Input value={formData.producer_address} onChange={(e) => setFormData((f) => ({ ...f, producer_address: e.target.value }))} placeholder="Endereço da propriedade" />
-              </div>
-              <div className="space-y-2">
-                <Label>Linha PRONAF</Label>
-                <Select value={formData.pronaf_line} onValueChange={(v) => setFormData((f) => ({ ...f, pronaf_line: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(PRONAF_LINE_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Projetista</Label>
-                <Select value={formData.project_designer} onValueChange={(v) => setFormData((f) => ({ ...f, project_designer: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(PROJECT_DESIGNER_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Valor Solicitado</Label>
-                <CurrencyInput value={formData.requested_value} onChange={(v) => setFormData((f) => ({ ...f, requested_value: v }))} />
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select value={formData.status} onValueChange={(v) => setFormData((f) => ({ ...f, status: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b pb-1">Dados do Produtor</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Nome do Produtor *</Label>
+                  <Input value={formData.producer_name} onChange={(e) => setFormData((f) => ({ ...f, producer_name: e.target.value }))} placeholder="Nome completo" />
+                </div>
+                <div className="space-y-2">
+                  <Label>CPF *</Label>
+                  <Input value={formData.producer_cpf} onChange={(e) => setFormData((f) => ({ ...f, producer_cpf: e.target.value }))} placeholder="000.000.000-00" />
+                </div>
+                <div className="space-y-2">
+                  <Label>SICAD</Label>
+                  <Input value={formData.sicad} onChange={(e) => setFormData((f) => ({ ...f, sicad: e.target.value }))} placeholder="Número SICAD" />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Endereço</Label>
+                  <Input value={formData.producer_address} onChange={(e) => setFormData((f) => ({ ...f, producer_address: e.target.value }))} placeholder="Endereço da propriedade" />
+                </div>
               </div>
             </div>
+
+            <div className="space-y-4 pt-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b pb-1">Detalhes da Operação</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Número da Proposta</Label>
+                  <Input value={formData.proposal_number} onChange={(e) => setFormData((f) => ({ ...f, proposal_number: e.target.value }))} placeholder="000.000.000" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Programa</Label>
+                  <Input value={formData.credit_program} onChange={(e) => setFormData((f) => ({ ...f, credit_program: e.target.value }))} placeholder="Ex: FNE/PRONAF A" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Linha PRONAF</Label>
+                  <Select value={formData.pronaf_line} onValueChange={(v) => setFormData((f) => ({ ...f, pronaf_line: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(PRONAF_LINE_LABELS).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Categoria</Label>
+                  <Input value={formData.category} onChange={(e) => setFormData((f) => ({ ...f, category: e.target.value }))} placeholder="Ex: VAREJO RURAL" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Finalidade do Crédito</Label>
+                  <Input value={formData.credit_purpose} onChange={(e) => setFormData((f) => ({ ...f, credit_purpose: e.target.value }))} placeholder="Ex: INVESTIMENTO" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Aplicação de Recurso</Label>
+                  <Input value={formData.resource_application} onChange={(e) => setFormData((f) => ({ ...f, resource_application: e.target.value }))} placeholder="Ex: AQUIS. ISOL. M" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Valor Solicitado</Label>
+                  <CurrencyInput value={formData.requested_value} onChange={(v) => setFormData((f) => ({ ...f, requested_value: v }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tratamento Especial</Label>
+                  <Input value={formData.special_treatment} onChange={(e) => setFormData((f) => ({ ...f, special_treatment: e.target.value }))} placeholder="Ex: SEM TRATAMENTO" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-primary border-b pb-1">Gestão e Prazos</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Agência</Label>
+                  <Input value={formData.agency_name} onChange={(e) => setFormData((f) => ({ ...f, agency_name: e.target.value }))} placeholder="Nome da agência" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Analista responsável</Label>
+                  <Input value={formData.last_analyst} onChange={(e) => setFormData((f) => ({ ...f, last_analyst: e.target.value }))} placeholder="F123456" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Dono (Owner)</Label>
+                  <Input value={formData.owner} onChange={(e) => setFormData((f) => ({ ...f, owner: e.target.value }))} placeholder="F123456" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tarefa Atual</Label>
+                  <Input value={formData.task} onChange={(e) => setFormData((f) => ({ ...f, task: e.target.value }))} placeholder="Ex: Resolver Ocorrência" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Projetista</Label>
+                  <Select value={formData.project_designer} onValueChange={(v) => setFormData((f) => ({ ...f, project_designer: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(PROJECT_DESIGNER_LABELS).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Data de Entrada</Label>
+                  <Input type="date" value={formData.entry_date} onChange={(e) => setFormData((f) => ({ ...f, entry_date: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Data Central</Label>
+                  <Input value={formData.central_date} onChange={(e) => setFormData((f) => ({ ...f, central_date: e.target.value }))} placeholder="Ex: 16/12/2025" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Início Atividade</Label>
+                  <Input value={formData.activity_start_date} onChange={(e) => setFormData((f) => ({ ...f, activity_start_date: e.target.value }))} placeholder="Ex: 30/12/2025" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={formData.status} onValueChange={(v) => setFormData((f) => ({ ...f, status: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                        <SelectItem key={key} value={key}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Estado Atual</Label>
+                  <Input value={formData.current_state} onChange={(e) => setFormData((f) => ({ ...f, current_state: e.target.value }))} placeholder="Ex: Em execução" />
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>Observações</Label>
-              <Textarea value={formData.notes} onChange={(e) => setFormData((f) => ({ ...f, notes: e.target.value }))} placeholder="Observações..." rows={3} />
+              <Textarea value={formData.notes} onChange={(e) => setFormData((f) => ({ ...f, notes: e.target.value }))} placeholder="Observações adicionais..." rows={3} />
             </div>
           </div>
           <DialogFooter>
