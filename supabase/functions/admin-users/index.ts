@@ -39,7 +39,7 @@ Deno.serve(async (req: Request) => {
     if (roleError || !callerRoleData) throw new Error("Erro ao verificar permissões do usuário.");
 
     const callerRole = callerRoleData.role;
-    
+
     // Get caller's agency if not dev
     let callerAgencyId: string | null = null;
     if (callerRole !== "developer") {
@@ -104,7 +104,7 @@ Deno.serve(async (req: Request) => {
             ...perms,
             can_view_proposals: true,
             // Gerente Geral usually oversees, maybe edits? Let's say yes.
-            can_create_proposals: true, 
+            can_create_proposals: true,
             can_edit_proposals: true,
             can_delete_proposals: true, // Can delete in their agency
             can_approve_proposals: true,
@@ -126,7 +126,7 @@ Deno.serve(async (req: Request) => {
             can_view_kanban: true,
             can_manage_tasks: true,
             can_view_disbursements: true, // Read only disbursements? Or manage? Request says "acesso a tudo menos cadastro usuario"
-            can_manage_disbursements: true, 
+            can_manage_disbursements: true,
           };
         case "analyst": // Analista
           return {
@@ -152,7 +152,7 @@ Deno.serve(async (req: Request) => {
     switch (action) {
       case "create": {
         const { email, password, display_name, role, agency_id } = payload;
-        
+
         // Validation: Only Dev can create Admins/Devs
         if ((role === "admin" || role === "developer") && callerRole !== "developer") {
           throw new Error("Acesso negado. Apenas desenvolvedores podem criar Gerentes Gerais ou Desenvolvedores.");
@@ -173,20 +173,27 @@ Deno.serve(async (req: Request) => {
         const userId = authUser.user.id;
 
         // Ensure id and user_id are both set to the UID for RLS consistency
-        await adminClient.from("profiles").upsert({
+        // Handle empty string agency_id as null
+        const finalAgencyId = (agency_id === "" || agency_id === "none") ? null : agency_id;
+
+        const { error: profileError } = await adminClient.from("profiles").upsert({
           id: userId,
           user_id: userId,
           email,
           display_name,
           full_name: display_name,
-          agency_id: agency_id // This comes safely from payload (checked strictly above for admin)
+          agency_id: finalAgencyId
         }, { onConflict: "id" });
+        if (profileError) throw new Error(`Erro Profile: ${profileError.message}`);
 
-        await adminClient.from("user_roles").upsert({ user_id: userId, role: role || "usuario" }, { onConflict: "user_id" });
-        await adminClient.from("user_permissions").upsert({
+        const { error: roleError } = await adminClient.from("user_roles").upsert({ user_id: userId, role: role || "usuario" }, { onConflict: "user_id" });
+        if (roleError) throw new Error(`Erro UserRole: ${roleError.message}`);
+
+        const { error: permError } = await adminClient.from("user_permissions").upsert({
           user_id: userId,
           ...getPermissionsForRole(role || "usuario")
         }, { onConflict: "user_id" });
+        if (permError) throw new Error(`Erro UserPermissions: ${permError.message}`);
 
         responseData = { success: true, user: authUser.user };
         break;
@@ -218,18 +225,18 @@ Deno.serve(async (req: Request) => {
 
       case "update_agency": {
         const { user_id, agency_id } = payload;
-        
+
         if (callerRole !== "developer") {
-           // check if target user is in caller's agency? Or just deny?
-           // Actually, Admin CAN move user OUT of agency? Or only TO agency?
-           // Simplest: Admin can only set agency_id to their own agency.
-           if (agency_id !== callerAgencyId) {
-             throw new Error("Acesso negado. Você só pode mover usuários para sua agência.");
-           }
+          // Admin can only set agency_id to their own agency.
+          if (agency_id !== callerAgencyId) {
+            throw new Error("Acesso negado. Você só pode mover usuários para sua agência.");
+          }
         }
 
         // Handle empty string as null for UUID compatibility
         const finalAgencyId = (agency_id === "" || agency_id === "none") ? null : agency_id;
+        console.log(`Updating agency for ${user_id} to ${finalAgencyId}`);
+
         const { error } = await adminClient.from("profiles").update({ agency_id: finalAgencyId }).eq("user_id", user_id);
         if (error) throw new Error(`Erro Agência: ${error.message}`);
         break;
@@ -239,10 +246,10 @@ Deno.serve(async (req: Request) => {
         const { user_id, password } = payload;
         // Verify target is in agency if caller is admin
         if (callerRole === "admin") {
-           const { data: targetProfile } = await adminClient.from("profiles").select("agency_id").eq("user_id", user_id).single();
-           if (targetProfile?.agency_id !== callerAgencyId) {
-             throw new Error("Acesso negado. Usuário pertence a outra agência.");
-           }
+          const { data: targetProfile } = await adminClient.from("profiles").select("agency_id").eq("user_id", user_id).single();
+          if (targetProfile?.agency_id !== callerAgencyId) {
+            throw new Error("Acesso negado. Usuário pertence a outra agência.");
+          }
         }
 
         const { error } = await adminClient.auth.admin.updateUserById(user_id, { password });
@@ -254,12 +261,12 @@ Deno.serve(async (req: Request) => {
         // Only developer should probably do manual granular overrides? 
         // Or Admin can do it for their staff? Let's allow Admin for their staff.
         const { user_id, permissions } = payload;
-        
+
         if (callerRole === "admin") {
-           const { data: targetProfile } = await adminClient.from("profiles").select("agency_id").eq("user_id", user_id).single();
-           if (targetProfile?.agency_id !== callerAgencyId) {
-             throw new Error("Acesso negado. Usuário pertence a outra agência.");
-           }
+          const { data: targetProfile } = await adminClient.from("profiles").select("agency_id").eq("user_id", user_id).single();
+          if (targetProfile?.agency_id !== callerAgencyId) {
+            throw new Error("Acesso negado. Usuário pertence a outra agência.");
+          }
         }
 
         const { error } = await adminClient.from("user_permissions").upsert({ user_id, ...permissions }, { onConflict: "user_id" });
@@ -273,15 +280,15 @@ Deno.serve(async (req: Request) => {
         if (user_id === caller.id) throw new Error("Auto-exclusão não permitida");
 
         if (callerRole === "admin") {
-           const { data: targetProfile } = await adminClient.from("profiles").select("agency_id").eq("user_id", user_id).single();
-           if (targetProfile?.agency_id !== callerAgencyId) {
-             throw new Error("Acesso negado. Usuário pertence a outra agência.");
-           }
-           // Also check if target is admin/dev?
-           const { data: pRole } = await adminClient.from("user_roles").select("role").eq("user_id", user_id).single();
-           if (pRole?.role === "admin" || pRole?.role === "developer") {
-             throw new Error("Acesso negado. Você não pode deletar administradores.");
-           }
+          const { data: targetProfile } = await adminClient.from("profiles").select("agency_id").eq("user_id", user_id).single();
+          if (targetProfile?.agency_id !== callerAgencyId) {
+            throw new Error("Acesso negado. Usuário pertence a outra agência.");
+          }
+          // Also check if target is admin/dev?
+          const { data: pRole } = await adminClient.from("user_roles").select("role").eq("user_id", user_id).single();
+          if (pRole?.role === "admin" || pRole?.role === "developer") {
+            throw new Error("Acesso negado. Você não pode deletar administradores.");
+          }
         }
 
         await adminClient.from("proposals").update({ created_by: null }).eq("created_by", user_id);
