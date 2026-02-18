@@ -18,14 +18,20 @@ Deno.serve(async (req: Request) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Autorização ausente");
+    if (!authHeader) {
+      console.error("Missing Authorization header");
+      throw new Error("Autorização ausente - Header not found");
+    }
 
     const anonClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
     const { data: { user: caller }, error: authError } = await anonClient.auth.getUser();
-    if (authError || !caller) throw new Error(`Autenticação falhou: ${authError?.message || 'Token inválido'}`);
+    if (authError || !caller) {
+      console.error("Auth failed:", authError);
+      throw new Error(`Autenticação falhou: ${authError?.message || 'Token inválido'}`);
+    }
 
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
