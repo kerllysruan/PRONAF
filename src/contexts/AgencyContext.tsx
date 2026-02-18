@@ -30,7 +30,30 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
         return localStorage.getItem('selectedAgencyId') || 'all';
     });
 
-    // ... (fetchAgencies remains)
+    const fetchAgencies = useCallback(async () => {
+        const { data, error } = await supabase
+            .from('agencies')
+            .select('*')
+            .order('name');
+
+        if (error) {
+            console.error('Error fetching agencies:', error);
+            toast({
+                title: "Erro ao carregar agências",
+                description: error.message,
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (data) {
+            setAgencies(data);
+        }
+    }, [toast]);
+
+    useEffect(() => {
+        fetchAgencies();
+    }, [fetchAgencies]);
 
     // Effective agency: developers AND admins use selector freely, everyone else is locked to their own agency
     const canSelectAgency = isDeveloper || isAdmin;
