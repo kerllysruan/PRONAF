@@ -369,8 +369,9 @@ function AccessControl() {
         {[
           { label: "Total", value: stats.total, icon: Users, accent: "text-primary" },
           { label: "Gerentes Gerais", value: stats.admins, icon: ShieldAlert, accent: "text-rose-500" },
-          { label: "G. de Agência", value: stats.gerentes, icon: ShieldCheck, accent: "text-amber-600" },
-          { label: "Técnicos", value: stats.tecnicos, icon: Shield, accent: "text-blue-600" },
+          { label: "G. de Negócios", value: stats.managers, icon: ShieldCheck, accent: "text-amber-600" },
+          { label: "Analistas", value: stats.analysts, icon: FileText, accent: "text-blue-600" },
+          { label: "Desembolsos", value: stats.financials, icon: DollarSign, accent: "text-emerald-600" },
         ].map(s => (
           <Card key={s.label} className="border shadow-sm">
             <CardContent className="p-4 flex items-center gap-3">
