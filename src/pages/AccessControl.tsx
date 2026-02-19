@@ -347,317 +347,363 @@ function AccessControl() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Shield className="h-5 w-5 text-primary" />
-            </div>
-            Controle de Acesso
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie usuários, permissões e níveis de acesso.</p>
+    <div className="space-y-6 animate-fade-in max-w-[1600px] mx-auto pb-10">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card/40 backdrop-blur-xl p-6 rounded-3xl border border-border/50 shadow-premium">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+            <Shield className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-extrabold font-heading text-foreground tracking-tight">Controle de Acesso</h1>
+            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              Gestão de usuários, permissões e níveis de segurança
+            </p>
+          </div>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="gap-2 h-10 px-5 shadow-sm">
-          <UserPlus className="h-4 w-4" /> Novo Usuário
+        <Button onClick={() => setIsCreateOpen(true)} className="gap-2 rounded-xl bg-primary shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all font-bold h-11 px-6">
+          <UserPlus className="h-5 w-5" /> Novo Usuário
         </Button>
-      </div>
+      </header>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Stats Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {[
-          { label: "Total", value: stats.total, icon: Users, accent: "text-primary" },
-          { label: "Gerentes Gerais", value: stats.admins, icon: ShieldAlert, accent: "text-rose-500" },
-          { label: "G. de Negócios", value: stats.managers, icon: ShieldCheck, accent: "text-amber-600" },
-          { label: "Analistas", value: stats.analysts, icon: FileText, accent: "text-blue-600" },
-          { label: "Desembolsos", value: stats.financials, icon: DollarSign, accent: "text-emerald-600" },
-        ].map(s => (
-          <Card key={s.label} className="border shadow-sm">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-lg bg-muted/60 flex items-center justify-center shrink-0`}>
-                <s.icon className={`h-5 w-5 ${s.accent}`} />
+          { label: "Total Usuários", value: stats.total, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Gerentes Geral", value: stats.admins, icon: ShieldAlert, color: "text-rose-600", bg: "bg-rose-50" },
+          { label: "G. Negócios", value: stats.managers, icon: ShieldCheck, color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "Analistas", value: stats.analysts, icon: FileText, color: "text-indigo-600", bg: "bg-indigo-50" },
+          { label: "Desembolsos", value: stats.financials, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+        ].map((s, idx) => (
+          <Card key={idx} className="group border-border/40 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className={`h-10 w-10 rounded-2xl ${s.bg} ${s.color} flex items-center justify-center transition-transform group-hover:scale-110 duration-300`}>
+                  <s.icon className="h-5 w-5" />
+                </div>
               </div>
-              <div>
-                <p className="text-2xl font-bold leading-none">{s.value}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+              <div className="mt-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 mb-1">{s.label}</p>
+                <h3 className="font-heading font-extrabold text-2xl text-foreground">
+                  {s.value}
+                </h3>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Filters & Table */}
-      <Card className="border shadow-sm overflow-hidden">
-        <CardHeader className="pb-3 border-b bg-muted/30">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome ou email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 h-9 bg-background"
-              />
-            </div>
-            <Select value={filterRole} onValueChange={setFilterRole}>
-              <SelectTrigger className="w-full sm:w-[160px] h-9 bg-background">
-                <SelectValue placeholder="Filtrar cargo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os cargos</SelectItem>
-                <SelectItem value="admin">Gerente Geral</SelectItem>
-                <SelectItem value="manager">Gerente de Negócios</SelectItem>
-                <SelectItem value="analyst">Analista</SelectItem>
-                <SelectItem value="financial">Desembolso</SelectItem>
-                <SelectItem value="usuario">Usuário</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterAgency} onValueChange={setFilterAgency}>
-              <SelectTrigger className="w-full sm:w-[180px] h-9 bg-background">
-                <SelectValue placeholder="Filtrar agência" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as agências</SelectItem>
-                {agencies.map(a => (
-                  <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="bg-card/40 backdrop-blur-md p-4 rounded-3xl border border-border/50 shadow-premium flex flex-col md:flex-row items-center gap-4">
+        <div className="flex items-center gap-3 flex-1 w-full">
+          <div className="h-10 w-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground">
+            <Search className="h-4 w-4" />
           </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[280px]">Usuário</TableHead>
-                <TableHead>Cargo</TableHead>
-                <TableHead>Agência</TableHead>
-                <TableHead className="hidden md:table-cell">Permissões</TableHead>
-                <TableHead className="text-right w-[220px]">Ações</TableHead>
+          <Input
+            placeholder="Buscar por nome ou e-mail..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-11 rounded-xl border-border/40 bg-background/50 font-bold flex-1"
+          />
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <Select value={filterRole} onValueChange={setFilterRole}>
+            <SelectTrigger className="w-full md:w-44 h-11 rounded-xl border-border/40 bg-background/50 font-bold">
+              <SelectValue placeholder="Filtrar cargo" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border/40 shadow-premium">
+              <SelectItem value="all">Todos os Cargos</SelectItem>
+              <SelectItem value="admin">Gerente Geral</SelectItem>
+              <SelectItem value="manager">Gerente Negócios</SelectItem>
+              <SelectItem value="analyst">Analista</SelectItem>
+              <SelectItem value="financial">Desembolso</SelectItem>
+              <SelectItem value="usuario">Usuário</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterAgency} onValueChange={setFilterAgency}>
+            <SelectTrigger className="w-full md:w-44 h-11 rounded-xl border-border/40 bg-background/50 font-bold">
+              <SelectValue placeholder="Filtrar agência" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border/40 shadow-premium">
+              <SelectItem value="all">Todas Agências</SelectItem>
+              {agencies.map(a => (
+                <SelectItem key={a.id} value={a.id} className="rounded-lg">{a.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="bg-card/40 backdrop-blur-md rounded-3xl border border-border/50 shadow-premium overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30 border-b border-border/40 hover:bg-muted/30">
+              <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest">Usuário</TableHead>
+              <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest">Nível de Acesso</TableHead>
+              <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest">Agência Vinculada</TableHead>
+              <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest hidden md:table-cell">Permissões</TableHead>
+              <TableHead className="py-4 px-6 text-right w-[240px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredUsers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="py-20 text-center">
+                  <div className="flex flex-col items-center gap-3 opacity-40">
+                    <Users className="h-10 w-10 text-muted-foreground" />
+                    <p className="text-sm font-bold text-muted-foreground italic uppercase tracking-widest">Nenhum usuário encontrado</p>
+                  </div>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">
-                    <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                    <p className="font-medium">Nenhum usuário encontrado</p>
-                  </TableCell>
-                </TableRow>
-              ) : filteredUsers.map((user) => {
+            ) : (
+              filteredUsers.map((user) => {
                 const isCurrent = user.id === currentUser?.id;
                 const roleConfig = getRoleConfig(user.role || "usuario");
                 const userPerms = permissions.get(user.id);
                 const activePermsCount = userPerms ? PERMISSIONS.filter(p => userPerms[p.key] === true).length : 0;
 
                 return (
-                  <TableRow key={user.id} className="group">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 border">
-                          <AvatarFallback className="text-xs font-semibold bg-muted">
+                  <TableRow key={user.id} className="group hover:bg-white/60 transition-colors border-b border-border/40 last:border-0 h-20">
+                    <TableCell className="py-4 px-6">
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-11 w-11 rounded-2xl border-2 border-background shadow-premium transform group-hover:scale-110 transition-transform duration-300">
+                          <AvatarFallback className="text-xs font-black bg-muted/50 text-foreground">
                             {getInitials(user.display_name || user.email)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm truncate max-w-[160px]">{user.display_name}</p>
+                            <p className="font-bold text-sm text-foreground group-hover:text-primary transition-colors truncate max-w-[200px]">
+                              {user.display_name}
+                            </p>
                             {isCurrent && (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/30 text-primary">
+                              <Badge className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-primary/20 animate-pulse">
                                 Você
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                          <p className="text-xs text-muted-foreground font-medium truncate opacity-70">{user.email}</p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-4 px-6">
                       <Select
                         value={user.role || "usuario"}
                         onValueChange={(v) => handleUpdateRole(user.id, v as UserRole)}
                       >
-                        <SelectTrigger className={`h-7 w-[120px] text-xs font-medium border rounded-md ${roleConfig.color}`}>
-                          <div className="flex items-center gap-1.5">
-                            <div className={`h-1.5 w-1.5 rounded-full ${roleConfig.dot}`} />
+                        <SelectTrigger className={`h-9 w-[160px] rounded-xl text-[10px] font-black uppercase tracking-widest border-border/40 shadow-sm transition-all focus:ring-primary ${roleConfig.color}`}>
+                          <div className="flex items-center gap-2">
+                            <roleConfig.icon className="h-4 w-4" />
                             <SelectValue />
                           </div>
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="usuario">Usuário</SelectItem>
-                          <SelectItem value="manager">Gerente de Negócios</SelectItem>
-                          <SelectItem value="analyst">Analista</SelectItem>
-                          <SelectItem value="financial">Desembolso</SelectItem>
-                          {isDeveloper && <SelectItem value="admin">Gerente Geral</SelectItem>}
-                          {isDeveloper && <SelectItem value="developer">Desenvolvedor</SelectItem>}
+                        <SelectContent className="rounded-xl border-border/40 shadow-premium">
+                          <SelectItem value="usuario" className="rounded-lg">Usuário</SelectItem>
+                          <SelectItem value="manager" className="rounded-lg">Gerente Negócios</SelectItem>
+                          <SelectItem value="analyst" className="rounded-lg">Analista</SelectItem>
+                          <SelectItem value="financial" className="rounded-lg">Desembolso</SelectItem>
+                          {isDeveloper && <SelectItem value="admin" className="rounded-lg">Gerente Geral</SelectItem>}
+                          {isDeveloper && <SelectItem value="developer" className="rounded-lg">Desenvolvedor</SelectItem>}
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="py-4 px-6">
                       <Select
                         value={user.agency_id || "none"}
                         onValueChange={(v) => handleUpdateAgency(user.id, v === "none" ? "" : v)}
                       >
-                        <SelectTrigger className="h-7 w-[160px] text-xs border rounded-md">
-                          <SelectValue placeholder="Sem agência" />
+                        <SelectTrigger className="h-9 w-[180px] rounded-xl text-[10px] font-black uppercase tracking-widest border-border/40 bg-background/50 font-bold">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <SelectValue placeholder="Sem agência" />
+                          </div>
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Sem agência</SelectItem>
+                        <SelectContent className="rounded-xl border-border/40 shadow-premium">
+                          <SelectItem value="none" className="rounded-lg">Sem agência</SelectItem>
                           {agencies.map(a => (
-                            <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                            <SelectItem key={a.id} value={a.id} className="rounded-lg">{a.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="flex items-center gap-1.5">
-                        <Activity className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">
-                          {activePermsCount}/{PERMISSIONS.length} ativas
+                    <TableCell className="py-4 px-6 hidden md:table-cell">
+                      <div className="flex items-center gap-2 group/pct">
+                        <div className="h-8 w-14 rounded-lg bg-muted/30 flex items-center justify-center border border-border/40 group-hover/pct:bg-primary/10 group-hover/pct:border-primary/20 transition-all">
+                          <span className="text-[10px] font-black text-primary">
+                            {Math.round((activePermsCount / PERMISSIONS.length) * 100)}%
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                          {activePermsCount} de {PERMISSIONS.length}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                    <TableCell className="py-4 px-6 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 duration-300">
                         <Button
-                          variant="ghost" size="sm"
-                          className="h-8 px-2.5 text-xs gap-1.5"
+                          variant="ghost" size="icon"
+                          className="h-10 w-10 rounded-xl text-primary hover:bg-primary/10 transition-all"
+                          title="Editar Permissões"
                           onClick={() => {
                             setSelectedUser(user);
                             setEditPerms(permissions.get(user.id) || { user_id: user.id });
                             setIsPermOpen(true);
                           }}
                         >
-                          <UserCog className="h-3.5 w-3.5" /> Permissões
+                          <UserCog className="h-5 w-5" />
                         </Button>
                         <Button
-                          variant="ghost" size="sm"
-                          className="h-8 px-2.5 text-xs gap-1.5"
+                          variant="ghost" size="icon"
+                          className="h-10 w-10 rounded-xl text-amber-500 hover:bg-amber-50 transition-all"
+                          title="Redefinir Senha"
                           onClick={() => {
                             setSelectedUser(user);
                             setNewPassword("");
                             setIsPasswordOpen(true);
                           }}
                         >
-                          <KeyRound className="h-3.5 w-3.5" /> Senha
+                          <KeyRound className="h-5 w-5" />
                         </Button>
-                        <Button
-                          variant="ghost" size="sm"
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                          disabled={isCurrent}
-                          onClick={() => {
-                            setUserToDeleteId(user.id);
-                            setIsDeleteAlertOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        {!isCurrent && (
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-10 w-10 rounded-xl text-rose-500 hover:bg-rose-50 transition-all"
+                            title="Excluir Usuário"
+                            onClick={() => {
+                              setUserToDeleteId(user.id);
+                              setIsDeleteAlertOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
                 );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Create User Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <UserPlus className="h-5 w-5 text-primary" /> Novo Usuário
+        <DialogContent className="rounded-3xl border-border/40 shadow-premium max-w-md p-0 overflow-hidden bg-card/95 backdrop-blur-xl">
+          <DialogHeader className="p-6 bg-primary text-primary-foreground">
+            <DialogTitle className="font-heading font-black text-xl flex items-center gap-2">
+              <UserPlus className="h-6 w-6" /> Novo Usuário
             </DialogTitle>
-            <DialogDescription>Cadastre uma nova credencial de acesso ao sistema.</DialogDescription>
+            <DialogDescription className="text-primary-foreground/80 font-medium">Cadastre uma nova credencial de acesso ao sistema.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Email</Label>
-              <Input
-                type="email" value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="usuario@email.com" className="h-10"
-              />
+          <div className="p-8 space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">E-mail de Acesso</Label>
+                <div className="relative">
+                  <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="email" value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="usuario@email.com" className="pl-11 h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Senha Inicial</Label>
+                <div className="relative">
+                  <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="password" value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Mínimo 6 caracteres" className="pl-11 h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nome de Exibição</Label>
+                <Input
+                  value={formData.display_name}
+                  onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                  placeholder="Ex: João Silva" className="h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold px-4"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nível de Acesso</Label>
+                  <Select value={formData.role} onValueChange={(v) => setFormData({ ...formData, role: v as UserRole })}>
+                    <SelectTrigger className="h-12 rounded-xl border-border/40 bg-muted/10 font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-border/40 shadow-premium">
+                      <SelectItem value="usuario" className="rounded-lg">Usuário</SelectItem>
+                      <SelectItem value="manager" className="rounded-lg">Gerente Negócios</SelectItem>
+                      <SelectItem value="analyst" className="rounded-lg">Analista</SelectItem>
+                      <SelectItem value="financial" className="rounded-lg">Desembolso</SelectItem>
+                      {isDeveloper && <SelectItem value="admin" className="rounded-lg">Gerente Geral</SelectItem>}
+                      {isDeveloper && <SelectItem value="developer" className="rounded-lg">Desenvolvedor</SelectItem>}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Agência</Label>
+                  <Select value={formData.agency_id || "none"} onValueChange={(v) => setFormData({ ...formData, agency_id: v === "none" ? "" : v })}>
+                    <SelectTrigger className="h-12 rounded-xl border-border/40 bg-muted/10 font-bold">
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl border-border/40 shadow-premium">
+                      <SelectItem value="none" className="rounded-lg">Sem agência</SelectItem>
+                      {agencies.map(a => (
+                        <SelectItem key={a.id} value={a.id} className="rounded-lg">{a.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Senha</Label>
-              <Input
-                type="password" value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Mínimo 6 caracteres" className="h-10"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Nome de exibição</Label>
-              <Input
-                value={formData.display_name}
-                onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-                placeholder="Ex: João Silva" className="h-10"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Cargo</Label>
-              <Select value={formData.role} onValueChange={(v) => setFormData({ ...formData, role: v as UserRole })}>
-                <SelectTrigger className="h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="usuario">Usuário</SelectItem>
-                  <SelectItem value="manager">Gerente de Negócios</SelectItem>
-                  <SelectItem value="analyst">Analista</SelectItem>
-                  <SelectItem value="financial">Desembolso</SelectItem>
-                  {isDeveloper && <SelectItem value="admin">Gerente Geral</SelectItem>}
-                  {isDeveloper && <SelectItem value="developer">Desenvolvedor</SelectItem>}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Agência</Label>
-              <Select value={formData.agency_id || "none"} onValueChange={(v) => setFormData({ ...formData, agency_id: v === "none" ? "" : v })}>
-                <SelectTrigger className="h-10">
-                  <SelectValue placeholder="Selecione uma agência" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem agência</SelectItem>
-                  {agencies.map(a => (
-                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            <div className="pt-4 flex gap-3">
+              <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="flex-1 h-12 rounded-2xl border-border/40 font-bold">Cancelar</Button>
+              <Button
+                onClick={handleCreateUser}
+                disabled={saving}
+                className="flex-1 h-12 rounded-2xl bg-primary shadow-lg shadow-primary/20 font-black gap-2"
+              >
+                {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <ShieldCheck className="h-5 w-5" />}
+                Confirmar Criação
+              </Button>
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreateUser} disabled={saving} className="gap-2">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Criar Usuário
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Permissions Dialog */}
       <Dialog open={isPermOpen} onOpenChange={setIsPermOpen}>
-        <DialogContent className="max-w-xl h-[85vh] sm:h-[80vh] flex flex-col p-0 overflow-hidden border-2 shadow-2xl">
-          <DialogHeader className="p-5 pb-3 border-b">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10 border shadow-sm">
-                  <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+        <DialogContent className="max-w-xl h-[85vh] sm:h-[80vh] flex flex-col p-0 overflow-hidden border-border/40 shadow-premium bg-card/95 backdrop-blur-xl rounded-3xl">
+          <DialogHeader className="p-8 bg-primary text-primary-foreground">
+            <div className="flex items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-14 w-14 rounded-2xl border-4 border-primary-foreground/20 shadow-lg">
+                  <AvatarFallback className="text-lg font-black bg-white text-primary">
                     {selectedUser ? getInitials(selectedUser.display_name || selectedUser.email) : "?"}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <DialogTitle className="text-base font-bold">Permissões de Acesso</DialogTitle>
-                  <DialogDescription className="text-xs">{selectedUser?.display_name} • {selectedUser?.email}</DialogDescription>
+                  <DialogTitle className="text-2xl font-black font-heading tracking-tight">Permissões de Acesso</DialogTitle>
+                  <DialogDescription className="text-primary-foreground/80 font-medium">
+                    {selectedUser?.display_name} • {selectedUser?.email}
+                  </DialogDescription>
                 </div>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 text-[11px] gap-1.5 font-bold uppercase tracking-wider"
+                className="hidden sm:flex h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2 bg-white/10 border-white/20 hover:bg-white/20 text-white transition-all shadow-inner"
                 onClick={() => {
                   const allTrue = PERMISSIONS.every(p => !!editPerms[p.key]);
                   const newState = { ...editPerms };
@@ -665,7 +711,7 @@ function AccessControl() {
                   setEditPerms(newState);
                 }}
               >
-                <CheckSquare className="h-3.5 w-3.5" />
+                <CheckSquare className="h-4 w-4" />
                 {PERMISSIONS.every(p => !!editPerms[p.key]) ? "Desmarcar Tudo" : "Marcar Tudo"}
               </Button>
             </div>
@@ -729,56 +775,72 @@ function AccessControl() {
 
       {/* Password Dialog */}
       <Dialog open={isPasswordOpen} onOpenChange={setIsPasswordOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <KeyRound className="h-4 w-4 text-primary" /> Redefinir Senha
+        <DialogContent className="rounded-3xl border-border/40 shadow-premium max-w-sm p-0 overflow-hidden bg-card/95 backdrop-blur-xl">
+          <DialogHeader className="p-6 bg-amber-500 text-white">
+            <DialogTitle className="font-heading font-black text-xl flex items-center gap-2">
+              <KeyRound className="h-6 w-6" /> Redefinir Senha
             </DialogTitle>
-            <DialogDescription className="text-xs">
-              Definir nova senha para {selectedUser?.display_name}
+            <DialogDescription className="text-white/80 font-medium">
+              Definindo nova senha para {selectedUser?.display_name}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-1.5 py-2">
-            <Label className="text-xs font-medium text-muted-foreground">Nova senha</Label>
-            <Input
-              type="password" value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Mínimo 6 caracteres" className="h-10"
-            />
+          <div className="p-8 space-y-6">
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nova Senha de Acesso</Label>
+              <Input
+                type="password" value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                className="h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold px-4"
+              />
+            </div>
+
+            <div className="pt-4 flex gap-3">
+              <Button variant="outline" onClick={() => setIsPasswordOpen(false)} className="flex-1 h-12 rounded-2xl border-border/40 font-bold">Cancelar</Button>
+              <Button
+                onClick={handleUpdatePassword}
+                disabled={saving || newPassword.length < 6}
+                className="flex-1 h-12 rounded-2xl bg-amber-500 shadow-lg shadow-amber-500/20 font-black gap-2 text-white"
+              >
+                {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+                Confirmar
+              </Button>
+            </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" size="sm" onClick={() => setIsPasswordOpen(false)}>Cancelar</Button>
-            <Button size="sm" onClick={handleUpdatePassword} disabled={saving || newPassword.length < 6} className="gap-1.5">
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-              Confirmar
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Trash2 className="h-5 w-5 text-destructive" /> Excluir usuário?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação é irreversível. O usuário será removido do sistema junto com todas as suas permissões, roles e perfil.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={executeDeleteUser}
-            >
-              Excluir permanentemente
-            </AlertDialogAction>
-          </AlertDialogFooter>
+        <AlertDialogContent className="rounded-3xl border-border/40 shadow-premium p-0 overflow-hidden bg-card/95 backdrop-blur-xl max-w-md">
+          <div className="p-8 space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0 shadow-inner">
+                <AlertCircle className="h-8 w-8" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black font-heading text-foreground">Excluir Usuário?</h2>
+                <p className="text-sm text-muted-foreground font-medium mt-1">Essa ação não pode ser desfeita.</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground leading-relaxed bg-muted/30 p-4 rounded-2xl border border-border/40">
+              O usuário será removido permanentemente do sistema, perdendo acesso a todas as funcionalidades e registros vinculados.
+            </p>
+
+            <div className="flex gap-3">
+              <AlertDialogCancel className="flex-1 h-12 rounded-2xl border-border/40 font-bold bg-white m-0">Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="flex-1 h-12 rounded-2xl bg-rose-500 text-white font-black hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 m-0"
+                onClick={executeDeleteUser}
+              >
+                Sim, Excluir
+              </AlertDialogAction>
+            </div>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div >
   );
 }
 

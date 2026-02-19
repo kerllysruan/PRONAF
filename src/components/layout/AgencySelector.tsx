@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAgency } from "@/contexts/AgencyContext";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -19,19 +17,21 @@ export function AgencySelector() {
     if (!isDeveloper && !isAdmin) return null;
 
     return (
-        <div className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-2xl bg-primary/5 flex items-center justify-center text-primary/60 border border-primary/10">
+                <Building2 className="h-4.5 w-4.5" />
+            </div>
             <Select
                 value={selectedAgencyId}
                 onValueChange={(value) => setSelectedAgencyId(value)}
             >
-                <SelectTrigger className="w-[180px] h-8 text-xs bg-background/50 border-muted-foreground/20">
+                <SelectTrigger className="w-[220px] h-10 rounded-2xl bg-muted/20 border-border/40 hover:bg-muted/30 transition-all font-bold text-xs">
                     <SelectValue placeholder="Selecionar Agência" />
                 </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">Todas as Agências</SelectItem>
+                <SelectContent className="rounded-2xl border-border/40 shadow-premium">
+                    <SelectItem value="all" className="rounded-xl font-bold py-2.5">Todas as Agências</SelectItem>
                     {agencies.map((agency) => (
-                        <SelectItem key={agency.id} value={agency.id}>
+                        <SelectItem key={agency.id} value={agency.id} className="rounded-xl font-bold py-2.5">
                             {agency.name}
                         </SelectItem>
                     ))}

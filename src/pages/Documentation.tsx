@@ -11,6 +11,7 @@ import {
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 import { useProposals, DbDocument } from "@/hooks/useProposals";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
@@ -81,237 +82,312 @@ export default function Documentation() {
     const percent = getCompletionPercent(selectedProposal);
     const completed = selectedProposal.documents.filter((d) => getDocCompleted(d)).length;
     return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setSelectedProposalId(null)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold font-heading">Checklist de Documentos</h1>
-            <p className="text-sm text-muted-foreground">{selectedProposal.producer_name} — {selectedProposal.producer_cpf}</p>
+      <div className="space-y-8 animate-fade-in max-w-[1600px] mx-auto pb-10">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card/40 backdrop-blur-xl p-6 rounded-3xl border border-border/50 shadow-premium">
+          <div className="flex items-center gap-5">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedProposalId(null)}
+              className="h-10 w-10 rounded-xl hover:bg-primary/10 text-primary transition-all"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center text-xl font-black shadow-lg shadow-primary/20">
+                {selectedProposal.producer_name.charAt(0)}
+              </div>
+              <div>
+                <h1 className="text-2xl font-extrabold font-heading text-foreground tracking-tight">{selectedProposal.producer_name}</h1>
+                <p className="text-xs text-muted-foreground font-mono uppercase tracking-widest">{selectedProposal.producer_cpf}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Badge className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border-0 shadow-sm ${STATUS_COLORS[selectedProposal.status as ProposalStatus]}`}>
+              {STATUS_LABELS[selectedProposal.status as ProposalStatus]}
+            </Badge>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1 space-y-6">
+            <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4">Progresso do Checklist</p>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-3xl font-black text-primary">{percent}%</span>
+                  <span className="text-xs font-bold text-muted-foreground">{completed}/{selectedProposal.documents.length} itens</span>
+                </div>
+                <div className="relative h-3 w-full bg-muted rounded-full overflow-hidden mb-4">
+                  <div
+                    className="absolute top-0 left-0 h-full bg-primary transition-all duration-1000 ease-out rounded-full"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed italic">
+                  {percent === 100 ? "Todos os documentos foram validados com sucesso." : "Alguns documentos ainda pendem validação técnica."}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
+              <CardContent className="p-6 space-y-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Linha de Crédito</p>
+                  <p className="text-sm font-bold text-foreground">{PRONAF_LINE_LABELS[selectedProposal.pronaf_line as PronafLine]}</p>
+                </div>
+                <Separator className="bg-border/40" />
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1">Identificador</p>
+                  <p className="text-[10px] font-mono font-bold text-muted-foreground">{selectedProposal.id}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="lg:col-span-2">
+            <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-white/60 backdrop-blur-sm h-full">
+              <CardHeader className="p-6 border-b border-border/40 bg-muted/20">
+                <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-primary">
+                  <ClipboardList className="h-4 w-4" /> Checklist de Documentação
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                {selectedProposal.documents.length === 0 ? (
+                  <div className="py-20 text-center space-y-3 opacity-40">
+                    <XCircle className="h-12 w-12 mx-auto text-muted-foreground" />
+                    <p className="text-sm font-bold text-muted-foreground italic uppercase tracking-widest">Nenhum documento necessário</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {selectedProposal.documents.map((doc) => {
+                      const isCompleted = getDocCompleted(doc);
+                      return (
+                        <div
+                          key={doc.id}
+                          className={`group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 ${isCompleted
+                            ? "bg-emerald-50/50 border-emerald-200/50"
+                            : "bg-white border-border/40 hover:border-primary/40 hover:shadow-md"
+                            }`}
+                        >
+                          <Checkbox
+                            checked={isCompleted}
+                            onCheckedChange={(checked) => handleToggle(doc.id, !!checked)}
+                            id={doc.id}
+                            disabled={!permissions.can_edit_proposals}
+                            className="h-6 w-6 rounded-lg transition-all"
+                          />
+                          <label
+                            htmlFor={doc.id}
+                            className={`flex-1 text-sm cursor-pointer transition-all duration-300 ${isCompleted ? "line-through text-muted-foreground opacity-60" : "font-bold text-foreground"}`}
+                          >
+                            {doc.name}
+                          </label>
+                          <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-muted/50 text-muted-foreground/30 group-hover:bg-primary/10 group-hover:text-primary/40'}`}>
+                            {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <ClipboardList className="h-4 w-4" />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="border-0 shadow-md">
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Status da Proposta</p>
-              <Badge className={`${STATUS_COLORS[selectedProposal.status as ProposalStatus]} mt-1`}>
-                {STATUS_LABELS[selectedProposal.status as ProposalStatus]}
-              </Badge>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-md">
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Linha PRONAF</p>
-              <p className="font-semibold text-sm mt-1">{PRONAF_LINE_LABELS[selectedProposal.pronaf_line as PronafLine]}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-md">
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Completude</p>
-              <div className="flex items-center gap-3 mt-1">
-                <Progress value={percent} className="h-2 flex-1" />
-                <span className="text-sm font-bold text-primary">{percent}%</span>
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-1">{completed}/{selectedProposal.documents.length} documentos</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Card className="border-0 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-sm font-heading flex items-center gap-2">
-              <ClipboardList className="h-4 w-4 text-primary" /> Documentos Necessários
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selectedProposal.documents.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum documento vinculado</p>
-            ) : (
-              <div className="space-y-2">
-                {selectedProposal.documents.map((doc) => {
-                  const isCompleted = getDocCompleted(doc);
-                  return (
-                    <div
-                      key={doc.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-150 ${isCompleted
-                          ? "bg-success/5 border-success/20"
-                          : "bg-destructive/5 border-destructive/20"
-                        }`}
-                    >
-                      <Checkbox
-                        checked={isCompleted}
-                        onCheckedChange={(checked) => handleToggle(doc.id, !!checked)}
-                        id={doc.id}
-                        disabled={!permissions.can_edit_proposals}
-                      />
-                      <label
-                        htmlFor={doc.id}
-                        className={`text-sm cursor-pointer flex-1 transition-all duration-150 ${isCompleted ? "line-through text-muted-foreground" : "font-medium"}`}
-                      >
-                        {doc.name}
-                      </label>
-                      {isCompleted ? (
-                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-destructive shrink-0" />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold font-heading">Controle de Documentação</h1>
-        <p className="text-sm text-muted-foreground mt-1">Checklist e acompanhamento dos documentos por proposta</p>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <FileCheck className="h-4 w-4 text-primary" />
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Documentos</p>
-            </div>
-            <p className="text-lg font-bold font-heading">{completedDocs}/{totalDocs}</p>
-            <p className="text-[10px] text-muted-foreground">{completionRate}% completo</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <CheckCircle2 className="h-4 w-4 text-success" />
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Completas</p>
-            </div>
-            <p className="text-lg font-bold font-heading">{proposalsComplete}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Incompletas</p>
-            </div>
-            <p className="text-lg font-bold font-heading">{proposalsIncomplete}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-md">
-          <CardContent className="p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Pendentes</p>
-            </div>
-            <p className="text-lg font-bold font-heading">{pendingDocs}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold font-heading">Progresso Geral</h3>
-            <span className="text-sm font-bold text-primary">{completionRate}%</span>
+    <div className="space-y-6 animate-fade-in max-w-[1600px] mx-auto pb-10">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card/40 backdrop-blur-xl p-6 rounded-3xl border border-border/50 shadow-premium">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+            <FileCheck className="h-6 w-6" />
           </div>
-          <Progress value={completionRate} className="h-3" />
-        </CardContent>
-      </Card>
+          <div>
+            <h1 className="text-3xl font-extrabold font-heading text-foreground tracking-tight">Documentação</h1>
+            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              Gestão de conformidade e checklists técnicos
+            </p>
+          </div>
+        </div>
+      </header>
 
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Buscar por nome ou CPF..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
+      {/* Stats Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { icon: FileCheck, label: "Total Documentos", value: `${completedDocs}/${totalDocs}`, subValue: `${completionRate}% concluído`, color: "text-blue-600", bg: "bg-blue-50" },
+          { icon: CheckCircle2, label: "Propostas OK", value: proposalsComplete, subValue: "100% documentos", color: "text-emerald-600", bg: "bg-emerald-50" },
+          { icon: AlertTriangle, label: "Incompletas", value: proposalsIncomplete, subValue: "Aguardando envio", color: "text-amber-600", bg: "bg-amber-50" },
+          { icon: XCircle, label: "Críticas", value: pendingDocs, subValue: "Pendência total", color: "text-rose-600", bg: "bg-rose-50" },
+        ].map((item, idx) => (
+          <Card key={idx} className="group border-border/40 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div className={`h-10 w-10 rounded-2xl ${item.bg} ${item.color} flex items-center justify-center transition-transform group-hover:scale-110 duration-300`}>
+                  <item.icon className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="mt-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 mb-1">{item.label}</p>
+                <h3 className="font-heading font-extrabold text-2xl text-foreground">
+                  {item.value}
+                </h3>
+                <p className="text-[10px] font-bold text-muted-foreground mt-1">{item.subValue}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-bold font-heading text-foreground">Progresso de Conformidade</h3>
+              <p className="text-xs text-muted-foreground font-medium">Percentual de documentos aprovados em toda a carteira</p>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos Status</SelectItem>
-                {Object.entries(STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={docFilter} onValueChange={setDocFilter}>
-              <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Docs" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="completo">Completos</SelectItem>
-                <SelectItem value="incompleto">Incompletos</SelectItem>
-                <SelectItem value="critico">Críticos (&lt;50%)</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col items-end">
+              <span className="text-3xl font-black text-primary">
+                {completionRate}%
+              </span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Global</span>
+            </div>
+          </div>
+          <div className="relative h-4 w-full bg-muted rounded-full overflow-hidden shadow-inner">
+            <div
+              className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-indigo-500 transition-all duration-1000 ease-out rounded-full shadow-lg shadow-primary/20"
+              style={{ width: `${completionRate}%` }}
+            />
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produtor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Documentação</TableHead>
-                  <TableHead className="hidden md:table-cell">Linha</TableHead>
-                  <TableHead className="w-20">Ação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma proposta encontrada</TableCell>
+      <div className="bg-card/40 backdrop-blur-md p-4 rounded-3xl border border-border/50 shadow-premium flex flex-col md:flex-row items-center gap-4">
+        <div className="flex items-center gap-3 flex-1 w-full">
+          <div className="h-10 w-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground">
+            <Search className="h-4 w-4" />
+          </div>
+          <Input
+            placeholder="Buscar por nome ou CPF..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-11 rounded-xl border-border/40 bg-background/50 font-bold flex-1"
+          />
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full md:w-44 h-11 rounded-xl border-border/40 bg-background/50 font-bold">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border/40 shadow-premium">
+              <SelectItem value="all">Todos Status</SelectItem>
+              {Object.entries(STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k} className="rounded-lg">{v}</SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select value={docFilter} onValueChange={setDocFilter}>
+            <SelectTrigger className="w-full md:w-44 h-11 rounded-xl border-border/40 bg-background/50 font-bold">
+              <SelectValue placeholder="Conformidade" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border/40 shadow-premium">
+              <SelectItem value="all">Todos os Graus</SelectItem>
+              <SelectItem value="completo">Completos</SelectItem>
+              <SelectItem value="incompleto">Incompletos</SelectItem>
+              <SelectItem value="critico">Críticos (&lt;50%)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="bg-card/40 backdrop-blur-md rounded-3xl border border-border/50 shadow-premium overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30 border-b border-border/40">
+              <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest">Produtor</TableHead>
+              <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest">Status da Proposta</TableHead>
+              <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest">Conformidade (Checklist)</TableHead>
+              <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest hidden md:table-cell">Linha PRONAF</TableHead>
+              <TableHead className="py-4 px-6 w-20"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="py-20 text-center">
+                  <div className="flex flex-col items-center gap-3 opacity-40">
+                    <ClipboardList className="h-10 w-10 text-muted-foreground" />
+                    <p className="text-sm font-bold text-muted-foreground italic uppercase tracking-widest">Nenhuma proposta encontrada</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((p) => {
+                const pct = getCompletionPercent(p);
+                const completed = p.documents.filter((d) => getDocCompleted(d)).length;
+                const isCritical = pct < 50;
+
+                return (
+                  <TableRow
+                    key={p.id}
+                    className="group hover:bg-white/60 transition-colors cursor-pointer border-b border-border/40 last:border-0"
+                    onClick={() => setSelectedProposalId(p.id)}
+                  >
+                    <TableCell className="py-4 px-6">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black shadow-inner">
+                          {p.producer_name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{p.producer_name}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{p.producer_cpf}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <Badge className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border-0 shadow-sm ${STATUS_COLORS[p.status as ProposalStatus]}`}>
+                        {STATUS_LABELS[p.status as ProposalStatus]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-4 px-6">
+                      <div className="space-y-1.5 min-w-[180px]">
+                        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          <span>{pct}%</span>
+                          <span>{completed}/{p.documents.length}</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-700 ${isCritical ? 'bg-rose-500 shadow-rose-500/20' : 'bg-emerald-500 shadow-emerald-500/20'} shadow-lg`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-4 px-6 hidden md:table-cell">
+                      <Badge variant="outline" className="text-[10px] font-bold border-border/40 bg-background/50 rounded-lg">
+                        {PRONAF_LINE_LABELS[p.pronaf_line as PronafLine]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-4 px-6 text-right">
+                      <div className="flex items-center justify-end">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-primary hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100">
+                          <Eye className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                ) : (
-                  filtered.map((p) => {
-                    const pct = getCompletionPercent(p);
-                    const completed = p.documents.filter((d) => getDocCompleted(d)).length;
-                    return (
-                      <TableRow key={p.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => setSelectedProposalId(p.id)}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-sm">{p.producer_name}</p>
-                            <p className="text-xs text-muted-foreground">{p.producer_cpf}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`${STATUS_COLORS[p.status as ProposalStatus]} text-xs`}>
-                            {STATUS_LABELS[p.status as ProposalStatus]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2 min-w-[150px]">
-                            <Progress value={pct} className="h-2 flex-1" />
-                            <span className="text-xs font-medium w-16 text-right">{completed}/{p.documents.length}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <Badge variant="outline" className="text-xs">
-                            {PRONAF_LINE_LABELS[p.pronaf_line as PronafLine]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

@@ -177,57 +177,60 @@ export default function AdminAgencies() {
     }
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-6 animate-fade-in max-w-[1600px] mx-auto pb-10">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold font-heading flex items-center gap-2">
-                        <Building2 className="h-6 w-6 text-primary" />
-                        Gestão de Agências
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Administração de agências e usuários vinculados
-                    </p>
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card/40 backdrop-blur-xl p-6 rounded-3xl border border-border/50 shadow-premium">
+                <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner">
+                        <Building2 className="h-7 w-7 text-primary" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-black font-heading tracking-tight text-foreground">Gestão de Agências</h1>
+                        <p className="text-sm text-muted-foreground font-medium">Administração de unidades e vinculação de usuários.</p>
+                    </div>
                 </div>
                 {permissions.can_manage_agencies && (
-                    <Button onClick={() => setIsCreateOpen(true)} className="gap-2 shadow-md shadow-primary/20">
-                        <Plus className="h-4 w-4" /> Nova Agência
+                    <Button
+                        onClick={() => setIsCreateOpen(true)}
+                        className="h-12 px-6 rounded-2xl bg-primary shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all font-black gap-2"
+                    >
+                        <Plus className="h-5 w-5" /> Nova Agência
                     </Button>
                 )}
-            </div>
+            </header>
 
-            {/* Stats */}
+            {/* Stats Summary */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card className="border-0 shadow-md">
-                    <CardContent className="p-4 flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Building2 className="h-5 w-5 text-primary" />
+                <Card className="rounded-3xl border-border/40 bg-card/40 backdrop-blur-md shadow-premium overflow-hidden transition-all hover:translate-y-[-4px]">
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                            <Building2 className="h-7 w-7" />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold">{agencies.length}</p>
-                            <p className="text-xs text-muted-foreground">Agências</p>
+                            <p className="text-3xl font-black font-heading tracking-tight">{agencies.length}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Agências Ativas</p>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="border-0 shadow-md">
-                    <CardContent className="p-4 flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                            <Users className="h-5 w-5 text-green-500" />
+                <Card className="rounded-3xl border-border/40 bg-card/40 backdrop-blur-md shadow-premium overflow-hidden transition-all hover:translate-y-[-4px]">
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner">
+                            <Users className="h-7 w-7" />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold">{users.filter(u => u.agency_id).length}</p>
-                            <p className="text-xs text-muted-foreground">Usuários vinculados</p>
+                            <p className="text-3xl font-black font-heading tracking-tight">{users.filter(u => u.agency_id).length}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Usuários Vinculados</p>
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="border-0 shadow-md">
-                    <CardContent className="p-4 flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                            <Users className="h-5 w-5 text-amber-500" />
+                <Card className="rounded-3xl border-border/40 bg-card/40 backdrop-blur-md shadow-premium overflow-hidden transition-all hover:translate-y-[-4px]">
+                    <CardContent className="p-6 flex items-center gap-4">
+                        <div className="h-14 w-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-inner">
+                            <Users className="h-7 w-7" />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold">{unassignedUsers.length}</p>
-                            <p className="text-xs text-muted-foreground">Sem agência</p>
+                            <p className="text-3xl font-black font-heading tracking-tight text-amber-600">{unassignedUsers.length}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Pendentes de Alocação</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -235,30 +238,36 @@ export default function AdminAgencies() {
 
             {/* Unassigned Users */}
             {unassignedUsers.length > 0 && (
-                <Card className="overflow-hidden border-amber-500/30">
-                    <CardHeader className="bg-amber-500/10 pb-3">
-                        <CardTitle className="text-base flex items-center gap-2 text-amber-700">
-                            <Users className="h-4 w-4" />
-                            Usuários sem agência vinculada
+                <Card className="overflow-hidden rounded-3xl border-amber-500/30 bg-amber-50/10 shadow-premium">
+                    <CardHeader className="bg-amber-500/10 px-6 py-4 border-b border-amber-500/20">
+                        <CardTitle className="text-base font-black font-heading flex items-center gap-2 text-amber-700 uppercase tracking-tight">
+                            <Users className="h-5 w-5" />
+                            Usuários aguardando vínculo
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead>Nome</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead className="text-right">Ações</TableHead>
+                                <TableRow className="bg-amber-500/5 hover:bg-amber-500/5 transition-none border-b border-amber-500/20">
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 h-10 px-6">Nome Completo</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 h-10 px-6">E-mail</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 h-10 px-6 text-right">Ações Rápidas</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {unassignedUsers.map((user) => (
-                                    <TableRow key={user.id}>
-                                        <TableCell className="font-medium">{user.full_name || "Sem nome"}</TableCell>
-                                        <TableCell>{user.email || "-"}</TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="outline" size="sm" className="gap-1" onClick={() => openMoveDialog(user)} disabled={!permissions.can_manage_agencies}>
-                                                <ArrowRightLeft className="h-3 w-3" /> Atribuir
+                                    <TableRow key={user.id} className="hover:bg-amber-500/5 transition-colors border-b border-amber-500/10 h-16">
+                                        <TableCell className="px-6 font-bold text-amber-900">{user.full_name || "Sem nome definido"}</TableCell>
+                                        <TableCell className="px-6 font-medium text-amber-700/80">{user.email || "-"}</TableCell>
+                                        <TableCell className="px-6 text-right">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-10 px-4 rounded-xl border-amber-200 bg-white hover:bg-amber-100 text-amber-700 font-bold gap-2 transition-all"
+                                                onClick={() => openMoveDialog(user)}
+                                                disabled={!permissions.can_manage_agencies}
+                                            >
+                                                <ArrowRightLeft className="h-4 w-4" /> Atribuir Unidade
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -270,34 +279,43 @@ export default function AdminAgencies() {
             )}
 
             {/* Agency Cards */}
-            <div className="grid gap-6">
+            <div className="grid gap-8">
                 {agencies.map((agency) => {
                     const agencyUsers = getUsersForAgency(agency.id);
                     return (
-                        <Card key={agency.id} className="overflow-hidden border-0 shadow-md">
-                            <CardHeader className="bg-muted/30 pb-3">
+                        <Card key={agency.id} className="overflow-hidden rounded-3xl border-border/40 bg-card/40 backdrop-blur-md shadow-premium">
+                            <CardHeader className="bg-muted/30 px-6 py-6 border-b border-border/50">
                                 <div className="flex items-center justify-between">
-                                    <CardTitle className="text-lg flex items-center gap-2">
-                                        <Building2 className="h-5 w-5 text-primary" />
-                                        {agency.name}
-                                        <Badge variant="outline" className="text-xs font-normal ml-2">
-                                            {agency.code || "N/A"}
-                                        </Badge>
-                                        <Badge variant="secondary" className="text-xs">
-                                            {agencyUsers.length} usuário{agencyUsers.length !== 1 ? "s" : ""}
-                                        </Badge>
-                                    </CardTitle>
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
+                                            <Building2 className="h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-xl font-black font-heading tracking-tight flex items-center gap-3">
+                                                {agency.name}
+                                                <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg">
+                                                    {agency.code || "S/C"}
+                                                </Badge>
+                                            </CardTitle>
+                                            <div className="flex items-center gap-3 mt-1">
+                                                <p className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                                                    <Users className="h-3.5 w-3.5" />
+                                                    {agencyUsers.length} Membros Vinculados
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                     {permissions.can_manage_agencies && (
                                         <Button
                                             variant="ghost"
-                                            size="sm"
-                                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            size="icon"
+                                            className="h-11 w-11 rounded-2xl text-rose-500 hover:bg-rose-50 transition-all shadow-sm"
                                             onClick={() => {
                                                 setAgencyToDelete(agency);
                                                 setIsDeleteOpen(true);
                                             }}
                                         >
-                                            <Trash2 className="h-4 w-4" />
+                                            <Trash2 className="h-5 w-5" />
                                         </Button>
                                     )}
                                 </div>
@@ -305,30 +323,41 @@ export default function AdminAgencies() {
                             <CardContent className="p-0">
                                 <Table>
                                     <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Nome</TableHead>
-                                            <TableHead>Email</TableHead>
-                                            <TableHead>CPF</TableHead>
-                                            <TableHead className="text-right">Ações</TableHead>
+                                        <TableRow className="bg-muted/30 border-b border-border/40 hover:bg-muted/30 transition-none">
+                                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6">Profissional</TableHead>
+                                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6">Contato Corporativo</TableHead>
+                                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6">Identificação (CPF)</TableHead>
+                                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 text-right">Controle</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {agencyUsers.map((user) => (
-                                            <TableRow key={user.id}>
-                                                <TableCell className="font-medium">{user.full_name || "Sem nome"}</TableCell>
-                                                <TableCell>{user.email || "-"}</TableCell>
-                                                <TableCell>{user.cpf || "-"}</TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => openMoveDialog(user)} disabled={!permissions.can_manage_agencies}>
-                                                        <ArrowRightLeft className="h-3 w-3" /> Mover
+                                            <TableRow key={user.id} className="group hover:bg-white/60 transition-colors border-b border-border/40 last:border-0 h-16">
+                                                <TableCell className="px-6 py-4 font-bold text-foreground group-hover:text-primary transition-colors">
+                                                    {user.full_name || "Colaborador sem nome"}
+                                                </TableCell>
+                                                <TableCell className="px-6 py-4 font-medium text-muted-foreground">{user.email || "-"}</TableCell>
+                                                <TableCell className="px-6 py-4 font-mono text-[11px] text-muted-foreground">{user.cpf || "-"}</TableCell>
+                                                <TableCell className="px-6 py-4 text-right">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-9 px-4 rounded-xl text-xs font-black uppercase tracking-widest gap-2 text-primary hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 duration-300"
+                                                        onClick={() => openMoveDialog(user)}
+                                                        disabled={!permissions.can_manage_agencies}
+                                                    >
+                                                        <ArrowRightLeft className="h-3.5 w-3.5" /> Reatribuir
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
                                         {agencyUsers.length === 0 && (
                                             <TableRow>
-                                                <TableCell colSpan={4} className="text-center text-muted-foreground py-6">
-                                                    Nenhum usuário vinculado a esta agência.
+                                                <TableCell colSpan={4} className="text-center py-12">
+                                                    <div className="flex flex-col items-center gap-2 opacity-50">
+                                                        <Users className="h-8 w-8 text-muted-foreground" />
+                                                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Nenhum profissional alocado</p>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         )}
@@ -342,103 +371,115 @@ export default function AdminAgencies() {
 
             {/* Create Agency Dialog */}
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Nova Agência</DialogTitle>
-                        <DialogDescription>
-                            Crie uma nova agência. Todas as configurações de banco de dados serão aplicadas automaticamente.
+                <DialogContent className="rounded-3xl border-border/40 shadow-premium max-w-md p-0 overflow-hidden bg-card/95 backdrop-blur-xl">
+                    <DialogHeader className="p-8 bg-primary text-primary-foreground">
+                        <DialogTitle className="text-2xl font-black font-heading tracking-tight flex items-center gap-3">
+                            <Building2 className="h-8 w-8" /> Nova Unidade
+                        </DialogTitle>
+                        <DialogDescription className="text-primary-foreground/80 font-medium">
+                            Cadastre uma nova agência no sistema para alocação de profissionais.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-2">
-                        <div className="space-y-2">
-                            <Label htmlFor="agency-name">Nome da Agência *</Label>
-                            <Input
-                                id="agency-name"
-                                placeholder="Ex: Agência Centro"
-                                value={newAgencyName}
-                                onChange={(e) => setNewAgencyName(e.target.value)}
-                            />
+                    <div className="p-8 space-y-6">
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nome da Agência *</Label>
+                                <Input
+                                    placeholder="Ex: Agência Central"
+                                    value={newAgencyName}
+                                    onChange={(e) => setNewAgencyName(e.target.value)}
+                                    className="h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold px-4"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Código Identificador</Label>
+                                <Input
+                                    placeholder="Ex: 002-X"
+                                    value={newAgencyCode}
+                                    onChange={(e) => setNewAgencyCode(e.target.value)}
+                                    className="h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold px-4"
+                                />
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="agency-code">Código (opcional)</Label>
-                            <Input
-                                id="agency-code"
-                                placeholder="Ex: 002"
-                                value={newAgencyCode}
-                                onChange={(e) => setNewAgencyCode(e.target.value)}
-                            />
+                        <div className="flex gap-3 pt-2">
+                            <Button variant="outline" onClick={() => setIsCreateOpen(false)} className="flex-1 h-12 rounded-2xl border-border/40 font-bold">Cancelar</Button>
+                            <Button onClick={handleCreateAgency} disabled={saving} className="flex-1 h-12 rounded-2xl bg-primary shadow-lg shadow-primary/20 font-black gap-2">
+                                {saving && <Loader2 className="h-5 w-5 animate-spin" />}
+                                Criar Agência
+                            </Button>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleCreateAgency} disabled={saving} className="gap-2">
-                            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                            Criar Agência
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
             {/* Move User Dialog */}
             <Dialog open={isMoveOpen} onOpenChange={setIsMoveOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Atribuir Agência</DialogTitle>
-                        <DialogDescription>
-                            Mover <strong>{selectedUser?.full_name || selectedUser?.email}</strong> para outra agência.
+                <DialogContent className="rounded-3xl border-border/40 shadow-premium max-w-sm p-0 overflow-hidden bg-card/95 backdrop-blur-xl">
+                    <DialogHeader className="p-8 bg-amber-500 text-white">
+                        <DialogTitle className="text-2xl font-black font-heading tracking-tight flex items-center gap-3">
+                            <ArrowRightLeft className="h-8 w-8" /> Alocação
+                        </DialogTitle>
+                        <DialogDescription className="text-white/80 font-medium pt-2">
+                            Mover <strong>{selectedUser?.full_name || selectedUser?.email}</strong> para outra unidade.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-2">
-                        <div className="space-y-2">
-                            <Label>Agência de destino</Label>
+                    <div className="p-8 space-y-6">
+                        <div className="space-y-3">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Unidade de Destino</Label>
                             <Select value={targetAgencyId} onValueChange={setTargetAgencyId}>
-                                <SelectTrigger>
+                                <SelectTrigger className="h-12 rounded-xl border-border/40 bg-muted/10 font-bold">
                                     <SelectValue placeholder="Selecione a agência" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl border-border/40 shadow-premium">
                                     {agencies.map((a) => (
-                                        <SelectItem key={a.id} value={a.id}>
+                                        <SelectItem key={a.id} value={a.id} className="rounded-lg">
                                             {a.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
+                        <div className="flex gap-3 pt-2">
+                            <Button variant="outline" onClick={() => setIsMoveOpen(false)} className="flex-1 h-12 rounded-2xl border-border/40 font-bold">Cancelar</Button>
+                            <Button onClick={handleMoveUser} disabled={saving || !targetAgencyId} className="flex-1 h-12 rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-500/20 font-black gap-2">
+                                {saving && <Loader2 className="h-5 w-5 animate-spin" />}
+                                Confirmar
+                            </Button>
+                        </div>
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsMoveOpen(false)}>Cancelar</Button>
-                        <Button onClick={handleMoveUser} disabled={saving || !targetAgencyId} className="gap-2">
-                            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                            Confirmar
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
             {/* Delete Agency Confirmation */}
             <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2">
-                            <Trash2 className="h-5 w-5 text-destructive" /> Excluir Agência?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Tem certeza que deseja excluir a agência <strong>{agencyToDelete?.name}</strong>?
-                            Os usuários e dados vinculados a ela serão desvinculados, mas não serão excluídos.
-                            Esta ação é irreversível.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setAgencyToDelete(null)}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={handleDeleteAgency}
-                            disabled={saving}
-                        >
-                            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                            Excluir permanentemente
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
+                <AlertDialogContent className="rounded-3xl border-border/40 shadow-premium p-0 overflow-hidden bg-card/95 backdrop-blur-xl max-w-md">
+                    <div className="p-8 space-y-6">
+                        <div className="flex items-center gap-4">
+                            <div className="h-14 w-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0 shadow-inner">
+                                <Trash2 className="h-8 w-8" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black font-heading text-foreground">Excluir Unidade?</h2>
+                                <p className="text-sm text-muted-foreground font-medium mt-1">Essa ação removerá a agência "{agencyToDelete?.name}" permanentemente.</p>
+                            </div>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground leading-relaxed bg-muted/30 p-4 rounded-2xl border border-border/40">
+                            Os usuários e dados vinculados a ela serão desvinculados, mas não serão excluídos. Esta operação não pode ser revertida.
+                        </p>
+
+                        <div className="flex gap-3">
+                            <AlertDialogCancel onClick={() => setAgencyToDelete(null)} className="flex-1 h-12 rounded-2xl border-border/40 font-bold bg-white m-0">Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                                className="flex-1 h-12 rounded-2xl bg-rose-500 text-white font-black hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 m-0"
+                                onClick={handleDeleteAgency}
+                                disabled={saving}
+                            >
+                                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                                Confirmar Exclusão
+                            </AlertDialogAction>
+                        </div>
+                    </div>
                 </AlertDialogContent>
             </AlertDialog>
         </div>

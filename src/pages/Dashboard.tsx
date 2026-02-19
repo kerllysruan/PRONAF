@@ -118,93 +118,98 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20">
-            <Sparkles className="h-5 w-5 text-white" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20 rotate-3 transform transition-transform hover:rotate-0">
+            <Sparkles className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold font-heading text-foreground">Dashboard Analítico</h1>
-            <p className="text-sm text-muted-foreground">Visão estratégica das propostas PRONAF</p>
+            <h1 className="text-3xl font-extrabold font-heading text-foreground tracking-tight">Dashboard Analítico</h1>
+            <p className="text-sm text-muted-foreground font-medium">Visão estratégica das propostas PRONAF</p>
           </div>
         </div>
-        <MonthYearFilter month={filterMonth} year={filterYear} onMonthChange={setFilterMonth} onYearChange={setFilterYear} years={availableYears} />
+        <div className="bg-background/40 backdrop-blur-md p-1.5 rounded-2xl border border-border/50 shadow-sm">
+          <MonthYearFilter month={filterMonth} year={filterYear} onMonthChange={setFilterMonth} onYearChange={setFilterYear} years={availableYears} />
+        </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10" />
-          <CardContent className="p-5 relative">
-            <div className="flex items-center justify-between">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total Propostas</p>
-                <p className="text-3xl font-bold font-heading mt-1">{stats.total}</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">{stats.novas} novas</Badge>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Propostas</p>
+                <p className="text-4xl font-extrabold font-heading text-foreground">{stats.total}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="px-2 py-0.5 rounded-lg bg-primary/10 text-primary border-0 text-[10px] font-bold">+{stats.novas} NOVAS</Badge>
                 </div>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <FileText className="h-6 w-6 text-primary" />
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary transform group-hover:scale-110 group-hover:rotate-3 transition-all">
+                <FileText className="h-7 w-7" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-          <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-success/10" />
-          <CardContent className="p-5 relative">
-            <div className="flex items-center justify-between">
+        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Contratos Assinados</p>
-                <p className="text-3xl font-bold font-heading mt-1">{stats.aprovadas}</p>
-                <div className="flex flex-col gap-0.5 mt-1">
-                  <p className="text-xs font-bold text-success-foreground bg-success/10 px-1.5 py-0.5 rounded-md self-start">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Contratos Assinados</p>
+                <p className="text-4xl font-extrabold font-heading text-foreground">{stats.aprovadas}</p>
+                <div className="flex flex-col gap-1 mt-2">
+                  <p className="text-sm font-bold text-success drop-shadow-sm font-heading">
                     {formatCurrency(stats.valorAprovado)}
                   </p>
                   <div className="flex items-center gap-1">
-                    <ArrowUpRight className="h-3 w-3 text-success" />
-                    <span className="text-[10px] text-success font-medium">{stats.taxaAprovacao}% taxa</span>
+                    <TrendingUp className="h-3 w-3 text-success" />
+                    <span className="text-[10px] text-success font-bold">{stats.taxaAprovacao}% TAXA</span>
                   </div>
                 </div>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-success/10 flex items-center justify-center">
-                <CheckCircle2 className="h-6 w-6 text-success" />
+              <div className="h-14 w-14 rounded-2xl bg-success/10 flex items-center justify-center text-success transform group-hover:scale-110 group-hover:-rotate-3 transition-all">
+                <CheckCircle2 className="h-7 w-7" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-accent/10" />
-          <CardContent className="p-5 relative">
-            <div className="flex items-center justify-between">
+        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Valor Total</p>
-                <p className="text-xl font-bold font-heading mt-1">{formatCurrency(stats.valorTotal)}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">Aprovado: {formatCurrency(stats.valorAprovado)}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Volume Financeiro</p>
+                <p className="text-2xl font-extrabold font-heading text-foreground mt-1">{formatCurrency(stats.valorTotal)}</p>
+                <p className="text-[10px] font-bold text-muted-foreground mt-2 flex items-center gap-1 italic">
+                  <DollarSign className="h-3 w-3 opacity-50" /> TOTAL PROCESSADO
+                </p>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-accent" />
+              <div className="h-14 w-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent transform group-hover:scale-110 group-hover:rotate-6 transition-all">
+                <DollarSign className="h-7 w-7" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="relative overflow-hidden border-0 shadow-md hover:shadow-lg transition-shadow">
-          <div className="absolute inset-0 bg-gradient-to-br from-warning/5 to-warning/10" />
-          <CardContent className="p-5 relative">
-            <div className="flex items-center justify-between">
+        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-warning/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Em Análise</p>
-                <p className="text-3xl font-bold font-heading mt-1">{stats.emAnalise}</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <Clock className="h-3 w-3 text-warning" />
-                  <span className="text-[10px] text-warning font-medium">{stats.pendentes} doc. pend.</span>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Em Análise</p>
+                <p className="text-4xl font-extrabold font-heading text-foreground">{stats.emAnalise}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="px-2 py-0.5 rounded-lg bg-warning/10 text-warning border-0 text-[10px] font-bold flex items-center gap-1">
+                    <Clock className="h-2.5 w-2.5" /> {stats.pendentes} PENDENTES
+                  </Badge>
                 </div>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-warning/10 flex items-center justify-center">
-                <Search className="h-6 w-6 text-warning" />
+              <div className="h-14 w-14 rounded-2xl bg-warning/10 flex items-center justify-center text-warning transform group-hover:scale-110 group-hover:-rotate-6 transition-all">
+                <Search className="h-7 w-7" />
               </div>
             </div>
           </CardContent>
@@ -212,44 +217,46 @@ export default function Dashboard() {
       </div>
 
       {/* Secondary KPIs */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-0 shadow-premium/50 rounded-2xl bg-background/40 backdrop-blur-sm">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-muted-foreground">Documentação</p>
-              <span className="text-sm font-bold text-primary">{docStats.rate}%</span>
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Documentação</p>
+              <span className="text-sm font-black text-primary">{docStats.rate}%</span>
             </div>
-            <Progress value={docStats.rate} className="h-2" />
-            <p className="text-[10px] text-muted-foreground mt-1">{docStats.completedDocs}/{docStats.totalDocs} documentos</p>
+            <Progress value={docStats.rate} className="h-1.5 bg-primary/10" />
+            <p className="text-[10px] text-muted-foreground mt-2 font-medium">{docStats.completedDocs}/{docStats.totalDocs} documentos validados</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Tarefas Pendentes</p>
-            <p className="text-2xl font-bold font-heading mt-1">{taskStats.pendentes}</p>
+        <Card className="border-0 shadow-premium/50 rounded-2xl bg-background/40 backdrop-blur-sm">
+          <CardContent className="p-5">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pendências</p>
+            <p className="text-3xl font-extrabold font-heading mt-1 text-foreground">{taskStats.pendentes}</p>
             {taskStats.atrasadas > 0 && (
-              <div className="flex items-center gap-1 mt-1">
+              <div className="flex items-center gap-1.5 mt-2 px-2 py-0.5 rounded-lg bg-destructive/10 w-fit">
                 <AlertTriangle className="h-3 w-3 text-destructive" />
-                <span className="text-[10px] text-destructive font-medium">{taskStats.atrasadas} atrasadas</span>
+                <span className="text-[10px] text-destructive font-black">{taskStats.atrasadas} EM ATRASO</span>
               </div>
             )}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Equipe Ativa</p>
-            <p className="text-2xl font-bold font-heading mt-1">{members.length}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">membros cadastrados</p>
+        <Card className="border-0 shadow-premium/50 rounded-2xl bg-background/40 backdrop-blur-sm">
+          <CardContent className="p-5">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Equipe Ativa</p>
+            <p className="text-3xl font-extrabold font-heading mt-1 text-foreground">{members.length}</p>
+            <p className="text-[10px] text-muted-foreground mt-2 font-medium uppercase tracking-tighter">analistas disponíveis</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Negadas</p>
-            <p className="text-2xl font-bold font-heading mt-1">{stats.negadas}</p>
+        <Card className="border-0 shadow-premium/50 rounded-2xl bg-background/40 backdrop-blur-sm">
+          <CardContent className="p-5">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Negadas</p>
+            <p className="text-3xl font-extrabold font-heading mt-1 text-foreground">{stats.negadas}</p>
             {stats.total > 0 && (
-              <div className="flex items-center gap-1 mt-1">
-                <ArrowDownRight className="h-3 w-3 text-destructive" />
-                <span className="text-[10px] text-destructive font-medium">{Math.round((stats.negadas / stats.total) * 100)}% do total</span>
+              <div className="flex items-center gap-1.5 mt-2">
+                <div className="h-1 w-12 rounded-full bg-destructive/20 overflow-hidden">
+                  <div className="h-full bg-destructive" style={{ width: `${Math.round((stats.negadas / stats.total) * 100)}%` }} />
+                </div>
+                <span className="text-[10px] text-destructive font-black">{Math.round((stats.negadas / stats.total) * 100)}% DO TOTAL</span>
               </div>
             )}
           </CardContent>
@@ -376,9 +383,9 @@ export default function Dashboard() {
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold">{formatCurrency(Number(p.requested_value))}</span>
                   <Badge className={`text-[10px] ${p.status === "aprovada" ? "bg-success text-success-foreground" :
-                      p.status === "negada" ? "bg-destructive text-destructive-foreground" :
-                        p.status === "em_analise" ? "bg-warning text-warning-foreground" :
-                          "bg-info text-info-foreground"
+                    p.status === "negada" ? "bg-destructive text-destructive-foreground" :
+                      p.status === "em_analise" ? "bg-warning text-warning-foreground" :
+                        "bg-info text-info-foreground"
                     }`}>
                     {STATUS_LABELS[p.status as ProposalStatus]}
                   </Badge>

@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 40% 98%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -15,44 +15,44 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 217 91% 60%;
+    --primary: 215 80% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 13% 95%;
+    --secondary: 210 20% 94%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 13% 95%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 15% 45%;
 
-    --accent: 217 91% 60%;
+    --accent: 215 80% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;
+    --success: 142 60% 40%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 25 95% 53%;
+    --warning: 32 95% 45%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 199 89% 48%;
+    --info: 199 89% 40%;
     --info-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 60%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 215 80% 45%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 222 47% 11%;
+    --sidebar-background: 222 47% 10%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary: 215 80% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 18% 20%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 18% 18%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-border: 222 47% 15%;
+    --sidebar-ring: 215 80% 45%;
 
     --chart-1: 217 91% 60%;
     --chart-2: 199 89% 48%;
@@ -155,10 +155,20 @@
   }
 
   .glass-card {
-    background: hsl(var(--card) / 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid hsl(var(--border) / 0.5);
+    @apply bg-card/60 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+
+  .premium-shadow {
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+  }
+
+  .premium-shadow-hover {
+    @apply transition-all duration-300;
+  }
+
+  .premium-shadow-hover:hover {
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
   }
 
   .status-badge {
