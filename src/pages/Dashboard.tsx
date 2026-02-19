@@ -59,7 +59,7 @@ export default function Dashboard() {
     { name: "Novas", value: stats.novas, fill: "hsl(199, 89%, 48%)" },
     { name: "Em Análise", value: stats.emAnalise, fill: "hsl(38, 92%, 50%)" },
     { name: "Doc. Pend.", value: stats.pendentes, fill: "hsl(210, 80%, 55%)" },
-    { name: "Aprovadas", value: stats.aprovadas, fill: "hsl(142, 71%, 35%)" },
+    { name: "Contratos Assinados", value: stats.aprovadas, fill: "hsl(142, 71%, 35%)" },
     { name: "Negadas", value: stats.negadas, fill: "hsl(0, 72%, 51%)" },
   ], [stats]);
 
@@ -156,11 +156,16 @@ export default function Dashboard() {
           <CardContent className="p-5 relative">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Aprovadas</p>
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Contratos Assinados</p>
                 <p className="text-3xl font-bold font-heading mt-1">{stats.aprovadas}</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <ArrowUpRight className="h-3 w-3 text-success" />
-                  <span className="text-[10px] text-success font-medium">{stats.taxaAprovacao}% taxa</span>
+                <div className="flex flex-col gap-0.5 mt-1">
+                  <p className="text-xs font-bold text-success-foreground bg-success/10 px-1.5 py-0.5 rounded-md self-start">
+                    {formatCurrency(stats.valorAprovado)}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <ArrowUpRight className="h-3 w-3 text-success" />
+                    <span className="text-[10px] text-success font-medium">{stats.taxaAprovacao}% taxa</span>
+                  </div>
                 </div>
               </div>
               <div className="h-12 w-12 rounded-xl bg-success/10 flex items-center justify-center">
@@ -370,12 +375,11 @@ export default function Dashboard() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold">{formatCurrency(Number(p.requested_value))}</span>
-                  <Badge className={`text-[10px] ${
-                    p.status === "aprovada" ? "bg-success text-success-foreground" :
-                    p.status === "negada" ? "bg-destructive text-destructive-foreground" :
-                    p.status === "em_analise" ? "bg-warning text-warning-foreground" :
-                    "bg-info text-info-foreground"
-                  }`}>
+                  <Badge className={`text-[10px] ${p.status === "aprovada" ? "bg-success text-success-foreground" :
+                      p.status === "negada" ? "bg-destructive text-destructive-foreground" :
+                        p.status === "em_analise" ? "bg-warning text-warning-foreground" :
+                          "bg-info text-info-foreground"
+                    }`}>
                     {STATUS_LABELS[p.status as ProposalStatus]}
                   </Badge>
                 </div>
