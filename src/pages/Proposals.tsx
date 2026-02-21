@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, FileUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ import {
 import { format, parseISO, getMonth, getYear } from "date-fns";
 import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { ImportProposalsDialog } from "@/components/proposals/ImportProposalsDialog";
 
 import { usePermissions } from "@/hooks/usePermissions";
 
@@ -54,6 +55,7 @@ export default function Proposals() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     producer_name: "", producer_cpf: "", producer_address: "", producer_phone: "",
     pronaf_line: "custeio", project_designer: "ney_medeiros", requested_value: 0, status: "nova",
@@ -189,12 +191,15 @@ export default function Proposals() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            className="rounded-xl border-border/60 hover:bg-background/80 transition-all font-bold text-xs px-5 h-11"
-          >
-            Exportar CSV
-          </Button>
+          {permissions.can_create_proposals && (
+            <Button
+              variant="outline"
+              onClick={() => setIsImportDialogOpen(true)}
+              className="rounded-xl border-border/60 hover:bg-background/80 transition-all font-bold text-xs px-5 h-11 flex items-center gap-2"
+            >
+              <FileUp className="h-4 w-4" /> Importar CSV
+            </Button>
+          )}
           {permissions.can_create_proposals && (
             <Button
               onClick={openNew}
@@ -569,6 +574,11 @@ export default function Proposals() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ImportProposalsDialog
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+      />
     </div>
   );
 }
