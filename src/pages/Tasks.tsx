@@ -28,9 +28,12 @@ import {
 } from "@/types/proposal";
 import {
   Plus, ClipboardList, Loader2, Clock, User, ListFilter, AlertTriangle,
-  CheckCircle2, MessageSquare, Send, ArrowRight, Columns3,
+  CheckCircle2, MessageSquare, Send, ArrowRight, Columns3, Filter, Search,
 } from "lucide-react";
 import { format, parseISO, isPast } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { TaskCard } from "@/components/tasks/TaskCard";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface TaskComment {
   id: string;
@@ -49,6 +52,7 @@ export default function Tasks() {
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [taskFilter, setTaskFilter] = useState<string>("all");
   const [taskMemberFilter, setTaskMemberFilter] = useState<string>("all");
+  const [taskSearchTerm, setTaskSearchTerm] = useState("");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -70,9 +74,12 @@ export default function Tasks() {
     return tasks.filter((t) => {
       const matchesStatus = taskFilter === "all" || t.status === taskFilter;
       const matchesMember = taskMemberFilter === "all" || t.assigned_to === taskMemberFilter;
-      return matchesStatus && matchesMember;
+      const matchesSearch = !taskSearchTerm ||
+        t.title.toLowerCase().includes(taskSearchTerm.toLowerCase()) ||
+        (t.description && t.description.toLowerCase().includes(taskSearchTerm.toLowerCase()));
+      return matchesStatus && matchesMember && matchesSearch;
     });
-  }, [tasks, taskFilter, taskMemberFilter]);
+  }, [tasks, taskFilter, taskMemberFilter, taskSearchTerm]);
 
   const getInitials = (name: string) => name.split(" ").map((w) => w[0]).join("").substring(0, 2).toUpperCase();
   const getMemberById = (id?: string | null) => members.find((m) => m.id === id);
@@ -134,71 +141,6 @@ export default function Tasks() {
     { key: "em_andamento", label: "Em Andamento", icon: <ArrowRight className="h-4 w-4" />, color: "border-t-info" },
     { key: "concluida", label: "Concluída", icon: <CheckCircle2 className="h-4 w-4" />, color: "border-t-success" },
   ];
-
-  const renderTaskCard = (task: typeof tasks[0]) => {
-    const member = getMemberById(task.assigned_to);
-    const isOverdue = task.due_date && isPast(new Date(task.due_date)) && task.status !== "concluida";
-
-    return (
-      <div
-        key={task.id}
-        draggable
-        onDragStart={(e) => handleDragStart(e, task.id)}
-        onClick={() => openTaskDetail(task.id)}
-        className={`group p-4 rounded-2xl bg-white border border-border/40 shadow-sm hover:shadow-premium-hover hover:border-primary/40 transition-all duration-300 cursor-pointer relative overflow-hidden ${isOverdue ? "ring-1 ring-destructive/20 border-destructive/20" : ""}`}
-      >
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <h4 className={`text-sm font-bold leading-tight group-hover:text-primary transition-colors ${task.status === "concluida" ? "line-through text-muted-foreground" : "text-foreground"}`}>
-            {task.title}
-          </h4>
-          <Badge className={`text-[9px] font-black uppercase tracking-widest shrink-0 px-2 py-0.5 rounded-full border-0 shadow-sm ${TASK_PRIORITY_COLORS[task.priority as TaskPriority] || "bg-muted text-muted-foreground"}`}>
-            {TASK_PRIORITY_LABELS[task.priority as TaskPriority] || task.priority}
-          </Badge>
-        </div>
-
-        {task.description && (
-          <p className="text-xs text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
-            {task.description}
-          </p>
-        )}
-
-        <div className="flex items-center justify-between mt-auto pt-3 border-t border-dashed border-border/60">
-          <div className="flex items-center gap-2">
-            {member ? (
-              <div className="flex items-center gap-1.5">
-                <Avatar className="h-6 w-6 border border-primary/10 shadow-sm">
-                  <AvatarFallback className="text-[9px] font-black" style={{ backgroundColor: member.color, color: "white" }}>
-                    {getInitials(member.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">{member.name.split(' ')[0]}</span>
-              </div>
-            ) : (
-              <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center">
-                <User className="h-3 w-3 text-muted-foreground" />
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            {task.due_date && (
-              <div className={`flex items-center gap-1 px-2 py-1 rounded-lg ${isOverdue ? 'bg-rose-50 text-rose-600' : 'bg-muted/30 text-muted-foreground'}`}>
-                <Clock className="h-3 w-3" />
-                <span className="text-[10px] font-mono font-bold">{format(parseISO(task.due_date), "dd/MM")}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1 text-muted-foreground/40 group-hover:text-primary/60 transition-colors">
-              <MessageSquare className="h-3.5 w-3.5" />
-            </div>
-          </div>
-        </div>
-
-        {isOverdue && (
-          <div className="absolute top-0 right-0 h-1 w-full bg-destructive/40" />
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-6 animate-fade-in max-w-[1600px] mx-auto pb-10">
@@ -289,6 +231,16 @@ export default function Tasks() {
             <Filter className="h-4 w-4" />
           </div>
           <div className="flex flex-col md:flex-row gap-3 flex-1">
+            <div className="relative flex-1 md:max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar tarefa..."
+                value={taskSearchTerm}
+                onChange={(e) => setTaskSearchTerm(e.target.value)}
+                className="pl-10 h-11 rounded-xl border-border/40 bg-background/50 focus:bg-background transition-all font-medium"
+              />
+            </div>
+
             <Select value={taskFilter} onValueChange={setTaskFilter}>
               <SelectTrigger className="w-full md:w-56 h-11 rounded-xl border-border/40 bg-background/50 font-bold">
                 <SelectValue placeholder="Status" />
@@ -349,7 +301,15 @@ export default function Tasks() {
 
                 <ScrollArea className="flex-1 min-h-[500px] p-4">
                   <div className="space-y-4">
-                    {colTasks.map(renderTaskCard)}
+                    {colTasks.map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        member={getMemberById(task.assigned_to)}
+                        onClick={openTaskDetail}
+                        onDragStart={handleDragStart}
+                      />
+                    ))}
                     {colTasks.length === 0 && (
                       <div className="py-20 text-center space-y-3 opacity-40">
                         <div className="h-12 w-12 rounded-full border-2 border-dashed border-muted-foreground mx-auto flex items-center justify-center">
@@ -589,7 +549,7 @@ export default function Tasks() {
               </div>
 
               <DialogFooter className="p-6 bg-muted/30 border-t border-border/40">
-                <Button variant="outline" onClick={() => setSelectedId(null)} className="h-11 px-8 rounded-xl font-bold border-border/40">
+                <Button variant="outline" onClick={() => setSelectedTaskId(null)} className="h-11 px-8 rounded-xl font-bold border-border/40">
                   Fechar Detalhes
                 </Button>
               </DialogFooter>
