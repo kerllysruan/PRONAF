@@ -118,17 +118,20 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card/40 backdrop-blur-xl p-6 rounded-3xl border border-border/50 shadow-premium">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20 rotate-3 transform transition-transform hover:rotate-0">
-            <Sparkles className="h-6 w-6 text-white" />
+          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner group/icon transform transition-all duration-500 hover:rotate-6">
+            <Sparkles className="h-7 w-7 text-primary" />
           </div>
           <div>
             <h1 className="text-3xl font-extrabold font-heading text-foreground tracking-tight">Dashboard Analítico</h1>
-            <p className="text-sm text-muted-foreground font-medium">Visão estratégica das propostas PRONAF</p>
+            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              Visão estratégica das propostas PRONAF
+            </p>
           </div>
         </div>
-        <div className="bg-background/40 backdrop-blur-md p-1.5 rounded-2xl border border-border/50 shadow-sm">
+        <div className="bg-background/40 backdrop-blur-md p-1 rounded-xl border border-border/50 shadow-sm">
           <MonthYearFilter month={filterMonth} year={filterYear} onMonthChange={setFilterMonth} onYearChange={setFilterYear} years={availableYears} />
         </div>
       </div>

@@ -246,34 +246,36 @@ export default function AdminAgencies() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-amber-500/5 hover:bg-amber-500/5 transition-none border-b border-amber-500/20">
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 h-10 px-6">Nome Completo</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 h-10 px-6">E-mail</TableHead>
-                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 h-10 px-6 text-right">Ações Rápidas</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {unassignedUsers.map((user) => (
-                                    <TableRow key={user.id} className="hover:bg-amber-500/5 transition-colors border-b border-amber-500/10 h-16">
-                                        <TableCell className="px-6 font-bold text-amber-900">{user.full_name || "Sem nome definido"}</TableCell>
-                                        <TableCell className="px-6 font-medium text-amber-700/80">{user.email || "-"}</TableCell>
-                                        <TableCell className="px-6 text-right">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-10 px-4 rounded-xl border-amber-200 bg-white hover:bg-amber-100 text-amber-700 font-bold gap-2 transition-all"
-                                                onClick={() => openMoveDialog(user)}
-                                                disabled={!permissions.can_manage_agencies}
-                                            >
-                                                <ArrowRightLeft className="h-4 w-4" /> Atribuir Unidade
-                                            </Button>
-                                        </TableCell>
+                        <div className="overflow-x-auto scrollbar-thin text-foreground">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="bg-amber-500/5 hover:bg-amber-500/5 transition-none border-b border-amber-500/20">
+                                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 h-10 px-6 whitespace-nowrap">Nome Completo</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 h-10 px-6 whitespace-nowrap">E-mail</TableHead>
+                                        <TableHead className="text-[10px] font-black uppercase tracking-widest text-amber-700/70 h-10 px-6 text-right whitespace-nowrap">Ações Rápidas</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {unassignedUsers.map((user) => (
+                                        <TableRow key={user.id} className="hover:bg-amber-500/5 transition-colors border-b border-amber-500/10 h-16">
+                                            <TableCell className="px-6 font-bold text-amber-900 whitespace-nowrap">{user.full_name || "Sem nome definido"}</TableCell>
+                                            <TableCell className="px-6 font-medium text-amber-700/80 whitespace-nowrap">{user.email || "-"}</TableCell>
+                                            <TableCell className="px-6 text-right whitespace-nowrap">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-10 px-4 rounded-xl border-amber-200 bg-white hover:bg-amber-100 text-amber-700 font-bold gap-2 transition-all"
+                                                    onClick={() => openMoveDialog(user)}
+                                                    disabled={!permissions.can_manage_agencies}
+                                                >
+                                                    <ArrowRightLeft className="h-4 w-4" /> Atribuir Unidade
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
             )}
@@ -321,48 +323,50 @@ export default function AdminAgencies() {
                                 </div>
                             </CardHeader>
                             <CardContent className="p-0">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow className="bg-muted/30 border-b border-border/40 hover:bg-muted/30 transition-none">
-                                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6">Profissional</TableHead>
-                                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6">Contato Corporativo</TableHead>
-                                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6">Identificação (CPF)</TableHead>
-                                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 text-right">Controle</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {agencyUsers.map((user) => (
-                                            <TableRow key={user.id} className="group hover:bg-white/60 transition-colors border-b border-border/40 last:border-0 h-16">
-                                                <TableCell className="px-6 py-4 font-bold text-foreground group-hover:text-primary transition-colors">
-                                                    {user.full_name || "Colaborador sem nome"}
-                                                </TableCell>
-                                                <TableCell className="px-6 py-4 font-medium text-muted-foreground">{user.email || "-"}</TableCell>
-                                                <TableCell className="px-6 py-4 font-mono text-[11px] text-muted-foreground">{user.cpf || "-"}</TableCell>
-                                                <TableCell className="px-6 py-4 text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-9 px-4 rounded-xl text-xs font-black uppercase tracking-widest gap-2 text-primary hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 duration-300"
-                                                        onClick={() => openMoveDialog(user)}
-                                                        disabled={!permissions.can_manage_agencies}
-                                                    >
-                                                        <ArrowRightLeft className="h-3.5 w-3.5" /> Reatribuir
-                                                    </Button>
-                                                </TableCell>
+                                <div className="overflow-x-auto scrollbar-thin text-foreground">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="bg-muted/30 border-b border-border/40 hover:bg-muted/30 transition-none">
+                                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 whitespace-nowrap">Profissional</TableHead>
+                                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 whitespace-nowrap">Contato Corporativo</TableHead>
+                                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 whitespace-nowrap">Identificação (CPF)</TableHead>
+                                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 text-right whitespace-nowrap">Controle</TableHead>
                                             </TableRow>
-                                        ))}
-                                        {agencyUsers.length === 0 && (
-                                            <TableRow>
-                                                <TableCell colSpan={4} className="text-center py-12">
-                                                    <div className="flex flex-col items-center gap-2 opacity-50">
-                                                        <Users className="h-8 w-8 text-muted-foreground" />
-                                                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Nenhum profissional alocado</p>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {agencyUsers.map((user) => (
+                                                <TableRow key={user.id} className="group hover:bg-white/60 transition-colors border-b border-border/40 last:border-0 h-16">
+                                                    <TableCell className="px-6 py-4 font-bold text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
+                                                        {user.full_name || "Colaborador sem nome"}
+                                                    </TableCell>
+                                                    <TableCell className="px-6 py-4 font-medium text-muted-foreground whitespace-nowrap">{user.email || "-"}</TableCell>
+                                                    <TableCell className="px-6 py-4 font-mono text-[11px] text-muted-foreground whitespace-nowrap">{user.cpf || "-"}</TableCell>
+                                                    <TableCell className="px-6 py-4 text-right whitespace-nowrap">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-9 px-4 rounded-xl text-xs font-black uppercase tracking-widest gap-2 text-primary hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 duration-300"
+                                                            onClick={() => openMoveDialog(user)}
+                                                            disabled={!permissions.can_manage_agencies}
+                                                        >
+                                                            <ArrowRightLeft className="h-3.5 w-3.5" /> Reatribuir
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                            {agencyUsers.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center py-12">
+                                                        <div className="flex flex-col items-center gap-2 opacity-50">
+                                                            <Users className="h-8 w-8 text-muted-foreground" />
+                                                            <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Nenhum profissional alocado</p>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             </CardContent>
                         </Card>
                     );

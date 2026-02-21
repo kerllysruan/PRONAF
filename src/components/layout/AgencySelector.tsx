@@ -19,7 +19,7 @@ export function AgencySelector() {
     return (
         <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-2xl bg-primary/5 flex items-center justify-center text-primary/60 border border-primary/10">
-                <Building2 className="h-4.5 w-4.5" />
+                <Building2 className="h-[18px] w-[18px]" />
             </div>
             <Select
                 value={selectedAgencyId}

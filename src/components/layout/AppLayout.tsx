@@ -13,13 +13,13 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, signOut, role } = useAuth();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-16 flex items-center border-b bg-background/60 backdrop-blur-xl px-4 md:px-6 gap-3 shrink-0 sticky top-0 z-30 transition-all">
             <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9 hover:bg-accent/10 transition-colors" />
+              <SidebarTrigger className="h-9 w-9 hover:bg-accent/10 transition-colors md:hidden" />
               <div className="h-6 w-px bg-border/60 mx-1 hidden sm:block" />
               <div className="flex flex-col">
                 <span className="text-sm font-bold text-foreground font-heading leading-none">
