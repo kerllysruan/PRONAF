@@ -6,7 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useProposals } from "@/hooks/useProposals";
-import { FileUp, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2, Download } from "lucide-react";
+import { useAgency } from "@/contexts/AgencyContext";
+import { FileUp, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2, Download, Search } from "lucide-react";
 import Papa from "papaparse";
 import { REQUIRED_DOCUMENTS } from "@/types/proposal";
 
@@ -16,7 +17,8 @@ interface ImportProposalsDialogProps {
 }
 
 export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDialogProps) {
-    const { user, agencyId } = useAuth();
+    const { user } = useAuth();
+    const { effectiveAgencyId } = useAgency();
     const { refetch } = useProposals();
     const { toast } = useToast();
     const [file, setFile] = useState<File | null>(null);
@@ -81,50 +83,62 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
     };
 
     const mapRow = (row: any) => {
-        // Mapping Portuguese (Export) or English (Template) headers to DB fields
-        return {
-            producer_name: row.Nome || row.producer_name || "Sem Nome",
-            producer_cpf: (row["Cpf/Cnpj"] || row.producer_cpf || "000.000.000-00").toString().replace(/[^\d]/g, ""),
-            requested_value: sanitizeNumber(row.Valor || row.requested_value),
-            pronaf_line: row["Programa Crédito"] || row.pronaf_line || "custeio",
-            producer_address: row.producer_address || "",
-            producer_phone: row.producer_phone || "",
-            project_designer: row.project_designer || null,
-            entry_date: row["Data Início"] || row.entry_date || new Date().toISOString().split('T')[0],
-            sicad: (row.SICAD || row.sicad || "").toString(),
-            proposal_number: (row["Número Proposta"] || row.proposal_number || "").toString(),
-            notes: row.notes || "",
-            agency_id: agencyId,
-            created_by: user.id,
-            status: "nova" as const,
-            // Additional fields from export
-            credit_program: row["Programa Crédito"] || row.credit_program,
-            request_type: row["Tipo Solicitação"] || row.request_type,
-            agency_code: row["Código Agência"] || row.agency_code,
-            agency_name: row["Nome Agência"] || row.agency_name,
-            task: row.Tarefa || row.task,
-            central_date: row["Data Central"] || row.central_date,
-            activity_start_date: row["Data Início da Atividade"] || row.activity_start_date,
-            last_analyst: row["Último Analista"] || row.last_analyst,
-            owner: row.Dono || row.owner,
-            originator: row.Originador || row.originator,
-            current_state: row.Estado || row.current_state,
-            category: row.Categoria || row.category,
-            client_size: row["Porte do Cliente"] || row.client_size,
-            credit_purpose: row["Finalidade do Crédito"] || row.credit_purpose,
-            resource_application: row["Aplicação de Recursos"] || row.resource_application,
-            special_treatment: row["Tratamento Especial"] || row.special_treatment,
-        };
+        try {
+            const getField = (keys: string[]) => {
+                for (const key of keys) {
+                    if (row[key] !== undefined && row[key] !== null) return row[key];
+                }
+                return "";
+            };
+
+            const targetAgency = effectiveAgencyId && effectiveAgencyId !== "all" ? effectiveAgencyId : null;
+
+            return {
+                producer_name: getField(["Nome", "producer_name", "NOME"]) || "Sem Nome",
+                producer_cpf: getField(["Cpf/Cnpj", "CPF", "producer_cpf"]).toString().replace(/[^\d]/g, "") || "00000000000",
+                requested_value: sanitizeNumber(getField(["Valor", "valor", "requested_value"])),
+                pronaf_line: getField(["Programa Crédito", "Programa Crdito", "Programa Crdito", "pronaf_line"]) || "custeio",
+                producer_address: getField(["producer_address", "Endereço", "Endereo"]) || "",
+                producer_phone: getField(["producer_phone", "Telefone"]) || "",
+                project_designer: getField(["project_designer", "Projetista"]) || null,
+                entry_date: getField(["Data Início", "Data Incio", "Data Incio", "entry_date"]) || new Date().toISOString().split('T')[0],
+                sicad: getField(["SICAD", "sicad"]).toString(),
+                proposal_number: getField(["Número Proposta", "Nmero Proposta", "Nmero Proposta", "proposal_number"]).toString(),
+                notes: getField(["notes", "Observações", "Observaes"]) || "",
+                agency_id: targetAgency,
+                created_by: user?.id,
+                status: "nova" as const,
+                credit_program: getField(["Programa Crédito", "Programa Crdito", "Programa Crdito"]),
+                request_type: getField(["Tipo Solicitação", "Tipo Solicitao", "Tipo Solicitao"]),
+                agency_code: getField(["Código Agência", "Cdigo Agncia", "Cdigo Agncia"]),
+                agency_name: getField(["Nome Agência", "Nome Agncia", "Nome Agncia"]),
+                task: getField(["Tarefa"]),
+                central_date: getField(["Data Central"]),
+                activity_start_date: getField(["Data Início da Atividade", "Data Incio da Atividade", "Data Incio da Atividade"]),
+                last_analyst: getField(["Último Analista", "ltimo Analista", "ltimo Analista"]),
+                owner: getField(["Dono"]),
+                originator: getField(["Originador"]),
+                current_state: getField(["Estado"]),
+                category: getField(["Categoria"]),
+                client_size: getField(["Porte do Cliente"]),
+                credit_purpose: getField(["Finalidade do Crédito", "Finalidade do Crdito"]),
+                resource_application: getField(["Aplicação de Recursos", "Aplicao de Recursos"]),
+                special_treatment: getField(["Tratamento Especial"]),
+            };
+        } catch (e) {
+            console.error("Erro ao mapear linha:", e, row);
+            return null;
+        }
     };
 
     const runImport = async () => {
-        console.log("Iniciando importação...", { file: !!file, user: !!user, agencyId });
+        const destAgency = effectiveAgencyId === "all" ? null : effectiveAgencyId;
+        alert(`BOTAO CLICADO! File: ${file?.name}, User: ${user?.email}, Agency: ${destAgency || 'TODAS (BLOQUEADO)'}`);
 
-        if (!file || !user || !agencyId) {
-            const msg = `Faltando dados: Arquivo=${!!file}, Usuário=${!!user}, Agência=${agencyId || 'NULA'}`;
-            console.error(msg);
+        if (!file || !user || !destAgency) {
+            const msg = `Impossível importar: ${!file ? 'Arquivo não selecionado.' : !user ? 'Usuário não logado.' : 'Selecione uma AGÊNCIA (filtro no topo) ANTES de importar.'}`;
             alert(msg);
-            toast({ title: "Erro de Configuração", description: msg, variant: "destructive" });
+            toast({ title: "Atenção", description: msg, variant: "destructive" });
             return;
         }
 
@@ -137,16 +151,13 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                 header: true,
                 skipEmptyLines: true,
                 delimiter: "", // Auto-detect
-                encoding: "ISO-8859-1", // Try Brazilian encoding first for bank exports
+                encoding: "ISO-8859-1",
                 complete: async (results) => {
                     try {
-                        console.log("PapaParse completo. Resultados:", results);
                         const rows = results.data as any[];
-
                         if (rows.length === 0) {
                             setIsImporting(false);
-                            alert("Arquivo parece estar vazio ou não foi lido corretamente.");
-                            toast({ title: "Arquivo vazio", description: "Nenhuma linha de dados encontrada.", variant: "destructive" });
+                            alert("Arquivo vazio ou erro de leitura.");
                             return;
                         }
 
@@ -157,9 +168,7 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
 
                         for (let i = 0; i < rows.length; i += BATCH_SIZE) {
                             const batch = rows.slice(i, i + BATCH_SIZE);
-                            const proposalsToInsert = batch.map(mapRow);
-
-                            console.log(`Enviando lote ${Math.floor(i / BATCH_SIZE) + 1}...`, proposalsToInsert);
+                            const proposalsToInsert = batch.map(mapRow).filter(p => p !== null);
 
                             const { data: newProposals, error: insertError } = await supabase
                                 .from("proposals")
@@ -167,11 +176,9 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                                 .select("id");
 
                             if (insertError) {
-                                console.error("Erro no lote:", insertError);
                                 errors.push({ batch: Math.floor(i / BATCH_SIZE) + 1, error: insertError.message });
                             } else if (newProposals) {
                                 successCount += newProposals.length;
-
                                 const allDocs = newProposals.flatMap((p) =>
                                     REQUIRED_DOCUMENTS.map((name) => ({
                                         proposal_id: p.id,
@@ -179,46 +186,21 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                                         completed: false,
                                     }))
                                 );
-
-                                const { error: docsError } = await supabase.from("proposal_documents").insert(allDocs);
-                                if (docsError) console.error("Erro ao criar documentos:", docsError);
+                                await supabase.from("proposal_documents").insert(allDocs);
                             }
-
                             setProgress(Math.round(((i + batch.length) / total) * 100));
                         }
 
                         setStats({ total, success: successCount, errors });
                         setIsImporting(false);
                         if (successCount > 0) refetch(true);
-
-                        toast({
-                            title: "Importação Concluída",
-                            description: `${successCount} propostas processadas.`,
-                        });
-                    } catch (innerError: any) {
-                        console.error("Erro no processamento dos dados:", innerError);
-                        alert("Erro interno no processamento: " + innerError.message);
-                        setIsImporting(false);
-                    }
+                        toast({ title: "Importação Concluída", description: `${successCount} processadas.` });
+                    } catch (e: any) { alert("Erro processando: " + e.message); setIsImporting(false); }
                 },
-                error: (error) => {
-                    console.error("Erro PapaParse:", error);
-                    alert("Erro ao ler o arquivo (PapaParse): " + error.message);
-                    setIsImporting(false);
-                    toast({
-                        title: "Erro ao ler arquivo",
-                        description: error.message,
-                        variant: "destructive",
-                    });
-                }
+                error: (e) => { alert("Erro PapaParse: " + e.message); setIsImporting(false); }
             });
-        } catch (topError: any) {
-            console.error("Erro fatal no runImport:", topError);
-            alert("Erro fatal: " + topError.message);
-            setIsImporting(false);
-        }
+        } catch (e: any) { alert("Erro fatal: " + e.message); setIsImporting(false); }
     };
-
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -231,7 +213,7 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                         Importação Massiva
                     </DialogTitle>
                     <DialogDescription className="font-medium text-muted-foreground pt-2">
-                        Selecione um arquivo CSV seguindo o modelo padrão para importar propostas em lote.
+                        Selecione uma agência no filtro do topo e depois um arquivo CSV.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -251,65 +233,26 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                             <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-500">
                                 <FileUp className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors" />
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-sm font-bold text-foreground">
-                                    {file ? file.name : "Clique para selecionar ou arraste aqui"}
-                                </p>
-                                <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/60">
-                                    Apenas arquivos .CSV (máx 10MB)
-                                </p>
-                            </div>
+                            <p className="text-sm font-bold text-foreground">{file ? file.name : "Clique para selecionar o CSV"}</p>
                         </div>
                     )}
 
                     {isImporting && (
                         <div className="space-y-4 py-8">
                             <div className="flex justify-between items-end">
-                                <div className="space-y-1">
-                                    <p className="text-sm font-bold text-foreground">Processando propostas...</p>
-                                    <p className="text-xs text-muted-foreground">{progress}% concluído</p>
-                                </div>
+                                <p className="text-sm font-bold">Processando {progress}%...</p>
                                 <Loader2 className="h-5 w-5 text-primary animate-spin" />
                             </div>
-                            <Progress value={progress} className="h-3 rounded-full bg-muted shadow-inner" />
+                            <Progress value={progress} className="h-3 rounded-full" />
                         </div>
                     )}
 
                     {stats && (
-                        <div className="bg-card/50 rounded-3xl p-6 border border-border/40 space-y-4 animate-in zoom-in-95 duration-300">
-                            <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner">
-                                    <CheckCircle2 className="h-6 w-6" />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-bold text-foreground">Resultado da Importação</h4>
-                                    <p className="text-sm text-muted-foreground font-medium">
-                                        Total processado: {stats.total}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-emerald-500/5 rounded-2xl p-4 border border-emerald-500/10">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">Sucesso</p>
-                                    <p className="text-2xl font-black text-emerald-700 leading-none">{stats.success}</p>
-                                </div>
-                                <div className="bg-rose-500/5 rounded-2xl p-4 border border-rose-500/10">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-rose-600 mb-1">Erros</p>
-                                    <p className="text-2xl font-black text-rose-700 leading-none">{stats.errors.length}</p>
-                                </div>
-                            </div>
-
+                        <div className="bg-card/50 rounded-3xl p-6 border border-border/40 space-y-4 animate-in zoom-in-95">
+                            <h4 className="font-bold">Resultado: {stats.success} Sucessos / {stats.errors.length} Erros</h4>
                             {stats.errors.length > 0 && (
-                                <div className="bg-rose-500/5 p-4 rounded-2xl border border-rose-500/10 max-h-32 overflow-y-auto scrollbar-thin">
-                                    <p className="text-[10px] font-black uppercase text-rose-600 mb-2 flex items-center gap-1.5">
-                                        <AlertCircle className="h-3 w-3" /> Detalhes dos Erros
-                                    </p>
-                                    {stats.errors.map((err, idx) => (
-                                        <p key={idx} className="text-[11px] text-rose-700/80 font-medium border-l-2 border-rose-200 pl-2 mb-2">
-                                            Lote {err.batch}: {err.error}
-                                        </p>
-                                    ))}
+                                <div className="text-[10px] text-rose-600 max-h-32 overflow-y-auto">
+                                    {stats.errors.map((e, i) => <p key={i}>Lote {e.batch}: {e.error}</p>)}
                                 </div>
                             )}
                         </div>
@@ -317,38 +260,12 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
 
                     <div className="flex flex-col gap-3">
                         {!stats && !isImporting && (
-                            <Button
-                                onClick={runImport}
-                                disabled={!file}
-                                className="h-14 rounded-2xl bg-primary shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all font-black text-base gap-3"
-                            >
-                                <FileUp className="h-5 w-5" />
+                            <Button onClick={runImport} disabled={!file} className="h-14 rounded-2xl bg-primary text-white font-black">
                                 Iniciar Importação
                             </Button>
                         )}
-                        {stats && (
-                            <Button
-                                onClick={() => onOpenChange(false)}
-                                className="h-14 rounded-2xl bg-foreground text-background shadow-lg shadow-foreground/10 hover:shadow-foreground/20 transition-all font-black text-base"
-                            >
-                                Fechar Relatório
-                            </Button>
-                        )}
-                        <Button
-                            variant="ghost"
-                            onClick={downloadTemplate}
-                            className="h-12 rounded-2xl text-muted-foreground hover:text-primary hover:bg-primary/5 font-bold gap-2 text-sm"
-                        >
-                            <Download className="h-4 w-4" />
-                            Baixar Modelo CSV
-                        </Button>
+                        <Button variant="ghost" onClick={downloadTemplate} className="font-bold">Baixar Modelo CSV</Button>
                     </div>
-                </div>
-
-                <div className="p-4 bg-muted/30 border-t border-border/40 text-center">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
-                        PRONAF • Bulk Data Processor
-                    </p>
                 </div>
             </DialogContent>
         </Dialog>
