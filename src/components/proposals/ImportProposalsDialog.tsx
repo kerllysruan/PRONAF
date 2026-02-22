@@ -66,8 +66,60 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
         document.body.removeChild(link);
     };
 
+    const sanitizeNumber = (val: any): number => {
+        if (val === null || val === undefined || val === "") return 0;
+        if (typeof val === "number") return val;
+        // Handle Brazilian format: "49.999,62" -> "49999.62"
+        const clean = val.toString()
+            .replace(/\./g, "")       // Remove dots (thousands)
+            .replace(",", ".")        // Replace comma with dot (decimal)
+            .replace(/[^\d.]/g, "");  // Remove everything else except digits and dot
+        return parseFloat(clean) || 0;
+    };
+
+    const mapRow = (row: any) => {
+        // Mapping Portuguese (Export) or English (Template) headers to DB fields
+        return {
+            producer_name: row.Nome || row.producer_name || "Sem Nome",
+            producer_cpf: (row["Cpf/Cnpj"] || row.producer_cpf || "000.000.000-00").toString().replace(/[^\d]/g, ""),
+            requested_value: sanitizeNumber(row.Valor || row.requested_value),
+            pronaf_line: row["Programa Crédito"] || row.pronaf_line || "custeio",
+            producer_address: row.producer_address || "",
+            producer_phone: row.producer_phone || "",
+            project_designer: row.project_designer || null,
+            entry_date: row["Data Início"] || row.entry_date || new Date().toISOString().split('T')[0],
+            sicad: (row.SICAD || row.sicad || "").toString(),
+            proposal_number: (row["Número Proposta"] || row.proposal_number || "").toString(),
+            notes: row.notes || "",
+            agency_id: agencyId,
+            created_by: user.id,
+            status: "nova" as const,
+            // Additional fields from export
+            credit_program: row["Programa Crédito"] || row.credit_program,
+            request_type: row["Tipo Solicitação"] || row.request_type,
+            agency_code: row["Código Agência"] || row.agency_code,
+            agency_name: row["Nome Agência"] || row.agency_name,
+            task: row.Tarefa || row.task,
+            central_date: row["Data Central"] || row.central_date,
+            activity_start_date: row["Data Início da Atividade"] || row.activity_start_date,
+            last_analyst: row["Último Analista"] || row.last_analyst,
+            owner: row.Dono || row.owner,
+            originator: row.Originador || row.originator,
+            current_state: row.Estado || row.current_state,
+            category: row.Categoria || row.category,
+            client_size: row["Porte do Cliente"] || row.client_size,
+            credit_purpose: row["Finalidade do Crédito"] || row.credit_purpose,
+            resource_application: row["Aplicação de Recursos"] || row.resource_application,
+            special_treatment: row["Tratamento Especial"] || row.special_treatment,
+        };
+    };
+
     const runImport = async () => {
-        if (!file || !user || !agencyId) return;
+        if (!file || !user || !agencyId) {
+            console.error("Faltando dados:", { file: !!file, user: !!user, agencyId });
+            toast({ title: "Erro", description: "Certifique-se de que o arquivo está selecionado e você está autenticado.", variant: "destructive" });
+            return;
+        }
 
         setIsImporting(true);
         setProgress(0);
@@ -76,34 +128,23 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
         Papa.parse(file, {
             header: true,
             skipEmptyLines: true,
+            delimiter: "", // Auto-detect
             complete: async (results) => {
                 const rows = results.data as any[];
+                if (rows.length === 0) {
+                    setIsImporting(false);
+                    toast({ title: "Arquivo vazio", description: "Nenhuma linha de dados encontrada.", variant: "destructive" });
+                    return;
+                }
+
                 const total = rows.length;
                 let successCount = 0;
                 const errors: any[] = [];
-
-                // Process in batches of 50
                 const BATCH_SIZE = 50;
 
                 for (let i = 0; i < rows.length; i += BATCH_SIZE) {
                     const batch = rows.slice(i, i + BATCH_SIZE);
-
-                    const proposalsToInsert = batch.map((row) => ({
-                        producer_name: row.producer_name || "Sem Nome",
-                        producer_cpf: row.producer_cpf || "000.000.000-00",
-                        requested_value: parseFloat(row.requested_value) || 0,
-                        pronaf_line: row.pronaf_line || "custeio",
-                        producer_address: row.producer_address || "",
-                        producer_phone: row.producer_phone || "",
-                        project_designer: row.project_designer || null,
-                        entry_date: row.entry_date || new Date().toISOString().split('T')[0],
-                        sicad: row.sicad || "",
-                        proposal_number: row.proposal_number || "",
-                        notes: row.notes || "",
-                        agency_id: agencyId,
-                        created_by: user.id,
-                        status: "nova" as const,
-                    }));
+                    const proposalsToInsert = batch.map(mapRow);
 
                     const { data: newProposals, error: insertError } = await supabase
                         .from("proposals")
@@ -111,11 +152,11 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                         .select("id");
 
                     if (insertError) {
+                        console.error("Erro no lote:", insertError);
                         errors.push({ batch: Math.floor(i / BATCH_SIZE) + 1, error: insertError.message });
                     } else if (newProposals) {
                         successCount += newProposals.length;
 
-                        // Create documents for each in parallel but small batches
                         const allDocs = newProposals.flatMap((p) =>
                             REQUIRED_DOCUMENTS.map((name) => ({
                                 proposal_id: p.id,
@@ -137,7 +178,7 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
 
                 toast({
                     title: "Importação Concluída",
-                    description: `${successCount} propostas importadas com sucesso.`,
+                    description: `${successCount} propostas processadas.`,
                 });
             },
             error: (error) => {
