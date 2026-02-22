@@ -107,6 +107,7 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
             const targetAgency = effectiveAgencyId && effectiveAgencyId !== "all" ? effectiveAgencyId : null;
 
             // Mapping with support for corrupted encoding strings provided by user
+            // Mapping with support for ALL fields from the user's export
             return {
                 producer_name: getField(["Nome", "producer_name", "NOME"]) || "Sem Nome",
                 producer_cpf: getField(["Cpf/Cnpj", "CPF", "producer_cpf"]).toString().replace(/[^\d]/g, "") || "00000000000",
@@ -122,7 +123,7 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                 agency_id: targetAgency,
                 created_by: user?.id,
                 status: "nova" as const,
-                // Extra fields present in DB schema
+                // Extra fields from export headers
                 credit_program: getField(["Programa Crédito", "Programa Cr閐ito", "Programa Crdito"]),
                 request_type: getField(["Tipo Solicitação", "Tipo Solicita玢o", "Tipo Solicitao"]),
                 agency_code: getField(["Código Agência", "C骴igo Ag阯cia", "Cdigo Agncia"]),
@@ -139,6 +140,22 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                 credit_purpose: getField(["Finalidade do Crédito", "Finalidade do Cr閐ito", "Finalidade do Crdito"]),
                 resource_application: getField(["Aplicação de Recursos", "Aplica玢o de Recursos", "Aplicao de Recursos"]),
                 special_treatment: getField(["Tratamento Especial"]),
+                // Added new fields based on DB schema expansion
+                central: getField(["Central"]),
+                superintendence_code: getField(["Código Superintendência", "C骴igo Superintend阯cia"]),
+                superintendence_name: getField(["Nome Superintendencia"]),
+                microcredit: getField(["Microcrédito", "Microcr閐ito"]),
+                renegotiation_type: getField(["Tipo Renegociação", "Tipo Renegocia玢o"]),
+                guarantee_type: getField(["Tipo de Garantia"]),
+                registration_central_task: getField(["Tarefa Central de Cadastro"]),
+                registration_central_activity_start: getField(["Dt. Inicio Ativ. C.Cadastro"]),
+                judicial_period: getField(["Prazo Judicial"]),
+                requesting_unit: getField(["Unidade Solicitante"]),
+                agreement: getField(["Convênio", "Conv阯io"]),
+                culture: getField(["Cultura"]),
+                roc_type: getField(["Tipo ROC"]),
+                poa_prd_subject: getField(["Assunto POA/PRD"]),
+                activity_id: getField(["ID Atividade"]),
             };
         } catch (e) {
             console.error("Erro fundamental no mapeamento:", e, row);

@@ -64,6 +64,10 @@ export default function Proposals() {
     task: "", central_date: "", activity_start_date: "", last_analyst: "",
     owner: "", originator: "", current_state: "", category: "", client_size: "",
     proposal_number: "", credit_purpose: "", resource_application: "", special_treatment: "",
+    central: "", superintendence_code: "", superintendence_name: "", microcredit: "",
+    renegotiation_type: "", guarantee_type: "", registration_central_task: "",
+    registration_central_activity_start: "", judicial_period: "", requesting_unit: "",
+    agreement: "", culture: "", roc_type: "", poa_prd_subject: "", activity_id: "",
   });
 
   const availableYears = useMemo(() => {
@@ -135,6 +139,10 @@ export default function Proposals() {
       task: "", central_date: "", activity_start_date: "", last_analyst: "",
       owner: "", originator: "", current_state: "", category: "", client_size: "",
       proposal_number: "", credit_purpose: "", resource_application: "", special_treatment: "",
+      central: "", superintendence_code: "", superintendence_name: "", microcredit: "",
+      renegotiation_type: "", guarantee_type: "", registration_central_task: "",
+      registration_central_activity_start: "", judicial_period: "", requesting_unit: "",
+      agreement: "", culture: "", roc_type: "", poa_prd_subject: "", activity_id: "",
     });
     setIsDialogOpen(true);
   };
@@ -155,6 +163,15 @@ export default function Proposals() {
       client_size: p.client_size || "", proposal_number: p.proposal_number || "",
       credit_purpose: p.credit_purpose || "", resource_application: p.resource_application || "",
       special_treatment: p.special_treatment || "",
+      central: p.central || "", superintendence_code: p.superintendence_code || "",
+      superintendence_name: p.superintendence_name || "", microcredit: p.microcredit || "",
+      renegotiation_type: p.renegotiation_type || "", guarantee_type: p.guarantee_type || "",
+      registration_central_task: p.registration_central_task || "",
+      registration_central_activity_start: p.registration_central_activity_start || "",
+      judicial_period: p.judicial_period || "", requesting_unit: p.requesting_unit || "",
+      agreement: p.agreement || "", culture: p.culture || "",
+      roc_type: p.roc_type || "", poa_prd_subject: p.poa_prd_subject || "",
+      activity_id: p.activity_id || "",
     });
     setIsDialogOpen(true);
   };
@@ -522,6 +539,75 @@ export default function Proposals() {
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Data de Entrada</Label>
                     <Input type="date" value={formData.entry_date} onChange={(e) => setFormData((f) => ({ ...f, entry_date: e.target.value }))} className="rounded-xl" />
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                  <span className="h-4 w-1 rounded-full bg-primary" />
+                  Dados Complementares (Campo CSV)
+                </h3>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Central</Label>
+                    <Input value={formData.central} onChange={(e) => setFormData((f) => ({ ...f, central: e.target.value }))} placeholder="Central" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Cód. Superintendência</Label>
+                    <Input value={formData.superintendence_code} onChange={(e) => setFormData((f) => ({ ...f, superintendence_code: e.target.value }))} placeholder="Cód. Superintendência" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Nome Superintendência</Label>
+                    <Input value={formData.superintendence_name} onChange={(e) => setFormData((f) => ({ ...f, superintendence_name: e.target.value }))} placeholder="Nome Superintendência" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Microcrédito</Label>
+                    <Input value={formData.microcredit} onChange={(e) => setFormData((f) => ({ ...f, microcredit: e.target.value }))} placeholder="Microcrédito" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Tipo Renegociação</Label>
+                    <Input value={formData.renegotiation_type} onChange={(e) => setFormData((f) => ({ ...f, renegotiation_type: e.target.value }))} placeholder="Tipo Renegociação" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Tipo de Garantia</Label>
+                    <Input value={formData.guarantee_type} onChange={(e) => setFormData((f) => ({ ...f, guarantee_type: e.target.value }))} placeholder="Tipo de Garantia" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Tarefa Central Cadastro</Label>
+                    <Input value={formData.registration_central_task} onChange={(e) => setFormData((f) => ({ ...f, registration_central_task: e.target.value }))} placeholder="Tarefa Central" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Dt. Início C. Cadastro</Label>
+                    <Input value={formData.registration_central_activity_start} onChange={(e) => setFormData((f) => ({ ...f, registration_central_activity_start: e.target.value }))} placeholder="Data Início" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Prazo Judicial</Label>
+                    <Input value={formData.judicial_period} onChange={(e) => setFormData((f) => ({ ...f, judicial_period: e.target.value }))} placeholder="Prazo Judicial" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Unidade Solicitante</Label>
+                    <Input value={formData.requesting_unit} onChange={(e) => setFormData((f) => ({ ...f, requesting_unit: e.target.value }))} placeholder="Unidade Solicitante" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Convênio</Label>
+                    <Input value={formData.agreement} onChange={(e) => setFormData((f) => ({ ...f, agreement: e.target.value }))} placeholder="Convênio" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Cultura</Label>
+                    <Input value={formData.culture} onChange={(e) => setFormData((f) => ({ ...f, culture: e.target.value }))} placeholder="Cultura" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Tipo ROC</Label>
+                    <Input value={formData.roc_type} onChange={(e) => setFormData((f) => ({ ...f, roc_type: e.target.value }))} placeholder="Tipo ROC" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Assunto POA/PRD</Label>
+                    <Input value={formData.poa_prd_subject} onChange={(e) => setFormData((f) => ({ ...f, poa_prd_subject: e.target.value }))} placeholder="Assunto POA/PRD" className="rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">ID Atividade</Label>
+                    <Input value={formData.activity_id} onChange={(e) => setFormData((f) => ({ ...f, activity_id: e.target.value }))} placeholder="ID Atividade" className="rounded-xl" />
                   </div>
                 </div>
               </section>

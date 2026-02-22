@@ -40,6 +40,21 @@ export interface DbProposal {
   credit_purpose?: string;
   resource_application?: string;
   special_treatment?: string;
+  central?: string;
+  superintendence_code?: string;
+  superintendence_name?: string;
+  microcredit?: string;
+  renegotiation_type?: string;
+  guarantee_type?: string;
+  registration_central_task?: string;
+  registration_central_activity_start?: string;
+  judicial_period?: string;
+  requesting_unit?: string;
+  agreement?: string;
+  culture?: string;
+  roc_type?: string;
+  poa_prd_subject?: string;
+  activity_id?: string;
 }
 
 export interface DbDocument {
