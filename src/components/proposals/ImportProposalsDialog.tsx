@@ -122,7 +122,7 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                 agency_id: targetAgency,
                 created_by: user?.id,
                 status: "nova" as const,
-                // Extra fields from export headers (including corrupted versions)
+                // Extra fields present in DB schema
                 credit_program: getField(["Programa Crédito", "Programa Cr閐ito", "Programa Crdito"]),
                 request_type: getField(["Tipo Solicitação", "Tipo Solicita玢o", "Tipo Solicitao"]),
                 agency_code: getField(["Código Agência", "C骴igo Ag阯cia", "Cdigo Agncia"]),
@@ -139,20 +139,6 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                 credit_purpose: getField(["Finalidade do Crédito", "Finalidade do Cr閐ito", "Finalidade do Crdito"]),
                 resource_application: getField(["Aplicação de Recursos", "Aplica玢o de Recursos", "Aplicao de Recursos"]),
                 special_treatment: getField(["Tratamento Especial"]),
-                // New fields from latest user request
-                superintendence_code: getField(["Código Superintendência", "C骴igo Superintend阯cia"]),
-                superintendence_name: getField(["Nome Superintendencia"]),
-                microcredit: getField(["Microcrédito", "Microcrito"]),
-                renegotiation_type: getField(["Tipo Renegociação", "Tipo Renegocia玢o"]),
-                guarantee_type: getField(["Tipo de Garantia"]),
-                registration_central_task: getField(["Tarefa Central de Cadastro"]),
-                judicial_period: getField(["Prazo Judicial"]),
-                requesting_unit: getField(["Unidade Solicitante"]),
-                agreement: getField(["Convênio", "Conv阯io"]),
-                culture: getField(["Cultura"]),
-                roc_type: getField(["Tipo ROC"]),
-                poa_prd_subject: getField(["Assunto POA/PRD"]),
-                activity_id: getField(["ID Atividade"]),
             };
         } catch (e) {
             console.error("Erro fundamental no mapeamento:", e, row);
