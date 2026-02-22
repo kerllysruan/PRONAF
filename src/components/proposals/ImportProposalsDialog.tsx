@@ -27,16 +27,19 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
-        if (selectedFile && selectedFile.type === "text/csv") {
-            setFile(selectedFile);
-            setStats(null);
-            setProgress(0);
-        } else if (selectedFile) {
-            toast({
-                title: "Formato inválido",
-                description: "Por favor, selecione um arquivo CSV.",
-                variant: "destructive",
-            });
+        if (selectedFile) {
+            const isCSV = selectedFile.name.toLowerCase().endsWith('.csv') || selectedFile.type === "text/csv";
+            if (isCSV) {
+                setFile(selectedFile);
+                setStats(null);
+                setProgress(0);
+            } else {
+                toast({
+                    title: "Formato inválido",
+                    description: "Por favor, selecione um arquivo .CSV",
+                    variant: "destructive",
+                });
+            }
         }
     };
 
@@ -115,9 +118,13 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
     };
 
     const runImport = async () => {
+        console.log("Iniciando importação...", { file: !!file, user: !!user, agencyId });
+
         if (!file || !user || !agencyId) {
-            console.error("Faltando dados:", { file: !!file, user: !!user, agencyId });
-            toast({ title: "Erro", description: "Certifique-se de que o arquivo está selecionado e você está autenticado.", variant: "destructive" });
+            const msg = `Faltando dados: Arquivo=${!!file}, Usuário=${!!user}, Agência=${agencyId || 'NULA'}`;
+            console.error(msg);
+            alert(msg);
+            toast({ title: "Erro de Configuração", description: msg, variant: "destructive" });
             return;
         }
 
@@ -125,73 +132,93 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
         setProgress(0);
         setStats(null);
 
-        Papa.parse(file, {
-            header: true,
-            skipEmptyLines: true,
-            delimiter: "", // Auto-detect
-            complete: async (results) => {
-                const rows = results.data as any[];
-                if (rows.length === 0) {
-                    setIsImporting(false);
-                    toast({ title: "Arquivo vazio", description: "Nenhuma linha de dados encontrada.", variant: "destructive" });
-                    return;
-                }
+        try {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                delimiter: "", // Auto-detect
+                encoding: "ISO-8859-1", // Try Brazilian encoding first for bank exports
+                complete: async (results) => {
+                    try {
+                        console.log("PapaParse completo. Resultados:", results);
+                        const rows = results.data as any[];
 
-                const total = rows.length;
-                let successCount = 0;
-                const errors: any[] = [];
-                const BATCH_SIZE = 50;
+                        if (rows.length === 0) {
+                            setIsImporting(false);
+                            alert("Arquivo parece estar vazio ou não foi lido corretamente.");
+                            toast({ title: "Arquivo vazio", description: "Nenhuma linha de dados encontrada.", variant: "destructive" });
+                            return;
+                        }
 
-                for (let i = 0; i < rows.length; i += BATCH_SIZE) {
-                    const batch = rows.slice(i, i + BATCH_SIZE);
-                    const proposalsToInsert = batch.map(mapRow);
+                        const total = rows.length;
+                        let successCount = 0;
+                        const errors: any[] = [];
+                        const BATCH_SIZE = 50;
 
-                    const { data: newProposals, error: insertError } = await supabase
-                        .from("proposals")
-                        .insert(proposalsToInsert)
-                        .select("id");
+                        for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+                            const batch = rows.slice(i, i + BATCH_SIZE);
+                            const proposalsToInsert = batch.map(mapRow);
 
-                    if (insertError) {
-                        console.error("Erro no lote:", insertError);
-                        errors.push({ batch: Math.floor(i / BATCH_SIZE) + 1, error: insertError.message });
-                    } else if (newProposals) {
-                        successCount += newProposals.length;
+                            console.log(`Enviando lote ${Math.floor(i / BATCH_SIZE) + 1}...`, proposalsToInsert);
 
-                        const allDocs = newProposals.flatMap((p) =>
-                            REQUIRED_DOCUMENTS.map((name) => ({
-                                proposal_id: p.id,
-                                name,
-                                completed: false,
-                            }))
-                        );
+                            const { data: newProposals, error: insertError } = await supabase
+                                .from("proposals")
+                                .insert(proposalsToInsert)
+                                .select("id");
 
-                        const { error: docsError } = await supabase.from("proposal_documents").insert(allDocs);
-                        if (docsError) console.error("Erro ao criar documentos:", docsError);
+                            if (insertError) {
+                                console.error("Erro no lote:", insertError);
+                                errors.push({ batch: Math.floor(i / BATCH_SIZE) + 1, error: insertError.message });
+                            } else if (newProposals) {
+                                successCount += newProposals.length;
+
+                                const allDocs = newProposals.flatMap((p) =>
+                                    REQUIRED_DOCUMENTS.map((name) => ({
+                                        proposal_id: p.id,
+                                        name,
+                                        completed: false,
+                                    }))
+                                );
+
+                                const { error: docsError } = await supabase.from("proposal_documents").insert(allDocs);
+                                if (docsError) console.error("Erro ao criar documentos:", docsError);
+                            }
+
+                            setProgress(Math.round(((i + batch.length) / total) * 100));
+                        }
+
+                        setStats({ total, success: successCount, errors });
+                        setIsImporting(false);
+                        if (successCount > 0) refetch(true);
+
+                        toast({
+                            title: "Importação Concluída",
+                            description: `${successCount} propostas processadas.`,
+                        });
+                    } catch (innerError: any) {
+                        console.error("Erro no processamento dos dados:", innerError);
+                        alert("Erro interno no processamento: " + innerError.message);
+                        setIsImporting(false);
                     }
-
-                    setProgress(Math.round(((i + batch.length) / total) * 100));
+                },
+                error: (error) => {
+                    console.error("Erro PapaParse:", error);
+                    alert("Erro ao ler o arquivo (PapaParse): " + error.message);
+                    setIsImporting(false);
+                    toast({
+                        title: "Erro ao ler arquivo",
+                        description: error.message,
+                        variant: "destructive",
+                    });
                 }
-
-                setStats({ total, success: successCount, errors });
-                setIsImporting(false);
-                if (successCount > 0) refetch(true);
-
-                toast({
-                    title: "Importação Concluída",
-                    description: `${successCount} propostas processadas.`,
-                });
-            },
-            error: (error) => {
-                console.error("Erro PapaParse:", error);
-                setIsImporting(false);
-                toast({
-                    title: "Erro ao ler arquivo",
-                    description: error.message,
-                    variant: "destructive",
-                });
-            }
-        });
+            });
+        } catch (topError: any) {
+            console.error("Erro fatal no runImport:", topError);
+            alert("Erro fatal: " + topError.message);
+            setIsImporting(false);
+        }
     };
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
