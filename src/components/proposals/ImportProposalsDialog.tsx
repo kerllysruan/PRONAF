@@ -93,61 +93,96 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
         try {
             const getField = (keys: string[]) => {
                 for (const key of keys) {
+                    // Try exact match first, then case-insensitive
                     if (row[key] !== undefined && row[key] !== null) return row[key];
+
+                    // Fallback search for keys that might have different case
+                    const lowercaseKey = key.toLowerCase();
+                    const actualKey = Object.keys(row).find(k => k.toLowerCase() === lowercaseKey);
+                    if (actualKey) return row[actualKey];
                 }
                 return "";
             };
 
             const targetAgency = effectiveAgencyId && effectiveAgencyId !== "all" ? effectiveAgencyId : null;
 
+            // Mapping with support for corrupted encoding strings provided by user
             return {
                 producer_name: getField(["Nome", "producer_name", "NOME"]) || "Sem Nome",
                 producer_cpf: getField(["Cpf/Cnpj", "CPF", "producer_cpf"]).toString().replace(/[^\d]/g, "") || "00000000000",
                 requested_value: sanitizeNumber(getField(["Valor", "valor", "requested_value"])),
-                pronaf_line: getField(["Programa Crédito", "Programa Crdito", "Programa Crdito", "pronaf_line"]) || "custeio",
+                pronaf_line: getField(["Programa Crédito", "Programa Cr閐ito", "Programa Crdito", "pronaf_line"]) || "custeio",
                 producer_address: getField(["producer_address", "Endereço", "Endereo"]) || "",
                 producer_phone: getField(["producer_phone", "Telefone"]) || "",
                 project_designer: getField(["project_designer", "Projetista"]) || null,
-                entry_date: getField(["Data Início", "Data Incio", "Data Incio", "entry_date"]) || new Date().toISOString().split('T')[0],
+                entry_date: getField(["Data Início", "Data In韈io", "Data Incio", "entry_date", "Data In韈io"]) || new Date().toISOString().split('T')[0],
                 sicad: getField(["SICAD", "sicad"]).toString(),
-                proposal_number: getField(["Número Proposta", "Nmero Proposta", "Nmero Proposta", "proposal_number"]).toString(),
+                proposal_number: getField(["Número Proposta", "N鷐ero Proposta", "Nmero Proposta", "proposal_number"]).toString(),
                 notes: getField(["notes", "Observações", "Observaes"]) || "",
                 agency_id: targetAgency,
                 created_by: user?.id,
                 status: "nova" as const,
-                credit_program: getField(["Programa Crédito", "Programa Crdito", "Programa Crdito"]),
-                request_type: getField(["Tipo Solicitação", "Tipo Solicitao", "Tipo Solicitao"]),
-                agency_code: getField(["Código Agência", "Cdigo Agncia", "Cdigo Agncia"]),
-                agency_name: getField(["Nome Agência", "Nome Agncia", "Nome Agncia"]),
+                // Extra fields from export headers (including corrupted versions)
+                credit_program: getField(["Programa Crédito", "Programa Cr閐ito", "Programa Crdito"]),
+                request_type: getField(["Tipo Solicitação", "Tipo Solicita玢o", "Tipo Solicitao"]),
+                agency_code: getField(["Código Agência", "C骴igo Ag阯cia", "Cdigo Agncia"]),
+                agency_name: getField(["Nome Agência", "Nome Agncia"]),
                 task: getField(["Tarefa"]),
                 central_date: getField(["Data Central"]),
-                activity_start_date: getField(["Data Início da Atividade", "Data Incio da Atividade", "Data Incio da Atividade"]),
-                last_analyst: getField(["Último Analista", "ltimo Analista", "ltimo Analista"]),
+                activity_start_date: getField(["Data Início da Atividade", "Data In韈io da Atividade", "Data Incio da Atividade"]),
+                last_analyst: getField(["Último Analista", "趌timo Analista", "ltimo Analista"]),
                 owner: getField(["Dono"]),
                 originator: getField(["Originador"]),
                 current_state: getField(["Estado"]),
                 category: getField(["Categoria"]),
                 client_size: getField(["Porte do Cliente"]),
-                credit_purpose: getField(["Finalidade do Crédito", "Finalidade do Crdito"]),
-                resource_application: getField(["Aplicação de Recursos", "Aplicao de Recursos"]),
+                credit_purpose: getField(["Finalidade do Crédito", "Finalidade do Cr閐ito", "Finalidade do Crdito"]),
+                resource_application: getField(["Aplicação de Recursos", "Aplica玢o de Recursos", "Aplicao de Recursos"]),
                 special_treatment: getField(["Tratamento Especial"]),
+                // New fields from latest user request
+                superintendence_code: getField(["Código Superintendência", "C骴igo Superintend阯cia"]),
+                superintendence_name: getField(["Nome Superintendencia"]),
+                microcredit: getField(["Microcrédito", "Microcrito"]),
+                renegotiation_type: getField(["Tipo Renegociação", "Tipo Renegocia玢o"]),
+                guarantee_type: getField(["Tipo de Garantia"]),
+                registration_central_task: getField(["Tarefa Central de Cadastro"]),
+                judicial_period: getField(["Prazo Judicial"]),
+                requesting_unit: getField(["Unidade Solicitante"]),
+                agreement: getField(["Convênio", "Conv阯io"]),
+                culture: getField(["Cultura"]),
+                roc_type: getField(["Tipo ROC"]),
+                poa_prd_subject: getField(["Assunto POA/PRD"]),
+                activity_id: getField(["ID Atividade"]),
             };
         } catch (e) {
-            console.error("Erro ao mapear linha:", e, row);
+            console.error("Erro fundamental no mapeamento:", e, row);
             return null;
         }
     };
 
-    const runImport = async () => {
+    const runImport = async (e?: React.MouseEvent | React.TouchEvent) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        console.log("HANDLER TRIGGERED. State:", { file: !!file, user: !!user, agency: effectiveAgencyId });
+
         const destAgency = effectiveAgencyId === "all" ? null : effectiveAgencyId;
-        alert(`BOTAO CLICADO! File: ${file?.name}, User: ${user?.email}, Agency: ${destAgency || 'TODAS (BLOQUEADO)'}`);
 
         if (!file || !user || !destAgency) {
-            const msg = `Impossível importar: ${!file ? 'Arquivo não selecionado.' : !user ? 'Usuário não logado.' : 'Selecione uma AGÊNCIA (filtro no topo) ANTES de importar.'}`;
+            const missing = [];
+            if (!file) missing.push("Arquivo (CSV)");
+            if (!user) missing.push("Usuário (Auth)");
+            if (!destAgency) missing.push("Agência (Filtro Superior)");
+
+            const msg = `Não é possível iniciar. Faltando: ${missing.join(", ")}`;
             alert(msg);
-            toast({ title: "Atenção", description: msg, variant: "destructive" });
+            toast({ title: "Atenção", description: "Verifique o arquivo e o filtro de agência.", variant: "destructive" });
             return;
         }
+
+        alert(`IMPORTAÇÃO INICIADA! Processando: ${file.name}`);
 
         setIsImporting(true);
         setProgress(0);
@@ -267,16 +302,20 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
 
                     <div className="flex flex-col gap-3">
                         {!stats && !isImporting && (
-                            <button
+                            <Button
                                 onClick={(e) => {
-                                    console.log("CLIQUE DETECTADO");
-                                    runImport();
+                                    console.log("CLICK EVENT");
+                                    runImport(e);
+                                }}
+                                onPointerDown={(e) => {
+                                    console.log("POINTER DOWN EVENT");
                                 }}
                                 disabled={!file}
-                                className={`h-14 rounded-2xl bg-primary text-white font-black transition-all ${!file ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/20'}`}
+                                className="h-14 rounded-2xl bg-primary shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all font-black text-base gap-3"
                             >
-                                {file ? "Iniciar Importação" : "Selecione um Arquivo"}
-                            </button>
+                                <FileUp className="h-5 w-5" />
+                                {file ? "Clique para Iniciar" : "Selecione o CSV"}
+                            </Button>
                         )}
                         <Button variant="ghost" onClick={downloadTemplate} className="font-bold">Baixar Modelo CSV</Button>
                     </div>
