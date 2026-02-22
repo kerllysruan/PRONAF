@@ -27,6 +27,13 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
     const [stats, setStats] = useState<{ total: number; success: number; errors: any[] } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    React.useEffect(() => {
+        if (open) {
+            console.log("Dialog Aberto. Estado:", { user: !!user, agency: effectiveAgencyId, file: !!file });
+            // alert("DEBUG: DIALOG DE IMPORTACÃO CARREGADO");
+        }
+    }, [open]);
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
         if (selectedFile) {
@@ -260,9 +267,16 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
 
                     <div className="flex flex-col gap-3">
                         {!stats && !isImporting && (
-                            <Button onClick={runImport} disabled={!file} className="h-14 rounded-2xl bg-primary text-white font-black">
-                                Iniciar Importação
-                            </Button>
+                            <button
+                                onClick={(e) => {
+                                    console.log("CLIQUE DETECTADO");
+                                    runImport();
+                                }}
+                                disabled={!file}
+                                className={`h-14 rounded-2xl bg-primary text-white font-black transition-all ${!file ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/20'}`}
+                            >
+                                {file ? "Iniciar Importação" : "Selecione um Arquivo"}
+                            </button>
                         )}
                         <Button variant="ghost" onClick={downloadTemplate} className="font-bold">Baixar Modelo CSV</Button>
                     </div>
