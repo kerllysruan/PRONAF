@@ -79,6 +79,7 @@ export default function Proposals() {
     return [
       'FNE/PRONAF A - RES. 5.183/24 (699)',
       'FNE/PRONAF GRUPO "A" - FNE (368)',
+      'FNE/PRONAF-MAIS ALIMENTOS (FNE) (434)',
       'FNE/PRONAF MULHER - FNE (406)',
       'FNE/RURAL (226)'
     ];
@@ -91,6 +92,8 @@ export default function Proposals() {
 
     if (curProg.includes("MULHER") || curProg.includes("406")) {
       targetProg = 'FNE/PRONAF MULHER - FNE (406)';
+    } else if (curProg.includes("ALIMENTOS") || curProg.includes("434")) {
+      targetProg = 'FNE/PRONAF-MAIS ALIMENTOS (FNE) (434)';
     } else if (curProg.includes("RURAL") || curProg.includes("226") || curProg === "FNE") {
       targetProg = 'FNE/RURAL (226)';
     } else if (curProg.includes("A") || curProg.includes("368") || curProg.includes("699") || curProg.includes("GRUPO")) {

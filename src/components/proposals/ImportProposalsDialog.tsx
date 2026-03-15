@@ -186,6 +186,9 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                     if (raw.includes("MULHER") || raw.includes("406")) {
                         return 'FNE/PRONAF MULHER - FNE (406)';
                     }
+                    if (raw.includes("ALIMENTOS") || raw.includes("434")) {
+                        return 'FNE/PRONAF-MAIS ALIMENTOS (FNE) (434)';
+                    }
                     if (raw.includes("A") || raw.includes("368") || raw.includes("699") || raw.includes("GRUPO")) {
                         return requestedValue < 50000 
                             ? 'FNE/PRONAF A - RES. 5.183/24 (699)' 
