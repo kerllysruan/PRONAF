@@ -104,7 +104,7 @@ export default function Dashboard() {
         pdf.setTextColor(255, 255, 255);
         pdf.setFont("helvetica", "bold");
         pdf.setFontSize(14);
-        pdf.text(`RELATÓRIO CARTEIRA AGRO AGENCIA ${agencyNameStr}`, margin, 15);
+        pdf.text(`RELATÓRIO CARTEIRA AGRO - ${agencyNameStr}`, margin, 15);
         
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(8);
@@ -131,7 +131,7 @@ export default function Dashboard() {
       };
 
       // PAGE 1: EXECUTIVE SUMMARY & STATUS
-      addHeader("Visão Geral e Distribuição de Status", "SUMMIT EXECUTIVE");
+      addHeader("Visão Geral e Distribuição de Status", "VISÃO ESTRATÉGICA");
       
       if (printableContentRef.current) {
         const kpiGrid = printableContentRef.current.querySelector('.grid') as HTMLElement;
