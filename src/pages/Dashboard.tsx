@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { useProposals } from "@/hooks/useProposals";
 import { useTeam } from "@/hooks/useTeam";
-import { STATUS_LABELS, PRONAF_LINE_LABELS, type ProposalStatus, type PronafLine } from "@/types/proposal";
+import { STATUS_LABELS, PRONAF_LINE_LABELS, PROJECT_DESIGNER_LABELS, type ProposalStatus, type PronafLine, type ProjectDesigner } from "@/types/proposal";
 import { format, parseISO, subMonths, startOfMonth, endOfMonth, isWithinInterval, getMonth, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
@@ -275,8 +275,9 @@ export default function Dashboard() {
   const designerChartData = useMemo(() => {
     const counts: Record<string, number> = {};
     filteredProposals.forEach(p => {
-      const designer = p.owner || 'Não Definido';
-      counts[designer] = (counts[designer] || 0) + 1;
+      const designerKey = p.project_designer;
+      const designerName = designerKey ? (PROJECT_DESIGNER_LABELS[designerKey] || designerKey) : 'Não Definido';
+      counts[designerName] = (counts[designerName] || 0) + 1;
     });
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
