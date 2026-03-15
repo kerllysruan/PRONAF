@@ -546,18 +546,16 @@ export default function Proposals() {
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="space-y-2 lg:col-span-2">
                     <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Programa de Crédito</Label>
-                    <Input 
-                      list="credit-programs"
-                      value={formData.credit_program} 
-                      onChange={(e) => setFormData((f) => ({ ...f, credit_program: e.target.value }))} 
-                      placeholder="Selecione na lista ou digite (Ex: FNE/PRONAF A)" 
-                      className="rounded-xl" 
-                    />
-                    <datalist id="credit-programs">
-                      {uniquePrograms.map(program => (
-                        <option key={program} value={program} />
-                      ))}
-                    </datalist>
+                    <Select value={formData.credit_program} onValueChange={(v) => setFormData((f) => ({ ...f, credit_program: v }))}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione o programa" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        {uniquePrograms.map(program => (
+                          <SelectItem key={program} value={program} className="rounded-lg">{program}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Valor Solicitado</Label>
