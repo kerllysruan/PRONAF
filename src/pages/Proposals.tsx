@@ -76,31 +76,33 @@ export default function Proposals() {
   }, [proposals]);
 
   const uniquePrograms = useMemo(() => {
-    const defaults = [
+    return [
       'FNE/PRONAF A - RES. 5.183/24 (699)',
       'FNE/PRONAF GRUPO "A" - FNE (368)',
       'FNE/PRONAF MULHER - FNE (406)',
       'FNE/RURAL (226)'
     ];
-    const progs = new Set([...defaults, ...proposals.map((p) => p.credit_program).filter(Boolean)]);
-    return Array.from(progs).sort((a, b) => a!.localeCompare(b!));
-  }, [proposals]);
+  }, []);
 
-  // Auto-classificação de programa para PRONAF A
+  // Auto-classificação de programa baseada em palavras-chave e valor
   useEffect(() => {
     const curProg = formData.credit_program.toUpperCase();
-    const isPronafA = curProg.includes("PRONAF A") || curProg.includes("368") || curProg.includes("699") || curProg.includes("GRUPO \"A\"");
-    
-    if (isPronafA) {
-      const correctProg = formData.requested_value < 50000 
+    let targetProg = "";
+
+    if (curProg.includes("MULHER") || curProg.includes("406")) {
+      targetProg = 'FNE/PRONAF MULHER - FNE (406)';
+    } else if (curProg.includes("RURAL") || curProg.includes("226") || curProg === "FNE") {
+      targetProg = 'FNE/RURAL (226)';
+    } else if (curProg.includes("A") || curProg.includes("368") || curProg.includes("699") || curProg.includes("GRUPO")) {
+      targetProg = formData.requested_value < 50000 
         ? 'FNE/PRONAF A - RES. 5.183/24 (699)' 
         : 'FNE/PRONAF GRUPO "A" - FNE (368)';
-      
-      if (formData.credit_program !== correctProg) {
-        setFormData(prev => ({ ...prev, credit_program: correctProg }));
-      }
     }
-  }, [formData.requested_value]);
+    
+    if (targetProg && formData.credit_program !== targetProg) {
+      setFormData(prev => ({ ...prev, credit_program: targetProg }));
+    }
+  }, [formData.requested_value, formData.credit_program]);
 
   const filtered = useMemo(() => {
     // Removed setPage(0) to prevent reset on data update

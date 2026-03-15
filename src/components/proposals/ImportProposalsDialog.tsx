@@ -181,13 +181,22 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                 created_by: user?.id,
                 status: proposalStatus,
                 credit_program: (() => {
-                    const raw = getField(["Programa Crédito", "Programa Cr\u00e9dito", "Programa Cr閐ito", "Programa Crdito"]);
-                    if (raw && (raw.includes("A") || raw.includes("368") || raw.includes("699"))) {
+                    const raw = (getField(["Programa Crédito", "Programa Cr\u00e9dito", "Programa Cr閐ito", "Programa Crdito"]) || "").toString().toUpperCase();
+                    
+                    if (raw.includes("MULHER") || raw.includes("406")) {
+                        return 'FNE/PRONAF MULHER - FNE (406)';
+                    }
+                    if (raw.includes("A") || raw.includes("368") || raw.includes("699") || raw.includes("GRUPO")) {
                         return requestedValue < 50000 
                             ? 'FNE/PRONAF A - RES. 5.183/24 (699)' 
                             : 'FNE/PRONAF GRUPO "A" - FNE (368)';
                     }
-                    return raw;
+                    if (raw.includes("RURAL") || raw.includes("226") || raw.includes("FNE")) {
+                        return 'FNE/RURAL (226)';
+                    }
+                    
+                    // Default fallback if unknown
+                    return 'FNE/RURAL (226)';
                 })(),
                 request_type: getField(["Tipo Solicitação", "Tipo Solicita\u00e7\u00e3o", "Tipo Solicita玢o", "Tipo Solicitao"]),
                 agency_code: getField(["Código Agência", "C\u00f3digo Ag\u00eancia", "C骴igo Ag阯cia", "Cdigo Agncia"]),
