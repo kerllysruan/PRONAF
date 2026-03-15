@@ -22,6 +22,21 @@ const CHART_COLORS = [
   "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(199, 89%, 48%)", "hsl(280, 60%, 50%)",
 ];
 
+const STATUS_CHART_COLORS: Record<string, string> = {
+  nova: "hsl(199, 89%, 48%)", // sky
+  em_analise: "hsl(215, 70%, 50%)", // blue
+  documentacao_pendente: "hsl(38, 92%, 50%)", // amber
+  avaliacao_risco: "hsl(346, 87%, 60%)", // rose
+  consideracoes_gerenciais: "hsl(215, 16%, 47%)", // slate
+  votacao_sinc: "hsl(220, 70%, 40%)", // darker blue
+  contrato_liberado: "hsl(142, 71%, 45%)", // emerald
+  desembolso: "hsl(175, 70%, 41%)", // teal
+  desembolso_solicitado: "hsl(240, 70%, 65%)", // indigo
+  em_andamento: "hsl(270, 70%, 60%)", // violet
+  aprovada: "hsl(142, 71%, 35%)", // green legacy
+  negada: "hsl(0, 72%, 51%)", // red legacy
+};
+
 export default function Dashboard() {
   const { proposals, loading: loadingP } = useProposals();
   const { tasks, members, loading: loadingT } = useTeam();
@@ -44,26 +59,35 @@ export default function Dashboard() {
 
   const stats = useMemo(() => {
     const total = filteredProposals.length;
-    const aprovadas = filteredProposals.filter((p) => p.status === "aprovada").length;
-    const emAnalise = filteredProposals.filter((p) => p.status === "em_analise").length;
+    const aprovadas = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").length;
+    const ativos = filteredProposals.filter((p) => !["nova", "aprovada", "negada", "contrato_liberado"].includes(p.status)).length;
     const pendentes = filteredProposals.filter((p) => p.status === "documentacao_pendente").length;
     const novas = filteredProposals.filter((p) => p.status === "nova").length;
     const negadas = filteredProposals.filter((p) => p.status === "negada").length;
     const valorTotal = filteredProposals.reduce((sum, p) => sum + Number(p.requested_value), 0);
-    const valorAprovado = filteredProposals.filter((p) => p.status === "aprovada").reduce((s, p) => s + Number(p.requested_value), 0);
+    const valorAprovado = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").reduce((s, p) => s + Number(p.requested_value), 0);
     const taxaAprovacao = total > 0 ? Math.round((aprovadas / total) * 100) : 0;
-    return { total, aprovadas, emAnalise, pendentes, novas, negadas, valorTotal, valorAprovado, taxaAprovacao };
+    return { total, aprovadas, ativos, pendentes, novas, negadas, valorTotal, valorAprovado, taxaAprovacao };
   }, [filteredProposals]);
 
-  const statusChartData = useMemo(() => [
-    { name: "Novas", value: stats.novas, fill: "hsl(199, 89%, 48%)" },
-    { name: "Em Análise", value: stats.emAnalise, fill: "hsl(38, 92%, 50%)" },
-    { name: "Doc. Pend.", value: stats.pendentes, fill: "hsl(210, 80%, 55%)" },
-    { name: "Contratos Assinados", value: stats.aprovadas, fill: "hsl(142, 71%, 35%)" },
-    { name: "Negadas", value: stats.negadas, fill: "hsl(0, 72%, 51%)" },
-  ], [stats]);
+  const statusChartData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredProposals.forEach(p => {
+      counts[p.status] = (counts[p.status] || 0) + 1;
+    });
+    
+    // Sort array descending and filter empty
+    return Object.entries(counts)
+      .filter(([_, count]) => count > 0)
+      .map(([status, count]) => ({
+        name: STATUS_LABELS[status as ProposalStatus] || status,
+        value: count,
+        fill: STATUS_CHART_COLORS[status] || "hsl(215, 16%, 47%)"
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredProposals]);
 
-  const pieData = useMemo(() => statusChartData.filter((d) => d.value > 0), [statusChartData]);
+  const pieData = useMemo(() => statusChartData, [statusChartData]);
 
   const monthlyData = useMemo(() => {
     const months: { name: string; propostas: number; valor: number }[] = [];
@@ -203,11 +227,11 @@ export default function Dashboard() {
           <CardContent className="p-6 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Em Análise</p>
-                <p className="text-4xl font-extrabold font-heading text-foreground">{stats.emAnalise}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Processos Ativos</p>
+                <p className="text-4xl font-extrabold font-heading text-foreground">{stats.ativos}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <Badge variant="secondary" className="px-2 py-0.5 rounded-lg bg-warning/10 text-warning border-0 text-[10px] font-bold flex items-center gap-1">
-                    <Clock className="h-2.5 w-2.5" /> {stats.pendentes} PENDENTES
+                    <Clock className="h-2.5 w-2.5" /> {stats.pendentes} PEND. DOCS
                   </Badge>
                 </div>
               </div>
