@@ -379,11 +379,20 @@ export default function Dashboard() {
                 <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={lineData} layout="vertical" margin={{ top: 5, right: 10, left: 20, bottom: 5 }}>
+                  <BarChart data={lineData} layout="vertical" margin={{ top: 5, right: 10, left: 60, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" />
                     <XAxis type="number" tick={{ fontSize: 11 }} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={80} />
-                    <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} formatter={(value: number) => [`R$ ${value.toFixed(1)}k`, "Valor"]} />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      tick={{ fontSize: 10 }} 
+                      width={120}
+                      tickFormatter={(value) => value.length > 20 ? `${value.substring(0, 20)}...` : value}
+                    />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px", maxWidth: "250px", whiteSpace: "normal" }} 
+                      formatter={(value: number) => [`R$ ${value.toFixed(1)}k`, "Valor"]} 
+                    />
                     <Bar dataKey="valor" fill="hsl(210, 80%, 55%)" radius={[0, 6, 6, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
