@@ -1,11 +1,23 @@
-import { useState, useMemo } from "react";
 import {
   FileText, CheckCircle2, Search, DollarSign, TrendingUp, Loader2,
   Sparkles, AlertTriangle, Clock, BarChart3, PieChart as PieChartIcon, ArrowUpRight, ArrowDownRight,
+  Filter, Check,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, Legend, LabelList,
@@ -49,7 +61,42 @@ export default function Dashboard() {
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
   const [isExporting, setIsExporting] = useState(false);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+
+  // States for the report filter dialog
+  const [selectedDesigners, setSelectedDesigners] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedYears, setSelectedYears] = useState<string[]>([]);
+  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
+
   const dashboardRef = useRef<HTMLDivElement>(null);
+
+  // Helper arrays for filters
+  const allDesigners = useMemo(() => Object.keys(PROJECT_DESIGNER_LABELS), []);
+  const allStatuses = useMemo(() => Object.keys(STATUS_LABELS), []);
+  const allMonths = useMemo(() => Array.from({ length: 12 }, (_, i) => (i + 1).toString()), []);
+  const allPrograms = useMemo(() => {
+    const progs = new Set(proposals.map(p => p.credit_program).filter(Boolean) as string[]);
+    return Array.from(progs);
+  }, [proposals]);
+
+  const toggleSelection = (list: string[], setList: (val: string[]) => void, item: string) => {
+    if (list.includes(item)) {
+      setList(list.filter(i => i !== item));
+    } else {
+      setList([...list, item]);
+    }
+  };
+
+  const toggleAll = (list: string[], setList: (val: string[]) => void, allItems: string[]) => {
+    if (list.length === allItems.length) {
+      setList([]);
+    } else {
+      setList([...allItems]);
+    }
+  };
+
   const reportListRef = useRef<HTMLDivElement>(null);
   const printableContentRef = useRef<HTMLDivElement>(null);
   const statusChartRef = useRef<HTMLDivElement>(null);
@@ -78,8 +125,16 @@ export default function Dashboard() {
     [filteredProposals]
   );
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = async (customFilters?: {
+    designers?: string[];
+    statuses?: string[];
+    months?: string[];
+    years?: string[];
+    programs?: string[];
+  }) => {
     setIsExporting(true);
+    // If we have custom filters, close the dialog
+    if (customFilters) setIsFilterDialogOpen(false);
     
     try {
       const pdf = new jsPDF({ 
@@ -223,7 +278,25 @@ export default function Dashboard() {
       pdf.addPage();
       addHeader("Detalhamento Operacional de Propostas", "OPERATIONAL DATA");
 
-      const tableData = ongoingProposals.map(p => [
+      // Apply custom filters if provided
+      let proposalsToPrint = ongoingProposals;
+      if (customFilters) {
+        proposalsToPrint = proposals.filter(p => {
+          const d = parseISO(p.created_at);
+          const pMonth = (getMonth(d) + 1).toString();
+          const pYear = getYear(d).toString();
+
+          const matchesDesigner = !customFilters.designers?.length || (p.project_designer && customFilters.designers.includes(p.project_designer));
+          const matchesStatus = !customFilters.statuses?.length || customFilters.statuses.includes(p.status);
+          const matchesMonth = !customFilters.months?.length || customFilters.months.includes(pMonth);
+          const matchesYear = !customFilters.years?.length || customFilters.years.includes(pYear);
+          const matchesProgram = !customFilters.programs?.length || (p.credit_program && customFilters.programs.includes(p.credit_program));
+
+          return matchesDesigner && matchesStatus && matchesMonth && matchesYear && matchesProgram;
+        });
+      }
+
+      const tableData = proposalsToPrint.map(p => [
         p.producer_name,
         p.producer_cpf || '-',
         formatCurrency(Number(p.requested_value)),
@@ -389,17 +462,209 @@ export default function Dashboard() {
         </div>
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           <button
-            onClick={handleExportPDF}
+            onClick={() => setIsFilterDialogOpen(true)}
             disabled={isExporting}
             className="px-4 py-2.5 bg-primary text-white rounded-2xl font-bold text-sm shadow-premium hover:shadow-premium-hover hover:scale-[1.02] transition-all flex items-center gap-2 disabled:opacity-50"
           >
             {isExporting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <FileText className="h-4 w-4" />
+              <Filter className="h-4 w-4" />
             )}
-            {isExporting ? "Gerando..." : "Gerar Relatório PDF"}
+            {isExporting ? "Gerando..." : "Gerar Relatório Filtrado"}
           </button>
+
+          <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
+            <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden border-0 rounded-[32px] shadow-2xl">
+              <DialogHeader className="p-8 bg-gradient-to-br from-primary to-primary/90 text-white">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
+                    <FileText className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-2xl font-extrabold font-heading">Personalizar Relatório PDF</DialogTitle>
+                    <p className="text-white/80 text-sm font-medium">Selecione os critérios para o detalhamento operacional</p>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <ScrollArea className="flex-1 p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Status Selection */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-primary" /> Status das Propostas
+                      </h3>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-[10px] font-bold h-7 px-2 hover:bg-primary/5 text-primary"
+                        onClick={() => toggleAll(selectedStatuses, setSelectedStatuses, allStatuses)}
+                      >
+                        {selectedStatuses.length === allStatuses.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 bg-muted/30 p-4 rounded-2xl border border-border/50">
+                      {allStatuses.map(status => (
+                        <div key={status} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedStatuses, setSelectedStatuses, status)}>
+                          <Checkbox checked={selectedStatuses.includes(status)} className="rounded-md border-2" />
+                          <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
+                            {STATUS_LABELS[status as ProposalStatus]}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Program Selection */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary" /> Programas de Crédito
+                      </h3>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-[10px] font-bold h-7 px-2 hover:bg-primary/5 text-primary"
+                        onClick={() => toggleAll(selectedPrograms, setSelectedPrograms, allPrograms)}
+                      >
+                        {selectedPrograms.length === allPrograms.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 bg-muted/30 p-4 rounded-2xl border border-border/50">
+                      {allPrograms.length > 0 ? allPrograms.map(program => (
+                        <div key={program} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedPrograms, setSelectedPrograms, program)}>
+                          <Checkbox checked={selectedPrograms.includes(program)} className="rounded-md border-2" />
+                          <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
+                            {program}
+                          </Label>
+                        </div>
+                      )) : (
+                        <p className="text-xs text-muted-foreground italic p-2 text-center">Nenhum programa encontrado</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Designer Selection */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                        <Search className="h-4 w-4 text-primary" /> Projetistas
+                      </h3>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-[10px] font-bold h-7 px-2 hover:bg-primary/5 text-primary"
+                        onClick={() => toggleAll(selectedDesigners, setSelectedDesigners, allDesigners)}
+                      >
+                        {selectedDesigners.length === allDesigners.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 bg-muted/30 p-4 rounded-2xl border border-border/50">
+                      {allDesigners.map(designer => (
+                        <div key={designer} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedDesigners, setSelectedDesigners, designer)}>
+                          <Checkbox checked={selectedDesigners.includes(designer)} className="rounded-md border-2" />
+                          <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
+                            {PROJECT_DESIGNER_LABELS[designer as ProjectDesigner]}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Date Filtering */}
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-primary" /> Mês de Registro
+                        </h3>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-[10px] font-bold h-7 px-2 hover:bg-primary/5 text-primary"
+                          onClick={() => toggleAll(selectedMonths, setSelectedMonths, allMonths)}
+                        >
+                          {selectedMonths.length === allMonths.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2 bg-muted/30 p-3 rounded-2xl border border-border/50">
+                        {allMonths.map(m => (
+                          <div 
+                            key={m} 
+                            onClick={() => toggleSelection(selectedMonths, setSelectedMonths, m)}
+                            className={`flex items-center justify-center p-2 rounded-xl border text-[10px] font-bold transition-all cursor-pointer ${
+                              selectedMonths.includes(m) 
+                              ? "bg-primary text-white border-primary shadow-sm" 
+                              : "bg-white text-muted-foreground border-border/60 hover:border-primary/40 hover:text-primary"
+                            }`}
+                          >
+                            {format(new Date(2024, Number(m) - 1, 1), "MMM", { locale: ptBR }).toUpperCase()}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-primary" /> Ano de Registro
+                        </h3>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-[10px] font-bold h-7 px-2 hover:bg-primary/5 text-primary"
+                          onClick={() => toggleAll(selectedYears, setSelectedYears, availableYears)}
+                        >
+                          {selectedYears.length === availableYears.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 bg-muted/30 p-3 rounded-2xl border border-border/50">
+                        {availableYears.map(y => (
+                          <div 
+                            key={y} 
+                            onClick={() => toggleSelection(selectedYears, setSelectedYears, y)}
+                            className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                              selectedYears.includes(y) 
+                              ? "bg-primary text-white border-primary shadow-sm" 
+                              : "bg-white text-muted-foreground border-border/60 hover:border-primary/40 hover:text-primary"
+                            }`}
+                          >
+                            {y}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
+
+              <DialogFooter className="p-8 bg-muted/30 border-t border-border/50 flex flex-col sm:flex-row gap-3 items-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsFilterDialogOpen(false)}
+                  className="w-full sm:w-auto rounded-xl font-bold text-sm"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={() => handleExportPDF({
+                    designers: selectedDesigners,
+                    statuses: selectedStatuses,
+                    months: selectedMonths,
+                    years: selectedYears,
+                    programs: selectedPrograms
+                  })}
+                  disabled={isExporting}
+                  className="w-full sm:w-auto bg-primary text-white rounded-xl font-bold text-sm shadow-premium hover:shadow-premium-hover transform active:scale-95 transition-all flex items-center gap-2"
+                >
+                  {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                  Gerar Relatório Personalizado
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <div className="bg-background/40 backdrop-blur-md p-1 rounded-xl border border-border/50 shadow-sm">
             <MonthYearFilter 
               month={filterMonth} 
