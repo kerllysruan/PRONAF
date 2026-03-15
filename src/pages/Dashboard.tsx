@@ -296,8 +296,9 @@ export default function Dashboard() {
     const months: { name: string; propostas: number; valor: number }[] = [];
     const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
     
-    // Initial cumulative value for all proposals before the 6-month window
-    let cumulativeValue = filteredProposals
+    // Initial cumulative value for ALL proposals before the 6-month window
+    // Important: Use 'proposals' to ignore date filters, but keep agency filter handled by hook
+    let cumulativeValue = proposals
       .filter(p => parseISO(p.created_at) < sixMonthsAgo)
       .reduce((s, p) => s + Number(p.requested_value), 0);
 
@@ -306,7 +307,7 @@ export default function Dashboard() {
       const start = startOfMonth(date);
       const end = endOfMonth(date);
       
-      const monthProposals = filteredProposals.filter((p) =>
+      const monthProposals = proposals.filter((p) =>
         isWithinInterval(parseISO(p.created_at), { start, end })
       );
       
@@ -320,7 +321,7 @@ export default function Dashboard() {
       });
     }
     return months;
-  }, [filteredProposals]);
+  }, [proposals]);
 
   const lineData = useMemo(() => {
     const programs: Record<string, { count: number; valor: number }> = {};
