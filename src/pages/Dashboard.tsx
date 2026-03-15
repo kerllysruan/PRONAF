@@ -1,3 +1,4 @@
+import { useState, useMemo, useRef } from "react";
 import {
   FileText, CheckCircle2, Search, DollarSign, TrendingUp, Loader2,
   Sparkles, AlertTriangle, Clock, BarChart3, PieChart as PieChartIcon, ArrowUpRight, ArrowDownRight,
