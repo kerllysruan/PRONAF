@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area, Legend,
+  PieChart, Pie, Cell, AreaChart, Area, Legend, LabelList,
 } from "recharts";
 import { useProposals } from "@/hooks/useProposals";
 import { useTeam } from "@/hooks/useTeam";
@@ -396,7 +396,9 @@ export default function Dashboard() {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
                   <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                    <LabelList dataKey="value" position="top" style={{ fontSize: '12px', fontWeight: 'bold', fill: 'hsl(215, 70%, 32%)' }} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -486,7 +488,14 @@ export default function Dashboard() {
                         "Valor Total"
                       ]} 
                     />
-                    <Bar dataKey="valor" fill="hsl(210, 80%, 55%)" radius={[0, 6, 6, 0]} />
+                    <Bar dataKey="valor" fill="hsl(210, 80%, 55%)" radius={[0, 6, 6, 0]}>
+                      <LabelList 
+                        dataKey="valor" 
+                        position="right" 
+                        style={{ fontSize: '10px', fontWeight: 'bold', fill: 'hsl(210, 80%, 40%)' }}
+                        formatter={(value: number) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value}
+                      />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
