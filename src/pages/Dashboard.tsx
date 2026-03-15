@@ -96,24 +96,31 @@ export default function Dashboard() {
       const addHeader = (title: string, pageType: string) => {
         const currentAgency = agencies.find(a => a.id === effectiveAgencyId);
         const agencyNameStr = currentAgency ? currentAgency.name.toUpperCase() : "GERAL";
+        const teamNames = members.map(m => m.full_name || 'Usuário').join(", ") || "Equipe Não Identificada";
         
         pdf.setFillColor(15, 23, 42); // Slate 900
-        pdf.rect(0, 0, pdfWidth, 40, "F");
+        pdf.rect(0, 0, pdfWidth, 45, "F");
         
         pdf.setTextColor(255, 255, 255);
-        pdf.setFontSize(20);
         pdf.setFont("helvetica", "bold");
-        pdf.text(`RELATÓRIO CARTEIRA AGRO AGENCIA ${agencyNameStr}`, margin, 18);
+        pdf.setFontSize(14);
+        pdf.text(`RELATÓRIO CARTEIRA AGRO AGENCIA ${agencyNameStr}`, margin, 15);
+        
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        pdf.text(`EQUIPE: ${teamNames}`, margin, 22, { maxWidth: contentWidth - 45 });
         
         pdf.setFontSize(10);
-        pdf.setFont("helvetica", "normal");
-        pdf.text(title.toUpperCase(), margin, 28);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(title.toUpperCase(), margin, 34);
         
-        pdf.text(`GERADO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, pdfWidth - margin, 18, { align: "right" });
-        pdf.text(pageType, pdfWidth - margin, 28, { align: "right" });
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        pdf.text(`GERADO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, pdfWidth - margin, 15, { align: "right" });
+        pdf.text(pageType, pdfWidth - margin, 22, { align: "right" });
         
         pdf.setDrawColor(51, 65, 85);
-        pdf.line(margin, 33, pdfWidth - margin, 33);
+        pdf.line(margin, 38, pdfWidth - margin, 38);
       };
 
       const addFooter = (pageNum: number) => {
@@ -135,7 +142,7 @@ export default function Dashboard() {
         });
         const kpiImg = kpiCanvas.toDataURL("image/jpeg", 0.8);
         const kpiRatio = contentWidth / kpiCanvas.width;
-        pdf.addImage(kpiImg, "JPEG", margin, 45, contentWidth, kpiCanvas.height * kpiRatio);
+        pdf.addImage(kpiImg, "JPEG", margin, 50, contentWidth, kpiCanvas.height * kpiRatio);
 
         if (statusChartRef.current) {
           const statusCanvas = await html2canvas(statusChartRef.current, { 
@@ -144,7 +151,7 @@ export default function Dashboard() {
           });
           const statusImg = statusCanvas.toDataURL("image/jpeg", 0.8);
           const statusRatio = contentWidth / statusCanvas.width;
-          pdf.addImage(statusImg, "JPEG", margin, 95, contentWidth, statusCanvas.height * statusRatio);
+          pdf.addImage(statusImg, "JPEG", margin, 100, contentWidth, statusCanvas.height * statusRatio);
         }
       }
       addFooter(1);
@@ -160,7 +167,7 @@ export default function Dashboard() {
         });
         const evoImg = evoCanvas.toDataURL("image/jpeg", 0.8);
         const evoRatio = contentWidth / evoCanvas.width;
-        pdf.addImage(evoImg, "JPEG", margin, 45, contentWidth, evoCanvas.height * evoRatio);
+        pdf.addImage(evoImg, "JPEG", margin, 50, contentWidth, evoCanvas.height * evoRatio);
       }
 
       if (designerChartRef.current) {
@@ -170,7 +177,7 @@ export default function Dashboard() {
         });
         const desImg = desCanvas.toDataURL("image/jpeg", 0.8);
         const desRatio = contentWidth / desCanvas.width;
-        pdf.addImage(desImg, "JPEG", margin, 155, contentWidth, desCanvas.height * desRatio);
+        pdf.addImage(desImg, "JPEG", margin, 160, contentWidth, desCanvas.height * desRatio);
       }
       addFooter(2);
 
@@ -185,7 +192,7 @@ export default function Dashboard() {
         });
         const progImg = progCanvas.toDataURL("image/jpeg", 0.8);
         const progRatio = contentWidth / progCanvas.width;
-        pdf.addImage(progImg, "JPEG", margin, 45, contentWidth, progCanvas.height * progRatio);
+        pdf.addImage(progImg, "JPEG", margin, 50, contentWidth, progCanvas.height * progRatio);
       }
       addFooter(3);
 
@@ -202,7 +209,7 @@ export default function Dashboard() {
       ]);
 
       autoTable(pdf, {
-        startY: 45,
+        startY: 50,
         head: [['PRODUTOR', 'CPF', 'VALOR (R$)', 'PROGRAMA DE CRÉDITO', 'DATA ENTRADA']],
         body: tableData,
         theme: 'grid',
