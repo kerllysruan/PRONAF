@@ -76,9 +76,31 @@ export default function Proposals() {
   }, [proposals]);
 
   const uniquePrograms = useMemo(() => {
-    const progs = new Set(proposals.map((p) => p.credit_program).filter(Boolean));
+    const defaults = [
+      'FNE/PRONAF A - RES. 5.183/24 (699)',
+      'FNE/PRONAF GRUPO "A" - FNE (368)',
+      'FNE/PRONAF MULHER - FNE (406)',
+      'FNE/RURAL (226)'
+    ];
+    const progs = new Set([...defaults, ...proposals.map((p) => p.credit_program).filter(Boolean)]);
     return Array.from(progs).sort((a, b) => a!.localeCompare(b!));
   }, [proposals]);
+
+  // Auto-classificação de programa para PRONAF A
+  useEffect(() => {
+    const curProg = formData.credit_program.toUpperCase();
+    const isPronafA = curProg.includes("PRONAF A") || curProg.includes("368") || curProg.includes("699") || curProg.includes("GRUPO \"A\"");
+    
+    if (isPronafA) {
+      const correctProg = formData.requested_value < 50000 
+        ? 'FNE/PRONAF A - RES. 5.183/24 (699)' 
+        : 'FNE/PRONAF GRUPO "A" - FNE (368)';
+      
+      if (formData.credit_program !== correctProg) {
+        setFormData(prev => ({ ...prev, credit_program: correctProg }));
+      }
+    }
+  }, [formData.requested_value]);
 
   const filtered = useMemo(() => {
     // Removed setPage(0) to prevent reset on data update
