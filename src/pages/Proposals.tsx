@@ -302,6 +302,19 @@ export default function Proposals() {
               </div>
 
               <div className="space-y-2">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Ordenar por</label>
+                <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
+                  <SelectTrigger className="h-11 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 shadow-inner">
+                    <SelectValue placeholder="Ordenar" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-border/50">
+                    <SelectItem value="data" className="rounded-lg">Data (Mais Novas)</SelectItem>
+                    <SelectItem value="nome" className="rounded-lg">Ordem Alfabética (A-Z)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Mês/Ano</label>
                 <MonthYearFilter
                   month={filterMonth}
