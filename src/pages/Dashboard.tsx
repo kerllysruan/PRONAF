@@ -101,7 +101,7 @@ export default function Dashboard() {
       months.push({
         name: format(date, "MMM/yy", { locale: ptBR }),
         propostas: monthProposals.length,
-        valor: monthProposals.reduce((s, p) => s + Number(p.requested_value), 0) / 1000,
+        valor: monthProposals.reduce((s, p) => s + Number(p.requested_value), 0),
       });
     }
     return months;
@@ -119,7 +119,7 @@ export default function Dashboard() {
       .map(([key, val]) => ({
         name: key,
         propostas: val.count,
-        valor: val.valor / 1000,
+        valor: val.valor,
       }))
       .sort((a, b) => b.valor - a.valor)
       .slice(0, 10); // Limita ao top 10 programas para não quebrar layout
@@ -381,7 +381,11 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={lineData} layout="vertical" margin={{ top: 5, right: 10, left: 60, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" />
-                    <XAxis type="number" tick={{ fontSize: 11 }} />
+                    <XAxis 
+                      type="number" 
+                      tick={{ fontSize: 11 }} 
+                      tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
+                    />
                     <YAxis 
                       type="category" 
                       dataKey="name" 
@@ -391,7 +395,10 @@ export default function Dashboard() {
                     />
                     <Tooltip 
                       contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px", maxWidth: "250px", whiteSpace: "normal" }} 
-                      formatter={(value: number) => [`R$ ${value.toFixed(1)}k`, "Valor"]} 
+                      formatter={(value: number) => [
+                        new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value), 
+                        "Valor Total"
+                      ]} 
                     />
                     <Bar dataKey="valor" fill="hsl(210, 80%, 55%)" radius={[0, 6, 6, 0]} />
                   </BarChart>
