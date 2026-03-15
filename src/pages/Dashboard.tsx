@@ -49,6 +49,22 @@ export default function Dashboard() {
   const dashboardRef = useRef<HTMLDivElement>(null);
   const reportListRef = useRef<HTMLDivElement>(null);
 
+
+
+  const availableYears = useMemo(() => {
+    const years = new Set(proposals.map((p) => String(getYear(parseISO(p.created_at)))));
+    return Array.from(years).sort().reverse();
+  }, [proposals]);
+
+  const filteredProposals = useMemo(() => {
+    return proposals.filter((p) => {
+      const d = parseISO(p.created_at);
+      if (filterMonth !== "all" && getMonth(d) + 1 !== Number(filterMonth)) return false;
+      if (filterYear !== "all" && getYear(d) !== Number(filterYear)) return false;
+      return true;
+    });
+  }, [proposals, filterMonth, filterYear]);
+
   const ongoingProposals = useMemo(() => 
     filteredProposals.filter(p => p.status === 'em_andamento'),
     [filteredProposals]
@@ -139,20 +155,6 @@ export default function Dashboard() {
       setIsExporting(false);
     }
   };
-
-  const availableYears = useMemo(() => {
-    const years = new Set(proposals.map((p) => String(getYear(parseISO(p.created_at)))));
-    return Array.from(years).sort().reverse();
-  }, [proposals]);
-
-  const filteredProposals = useMemo(() => {
-    return proposals.filter((p) => {
-      const d = parseISO(p.created_at);
-      if (filterMonth !== "all" && getMonth(d) + 1 !== Number(filterMonth)) return false;
-      if (filterYear !== "all" && getYear(d) !== Number(filterYear)) return false;
-      return true;
-    });
-  }, [proposals, filterMonth, filterYear]);
 
   const stats = useMemo(() => {
     const total = filteredProposals.length;
