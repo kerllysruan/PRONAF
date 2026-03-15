@@ -20,6 +20,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import { useRef } from "react";
+import { useAgency } from "@/contexts/AgencyContext";
 
 const CHART_COLORS = [
   "hsl(215, 70%, 32%)", "hsl(210, 80%, 55%)", "hsl(142, 71%, 35%)",
@@ -44,6 +45,7 @@ const STATUS_CHART_COLORS: Record<string, string> = {
 export default function Dashboard() {
   const { proposals, loading: loadingP } = useProposals();
   const { tasks, members, loading: loadingT } = useTeam();
+  const { agencies, effectiveAgencyId } = useAgency();
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
   const [isExporting, setIsExporting] = useState(false);
@@ -92,13 +94,16 @@ export default function Dashboard() {
       const contentWidth = pdfWidth - (margin * 2);
 
       const addHeader = (title: string, pageType: string) => {
+        const currentAgency = agencies.find(a => a.id === effectiveAgencyId);
+        const agencyNameStr = currentAgency ? currentAgency.name.toUpperCase() : "GERAL";
+        
         pdf.setFillColor(15, 23, 42); // Slate 900
         pdf.rect(0, 0, pdfWidth, 40, "F");
         
         pdf.setTextColor(255, 255, 255);
-        pdf.setFontSize(22);
+        pdf.setFontSize(20);
         pdf.setFont("helvetica", "bold");
-        pdf.text("PRONAF GESTÃO PREMIUM", margin, 18);
+        pdf.text(`RELATÓRIO CARTEIRA AGRO AGENCIA ${agencyNameStr}`, margin, 18);
         
         pdf.setFontSize(10);
         pdf.setFont("helvetica", "normal");
