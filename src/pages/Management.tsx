@@ -172,7 +172,7 @@ export default function Management() {
                           <SelectValue placeholder="Selecione o cargo..." />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl border-border/40 shadow-premium">
-                          {["Gerente", "Analista", "Técnico", "Assistente", "Estagiário"].map((r) => (
+                          {["ANALISTA BANCÁRIO", "AUXILIAR DE NEGÓCIOS", "GERENTE DE RELACIONAMENTO", "GERENTE GERAL", "SUPORTE ADMINISTRATIVO"].map((r) => (
                             <SelectItem key={r} value={r} className="rounded-lg">{r}</SelectItem>
                           ))}
                         </SelectContent>
