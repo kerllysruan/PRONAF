@@ -80,7 +80,12 @@ export default function Dashboard() {
     setIsExporting(true);
     
     try {
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pdf = new jsPDF({ 
+        orientation: "portrait", 
+        unit: "mm", 
+        format: "a4",
+        compress: true 
+      });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 15;
@@ -118,16 +123,23 @@ export default function Dashboard() {
       
       if (printableContentRef.current) {
         const kpiGrid = printableContentRef.current.querySelector('.grid') as HTMLElement;
-        const kpiCanvas = await html2canvas(kpiGrid, { scale: 3, backgroundColor: "#FFFFFF" });
-        const kpiImg = kpiCanvas.toDataURL("image/png");
+        const kpiCanvas = await html2canvas(kpiGrid, { 
+          scale: 2, 
+          backgroundColor: "#FFFFFF",
+          logging: false 
+        });
+        const kpiImg = kpiCanvas.toDataURL("image/jpeg", 0.8);
         const kpiRatio = contentWidth / kpiCanvas.width;
-        pdf.addImage(kpiImg, "PNG", margin, 45, contentWidth, kpiCanvas.height * kpiRatio);
+        pdf.addImage(kpiImg, "JPEG", margin, 45, contentWidth, kpiCanvas.height * kpiRatio);
 
         if (statusChartRef.current) {
-          const statusCanvas = await html2canvas(statusChartRef.current, { scale: 3 });
-          const statusImg = statusCanvas.toDataURL("image/png");
+          const statusCanvas = await html2canvas(statusChartRef.current, { 
+            scale: 2,
+            logging: false 
+          });
+          const statusImg = statusCanvas.toDataURL("image/jpeg", 0.8);
           const statusRatio = contentWidth / statusCanvas.width;
-          pdf.addImage(statusImg, "PNG", margin, 95, contentWidth, statusCanvas.height * statusRatio);
+          pdf.addImage(statusImg, "JPEG", margin, 95, contentWidth, statusCanvas.height * statusRatio);
         }
       }
       addFooter(1);
@@ -137,17 +149,23 @@ export default function Dashboard() {
       addHeader("Performance Temporal e Produtividade", "ANALYTICS & PERFORMANCE");
       
       if (evolutionChartRef.current) {
-        const evoCanvas = await html2canvas(evolutionChartRef.current, { scale: 3 });
-        const evoImg = evoCanvas.toDataURL("image/png");
+        const evoCanvas = await html2canvas(evolutionChartRef.current, { 
+          scale: 2,
+          logging: false 
+        });
+        const evoImg = evoCanvas.toDataURL("image/jpeg", 0.8);
         const evoRatio = contentWidth / evoCanvas.width;
-        pdf.addImage(evoImg, "PNG", margin, 45, contentWidth, evoCanvas.height * evoRatio);
+        pdf.addImage(evoImg, "JPEG", margin, 45, contentWidth, evoCanvas.height * evoRatio);
       }
 
       if (designerChartRef.current) {
-        const desCanvas = await html2canvas(designerChartRef.current, { scale: 3 });
-        const desImg = desCanvas.toDataURL("image/png");
+        const desCanvas = await html2canvas(designerChartRef.current, { 
+          scale: 2,
+          logging: false 
+        });
+        const desImg = desCanvas.toDataURL("image/jpeg", 0.8);
         const desRatio = contentWidth / desCanvas.width;
-        pdf.addImage(desImg, "PNG", margin, 155, contentWidth, desCanvas.height * desRatio);
+        pdf.addImage(desImg, "JPEG", margin, 155, contentWidth, desCanvas.height * desRatio);
       }
       addFooter(2);
 
@@ -156,10 +174,13 @@ export default function Dashboard() {
       addHeader("Segmentação por Programas de Crédito", "PORTFOLIO DETAIL");
       
       if (programsChartRef.current) {
-        const progCanvas = await html2canvas(programsChartRef.current, { scale: 3 });
-        const progImg = progCanvas.toDataURL("image/png");
+        const progCanvas = await html2canvas(programsChartRef.current, { 
+          scale: 2,
+          logging: false 
+        });
+        const progImg = progCanvas.toDataURL("image/jpeg", 0.8);
         const progRatio = contentWidth / progCanvas.width;
-        pdf.addImage(progImg, "PNG", margin, 45, contentWidth, progCanvas.height * progRatio);
+        pdf.addImage(progImg, "JPEG", margin, 45, contentWidth, progCanvas.height * progRatio);
       }
       addFooter(3);
 
