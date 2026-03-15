@@ -32,7 +32,6 @@ import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
-import { useRef } from "react";
 import { useAgency } from "@/contexts/AgencyContext";
 
 const CHART_COLORS = [
@@ -101,6 +100,8 @@ export default function Dashboard() {
   const reportListRef = useRef<HTMLDivElement>(null);
   const printableContentRef = useRef<HTMLDivElement>(null);
   const statusChartRef = useRef<HTMLDivElement>(null);
+  const evolutionChartRef = useRef<HTMLDivElement>(null);
+  const programsChartRef = useRef<HTMLDivElement>(null);
   const designerChartRef = useRef<HTMLDivElement>(null);
 
 
