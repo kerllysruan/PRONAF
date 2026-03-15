@@ -489,7 +489,22 @@ export default function Dashboard() {
                 </div>
               </DialogHeader>
 
-              <ScrollArea className="flex-1 p-8">
+              <ScrollArea className="flex-1 p-8 pr-12 scrollbar-premium">
+                <style dangerouslySetInnerHTML={{ __html: `
+                  .scrollbar-premium [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+                    width: 10px !important;
+                    display: block !important;
+                  }
+                  .scrollbar-premium [data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+                    background: rgba(0,0,0,0.05) !important;
+                    border-radius: 10px !important;
+                  }
+                  .scrollbar-premium [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+                    background: #1e40af !important;
+                    border: 2px solid white !important;
+                    border-radius: 10px !important;
+                  }
+                `}} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Status Selection */}
                   <div className="space-y-4">
@@ -506,7 +521,7 @@ export default function Dashboard() {
                         {selectedStatuses.length === allStatuses.length ? "Desmarcar Todos" : "Selecionar Todos"}
                       </Button>
                     </div>
-                    <ScrollArea className="h-40 bg-muted/30 p-4 rounded-2xl border border-border/50">
+                    <ScrollArea className="h-48 bg-muted/30 p-4 rounded-2xl border border-border/50 scrollbar-premium">
                       <div className="grid grid-cols-1 gap-2">
                         {allStatuses.map(status => (
                           <div key={status} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedStatuses, setSelectedStatuses, status)}>
@@ -535,7 +550,7 @@ export default function Dashboard() {
                         {selectedPrograms.length === allPrograms.length ? "Desmarcar Todos" : "Selecionar Todos"}
                       </Button>
                     </div>
-                    <ScrollArea className="h-40 bg-muted/30 p-4 rounded-2xl border border-border/50">
+                    <ScrollArea className="h-48 bg-muted/30 p-4 rounded-2xl border border-border/50 scrollbar-premium">
                       <div className="grid grid-cols-1 gap-2">
                         {allPrograms.length > 0 ? allPrograms.map(program => (
                           <div key={program} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedPrograms, setSelectedPrograms, program)}>
@@ -566,7 +581,7 @@ export default function Dashboard() {
                         {selectedDesigners.length === allDesigners.length ? "Desmarcar Todos" : "Selecionar Todos"}
                       </Button>
                     </div>
-                    <ScrollArea className="h-40 bg-muted/30 p-4 rounded-2xl border border-border/50">
+                    <ScrollArea className="h-48 bg-muted/30 p-4 rounded-2xl border border-border/50 scrollbar-premium">
                       <div className="grid grid-cols-1 gap-2">
                         {allDesigners.map(designer => (
                           <div key={designer} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedDesigners, setSelectedDesigners, designer)}>
