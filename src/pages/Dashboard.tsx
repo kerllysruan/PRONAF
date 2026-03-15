@@ -101,8 +101,6 @@ export default function Dashboard() {
   const reportListRef = useRef<HTMLDivElement>(null);
   const printableContentRef = useRef<HTMLDivElement>(null);
   const statusChartRef = useRef<HTMLDivElement>(null);
-  const evolutionChartRef = useRef<HTMLDivElement>(null);
-  const programsChartRef = useRef<HTMLDivElement>(null);
   const designerChartRef = useRef<HTMLDivElement>(null);
 
 
@@ -115,27 +113,30 @@ export default function Dashboard() {
   const filteredProposals = useMemo(() => {
     return proposals.filter((p) => {
       const d = parseISO(p.created_at);
+      const pMonth = (getMonth(d) + 1).toString();
+      const pYear = getYear(d).toString();
+
+      // Core Filters (Month/Year from top bar)
       if (filterMonth !== "all" && getMonth(d) + 1 !== Number(filterMonth)) return false;
       if (filterYear !== "all" && getYear(d) !== Number(filterYear)) return false;
-      return true;
+
+      // Report/Global Extension Filters
+      const matchesDesigner = selectedDesigners.length === 0 || (p.project_designer && selectedDesigners.includes(p.project_designer));
+      const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(p.status);
+      const matchesProgram = selectedPrograms.length === 0 || (p.credit_program && selectedPrograms.includes(p.credit_program));
+
+      return matchesDesigner && matchesStatus && matchesProgram;
     });
-  }, [proposals, filterMonth, filterYear]);
+  }, [proposals, filterMonth, filterYear, selectedDesigners, selectedStatuses, selectedPrograms]);
 
   const ongoingProposals = useMemo(() => 
-    filteredProposals.filter(p => p.status === 'em_andamento'),
+    filteredProposals.filter(p => !['negada', 'aprovada', 'contrato_liberado'].includes(p.status)),
     [filteredProposals]
   );
 
-  const handleExportPDF = async (customFilters?: {
-    designers?: string[];
-    statuses?: string[];
-    months?: string[];
-    years?: string[];
-    programs?: string[];
-  }) => {
+  const handleExportPDF = async () => {
     setIsExporting(true);
-    // If we have custom filters, close the dialog
-    if (customFilters) setIsFilterDialogOpen(false);
+    setIsFilterDialogOpen(false);
     
     try {
       const pdf = new jsPDF({ 
@@ -235,7 +236,7 @@ export default function Dashboard() {
       }
       addFooter(1);
 
-      // PAGE 2: ANALYTICS & DESIGNERS
+      // PAGE 2: ANALYTICS & PERFORMANCE
       pdf.addPage();
       addHeader("Performance Temporal e Produtividade", "ANALYTICS & PERFORMANCE");
       
@@ -274,28 +275,12 @@ export default function Dashboard() {
         pdf.addImage(progImg, "JPEG", margin, 70, contentWidth, progCanvas.height * progRatio);
       }
       addFooter(3);
-
+      
       // PAGE 4+: DATA TABLE (NATIVE)
       pdf.addPage();
       addHeader("Detalhamento Operacional de Propostas", "OPERATIONAL DATA");
 
-      // Apply custom filters if provided
-      let proposalsToPrint = ongoingProposals;
-      if (customFilters) {
-        proposalsToPrint = proposals.filter(p => {
-          const d = parseISO(p.created_at);
-          const pMonth = (getMonth(d) + 1).toString();
-          const pYear = getYear(d).toString();
-
-          const matchesDesigner = !customFilters.designers?.length || (p.project_designer && customFilters.designers.includes(p.project_designer));
-          const matchesStatus = !customFilters.statuses?.length || customFilters.statuses.includes(p.status);
-          const matchesMonth = !customFilters.months?.length || customFilters.months.includes(pMonth);
-          const matchesYear = !customFilters.years?.length || customFilters.years.includes(pYear);
-          const matchesProgram = !customFilters.programs?.length || (p.credit_program && customFilters.programs.includes(p.credit_program));
-
-          return matchesDesigner && matchesStatus && matchesMonth && matchesYear && matchesProgram;
-        });
-      }
+      const proposalsToPrint = ongoingProposals;
 
       const tableData = proposalsToPrint.map(p => [
         p.producer_name,
@@ -1174,6 +1159,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }
