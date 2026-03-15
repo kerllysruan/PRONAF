@@ -53,6 +53,7 @@ export default function Dashboard() {
   const statusChartRef = useRef<HTMLDivElement>(null);
   const evolutionChartRef = useRef<HTMLDivElement>(null);
   const programsChartRef = useRef<HTMLDivElement>(null);
+  const designerChartRef = useRef<HTMLDivElement>(null);
 
 
 
@@ -85,75 +86,86 @@ export default function Dashboard() {
       const margin = 15;
       const contentWidth = pdfWidth - (margin * 2);
 
-      // --- PAGINA 1: VISION & STATUS ---
-      // Header Page 1
-      pdf.setFillColor(30, 58, 138); 
-      pdf.rect(0, 0, pdfWidth, 25, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(18);
-      pdf.setFont("helvetica", "bold");
-      pdf.text("RELATÓRIO DE GESTÃO - PRONAF", margin, 16);
-      
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`, pdfWidth - margin, 16, { align: "right" });
+      const addHeader = (title: string, pageType: string) => {
+        pdf.setFillColor(15, 23, 42); // Slate 900
+        pdf.rect(0, 0, pdfWidth, 40, "F");
+        
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(22);
+        pdf.setFont("helvetica", "bold");
+        pdf.text("PRONAF GESTÃO PREMIUM", margin, 18);
+        
+        pdf.setFontSize(10);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(title.toUpperCase(), margin, 28);
+        
+        pdf.text(`GERADO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, pdfWidth - margin, 18, { align: "right" });
+        pdf.text(pageType, pdfWidth - margin, 28, { align: "right" });
+        
+        pdf.setDrawColor(51, 65, 85);
+        pdf.line(margin, 33, pdfWidth - margin, 33);
+      };
 
-      // KPIs capture (printableContentRef top block)
+      const addFooter = (pageNum: number) => {
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(`Documento de Gestão Estratégica - PRONAF Digital`, margin, pdfHeight - 10);
+        pdf.text(`Página ${pageNum}`, pdfWidth - margin, pdfHeight - 10, { align: "right" });
+      };
+
+      // PAGE 1: EXECUTIVE SUMMARY & STATUS
+      addHeader("Visão Geral e Distribuição de Status", "SUMMIT EXECUTIVE");
+      
       if (printableContentRef.current) {
-        const kpiCanvas = await html2canvas(printableContentRef.current.querySelector('.grid') as HTMLElement, { scale: 3 });
+        const kpiGrid = printableContentRef.current.querySelector('.grid') as HTMLElement;
+        const kpiCanvas = await html2canvas(kpiGrid, { scale: 3, backgroundColor: "#FFFFFF" });
         const kpiImg = kpiCanvas.toDataURL("image/png");
         const kpiRatio = contentWidth / kpiCanvas.width;
-        pdf.addImage(kpiImg, "PNG", margin, 35, contentWidth, kpiCanvas.height * kpiRatio);
+        pdf.addImage(kpiImg, "PNG", margin, 45, contentWidth, kpiCanvas.height * kpiRatio);
+
+        if (statusChartRef.current) {
+          const statusCanvas = await html2canvas(statusChartRef.current, { scale: 3 });
+          const statusImg = statusCanvas.toDataURL("image/png");
+          const statusRatio = contentWidth / statusCanvas.width;
+          pdf.addImage(statusImg, "PNG", margin, 95, contentWidth, statusCanvas.height * statusRatio);
+        }
       }
+      addFooter(1);
 
-      // Status Chart (statusChartRef)
-      if (statusChartRef.current) {
-        const statusCanvas = await html2canvas(statusChartRef.current, { scale: 3 });
-        const statusImg = statusCanvas.toDataURL("image/png");
-        const statusRatio = contentWidth / statusCanvas.width;
-        pdf.addImage(statusImg, "PNG", margin, 75, contentWidth, statusCanvas.height * statusRatio);
-      }
-
-      // Footer P1
-      pdf.setFontSize(8);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text(`Página 1 - Visão de Status e Indicadores`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
-
-      // --- PAGINA 2: ANALYTICS ---
+      // PAGE 2: ANALYTICS & DESIGNERS
       pdf.addPage();
-      pdf.setFillColor(30, 58, 138); 
-      pdf.rect(0, 0, pdfWidth, 15, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(12);
-      pdf.text("ANÁLISE TEMPORAL E POR PROGRAMA", margin, 10);
-
-      // Evolution Chart (evolutionChartRef)
+      addHeader("Performance Temporal e Produtividade", "ANALYTICS & PERFORMANCE");
+      
       if (evolutionChartRef.current) {
         const evoCanvas = await html2canvas(evolutionChartRef.current, { scale: 3 });
         const evoImg = evoCanvas.toDataURL("image/png");
         const evoRatio = contentWidth / evoCanvas.width;
-        pdf.addImage(evoImg, "PNG", margin, 25, contentWidth, evoCanvas.height * evoRatio);
+        pdf.addImage(evoImg, "PNG", margin, 45, contentWidth, evoCanvas.height * evoRatio);
       }
 
-      // Programs Chart (programsChartRef)
+      if (designerChartRef.current) {
+        const desCanvas = await html2canvas(designerChartRef.current, { scale: 3 });
+        const desImg = desCanvas.toDataURL("image/png");
+        const desRatio = contentWidth / desCanvas.width;
+        pdf.addImage(desImg, "PNG", margin, 155, contentWidth, desCanvas.height * desRatio);
+      }
+      addFooter(2);
+
+      // PAGE 3: PROGRAMS RANKING
+      pdf.addPage();
+      addHeader("Segmentação por Programas de Crédito", "PORTFOLIO DETAIL");
+      
       if (programsChartRef.current) {
         const progCanvas = await html2canvas(programsChartRef.current, { scale: 3 });
         const progImg = progCanvas.toDataURL("image/png");
         const progRatio = contentWidth / progCanvas.width;
-        pdf.addImage(progImg, "PNG", margin, 130, contentWidth, progCanvas.height * progRatio);
+        pdf.addImage(progImg, "PNG", margin, 45, contentWidth, progCanvas.height * progRatio);
       }
+      addFooter(3);
 
-      // Footer P2
-      pdf.setTextColor(150, 150, 150);
-      pdf.text(`Página 2 - Evolução e Segmentação`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
-
-      // --- PAGINA 3+: TABELA NATIVA (AUTOTABLE) ---
+      // PAGE 4+: DATA TABLE (NATIVE)
       pdf.addPage();
-      pdf.setFillColor(30, 58, 138); 
-      pdf.rect(0, 0, pdfWidth, 15, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(12);
-      pdf.text("DETALHAMENTO E OPERACIONAL (Copiável)", margin, 10);
+      addHeader("Detalhamento Operacional de Propostas", "OPERATIONAL DATA");
 
       const tableData = ongoingProposals.map(p => [
         p.producer_name,
@@ -164,26 +176,27 @@ export default function Dashboard() {
       ]);
 
       autoTable(pdf, {
-        startY: 25,
+        startY: 45,
         head: [['PRODUTOR', 'CPF', 'VALOR (R$)', 'PROGRAMA DE CRÉDITO', 'DATA ENTRADA']],
         body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [30, 58, 138], fontSize: 9, halign: 'center' },
-        styles: { fontSize: 8, cellPadding: 3 },
+        theme: 'grid',
+        headStyles: { fillColor: [15, 23, 42], fontSize: 9, halign: 'center' },
+        styles: { fontSize: 8, cellPadding: 4, lineColor: [226, 232, 240] },
         columnStyles: {
           2: { halign: 'right', fontStyle: 'bold' },
           4: { halign: 'center' }
         },
         margin: { left: margin, right: margin },
         didDrawPage: (data) => {
-          // Footer for table pages
-          pdf.setFontSize(8);
-          pdf.setTextColor(150, 150, 150);
-          pdf.text(`Página ${pdf.internal.pages.length - 1} - Listagem de Propostas`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
+          if (pdf.internal.pages.length > 4) {
+             addFooter(pdf.internal.pages.length - 1);
+          }
         }
       });
+      
+      addFooter(pdf.internal.pages.length - 1);
 
-      pdf.save(`Relatorio_PRONAF_Consultivo_${format(new Date(), "yyyyMMdd")}.pdf`);
+      pdf.save(`RELATORIO_PREMIUM_PRONAF_${format(new Date(), "yyyyMMdd")}.pdf`);
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
     } finally {
@@ -257,6 +270,17 @@ export default function Dashboard() {
       }))
       .sort((a, b) => b.valor - a.valor)
       .slice(0, 10); // Limita ao top 10 programas para não quebrar layout
+  }, [filteredProposals]);
+
+  const designerChartData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredProposals.forEach(p => {
+      const designer = p.owner || 'Não Definido';
+      counts[designer] = (counts[designer] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
   }, [filteredProposals]);
 
   const docStats = useMemo(() => {
@@ -709,6 +733,24 @@ export default function Dashboard() {
                         style={{ fontSize: '12px', fontWeight: 'bold', fill: '#1E293B' }} 
                         offset={15}
                       />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div ref={designerChartRef} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+              <h3 className="text-lg font-bold mb-6 text-slate-700 flex items-center gap-2">
+                <PieChartIcon className="h-5 w-5" /> Estatísticas por Projetista (Carga de Trabalho)
+              </h3>
+              <div className="h-[500px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={designerChartData} margin={{ top: 20, right: 30, left: 20, bottom: 30 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 500 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={50} fill="#1E3A8A">
+                       <LabelList dataKey="value" position="top" style={{ fontSize: '14px', fontWeight: 'bold', fill: '#1E293B' }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
