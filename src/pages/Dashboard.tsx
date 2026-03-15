@@ -48,6 +48,7 @@ export default function Dashboard() {
   const [isExporting, setIsExporting] = useState(false);
   const dashboardRef = useRef<HTMLDivElement>(null);
   const reportListRef = useRef<HTMLDivElement>(null);
+  const printableContentRef = useRef<HTMLDivElement>(null);
 
 
 
@@ -71,81 +72,52 @@ export default function Dashboard() {
   );
 
   const handleExportPDF = async () => {
-    if (!dashboardRef.current) return;
+    if (!printableContentRef.current || !reportListRef.current) return;
     setIsExporting(true);
     
     try {
-      const canvas = await html2canvas(dashboardRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#FFFFFF",
-        logging: false,
-      });
-      
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-      
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      // Page 1: Dashboard
-      const imgData = canvas.toDataURL("image/png");
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = pdfWidth / imgWidth;
-      const finaleHeight = imgHeight * ratio;
+      const margin = 10;
+      const contentWidth = pdfWidth - (margin * 2);
 
-      // Header Blue Bar
-      pdf.setFillColor(30, 58, 138); 
-      pdf.rect(0, 0, pdfWidth, 25, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(18);
-      pdf.setFont("helvetica", "bold");
-      pdf.text("RELATÓRIO DE GESTÃO - PRONAF", 10, 16);
-      
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "normal");
-      const dateStr = format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR });
-      pdf.text(`Gerado em: ${dateStr}`, pdfWidth - 10, 16, { align: "right" });
-
-      pdf.addImage(imgData, "PNG", 0, 30, pdfWidth, finaleHeight);
-      
-      // Page 1 Footer
-      pdf.setFontSize(8);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text(`Página 1 - Visão Geral do Dashboard`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
-
-      // Page 2+: Detailed List if ongoingProposals exists
-      if (ongoingProposals.length > 0 && reportListRef.current) {
-        pdf.addPage();
+      // Função auxiliar para capturar e adicionar seção ao PDF
+      const addSectionToPDF = async (element: HTMLElement, title: string, isFirstPage: boolean = false) => {
+        if (!isFirstPage) pdf.addPage();
         
-        // Secondary Page Header
+        // Header
         pdf.setFillColor(30, 58, 138); 
         pdf.rect(0, 0, pdfWidth, 20, "F");
         pdf.setTextColor(255, 255, 255);
         pdf.setFontSize(14);
-        pdf.text("DETALHAMENTO: PROPOSTAS EM ANDAMENTO", 10, 13);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(title, margin, 13);
         
-        const listCanvas = await html2canvas(reportListRef.current, {
+        const canvas = await html2canvas(element, {
           scale: 2,
           useCORS: true,
           backgroundColor: "#FFFFFF",
         });
         
-        const listImgData = listCanvas.toDataURL("image/png");
-        const listImgWidth = listCanvas.width;
-        const listImgHeight = listCanvas.height;
-        const listRatio = pdfWidth / listImgWidth;
-        const listFinalHeight = listImgHeight * listRatio;
-
-        pdf.addImage(listImgData, "PNG", 0, 25, pdfWidth, listFinalHeight);
+        const imgData = canvas.toDataURL("image/png");
+        const ratio = contentWidth / canvas.width;
+        const imgHeight = canvas.height * ratio;
         
+        pdf.addImage(imgData, "PNG", margin, 25, contentWidth, imgHeight);
+        
+        // Footer
         pdf.setFontSize(8);
         pdf.setTextColor(150, 150, 150);
-        pdf.text(`Página 2 - Lista Detalhada`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
+        pdf.text(`RELATÓRIO PRONAF - ${title}`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
+      };
+
+      // 1. Capture KPIs Overview (First Page top)
+      await addSectionToPDF(printableContentRef.current, "VISÃO GERAL EXECUTIVA", true);
+
+      // 2. Capture Propostas em Andamento (Next Page)
+      if (ongoingProposals.length > 0) {
+        await addSectionToPDF(reportListRef.current, "DETALHAMENTO: PROPOSTAS EM ANDAMENTO");
       }
 
       pdf.save(`Relatorio_PRONAF_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
@@ -591,32 +563,125 @@ export default function Dashboard() {
       </Card>
       </div>
 
-      {/* Hidden section for PDF Report List */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '0', width: '800px' }}>
-        <div ref={reportListRef} className="bg-white p-8">
-          <h2 className="text-xl font-bold mb-6 text-slate-800 border-b pb-2">Propostas em Andamento</h2>
-          <table className="w-full text-sm border-collapse">
+      {/* Hidden section for PDF Report Layout (Vertical & Large Graphics) */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '0', width: '1000px' }}>
+        <div ref={printableContentRef} className="bg-white p-10 space-y-12">
+          {/* KPI Summary Block */}
+          <div className="grid grid-cols-4 gap-6 border-b pb-8">
+            <div className="text-center">
+              <p className="text-xs text-slate-500 font-bold uppercase">Total Propostas</p>
+              <p className="text-3xl font-black text-slate-800">{stats.total}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-500 font-bold uppercase">Volume Total</p>
+              <p className="text-2xl font-black text-slate-800">{formatCurrency(stats.valorTotal)}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-500 font-bold uppercase">Assinados</p>
+              <p className="text-3xl font-black text-emerald-600">{stats.aprovadas}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xs text-slate-500 font-bold uppercase">Taxa Sucesso</p>
+              <p className="text-3xl font-black text-blue-600">{stats.taxaAprovacao}%</p>
+            </div>
+          </div>
+
+          {/* Large Vertical Charts Section */}
+          <div className="space-y-16">
+            <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+              <h3 className="text-lg font-bold mb-6 text-slate-700 flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" /> Distribuição de Propostas por Status
+              </h3>
+              <div className="h-[500px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={statusChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{ fontSize: 12, fontWeight: 500 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={60}>
+                      <LabelList dataKey="value" position="top" style={{ fontSize: '14px', fontWeight: 'bold', fill: '#1E293B' }} />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+              <h3 className="text-lg font-bold mb-6 text-slate-700 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" /> Evolução de Volume Financeiro Mensal
+              </h3>
+              <div className="h-[500px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={monthlyData} margin={{ top: 20, right: 30, left: 40, bottom: 20 }}>
+                    <defs>
+                      <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#1E3A8A" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#1E3A8A" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 500 }} />
+                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `R$${v/1000}k`} />
+                    <Area type="monotone" dataKey="valor" stroke="#1E3A8A" fillOpacity={1} fill="url(#colorValor)" strokeWidth={4} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+              <h3 className="text-lg font-bold mb-6 text-slate-700 flex items-center gap-2">
+                <DollarSign className="h-5 w-5" /> Ranking por Programa de Crédito (Valores Reais)
+              </h3>
+              <div className="h-[600px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={lineData} layout="vertical" margin={{ top: 10, right: 150, left: 180, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
+                    <XAxis type="number" hide />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fontWeight: 600 }} width={170} />
+                    <Bar dataKey="valor" fill="#3B82F6" radius={[0, 10, 10, 0]}>
+                      <LabelList 
+                        dataKey="valor" 
+                        position="right" 
+                        formatter={(v: number) => formatCurrency(v)} 
+                        style={{ fontSize: '12px', fontWeight: 'bold', fill: '#1E293B' }} 
+                        offset={15}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Propostas em Andamento List Section */}
+        <div ref={reportListRef} className="bg-white p-10 mt-10">
+          <h2 className="text-2xl font-black mb-8 text-slate-800 border-b-4 border-blue-900 pb-3 flex items-center gap-3">
+             <Clock className="h-7 w-7 text-blue-900" /> Detalhamento de Propostas em Andamento
+          </h2>
+          <table className="w-full text-sm border-collapse rounded-2xl overflow-hidden shadow-sm">
             <thead>
-              <tr className="bg-slate-50 text-slate-600">
-                <th className="border p-2 text-left">Produtor</th>
-                <th className="border p-2 text-left">Valor Solicitado</th>
-                <th className="border p-2 text-left">Programa</th>
-                <th className="border p-2 text-left">Data Entrada</th>
+              <tr className="bg-blue-900 text-white">
+                <th className="p-4 text-left font-bold uppercase tracking-wider">Produtor</th>
+                <th className="p-4 text-left font-bold uppercase tracking-wider">Valor Solicitado</th>
+                <th className="p-4 text-left font-bold uppercase tracking-wider">Programa de Crédito</th>
+                <th className="p-4 text-left font-bold uppercase tracking-wider">Data Entrada</th>
               </tr>
             </thead>
             <tbody>
-              {ongoingProposals.map((p) => (
-                <tr key={p.id}>
-                  <td className="border p-2 font-medium">{p.producer_name}</td>
-                  <td className="border p-2">{formatCurrency(Number(p.requested_value))}</td>
-                  <td className="border p-2 text-xs">{p.credit_program || '-'}</td>
-                  <td className="border p-2">{format(parseISO(p.created_at), "dd/MM/yyyy")}</td>
+              {ongoingProposals.map((p, idx) => (
+                <tr key={p.id} className={idx % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+                  <td className="p-4 border-b font-semibold text-slate-700">{p.producer_name}</td>
+                  <td className="p-4 border-b font-bold text-slate-900">{formatCurrency(Number(p.requested_value))}</td>
+                  <td className="p-4 border-b text-slate-600 text-xs">{p.credit_program || 'Não Informado'}</td>
+                  <td className="p-4 border-b text-slate-500 font-medium">{format(parseISO(p.created_at), "dd/MM/yyyy")}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="mt-6 text-[10px] text-slate-400">
-            Total de registros: {ongoingProposals.length}
+          <div className="mt-8 flex justify-between items-center bg-slate-100 p-4 rounded-xl">
+             <span className="text-slate-600 font-bold uppercase text-xs">Total de Registros em Andamento:</span>
+             <span className="text-xl font-black text-blue-900">{ongoingProposals.length}</span>
           </div>
         </div>
       </div>
