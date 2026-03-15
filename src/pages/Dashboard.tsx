@@ -506,16 +506,18 @@ export default function Dashboard() {
                         {selectedStatuses.length === allStatuses.length ? "Desmarcar Todos" : "Selecionar Todos"}
                       </Button>
                     </div>
-                    <div className="grid grid-cols-1 gap-2 bg-muted/30 p-4 rounded-2xl border border-border/50">
-                      {allStatuses.map(status => (
-                        <div key={status} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedStatuses, setSelectedStatuses, status)}>
-                          <Checkbox checked={selectedStatuses.includes(status)} className="rounded-md border-2" />
-                          <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
-                            {STATUS_LABELS[status as ProposalStatus]}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
+                    <ScrollArea className="h-40 bg-muted/30 p-4 rounded-2xl border border-border/50">
+                      <div className="grid grid-cols-1 gap-2">
+                        {allStatuses.map(status => (
+                          <div key={status} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedStatuses, setSelectedStatuses, status)}>
+                            <Checkbox checked={selectedStatuses.includes(status)} className="rounded-md border-2" />
+                            <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
+                              {STATUS_LABELS[status as ProposalStatus]}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   </div>
 
                   {/* Program Selection */}
@@ -533,18 +535,20 @@ export default function Dashboard() {
                         {selectedPrograms.length === allPrograms.length ? "Desmarcar Todos" : "Selecionar Todos"}
                       </Button>
                     </div>
-                    <div className="grid grid-cols-1 gap-2 bg-muted/30 p-4 rounded-2xl border border-border/50">
-                      {allPrograms.length > 0 ? allPrograms.map(program => (
-                        <div key={program} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedPrograms, setSelectedPrograms, program)}>
-                          <Checkbox checked={selectedPrograms.includes(program)} className="rounded-md border-2" />
-                          <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
-                            {program}
-                          </Label>
-                        </div>
-                      )) : (
-                        <p className="text-xs text-muted-foreground italic p-2 text-center">Nenhum programa encontrado</p>
-                      )}
-                    </div>
+                    <ScrollArea className="h-40 bg-muted/30 p-4 rounded-2xl border border-border/50">
+                      <div className="grid grid-cols-1 gap-2">
+                        {allPrograms.length > 0 ? allPrograms.map(program => (
+                          <div key={program} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedPrograms, setSelectedPrograms, program)}>
+                            <Checkbox checked={selectedPrograms.includes(program)} className="rounded-md border-2" />
+                            <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
+                              {program}
+                            </Label>
+                          </div>
+                        )) : (
+                          <p className="text-xs text-muted-foreground italic p-2 text-center">Nenhum programa encontrado</p>
+                        )}
+                      </div>
+                    </ScrollArea>
                   </div>
 
                   {/* Designer Selection */}
@@ -562,16 +566,18 @@ export default function Dashboard() {
                         {selectedDesigners.length === allDesigners.length ? "Desmarcar Todos" : "Selecionar Todos"}
                       </Button>
                     </div>
-                    <div className="grid grid-cols-1 gap-2 bg-muted/30 p-4 rounded-2xl border border-border/50">
-                      {allDesigners.map(designer => (
-                        <div key={designer} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedDesigners, setSelectedDesigners, designer)}>
-                          <Checkbox checked={selectedDesigners.includes(designer)} className="rounded-md border-2" />
-                          <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
-                            {PROJECT_DESIGNER_LABELS[designer as ProjectDesigner]}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
+                    <ScrollArea className="h-40 bg-muted/30 p-4 rounded-2xl border border-border/50">
+                      <div className="grid grid-cols-1 gap-2">
+                        {allDesigners.map(designer => (
+                          <div key={designer} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedDesigners, setSelectedDesigners, designer)}>
+                            <Checkbox checked={selectedDesigners.includes(designer)} className="rounded-md border-2" />
+                            <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
+                              {PROJECT_DESIGNER_LABELS[designer as ProjectDesigner]}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   </div>
 
                   {/* Date Filtering */}
