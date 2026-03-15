@@ -7,6 +7,7 @@ import { useToast } from "./use-toast";
 export interface DbTeamMember {
   id: string;
   user_id: string;
+  agency_id: string;
   name: string;
   role: string;
   color: string;
@@ -78,9 +79,26 @@ export function useTeam() {
 
   const addMember = async (data: { name: string; role: string; color: string }) => {
     if (!user) return;
-    const { error } = await supabase.from("team_members").insert({ ...data, user_id: user.id });
-    if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Membro adicionado!" }); await fetchAll(true); }
+    // Use effectiveAgencyId if available, otherwise fallback to user's primary agencyId
+    const targetAgencyId = (effectiveAgencyId && effectiveAgencyId !== "all") ? effectiveAgencyId : agencyId;
+    
+    if (!targetAgencyId) {
+      toast({ title: "Erro", description: "Agência não identificada.", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("team_members").insert({ 
+      ...data, 
+      user_id: user.id,
+      agency_id: targetAgencyId 
+    });
+
+    if (error) {
+      toast({ title: "Erro ao adicionar membro", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Membro adicionado com sucesso!" });
+      await fetchAll(true);
+    }
   };
 
   const removeMember = async (id: string) => {
@@ -90,9 +108,25 @@ export function useTeam() {
 
   const createTask = async (data: Omit<DbDocumentTask, "id" | "user_id" | "created_at" | "agency_id">) => {
     if (!user) return;
-    const { error } = await supabase.from("document_tasks").insert({ ...data, user_id: user.id, agency_id: agencyId });
-    if (error) toast({ title: "Erro", description: error.message, variant: "destructive" });
-    else { toast({ title: "Tarefa criada!" }); await fetchAll(true); }
+    const targetAgencyId = (effectiveAgencyId && effectiveAgencyId !== "all") ? effectiveAgencyId : agencyId;
+
+    if (!targetAgencyId) {
+      toast({ title: "Erro", description: "Agência não identificada para a tarefa.", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("document_tasks").insert({ 
+      ...data, 
+      user_id: user.id, 
+      agency_id: targetAgencyId 
+    });
+
+    if (error) {
+      toast({ title: "Erro ao criar tarefa", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Tarefa criada com sucesso!" });
+      await fetchAll(true);
+    }
   };
 
   const updateTaskStatus = async (id: string, status: string) => {
