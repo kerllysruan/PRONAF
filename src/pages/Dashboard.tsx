@@ -47,6 +47,12 @@ export default function Dashboard() {
   const [filterYear, setFilterYear] = useState("all");
   const [isExporting, setIsExporting] = useState(false);
   const dashboardRef = useRef<HTMLDivElement>(null);
+  const reportListRef = useRef<HTMLDivElement>(null);
+
+  const ongoingProposals = useMemo(() => 
+    filteredProposals.filter(p => p.status === 'em_andamento'),
+    [filteredProposals]
+  );
 
   const handleExportPDF = async () => {
     if (!dashboardRef.current) return;
@@ -56,11 +62,10 @@ export default function Dashboard() {
       const canvas = await html2canvas(dashboardRef.current, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#F8FAFC",
+        backgroundColor: "#FFFFFF",
         logging: false,
       });
       
-      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -69,20 +74,17 @@ export default function Dashboard() {
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // Page 1: Dashboard
+      const imgData = canvas.toDataURL("image/png");
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      
-      const finaleWidth = imgWidth * ratio;
+      const ratio = pdfWidth / imgWidth;
       const finaleHeight = imgHeight * ratio;
-      
-      const x = (pdfWidth - finaleWidth) / 2;
-      const y = 10; // Top margin
 
-      // Header
-      pdf.setFillColor(30, 58, 138); // Dark Blue
+      // Header Blue Bar
+      pdf.setFillColor(30, 58, 138); 
       pdf.rect(0, 0, pdfWidth, 25, "F");
-      
       pdf.setTextColor(255, 255, 255);
       pdf.setFontSize(18);
       pdf.setFont("helvetica", "bold");
@@ -93,13 +95,42 @@ export default function Dashboard() {
       const dateStr = format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR });
       pdf.text(`Gerado em: ${dateStr}`, pdfWidth - 10, 16, { align: "right" });
 
-      // Content
-      pdf.addImage(imgData, "PNG", x, 30, finaleWidth, finaleHeight);
+      pdf.addImage(imgData, "PNG", 0, 30, pdfWidth, finaleHeight);
       
-      // Footer
+      // Page 1 Footer
       pdf.setFontSize(8);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text("PRONAF Plataforma de Gestão - Relatório Interno", pdfWidth / 2, pdfHeight - 10, { align: "center" });
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(`Página 1 - Visão Geral do Dashboard`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
+
+      // Page 2+: Detailed List if ongoingProposals exists
+      if (ongoingProposals.length > 0 && reportListRef.current) {
+        pdf.addPage();
+        
+        // Secondary Page Header
+        pdf.setFillColor(30, 58, 138); 
+        pdf.rect(0, 0, pdfWidth, 20, "F");
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFontSize(14);
+        pdf.text("DETALHAMENTO: PROPOSTAS EM ANDAMENTO", 10, 13);
+        
+        const listCanvas = await html2canvas(reportListRef.current, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#FFFFFF",
+        });
+        
+        const listImgData = listCanvas.toDataURL("image/png");
+        const listImgWidth = listCanvas.width;
+        const listImgHeight = listCanvas.height;
+        const listRatio = pdfWidth / listImgWidth;
+        const listFinalHeight = listImgHeight * listRatio;
+
+        pdf.addImage(listImgData, "PNG", 0, 25, pdfWidth, listFinalHeight);
+        
+        pdf.setFontSize(8);
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(`Página 2 - Lista Detalhada`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
+      }
 
       pdf.save(`Relatorio_PRONAF_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
     } catch (error) {
@@ -476,7 +507,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={lineData} layout="vertical" margin={{ top: 5, right: 10, left: 60, bottom: 5 }}>
+                  <BarChart data={lineData} layout="vertical" margin={{ top: 5, right: 100, left: 60, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" />
                     <XAxis 
                       type="number" 
@@ -556,7 +587,37 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+      </div>
+
+      {/* Hidden section for PDF Report List */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '0', width: '800px' }}>
+        <div ref={reportListRef} className="bg-white p-8">
+          <h2 className="text-xl font-bold mb-6 text-slate-800 border-b pb-2">Propostas em Andamento</h2>
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-slate-600">
+                <th className="border p-2 text-left">Produtor</th>
+                <th className="border p-2 text-left">Valor Solicitado</th>
+                <th className="border p-2 text-left">Programa</th>
+                <th className="border p-2 text-left">Data Entrada</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ongoingProposals.map((p) => (
+                <tr key={p.id}>
+                  <td className="border p-2 font-medium">{p.producer_name}</td>
+                  <td className="border p-2">{formatCurrency(Number(p.requested_value))}</td>
+                  <td className="border p-2 text-xs">{p.credit_program || '-'}</td>
+                  <td className="border p-2">{format(parseISO(p.created_at), "dd/MM/yyyy")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="mt-6 text-[10px] text-slate-400">
+            Total de registros: {ongoingProposals.length}
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
 }
