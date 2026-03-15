@@ -534,21 +534,33 @@ export default function Dashboard() {
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-heading flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-primary" /> Propostas por Status
+              <TrendingUp className="h-4 w-4 text-primary" /> Evolução de Volume Financeiro Mensal
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={statusChartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                    <LabelList dataKey="value" position="top" style={{ fontSize: '12px', fontWeight: 'bold', fill: 'hsl(215, 70%, 32%)' }} />
-                  </Bar>
-                </BarChart>
+                <AreaChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#052e16" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#052e16" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis 
+                    tick={{ fontSize: 11 }} 
+                    axisLine={false} 
+                    tickLine={false}
+                    tickFormatter={(value) => value >= 1000000 ? `R$ ${(value / 1000000).toFixed(1)}mi` : value >= 1000 ? `R$ ${(value / 1000).toFixed(0)}k` : `R$ ${value}`}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), "Volume Financeiro"]}
+                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} 
+                  />
+                  <Area type="monotone" dataKey="valor" stroke="#052e16" fill="url(#colorValor)" strokeWidth={3} />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
@@ -594,19 +606,32 @@ export default function Dashboard() {
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-heading flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" /> Evolução Mensal
+              <Sparkles className="h-4 w-4 text-primary" /> Histórico de Volume Adquirido
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} />
-                  <Legend />
-                  <Area type="monotone" dataKey="propostas" name="Propostas" stroke="hsl(215, 70%, 32%)" fill="hsl(215, 70%, 32%)" fillOpacity={0.15} strokeWidth={2} />
+                  <defs>
+                    <linearGradient id="colorValorLine" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#052e16" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#052e16" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis 
+                    tick={{ fontSize: 11 }} 
+                    axisLine={false} 
+                    tickLine={false}
+                    tickFormatter={(value) => value >= 1000000 ? `R$ ${(value / 1000000).toFixed(1)}mi` : value >= 1000 ? `R$ ${(value / 1000).toFixed(0)}k` : `R$ ${value}`}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), "Volume Financeiro"]}
+                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} 
+                  />
+                  <Area type="monotone" dataKey="valor" name="Volume Financeiro" stroke="#052e16" fill="url(#colorValorLine)" strokeWidth={3} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
