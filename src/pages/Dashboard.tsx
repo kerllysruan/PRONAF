@@ -110,13 +110,9 @@ export default function Dashboard() {
           const rankB = HIERARCHY_RANK[b.role.toUpperCase()] || 99;
           return rankA - rankB;
         });
-
-        const teamNames = sortedTeam
-          .map(m => `${m.name.toUpperCase()} (${m.role.toUpperCase()})`)
-          .join(", ") || "Equipe Não Identificada";
         
         pdf.setFillColor(5, 46, 22); // Deep Emerald (Success Green)
-        pdf.rect(0, 0, pdfWidth, 55, "F");
+        pdf.rect(0, 0, pdfWidth, 65, "F");
         
         pdf.setTextColor(255, 255, 255);
         pdf.setFont("helvetica", "bold");
@@ -126,20 +122,28 @@ export default function Dashboard() {
         pdf.text(titleText, margin, 15, { maxWidth: contentWidth - 50 });
         
         pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(8);
-        pdf.text(`EQUIPE: ${teamNames}`, margin, 27, { maxWidth: contentWidth - 50 });
+        pdf.setFontSize(7.5); // Slightly smaller for multiple lines
+        
+        // Render each member in its own line
+        let currentY = 25;
+        sortedTeam.forEach((m) => {
+          if (currentY < 50) { // Limit to avoid overlap with section title
+            pdf.text(`${m.name.toUpperCase()} (${m.role.toUpperCase()})`, margin, currentY);
+            currentY += 4.5;
+          }
+        });
         
         pdf.setFontSize(10);
         pdf.setFont("helvetica", "bold");
-        pdf.text(title.toUpperCase(), margin, 42);
+        pdf.text(title.toUpperCase(), margin, 55);
         
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(8);
         pdf.text(`GERADO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, pdfWidth - margin, 15, { align: "right" });
-        pdf.text(pageType, pdfWidth - margin, 27, { align: "right" });
+        pdf.text(pageType, pdfWidth - margin, 25, { align: "right" });
         
         pdf.setDrawColor(212, 175, 55); // Rich Gold (Prosperity)
-        pdf.line(margin, 46, pdfWidth - margin, 46);
+        pdf.line(margin, 58, pdfWidth - margin, 58);
       };
 
       const addFooter = (pageNum: number) => {
@@ -161,7 +165,7 @@ export default function Dashboard() {
         });
         const kpiImg = kpiCanvas.toDataURL("image/jpeg", 0.8);
         const kpiRatio = contentWidth / kpiCanvas.width;
-        pdf.addImage(kpiImg, "JPEG", margin, 60, contentWidth, kpiCanvas.height * kpiRatio);
+        pdf.addImage(kpiImg, "JPEG", margin, 70, contentWidth, kpiCanvas.height * kpiRatio);
 
         if (statusChartRef.current) {
           const statusCanvas = await html2canvas(statusChartRef.current, { 
@@ -170,7 +174,7 @@ export default function Dashboard() {
           });
           const statusImg = statusCanvas.toDataURL("image/jpeg", 0.8);
           const statusRatio = contentWidth / statusCanvas.width;
-          pdf.addImage(statusImg, "JPEG", margin, 110, contentWidth, statusCanvas.height * statusRatio);
+          pdf.addImage(statusImg, "JPEG", margin, 120, contentWidth, statusCanvas.height * statusRatio);
         }
       }
       addFooter(1);
@@ -186,7 +190,7 @@ export default function Dashboard() {
         });
         const evoImg = evoCanvas.toDataURL("image/jpeg", 0.8);
         const evoRatio = contentWidth / evoCanvas.width;
-        pdf.addImage(evoImg, "JPEG", margin, 60, contentWidth, evoCanvas.height * evoRatio);
+        pdf.addImage(evoImg, "JPEG", margin, 70, contentWidth, evoCanvas.height * evoRatio);
       }
 
       if (designerChartRef.current) {
@@ -196,7 +200,7 @@ export default function Dashboard() {
         });
         const desImg = desCanvas.toDataURL("image/jpeg", 0.8);
         const desRatio = contentWidth / desCanvas.width;
-        pdf.addImage(desImg, "JPEG", margin, 170, contentWidth, desCanvas.height * desRatio);
+        pdf.addImage(desImg, "JPEG", margin, 180, contentWidth, desCanvas.height * desRatio);
       }
       addFooter(2);
 
@@ -211,7 +215,7 @@ export default function Dashboard() {
         });
         const progImg = progCanvas.toDataURL("image/jpeg", 0.8);
         const progRatio = contentWidth / progCanvas.width;
-        pdf.addImage(progImg, "JPEG", margin, 60, contentWidth, progCanvas.height * progRatio);
+        pdf.addImage(progImg, "JPEG", margin, 70, contentWidth, progCanvas.height * progRatio);
       }
       addFooter(3);
 
@@ -228,7 +232,7 @@ export default function Dashboard() {
       ]);
 
       autoTable(pdf, {
-        startY: 60,
+        startY: 70,
         head: [['PRODUTOR', 'CPF', 'VALOR (R$)', 'PROGRAMA DE CRÉDITO', 'DATA ENTRADA']],
         body: tableData,
         theme: 'grid',
