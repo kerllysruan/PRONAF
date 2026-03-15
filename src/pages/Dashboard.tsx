@@ -16,6 +16,9 @@ import { STATUS_LABELS, PRONAF_LINE_LABELS, type ProposalStatus, type PronafLine
 import { format, parseISO, subMonths, startOfMonth, endOfMonth, isWithinInterval, getMonth, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import { useRef } from "react";
 
 const CHART_COLORS = [
   "hsl(215, 70%, 32%)", "hsl(210, 80%, 55%)", "hsl(142, 71%, 35%)",
@@ -42,6 +45,69 @@ export default function Dashboard() {
   const { tasks, members, loading: loadingT } = useTeam();
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
+  const [isExporting, setIsExporting] = useState(false);
+  const dashboardRef = useRef<HTMLDivElement>(null);
+
+  const handleExportPDF = async () => {
+    if (!dashboardRef.current) return;
+    setIsExporting(true);
+    
+    try {
+      const canvas = await html2canvas(dashboardRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#F8FAFC",
+        logging: false,
+      });
+      
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      
+      const finaleWidth = imgWidth * ratio;
+      const finaleHeight = imgHeight * ratio;
+      
+      const x = (pdfWidth - finaleWidth) / 2;
+      const y = 10; // Top margin
+
+      // Header
+      pdf.setFillColor(30, 58, 138); // Dark Blue
+      pdf.rect(0, 0, pdfWidth, 25, "F");
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("RELATÓRIO DE GESTÃO - PRONAF", 10, 16);
+      
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      const dateStr = format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR });
+      pdf.text(`Gerado em: ${dateStr}`, pdfWidth - 10, 16, { align: "right" });
+
+      // Content
+      pdf.addImage(imgData, "PNG", x, 30, finaleWidth, finaleHeight);
+      
+      // Footer
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text("PRONAF Plataforma de Gestão - Relatório Interno", pdfWidth / 2, pdfHeight - 10, { align: "center" });
+
+      pdf.save(`Relatorio_PRONAF_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const availableYears = useMemo(() => {
     const years = new Set(proposals.map((p) => String(getYear(parseISO(p.created_at)))));
@@ -159,12 +225,32 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
-        <div className="bg-background/40 backdrop-blur-md p-1 rounded-xl border border-border/50 shadow-sm">
-          <MonthYearFilter month={filterMonth} year={filterYear} onMonthChange={setFilterMonth} onYearChange={setFilterYear} years={availableYears} />
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <button
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="px-4 py-2.5 bg-primary text-white rounded-2xl font-bold text-sm shadow-premium hover:shadow-premium-hover hover:scale-[1.02] transition-all flex items-center gap-2 disabled:opacity-50"
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4" />
+            )}
+            {isExporting ? "Gerando..." : "Gerar Relatório PDF"}
+          </button>
+          <div className="bg-background/40 backdrop-blur-md p-1 rounded-xl border border-border/50 shadow-sm">
+            <MonthYearFilter 
+              month={filterMonth} 
+              year={filterYear} 
+              years={availableYears}
+              onMonthChange={setFilterMonth} 
+              onYearChange={setFilterYear} 
+            />
+          </div>
         </div>
       </div>
 
-      {/* KPI Cards */}
+      <div ref={dashboardRef} className="space-y-8 p-1">
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -446,5 +532,6 @@ export default function Dashboard() {
         </CardContent>
       </Card>
     </div>
-  );
+  </div>
+);
 }
