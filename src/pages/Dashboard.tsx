@@ -96,7 +96,24 @@ export default function Dashboard() {
       const addHeader = (title: string, pageType: string) => {
         const currentAgency = agencies.find(a => a.id === effectiveAgencyId);
         const agencyNameStr = currentAgency ? currentAgency.name.toUpperCase() : "GERAL";
-        const teamNames = members.map(m => m.full_name || 'Usuário').join(", ") || "Equipe Não Identificada";
+        
+        const HIERARCHY_RANK: Record<string, number> = {
+          "GERENTE GERAL": 1,
+          "GERENTE DE RELACIONAMENTO": 2,
+          "AUXILIAR DE NEGÓCIOS": 3,
+          "ANALISTA BANCÁRIO": 4,
+          "SUPORTE ADMINISTRATIVO": 5
+        };
+
+        const sortedTeam = [...members].sort((a, b) => {
+          const rankA = HIERARCHY_RANK[a.role.toUpperCase()] || 99;
+          const rankB = HIERARCHY_RANK[b.role.toUpperCase()] || 99;
+          return rankA - rankB;
+        });
+
+        const teamNames = sortedTeam
+          .map(m => `${m.name.toUpperCase()} (${m.role.toUpperCase()})`)
+          .join(", ") || "Equipe Não Identificada";
         
         pdf.setFillColor(5, 46, 22); // Deep Emerald (Success Green)
         pdf.rect(0, 0, pdfWidth, 55, "F");
