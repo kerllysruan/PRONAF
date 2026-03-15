@@ -418,8 +418,17 @@ export default function Dashboard() {
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                    <Pie 
+                      data={pieData} 
+                      cx="50%" 
+                      cy="50%" 
+                      innerRadius={55} 
+                      outerRadius={85} 
+                      paddingAngle={3} 
+                      dataKey="value"
+                      labelLine={true}
+                      label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
+                    >
                       {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                     </Pie>
                     <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} />
@@ -492,8 +501,15 @@ export default function Dashboard() {
                       <LabelList 
                         dataKey="valor" 
                         position="right" 
+                        offset={10}
                         style={{ fontSize: '10px', fontWeight: 'bold', fill: 'hsl(210, 80%, 40%)' }}
-                        formatter={(value: number) => value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value}
+                        formatter={(value: number) => 
+                          new Intl.NumberFormat("pt-BR", { 
+                            style: "currency", 
+                            currency: "BRL",
+                            maximumFractionDigits: 0 
+                          }).format(value)
+                        }
                       />
                     </Bar>
                   </BarChart>
