@@ -583,6 +583,19 @@ export default function Proposals() {
                     <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Data de Entrada</Label>
                     <Input type="date" value={formData.entry_date} onChange={(e) => setFormData((f) => ({ ...f, entry_date: e.target.value }))} className="rounded-xl" />
                   </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Status da Proposta</Label>
+                    <Select value={formData.status} onValueChange={(v) => setFormData((f) => ({ ...f, status: v as ProposalStatus }))}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione o status" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                          <SelectItem key={value} value={value} className="rounded-lg">{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </section>
 
