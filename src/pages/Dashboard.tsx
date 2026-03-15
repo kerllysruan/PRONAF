@@ -294,17 +294,29 @@ export default function Dashboard() {
 
   const monthlyData = useMemo(() => {
     const months: { name: string; propostas: number; valor: number }[] = [];
+    const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
+    
+    // Initial cumulative value for all proposals before the 6-month window
+    let cumulativeValue = filteredProposals
+      .filter(p => parseISO(p.created_at) < sixMonthsAgo)
+      .reduce((s, p) => s + Number(p.requested_value), 0);
+
     for (let i = 5; i >= 0; i--) {
       const date = subMonths(new Date(), i);
       const start = startOfMonth(date);
       const end = endOfMonth(date);
+      
       const monthProposals = filteredProposals.filter((p) =>
         isWithinInterval(parseISO(p.created_at), { start, end })
       );
+      
+      const monthValue = monthProposals.reduce((s, p) => s + Number(p.requested_value), 0);
+      cumulativeValue += monthValue;
+
       months.push({
         name: format(date, "MMM/yy", { locale: ptBR }),
         propostas: monthProposals.length,
-        valor: monthProposals.reduce((s, p) => s + Number(p.requested_value), 0),
+        valor: cumulativeValue,
       });
     }
     return months;
@@ -534,45 +546,10 @@ export default function Dashboard() {
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-heading flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" /> Evolução de Volume Financeiro Mensal
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                  <defs>
-                    <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#052e16" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#052e16" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis 
-                    tick={{ fontSize: 11 }} 
-                    axisLine={false} 
-                    tickLine={false}
-                    tickFormatter={(value) => value >= 1000000 ? `R$ ${(value / 1000000).toFixed(1)}mi` : value >= 1000 ? `R$ ${(value / 1000).toFixed(0)}k` : `R$ ${value}`}
-                  />
-                  <Tooltip 
-                    formatter={(value: number) => [formatCurrency(value), "Volume Financeiro"]}
-                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} 
-                  />
-                  <Area type="monotone" dataKey="valor" stroke="#052e16" fill="url(#colorValor)" strokeWidth={3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-heading flex items-center gap-2">
               <PieChartIcon className="h-4 w-4 text-primary" /> Distribuição por Status
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent ref={statusChartRef}>
             <div className="h-64">
               {pieData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
@@ -596,6 +573,41 @@ export default function Dashboard() {
                   </PieChart>
                 </ResponsiveContainer>
               )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-md">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-heading flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" /> Evolução Acumulada de Volume Financeiro
+            </CardTitle>
+          </CardHeader>
+          <CardContent ref={evolutionChartRef}>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#052e16" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#052e16" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis 
+                    tick={{ fontSize: 11 }} 
+                    axisLine={false} 
+                    tickLine={false}
+                    tickFormatter={(value) => value >= 1000000 ? `R$ ${(value / 1000000).toFixed(1)}mi` : value >= 1000 ? `R$ ${(value / 1000).toFixed(0)}k` : `R$ ${value}`}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatCurrency(value), "Volume Acumulado"]}
+                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} 
+                  />
+                  <Area type="monotone" dataKey="valor" stroke="#052e16" fill="url(#colorValor)" strokeWidth={3} />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
