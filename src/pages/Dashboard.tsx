@@ -17,6 +17,7 @@ import { format, parseISO, subMonths, startOfMonth, endOfMonth, isWithinInterval
 import { ptBR } from "date-fns/locale";
 import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import { useRef } from "react";
 
@@ -49,6 +50,9 @@ export default function Dashboard() {
   const dashboardRef = useRef<HTMLDivElement>(null);
   const reportListRef = useRef<HTMLDivElement>(null);
   const printableContentRef = useRef<HTMLDivElement>(null);
+  const statusChartRef = useRef<HTMLDivElement>(null);
+  const evolutionChartRef = useRef<HTMLDivElement>(null);
+  const programsChartRef = useRef<HTMLDivElement>(null);
 
 
 
@@ -72,55 +76,114 @@ export default function Dashboard() {
   );
 
   const handleExportPDF = async () => {
-    if (!printableContentRef.current || !reportListRef.current) return;
     setIsExporting(true);
     
     try {
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
+      const margin = 15;
       const contentWidth = pdfWidth - (margin * 2);
 
-      // Função auxiliar para capturar e adicionar seção ao PDF
-      const addSectionToPDF = async (element: HTMLElement, title: string, isFirstPage: boolean = false) => {
-        if (!isFirstPage) pdf.addPage();
-        
-        // Header
-        pdf.setFillColor(30, 58, 138); 
-        pdf.rect(0, 0, pdfWidth, 20, "F");
-        pdf.setTextColor(255, 255, 255);
-        pdf.setFontSize(14);
-        pdf.setFont("helvetica", "bold");
-        pdf.text(title, margin, 13);
-        
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#FFFFFF",
-        });
-        
-        const imgData = canvas.toDataURL("image/png");
-        const ratio = contentWidth / canvas.width;
-        const imgHeight = canvas.height * ratio;
-        
-        pdf.addImage(imgData, "PNG", margin, 25, contentWidth, imgHeight);
-        
-        // Footer
-        pdf.setFontSize(8);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text(`RELATÓRIO PRONAF - ${title}`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
-      };
+      // --- PAGINA 1: VISION & STATUS ---
+      // Header Page 1
+      pdf.setFillColor(30, 58, 138); 
+      pdf.rect(0, 0, pdfWidth, 25, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("RELATÓRIO DE GESTÃO - PRONAF", margin, 16);
+      
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`, pdfWidth - margin, 16, { align: "right" });
 
-      // 1. Capture KPIs Overview (First Page top)
-      await addSectionToPDF(printableContentRef.current, "VISÃO GERAL EXECUTIVA", true);
-
-      // 2. Capture Propostas em Andamento (Next Page)
-      if (ongoingProposals.length > 0) {
-        await addSectionToPDF(reportListRef.current, "DETALHAMENTO: PROPOSTAS EM ANDAMENTO");
+      // KPIs capture (printableContentRef top block)
+      if (printableContentRef.current) {
+        const kpiCanvas = await html2canvas(printableContentRef.current.querySelector('.grid') as HTMLElement, { scale: 3 });
+        const kpiImg = kpiCanvas.toDataURL("image/png");
+        const kpiRatio = contentWidth / kpiCanvas.width;
+        pdf.addImage(kpiImg, "PNG", margin, 35, contentWidth, kpiCanvas.height * kpiRatio);
       }
 
-      pdf.save(`Relatorio_PRONAF_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
+      // Status Chart (statusChartRef)
+      if (statusChartRef.current) {
+        const statusCanvas = await html2canvas(statusChartRef.current, { scale: 3 });
+        const statusImg = statusCanvas.toDataURL("image/png");
+        const statusRatio = contentWidth / statusCanvas.width;
+        pdf.addImage(statusImg, "PNG", margin, 75, contentWidth, statusCanvas.height * statusRatio);
+      }
+
+      // Footer P1
+      pdf.setFontSize(8);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(`Página 1 - Visão de Status e Indicadores`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
+
+      // --- PAGINA 2: ANALYTICS ---
+      pdf.addPage();
+      pdf.setFillColor(30, 58, 138); 
+      pdf.rect(0, 0, pdfWidth, 15, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(12);
+      pdf.text("ANÁLISE TEMPORAL E POR PROGRAMA", margin, 10);
+
+      // Evolution Chart (evolutionChartRef)
+      if (evolutionChartRef.current) {
+        const evoCanvas = await html2canvas(evolutionChartRef.current, { scale: 3 });
+        const evoImg = evoCanvas.toDataURL("image/png");
+        const evoRatio = contentWidth / evoCanvas.width;
+        pdf.addImage(evoImg, "PNG", margin, 25, contentWidth, evoCanvas.height * evoRatio);
+      }
+
+      // Programs Chart (programsChartRef)
+      if (programsChartRef.current) {
+        const progCanvas = await html2canvas(programsChartRef.current, { scale: 3 });
+        const progImg = progCanvas.toDataURL("image/png");
+        const progRatio = contentWidth / progCanvas.width;
+        pdf.addImage(progImg, "PNG", margin, 130, contentWidth, progCanvas.height * progRatio);
+      }
+
+      // Footer P2
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(`Página 2 - Evolução e Segmentação`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
+
+      // --- PAGINA 3+: TABELA NATIVA (AUTOTABLE) ---
+      pdf.addPage();
+      pdf.setFillColor(30, 58, 138); 
+      pdf.rect(0, 0, pdfWidth, 15, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(12);
+      pdf.text("DETALHAMENTO E OPERACIONAL (Copiável)", margin, 10);
+
+      const tableData = ongoingProposals.map(p => [
+        p.producer_name,
+        p.producer_cpf || '-',
+        formatCurrency(Number(p.requested_value)),
+        p.credit_program || 'Não Informado',
+        format(parseISO(p.created_at), "dd/MM/yyyy")
+      ]);
+
+      autoTable(pdf, {
+        startY: 25,
+        head: [['PRODUTOR', 'CPF', 'VALOR (R$)', 'PROGRAMA DE CRÉDITO', 'DATA ENTRADA']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [30, 58, 138], fontSize: 9, halign: 'center' },
+        styles: { fontSize: 8, cellPadding: 3 },
+        columnStyles: {
+          2: { halign: 'right', fontStyle: 'bold' },
+          4: { halign: 'center' }
+        },
+        margin: { left: margin, right: margin },
+        didDrawPage: (data) => {
+          // Footer for table pages
+          pdf.setFontSize(8);
+          pdf.setTextColor(150, 150, 150);
+          pdf.text(`Página ${pdf.internal.pages.length - 1} - Listagem de Propostas`, pdfWidth / 2, pdfHeight - 10, { align: "center" });
+        }
+      });
+
+      pdf.save(`Relatorio_PRONAF_Consultivo_${format(new Date(), "yyyyMMdd")}.pdf`);
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
     } finally {
@@ -588,7 +651,7 @@ export default function Dashboard() {
 
           {/* Large Vertical Charts Section */}
           <div className="space-y-16">
-            <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+            <div ref={statusChartRef} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
               <h3 className="text-lg font-bold mb-6 text-slate-700 flex items-center gap-2">
                 <BarChart3 className="h-5 w-5" /> Distribuição de Propostas por Status
               </h3>
@@ -606,7 +669,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+            <div ref={evolutionChartRef} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
               <h3 className="text-lg font-bold mb-6 text-slate-700 flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" /> Evolução de Volume Financeiro Mensal
               </h3>
@@ -628,7 +691,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+            <div ref={programsChartRef} className="bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
               <h3 className="text-lg font-bold mb-6 text-slate-700 flex items-center gap-2">
                 <DollarSign className="h-5 w-5" /> Ranking por Programa de Crédito (Valores Reais)
               </h3>
@@ -663,6 +726,7 @@ export default function Dashboard() {
             <thead>
               <tr className="bg-blue-900 text-white">
                 <th className="p-4 text-left font-bold uppercase tracking-wider">Produtor</th>
+                <th className="p-4 text-left font-bold uppercase tracking-wider">CPF</th>
                 <th className="p-4 text-left font-bold uppercase tracking-wider">Valor Solicitado</th>
                 <th className="p-4 text-left font-bold uppercase tracking-wider">Programa de Crédito</th>
                 <th className="p-4 text-left font-bold uppercase tracking-wider">Data Entrada</th>
@@ -672,6 +736,7 @@ export default function Dashboard() {
               {ongoingProposals.map((p, idx) => (
                 <tr key={p.id} className={idx % 2 === 0 ? "bg-slate-50" : "bg-white"}>
                   <td className="p-4 border-b font-semibold text-slate-700">{p.producer_name}</td>
+                  <td className="p-4 border-b text-slate-500">{p.producer_cpf || '-'}</td>
                   <td className="p-4 border-b font-bold text-slate-900">{formatCurrency(Number(p.requested_value))}</td>
                   <td className="p-4 border-b text-slate-600 text-xs">{p.credit_program || 'Não Informado'}</td>
                   <td className="p-4 border-b text-slate-500 font-medium">{format(parseISO(p.created_at), "dd/MM/yyyy")}</td>
