@@ -75,6 +75,11 @@ export default function Proposals() {
     return Array.from(years).sort().reverse();
   }, [proposals]);
 
+  const uniquePrograms = useMemo(() => {
+    const progs = new Set(proposals.map((p) => p.credit_program).filter(Boolean));
+    return Array.from(progs).sort((a, b) => a!.localeCompare(b!));
+  }, [proposals]);
+
   const filtered = useMemo(() => {
     // Removed setPage(0) to prevent reset on data update
     let result = proposals.filter((p) => {
@@ -373,7 +378,7 @@ export default function Proposals() {
                       </TableCell>
                       <TableCell className="py-4">
                         <div className="flex flex-col">
-                          <span className="text-xs font-semibold">{PRONAF_LINE_LABELS[proposal.pronaf_line as PronafLine]}</span>
+                          <span className="text-xs font-semibold">{proposal.credit_program || 'Não Informado'}</span>
                           <span className="text-[9px] text-muted-foreground/60 uppercase font-black">{proposal.sicad || 'SEM SICAD'}</span>
                         </div>
                       </TableCell>
@@ -515,20 +520,20 @@ export default function Proposals() {
                   Operação Financeira
                 </h3>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Linha PRONAF</Label>
-                    <Select value={formData.pronaf_line} onValueChange={(v) => setFormData((f) => ({ ...f, pronaf_line: v }))}>
-                      <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        {Object.entries(PRONAF_LINE_LABELS).map(([key, label]) => (
-                          <SelectItem key={key} value={key} className="rounded-lg">{label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Programa</Label>
-                    <Input value={formData.credit_program} onChange={(e) => setFormData((f) => ({ ...f, credit_program: e.target.value }))} placeholder="Ex: FNE/PRONAF A" className="rounded-xl" />
+                  <div className="space-y-2 lg:col-span-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Programa de Crédito</Label>
+                    <Input 
+                      list="credit-programs"
+                      value={formData.credit_program} 
+                      onChange={(e) => setFormData((f) => ({ ...f, credit_program: e.target.value }))} 
+                      placeholder="Selecione na lista ou digite (Ex: FNE/PRONAF A)" 
+                      className="rounded-xl" 
+                    />
+                    <datalist id="credit-programs">
+                      {uniquePrograms.map(program => (
+                        <option key={program} value={program} />
+                      ))}
+                    </datalist>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Valor Solicitado</Label>

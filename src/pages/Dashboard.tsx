@@ -108,17 +108,21 @@ export default function Dashboard() {
   }, [filteredProposals]);
 
   const lineData = useMemo(() => {
-    const lines: Record<string, { count: number; valor: number }> = {};
+    const programs: Record<string, { count: number; valor: number }> = {};
     filteredProposals.forEach((p) => {
-      if (!lines[p.pronaf_line]) lines[p.pronaf_line] = { count: 0, valor: 0 };
-      lines[p.pronaf_line].count++;
-      lines[p.pronaf_line].valor += Number(p.requested_value);
+      const progName = p.credit_program || 'Não Informado';
+      if (!programs[progName]) programs[progName] = { count: 0, valor: 0 };
+      programs[progName].count++;
+      programs[progName].valor += Number(p.requested_value);
     });
-    return Object.entries(lines).map(([key, val]) => ({
-      name: PRONAF_LINE_LABELS[key as PronafLine] || key,
-      propostas: val.count,
-      valor: val.valor / 1000,
-    })).sort((a, b) => b.valor - a.valor);
+    return Object.entries(programs)
+      .map(([key, val]) => ({
+        name: key,
+        propostas: val.count,
+        valor: val.valor / 1000,
+      }))
+      .sort((a, b) => b.valor - a.valor)
+      .slice(0, 10); // Limita ao top 10 programas para não quebrar layout
   }, [filteredProposals]);
 
   const docStats = useMemo(() => {
@@ -366,7 +370,7 @@ export default function Dashboard() {
         <Card className="border-0 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-heading flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-primary" /> Valores por Linha PRONAF (R$ mil)
+              <DollarSign className="h-4 w-4 text-primary" /> Valores por Programa de Crédito (R$ mil)
             </CardTitle>
           </CardHeader>
           <CardContent>
