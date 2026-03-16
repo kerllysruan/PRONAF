@@ -148,35 +148,58 @@ export default function Tasks() {
       return matchesMember && matchesStatus;
     });
 
-    const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const margin = 15;
+    const contentWidth = pdfWidth - (margin * 2);
 
-    // Header
-    pdf.setFillColor(99, 102, 241);
-    pdf.rect(0, 0, pageW, 28, "F");
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(18);
-    pdf.setFont("helvetica", "bold");
-    pdf.text("PRONAF - Relatório de Tarefas", 14, 16);
-    pdf.setFontSize(9);
-    pdf.setFont("helvetica", "normal");
-    const memberName = reportMemberFilter === "all" ? "Todos os Membros" : members.find(m => m.id === reportMemberFilter)?.name || "";
-    const statusName = reportStatusFilter === "all" ? "Todos" : TASK_STATUS_LABELS[reportStatusFilter as TaskStatus] || reportStatusFilter;
-    pdf.text(`Membro: ${memberName}  |  Status: ${statusName}  |  Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 23);
+    const memberName = reportMemberFilter === "all" ? "TODOS OS MEMBROS" : (members.find(m => m.id === reportMemberFilter)?.name || "").toUpperCase();
+    const statusName = reportStatusFilter === "all" ? "TODOS" : (TASK_STATUS_LABELS[reportStatusFilter as TaskStatus] || reportStatusFilter).toUpperCase();
 
-    // Stats summary
-    pdf.setTextColor(30, 30, 30);
     const rPending = reportTasks.filter(t => t.status === "pendente").length;
     const rProgress = reportTasks.filter(t => t.status === "em_andamento").length;
     const rDone = reportTasks.filter(t => t.status === "concluida").length;
     const rOverdue = reportTasks.filter(t => t.due_date && isPast(new Date(t.due_date)) && t.status !== "concluida").length;
 
+    // ── HEADER (Same as Dashboard) ──────────────────────────────
+    pdf.setFillColor(5, 46, 22); // Deep Emerald
+    pdf.rect(0, 0, pdfWidth, 65, "F");
+
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(14);
+    pdf.text(`RELATÓRIO DE TAREFAS - ${memberName}`, margin, 15, { maxWidth: contentWidth - 50 });
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7.5);
+    let currentY = 25;
+    members.forEach((m) => {
+      if (currentY < 50) {
+        pdf.text(`${m.name.toUpperCase()} (${m.role.toUpperCase()})`, margin, currentY);
+        currentY += 4.5;
+      }
+    });
+
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "bold");
-    pdf.text(`Total: ${reportTasks.length}   |   Pendentes: ${rPending}   |   Em Andamento: ${rProgress}   |   Concluídas: ${rDone}   |   Atrasadas: ${rOverdue}`, 14, 36);
+    pdf.text(`FILTRO: MEMBRO: ${memberName}  |  STATUS: ${statusName}`, margin, 55);
 
-    // Table
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.text(`GERADO: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, pdfWidth - margin, 15, { align: "right" });
+    pdf.text("GESTÃO DE TAREFAS", pdfWidth - margin, 25, { align: "right" });
+
+    pdf.setDrawColor(212, 175, 55); // Rich Gold
+    pdf.line(margin, 58, pdfWidth - margin, 58);
+
+    // ── STATS SUMMARY ───────────────────────────────────────────
+    pdf.setTextColor(30, 30, 30);
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`TOTAL: ${reportTasks.length}   |   PENDENTES: ${rPending}   |   EM ANDAMENTO: ${rProgress}   |   CONCLUÍDAS: ${rDone}   |   ATRASADAS: ${rOverdue}`, margin, 66);
+
+    // ── TABLE ────────────────────────────────────────────────────
     const tableData = reportTasks.map((t) => {
       const member = members.find(m => m.id === t.assigned_to);
       const proposal = proposals.find(p => p.id === t.proposal_id);
@@ -194,36 +217,44 @@ export default function Tasks() {
     });
 
     autoTable(pdf, {
-      head: [["Tarefa", "Responsável", "Status", "Prioridade", "Prazo", "Atrasada", "Proposta", "Descrição"]],
+      head: [["TAREFA", "RESPONSÁVEL", "STATUS", "PRIORIDADE", "PRAZO", "ATRASADA", "PROPOSTA", "DESCRIÇÃO"]],
       body: tableData,
-      startY: 42,
+      startY: 72,
       theme: "grid",
-      styles: { fontSize: 8, cellPadding: 3, lineWidth: 0.1, lineColor: [200, 200, 200] },
-      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontStyle: "bold", fontSize: 8 },
-      alternateRowStyles: { fillColor: [248, 249, 252] },
+      styles: { fontSize: 8, cellPadding: 4, lineColor: [226, 232, 240] },
+      headStyles: { fillColor: [15, 23, 42], fontSize: 9, halign: "center" },
       columnStyles: {
-        0: { cellWidth: 50, fontStyle: "bold" },
-        1: { cellWidth: 30 },
-        2: { cellWidth: 25 },
-        3: { cellWidth: 22 },
-        4: { cellWidth: 25 },
-        5: { cellWidth: 18 },
-        6: { cellWidth: 35 },
-        7: { cellWidth: "auto" },
+        0: { fontStyle: "bold" },
+        4: { halign: "center" },
+        5: { halign: "center" },
       },
+      margin: { left: margin, right: margin },
+      didDrawPage: () => {
+        // Re-draw header on overflow pages
+        if ((pdf as any).lastAutoTable?.pageNumber > 1) {
+          pdf.setFillColor(5, 46, 22);
+          pdf.rect(0, 0, pdfWidth, 20, "F");
+          pdf.setTextColor(255, 255, 255);
+          pdf.setFont("helvetica", "bold");
+          pdf.setFontSize(10);
+          pdf.text(`RELATÓRIO DE TAREFAS - ${memberName} (CONTINUAÇÃO)`, margin, 13);
+          pdf.setDrawColor(212, 175, 55);
+          pdf.line(margin, 18, pdfWidth - margin, 18);
+        }
+      }
     });
 
-    // Footer
+    // ── FOOTER ───────────────────────────────────────────────────
     const pageCount = pdf.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       pdf.setPage(i);
-      pdf.setFontSize(7);
-      pdf.setTextColor(150, 150, 150);
-      pdf.text(`Página ${i} de ${pageCount}`, pageW - 30, pageH - 6);
-      pdf.text("PRONAF Planner - Relatório de Tarefas", 14, pageH - 6);
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text("Documento de Gestão Estratégica - PRONAF Digital", margin, pdfHeight - 10);
+      pdf.text(`Página ${i}`, pdfWidth - margin, pdfHeight - 10, { align: "right" });
     }
 
-    pdf.save(`relatorio_tarefas_${memberName.replace(/\s/g, '_')}_${format(new Date(), "yyyyMMdd")}.pdf`);
+    pdf.save(`RELATORIO_TAREFAS_PRONAF_${memberName.replace(/\s/g, '_')}_${format(new Date(), "yyyyMMdd")}.pdf`);
     setIsReportOpen(false);
   };
 
