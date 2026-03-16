@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,7 +30,7 @@ import {
 } from "@/types/proposal";
 import {
   Plus, ClipboardList, Loader2, Clock, User, ListFilter, AlertTriangle,
-  CheckCircle2, MessageSquare, Send, ArrowRight, Columns3, Filter, Search,
+  CheckCircle2, MessageSquare, Send, ArrowRight, Columns3, Filter, Search, FileText,
 } from "lucide-react";
 import { format, parseISO, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -58,6 +60,9 @@ export default function Tasks() {
   const [newComment, setNewComment] = useState("");
   const [loadingComments, setLoadingComments] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "board">("board");
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportMemberFilter, setReportMemberFilter] = useState<string>("all");
+  const [reportStatusFilter, setReportStatusFilter] = useState<string>("all");
   const [newTask, setNewTask] = useState({
     title: "", description: "", assigned_to: null as string | null,
     priority: "media", due_date: null as string | null, proposal_id: null as string | null,
@@ -136,6 +141,92 @@ export default function Tasks() {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
+  const generateTaskReport = () => {
+    const reportTasks = tasks.filter((t) => {
+      const matchesMember = reportMemberFilter === "all" || t.assigned_to === reportMemberFilter;
+      const matchesStatus = reportStatusFilter === "all" || t.status === reportStatusFilter;
+      return matchesMember && matchesStatus;
+    });
+
+    const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+
+    // Header
+    pdf.setFillColor(99, 102, 241);
+    pdf.rect(0, 0, pageW, 28, "F");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(18);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("PRONAF - Relatório de Tarefas", 14, 16);
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "normal");
+    const memberName = reportMemberFilter === "all" ? "Todos os Membros" : members.find(m => m.id === reportMemberFilter)?.name || "";
+    const statusName = reportStatusFilter === "all" ? "Todos" : TASK_STATUS_LABELS[reportStatusFilter as TaskStatus] || reportStatusFilter;
+    pdf.text(`Membro: ${memberName}  |  Status: ${statusName}  |  Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 14, 23);
+
+    // Stats summary
+    pdf.setTextColor(30, 30, 30);
+    const rPending = reportTasks.filter(t => t.status === "pendente").length;
+    const rProgress = reportTasks.filter(t => t.status === "em_andamento").length;
+    const rDone = reportTasks.filter(t => t.status === "concluida").length;
+    const rOverdue = reportTasks.filter(t => t.due_date && isPast(new Date(t.due_date)) && t.status !== "concluida").length;
+
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`Total: ${reportTasks.length}   |   Pendentes: ${rPending}   |   Em Andamento: ${rProgress}   |   Concluídas: ${rDone}   |   Atrasadas: ${rOverdue}`, 14, 36);
+
+    // Table
+    const tableData = reportTasks.map((t) => {
+      const member = members.find(m => m.id === t.assigned_to);
+      const proposal = proposals.find(p => p.id === t.proposal_id);
+      const isOverdue = t.due_date && isPast(new Date(t.due_date)) && t.status !== "concluida";
+      return [
+        t.title,
+        member?.name || "Não atribuído",
+        TASK_STATUS_LABELS[t.status as TaskStatus] || t.status,
+        TASK_PRIORITY_LABELS[t.priority as TaskPriority] || t.priority,
+        t.due_date ? format(parseISO(t.due_date), "dd/MM/yyyy") : "Sem prazo",
+        isOverdue ? "SIM" : "-",
+        proposal?.producer_name || "-",
+        t.description || "-",
+      ];
+    });
+
+    autoTable(pdf, {
+      head: [["Tarefa", "Responsável", "Status", "Prioridade", "Prazo", "Atrasada", "Proposta", "Descrição"]],
+      body: tableData,
+      startY: 42,
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 3, lineWidth: 0.1, lineColor: [200, 200, 200] },
+      headStyles: { fillColor: [99, 102, 241], textColor: 255, fontStyle: "bold", fontSize: 8 },
+      alternateRowStyles: { fillColor: [248, 249, 252] },
+      columnStyles: {
+        0: { cellWidth: 50, fontStyle: "bold" },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 25 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 18 },
+        6: { cellWidth: 35 },
+        7: { cellWidth: "auto" },
+      },
+    });
+
+    // Footer
+    const pageCount = pdf.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i);
+      pdf.setFontSize(7);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(`Página ${i} de ${pageCount}`, pageW - 30, pageH - 6);
+      pdf.text("PRONAF Planner - Relatório de Tarefas", 14, pageH - 6);
+    }
+
+    pdf.save(`relatorio_tarefas_${memberName.replace(/\s/g, '_')}_${format(new Date(), "yyyyMMdd")}.pdf`);
+    setIsReportOpen(false);
+  };
+
   const statusColumns: { key: TaskStatus; label: string; icon: React.ReactNode; color: string }[] = [
     { key: "pendente", label: "Pendente", icon: <ClipboardList className="h-4 w-4" />, color: "border-t-warning" },
     { key: "em_andamento", label: "Em Andamento", icon: <ArrowRight className="h-4 w-4" />, color: "border-t-info" },
@@ -186,6 +277,13 @@ export default function Tasks() {
               <Plus className="h-4 w-4 mr-2" /> Nova Tarefa
             </Button>
           )}
+          <Button
+            variant="outline"
+            onClick={() => setIsReportOpen(true)}
+            className="rounded-xl border-border/40 shadow-sm hover:shadow-md transition-all font-bold text-xs px-5 h-11 gap-2"
+          >
+            <FileText className="h-4 w-4" /> Relatório
+          </Button>
         </div>
       </header>
 
@@ -648,6 +746,85 @@ export default function Tasks() {
               className="h-12 px-10 rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-extrabold text-xs uppercase tracking-widest"
             >
               Criar Tarefa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Dialog */}
+      <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden border-0 rounded-3xl shadow-2xl bg-background font-sans">
+          <div className="bg-primary p-6 text-primary-foreground relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+              <FileText className="h-32 w-32 -mr-8 -mt-8" />
+            </div>
+            <DialogHeader className="relative z-10">
+              <DialogTitle className="text-2xl font-bold font-heading">
+                Relatório de Tarefas
+              </DialogTitle>
+              <p className="text-primary-foreground/80 text-sm">Filtre as tarefas e gere um relatório em PDF.</p>
+            </DialogHeader>
+          </div>
+
+          <div className="p-8 space-y-6">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Membro da Equipe</Label>
+              <Select value={reportMemberFilter} onValueChange={setReportMemberFilter}>
+                <SelectTrigger className="h-12 rounded-xl border-border/40 bg-muted/10 font-bold">
+                  <SelectValue placeholder="Selecione o membro" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border/40 shadow-premium">
+                  <SelectItem value="all" className="rounded-lg font-bold">Todos os Membros</SelectItem>
+                  {members.map((m) => (
+                    <SelectItem key={m.id} value={m.id} className="rounded-lg">{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Status</Label>
+              <Select value={reportStatusFilter} onValueChange={setReportStatusFilter}>
+                <SelectTrigger className="h-12 rounded-xl border-border/40 bg-muted/10 font-bold">
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border/40 shadow-premium">
+                  <SelectItem value="all" className="rounded-lg font-bold">Todos os Status</SelectItem>
+                  {Object.entries(TASK_STATUS_LABELS).map(([k, v]) => (
+                    <SelectItem key={k} value={k} className="rounded-lg">{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="bg-muted/20 rounded-2xl p-4 border border-border/40">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Prévia</p>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-xl bg-amber-50 p-3">
+                  <p className="text-lg font-black text-amber-600">{tasks.filter(t => (reportMemberFilter === "all" || t.assigned_to === reportMemberFilter) && (reportStatusFilter === "all" || t.status === reportStatusFilter) && t.status === "pendente").length}</p>
+                  <p className="text-[9px] font-bold text-amber-600/70 uppercase">Pendentes</p>
+                </div>
+                <div className="rounded-xl bg-blue-50 p-3">
+                  <p className="text-lg font-black text-blue-600">{tasks.filter(t => (reportMemberFilter === "all" || t.assigned_to === reportMemberFilter) && (reportStatusFilter === "all" || t.status === reportStatusFilter) && t.status === "em_andamento").length}</p>
+                  <p className="text-[9px] font-bold text-blue-600/70 uppercase">Andamento</p>
+                </div>
+                <div className="rounded-xl bg-emerald-50 p-3">
+                  <p className="text-lg font-black text-emerald-600">{tasks.filter(t => (reportMemberFilter === "all" || t.assigned_to === reportMemberFilter) && (reportStatusFilter === "all" || t.status === reportStatusFilter) && t.status === "concluida").length}</p>
+                  <p className="text-[9px] font-bold text-emerald-600/70 uppercase">Concluídas</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="p-6 bg-muted/30 border-t border-border/40 gap-3">
+            <Button variant="outline" onClick={() => setIsReportOpen(false)} className="h-12 px-8 rounded-xl font-bold border-border/40">
+              Cancelar
+            </Button>
+            <Button
+              onClick={generateTaskReport}
+              className="h-12 px-10 rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-extrabold text-xs uppercase tracking-widest gap-2"
+            >
+              <FileText className="h-4 w-4" /> Gerar PDF
             </Button>
           </DialogFooter>
         </DialogContent>
