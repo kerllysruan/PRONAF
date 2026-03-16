@@ -27,8 +27,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useProposals } from "@/hooks/useProposals";
 import {
-  ProposalStatus, PronafLine, ProjectDesigner, STATUS_LABELS, STATUS_COLORS, PRONAF_LINE_LABELS, PROJECT_DESIGNER_LABELS,
+  ProposalStatus, PronafLine, ProjectDesigner, STATUS_LABELS, STATUS_COLORS, PRONAF_LINE_LABELS, PROJECT_DESIGNER_LABELS, ASSIGNABLE_TASK_TYPES, AssignableTaskType,
 } from "@/types/proposal";
+import { useTeam } from "@/hooks/useTeam";
 import { format, parseISO, getMonth, getYear } from "date-fns";
 import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -43,7 +44,10 @@ const formatCurrency = (value: number) =>
 
 export default function Proposals() {
   const { proposals, loading, createProposal, updateProposal, deleteProposal, refetch } = useProposals();
+  const { members, createTask } = useTeam();
   const { permissions } = usePermissions();
+  const [selectedTaskType, setSelectedTaskType] = useState<string>("");
+  const [selectedMember, setSelectedMember] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [designerFilter, setDesignerFilter] = useState<string>("all");
@@ -212,10 +216,42 @@ export default function Proposals() {
     if (!formData.producer_name.trim() || !formData.producer_cpf.trim()) return;
     if (editingId) {
       await updateProposal(editingId, formData);
+      // Se uma tarefa foi selecionada, criar a tarefa vinculada à proposta
+      if (selectedTaskType && selectedMember) {
+        await createTask({
+          title: ASSIGNABLE_TASK_TYPES[selectedTaskType as AssignableTaskType],
+          description: `Tarefa atribuída para proposta de ${formData.producer_name}`,
+          assigned_to: selectedMember,
+          priority: 'media',
+          status: 'pendente',
+          due_date: null,
+          proposal_id: editingId,
+          document_name: selectedTaskType,
+        });
+      }
+      setSelectedTaskType("");
+      setSelectedMember("");
       setIsDialogOpen(false);
     } else {
       const result = await createProposal(formData as any);
-      if (result) setIsDialogOpen(false);
+      if (result) {
+        // Se uma tarefa foi selecionada na criação, criar a tarefa
+        if (selectedTaskType && selectedMember && result.id) {
+          await createTask({
+            title: ASSIGNABLE_TASK_TYPES[selectedTaskType as AssignableTaskType],
+            description: `Tarefa atribuída para proposta de ${formData.producer_name}`,
+            assigned_to: selectedMember,
+            priority: 'media',
+            status: 'pendente',
+            due_date: null,
+            proposal_id: result.id,
+            document_name: selectedTaskType,
+          });
+        }
+        setSelectedTaskType("");
+        setSelectedMember("");
+        setIsDialogOpen(false);
+      }
     }
   };
 
@@ -592,6 +628,44 @@ export default function Proposals() {
                       <SelectContent className="rounded-xl">
                         {Object.entries(STATUS_LABELS).map(([value, label]) => (
                           <SelectItem key={value} value={value} className="rounded-lg">{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                  <span className="h-4 w-1 rounded-full bg-primary" />
+                  Atribuir Tarefa
+                </h3>
+                <p className="text-[10px] text-muted-foreground font-medium -mt-2">
+                  Crie uma tarefa vinculada a esta proposta e atribua a um membro da equipe.
+                </p>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Tipo de Tarefa</Label>
+                    <Select value={selectedTaskType} onValueChange={setSelectedTaskType}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione a tarefa (opcional)" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        {Object.entries(ASSIGNABLE_TASK_TYPES).map(([key, label]) => (
+                          <SelectItem key={key} value={key} className="rounded-lg">{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Atribuir a</Label>
+                    <Select value={selectedMember} onValueChange={setSelectedMember} disabled={!selectedTaskType}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue placeholder="Selecione o membro" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        {members.map((m) => (
+                          <SelectItem key={m.id} value={m.id} className="rounded-lg">{m.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

@@ -183,22 +183,23 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                 credit_program: (() => {
                     const raw = (getField(["Programa Crédito", "Programa Cr\u00e9dito", "Programa Cr閐ito", "Programa Crdito"]) || "").toString().toUpperCase();
                     
-                    if (raw.includes("MULHER") || raw.includes("406")) {
+                    if (raw.includes("406") || raw.includes("MULHER")) {
                         return 'FNE/PRONAF MULHER - FNE (406)';
                     }
-                    if (raw.includes("ALIMENTOS") || raw.includes("434")) {
+                    if (raw.includes("434") || raw.includes("ALIMENTOS") || raw.includes("MAIS ALIMENTOS")) {
                         return 'FNE/PRONAF-MAIS ALIMENTOS (FNE) (434)';
                     }
-                    if (raw.includes("A") || raw.includes("368") || raw.includes("699") || raw.includes("GRUPO")) {
-                        return requestedValue < 50000 
-                            ? 'FNE/PRONAF A - RES. 5.183/24 (699)' 
-                            : 'FNE/PRONAF GRUPO "A" - FNE (368)';
+                    if (raw.includes("699") || (raw.includes("PRONAF A") && requestedValue < 50000)) {
+                        return 'FNE/PRONAF A - RES. 5.183/24 (699)';
                     }
-                    if (raw.includes("RURAL") || raw.includes("226") || raw.includes("FNE")) {
+                    if (raw.includes("368") || raw.includes("GRUPO \"A\"") || raw.includes("PRONAF A")) {
+                        return 'FNE/PRONAF GRUPO "A" - FNE (368)';
+                    }
+                    if (raw.includes("226") || raw.includes("RURAL")) {
                         return 'FNE/RURAL (226)';
                     }
                     
-                    // Default fallback if unknown
+                    // Default fallback
                     return 'FNE/RURAL (226)';
                 })(),
                 request_type: getField(["Tipo Solicitação", "Tipo Solicita\u00e7\u00e3o", "Tipo Solicita玢o", "Tipo Solicitao"]),
@@ -283,21 +284,7 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                         const errors: any[] = [];
                         const BATCH_SIZE = 50;
 
-                        // Gera uma "impressão digital" de todos os campos comparáveis de uma proposta.
-                        // Dois registros são considerados idênticos SE E SOMENTE SE todos os campos listados forem iguais.
-                        const fingerprint = (p: any): string => [
-                            "producer_name", "producer_cpf", "requested_value", "pronaf_line",
-                            "sicad", "proposal_number", "activity_id", "task", "entry_date",
-                            "current_state", "category", "credit_program", "request_type",
-                            "agency_code", "agency_name", "last_analyst", "owner", "originator",
-                            "credit_purpose", "resource_application", "special_treatment",
-                            "central", "superintendence_code", "superintendence_name",
-                            "microcredit", "renegotiation_type", "guarantee_type",
-                            "registration_central_task", "registration_central_activity_start",
-                            "judicial_period", "requesting_unit", "agreement",
-                            "culture", "roc_type", "poa_prd_subject",
-                            "central_date", "activity_start_date", "client_size",
-                        ].map(k => String(p[k] ?? "").trim()).join("|");
+
 
                         for (let i = 0; i < rows.length; i += BATCH_SIZE) {
                             const batch = rows.slice(i, i + BATCH_SIZE);
@@ -308,52 +295,32 @@ export function ImportProposalsDialog({ open, onOpenChange }: ImportProposalsDia
                                 continue;
                             }
 
-                            // ─── Deduplicação por comparação completa ────────────────────
-                            // Passo 1: Coleta chaves de narrowing (SICAD / activity_id) para
-                            //          buscar candidatos no banco de forma eficiente.
-                            const sicadsInBatch = mappedBatch.map(p => p.sicad).filter(s => s && s.trim() !== "");
+                            // ─── Deduplicação por IDs Únicos (activity_id ou proposal_number) ──────
                             const activityIdsInBatch = mappedBatch.map(p => p.activity_id).filter(a => a && a.trim() !== "");
+                            const proposalNumbersInBatch = mappedBatch.map(p => p.proposal_number).filter(n => n && n.trim() !== "");
 
-                            // Passo 2: Busca candidatos no banco com todos os campos comparáveis.
-                            const candidateRows: any[] = [];
-                            const SELECT_FIELDS = [
-                                "producer_name", "producer_cpf", "requested_value", "pronaf_line",
-                                "sicad", "proposal_number", "activity_id", "task", "entry_date",
-                                "current_state", "category", "credit_program", "request_type",
-                                "agency_code", "agency_name", "last_analyst", "owner", "originator",
-                                "credit_purpose", "resource_application", "special_treatment",
-                                "central", "superintendence_code", "superintendence_name",
-                                "microcredit", "renegotiation_type", "guarantee_type",
-                                "registration_central_task", "registration_central_activity_start",
-                                "judicial_period", "requesting_unit", "agreement",
-                                "culture", "roc_type", "poa_prd_subject",
-                                "central_date", "activity_start_date", "client_size",
-                            ].join(", ");
-
-                            if (sicadsInBatch.length > 0) {
-                                const { data } = await supabase
-                                    .from("proposals")
-                                    .select(SELECT_FIELDS)
-                                    .in("sicad", sicadsInBatch);
-                                if (data) candidateRows.push(...data);
-                            }
+                            const existingIds = new Set<string>();
 
                             if (activityIdsInBatch.length > 0) {
                                 const { data } = await supabase
                                     .from("proposals")
-                                    .select(SELECT_FIELDS)
+                                    .select("activity_id")
                                     .in("activity_id", activityIdsInBatch);
-                                if (data) candidateRows.push(...data);
+                                if (data) data.forEach(p => existingIds.add(p.activity_id));
                             }
 
-                            // Passo 3: Gera fingerprints de todos os candidatos existentes no banco.
-                            const existingFingerprints = new Set<string>(
-                                candidateRows.map(fingerprint)
-                            );
+                            if (proposalNumbersInBatch.length > 0) {
+                                const { data } = await supabase
+                                    .from("proposals")
+                                    .select("proposal_number")
+                                    .in("proposal_number", proposalNumbersInBatch);
+                                if (data) data.forEach(p => existingIds.add(p.proposal_number));
+                            }
 
-                            // Passo 4: Filtra — só ignora se o fingerprint completo bater.
                             const proposalsToInsert = mappedBatch.filter(p => {
-                                return !existingFingerprints.has(fingerprint(p));
+                                const hasActivityId = p.activity_id && existingIds.has(p.activity_id);
+                                const hasProposalNumber = p.proposal_number && existingIds.has(p.proposal_number);
+                                return !hasActivityId && !hasProposalNumber;
                             });
 
                             const batchDuplicates = mappedBatch.length - proposalsToInsert.length;
