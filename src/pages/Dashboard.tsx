@@ -463,7 +463,7 @@ export default function Dashboard() {
 
           <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
             <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden border-0 rounded-[32px] shadow-2xl">
-              <DialogHeader className="p-8 bg-gradient-to-br from-primary to-primary/90 text-white">
+              <DialogHeader className="p-8 bg-gradient-to-br from-primary to-primary/90 text-white shrink-0">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl">
                     <FileText className="h-6 w-6 text-white" />
@@ -475,137 +475,172 @@ export default function Dashboard() {
                 </div>
               </DialogHeader>
 
-              <ScrollArea className="flex-1 p-8 pr-12 scrollbar-premium">
+              <div className="flex-1 overflow-y-auto p-8" style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#2563eb #e5e7eb',
+              }}>
                 <style dangerouslySetInnerHTML={{ __html: `
-                  .scrollbar-premium [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+                  .filter-scroll-area::-webkit-scrollbar {
                     width: 10px !important;
                     display: block !important;
                   }
-                  .scrollbar-premium [data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
-                    background: rgba(0,0,0,0.05) !important;
+                  .filter-scroll-area::-webkit-scrollbar-track {
+                    background: #e5e7eb !important;
                     border-radius: 10px !important;
+                    margin: 4px 0;
                   }
-                  .scrollbar-premium [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
-                    background: #1e40af !important;
-                    border: 2px solid white !important;
+                  .filter-scroll-area::-webkit-scrollbar-thumb {
+                    background: linear-gradient(180deg, #3b82f6, #1d4ed8) !important;
                     border-radius: 10px !important;
+                    border: 2px solid #e5e7eb !important;
                   }
-                `}} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  .filter-scroll-area::-webkit-scrollbar-thumb:hover {
+                    background: linear-gradient(180deg, #2563eb, #1e40af) !important;
+                  }
+                  .filter-inner-scroll::-webkit-scrollbar {
+                    width: 8px !important;
+                    display: block !important;
+                  }
+                  .filter-inner-scroll::-webkit-scrollbar-track {
+                    background: rgba(0,0,0,0.04) !important;
+                    border-radius: 8px !important;
+                  }
+                  .filter-inner-scroll::-webkit-scrollbar-thumb {
+                    background: #93c5fd !important;
+                    border-radius: 8px !important;
+                    border: 2px solid transparent !important;
+                    background-clip: padding-box !important;
+                  }
+                  .filter-inner-scroll::-webkit-scrollbar-thumb:hover {
+                    background: #3b82f6 !important;
+                    background-clip: padding-box !important;
+                  }
+                ` }} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 filter-scroll-area">
                   {/* Status Selection */}
-                  <div className="space-y-4">
+                  <div className="space-y-3 bg-gradient-to-br from-blue-50/80 to-white rounded-2xl p-5 border border-blue-100 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-primary" /> Status das Propostas
+                      <h3 className="text-xs font-black text-blue-700 uppercase tracking-widest flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-blue-600" />
+                        </div>
+                        Status
+                        <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[9px] font-black bg-blue-100 text-blue-700 border-0">{selectedStatuses.length}/{allStatuses.length}</Badge>
                       </h3>
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="text-[10px] font-bold h-7 px-2 hover:bg-primary/5 text-primary"
+                        className="text-[9px] font-bold h-6 px-2 hover:bg-blue-100/80 text-blue-600 rounded-lg"
                         onClick={() => toggleAll(selectedStatuses, setSelectedStatuses, allStatuses)}
                       >
-                        {selectedStatuses.length === allStatuses.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                        {selectedStatuses.length === allStatuses.length ? "Desmarcar" : "Selecionar Todos"}
                       </Button>
                     </div>
-                    <ScrollArea className="h-48 bg-muted/30 p-4 rounded-2xl border border-border/50 scrollbar-premium">
-                      <div className="grid grid-cols-1 gap-2">
-                        {allStatuses.map(status => (
-                          <div key={status} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedStatuses, setSelectedStatuses, status)}>
-                            <Checkbox checked={selectedStatuses.includes(status)} className="rounded-md border-2" />
-                            <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
-                              {STATUS_LABELS[status as ProposalStatus]}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
+                    <div className="max-h-44 overflow-y-auto filter-inner-scroll rounded-xl bg-white/80 p-3 border border-blue-50 space-y-1.5" style={{ scrollbarWidth: 'thin', scrollbarColor: '#93c5fd transparent' }}>
+                      {allStatuses.map(status => (
+                        <div key={status} className={`flex items-center space-x-2.5 group cursor-pointer p-2 rounded-xl transition-all duration-150 ${selectedStatuses.includes(status) ? 'bg-blue-50/80 border border-blue-200' : 'hover:bg-gray-50 border border-transparent'}`} onClick={() => toggleSelection(selectedStatuses, setSelectedStatuses, status)}>
+                          <Checkbox checked={selectedStatuses.includes(status)} className="rounded-md border-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600" />
+                          <Label className="text-sm font-semibold cursor-pointer group-hover:text-blue-700 transition-colors">
+                            {STATUS_LABELS[status as ProposalStatus]}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Program Selection */}
-                  <div className="space-y-4">
+                  <div className="space-y-3 bg-gradient-to-br from-emerald-50/80 to-white rounded-2xl p-5 border border-emerald-100 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-primary" /> Programas de Crédito
+                      <h3 className="text-xs font-black text-emerald-700 uppercase tracking-widest flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+                          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                        </div>
+                        Programas
+                        <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[9px] font-black bg-emerald-100 text-emerald-700 border-0">{selectedPrograms.length}/{allPrograms.length}</Badge>
                       </h3>
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="text-[10px] font-bold h-7 px-2 hover:bg-primary/5 text-primary"
+                        className="text-[9px] font-bold h-6 px-2 hover:bg-emerald-100/80 text-emerald-600 rounded-lg"
                         onClick={() => toggleAll(selectedPrograms, setSelectedPrograms, allPrograms)}
                       >
-                        {selectedPrograms.length === allPrograms.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                        {selectedPrograms.length === allPrograms.length ? "Desmarcar" : "Selecionar Todos"}
                       </Button>
                     </div>
-                    <ScrollArea className="h-48 bg-muted/30 p-4 rounded-2xl border border-border/50 scrollbar-premium">
-                      <div className="grid grid-cols-1 gap-2">
-                        {allPrograms.length > 0 ? allPrograms.map(program => (
-                          <div key={program} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedPrograms, setSelectedPrograms, program)}>
-                            <Checkbox checked={selectedPrograms.includes(program)} className="rounded-md border-2" />
-                            <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
-                              {program}
-                            </Label>
-                          </div>
-                        )) : (
-                          <p className="text-xs text-muted-foreground italic p-2 text-center">Nenhum programa encontrado</p>
-                        )}
-                      </div>
-                    </ScrollArea>
+                    <div className="max-h-44 overflow-y-auto filter-inner-scroll rounded-xl bg-white/80 p-3 border border-emerald-50 space-y-1.5" style={{ scrollbarWidth: 'thin', scrollbarColor: '#6ee7b7 transparent' }}>
+                      {allPrograms.length > 0 ? allPrograms.map(program => (
+                        <div key={program} className={`flex items-center space-x-2.5 group cursor-pointer p-2 rounded-xl transition-all duration-150 ${selectedPrograms.includes(program) ? 'bg-emerald-50/80 border border-emerald-200' : 'hover:bg-gray-50 border border-transparent'}`} onClick={() => toggleSelection(selectedPrograms, setSelectedPrograms, program)}>
+                          <Checkbox checked={selectedPrograms.includes(program)} className="rounded-md border-2 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600" />
+                          <Label className="text-xs font-semibold cursor-pointer group-hover:text-emerald-700 transition-colors leading-tight">
+                            {program}
+                          </Label>
+                        </div>
+                      )) : (
+                        <p className="text-xs text-muted-foreground italic p-2 text-center">Nenhum programa encontrado</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Designer Selection */}
-                  <div className="space-y-4">
+                  <div className="space-y-3 bg-gradient-to-br from-violet-50/80 to-white rounded-2xl p-5 border border-violet-100 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                        <Search className="h-4 w-4 text-primary" /> Projetistas
+                      <h3 className="text-xs font-black text-violet-700 uppercase tracking-widest flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-lg bg-violet-100 flex items-center justify-center">
+                          <Search className="h-3.5 w-3.5 text-violet-600" />
+                        </div>
+                        Projetistas
+                        <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[9px] font-black bg-violet-100 text-violet-700 border-0">{selectedDesigners.length}/{allDesigners.length}</Badge>
                       </h3>
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="text-[10px] font-bold h-7 px-2 hover:bg-primary/5 text-primary"
+                        className="text-[9px] font-bold h-6 px-2 hover:bg-violet-100/80 text-violet-600 rounded-lg"
                         onClick={() => toggleAll(selectedDesigners, setSelectedDesigners, allDesigners)}
                       >
-                        {selectedDesigners.length === allDesigners.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                        {selectedDesigners.length === allDesigners.length ? "Desmarcar" : "Selecionar Todos"}
                       </Button>
                     </div>
-                    <ScrollArea className="h-48 bg-muted/30 p-4 rounded-2xl border border-border/50 scrollbar-premium">
-                      <div className="grid grid-cols-1 gap-2">
-                        {allDesigners.map(designer => (
-                          <div key={designer} className="flex items-center space-x-2 group cursor-pointer" onClick={() => toggleSelection(selectedDesigners, setSelectedDesigners, designer)}>
-                            <Checkbox checked={selectedDesigners.includes(designer)} className="rounded-md border-2" />
-                            <Label className="text-sm font-medium cursor-pointer group-hover:text-primary transition-colors">
-                              {PROJECT_DESIGNER_LABELS[designer as ProjectDesigner]}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
+                    <div className="max-h-44 overflow-y-auto filter-inner-scroll rounded-xl bg-white/80 p-3 border border-violet-50 space-y-1.5" style={{ scrollbarWidth: 'thin', scrollbarColor: '#c4b5fd transparent' }}>
+                      {allDesigners.map(designer => (
+                        <div key={designer} className={`flex items-center space-x-2.5 group cursor-pointer p-2 rounded-xl transition-all duration-150 ${selectedDesigners.includes(designer) ? 'bg-violet-50/80 border border-violet-200' : 'hover:bg-gray-50 border border-transparent'}`} onClick={() => toggleSelection(selectedDesigners, setSelectedDesigners, designer)}>
+                          <Checkbox checked={selectedDesigners.includes(designer)} className="rounded-md border-2 data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600" />
+                          <Label className="text-sm font-semibold cursor-pointer group-hover:text-violet-700 transition-colors">
+                            {PROJECT_DESIGNER_LABELS[designer as ProjectDesigner]}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Date Filtering */}
-                  <div className="space-y-6">
-                    <div className="space-y-4">
+                  <div className="space-y-5 bg-gradient-to-br from-amber-50/80 to-white rounded-2xl p-5 border border-amber-100 shadow-sm">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-primary" /> Mês de Registro
+                        <h3 className="text-xs font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-lg bg-amber-100 flex items-center justify-center">
+                            <Clock className="h-3.5 w-3.5 text-amber-600" />
+                          </div>
+                          Mês
+                          <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[9px] font-black bg-amber-100 text-amber-700 border-0">{selectedMonths.length}/{allMonths.length}</Badge>
                         </h3>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="text-[10px] font-bold h-7 px-2 hover:bg-primary/5 text-primary"
+                          className="text-[9px] font-bold h-6 px-2 hover:bg-amber-100/80 text-amber-600 rounded-lg"
                           onClick={() => toggleAll(selectedMonths, setSelectedMonths, allMonths)}
                         >
-                          {selectedMonths.length === allMonths.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                          {selectedMonths.length === allMonths.length ? "Desmarcar" : "Selecionar Todos"}
                         </Button>
                       </div>
-                      <div className="grid grid-cols-4 gap-2 bg-muted/30 p-3 rounded-2xl border border-border/50">
+                      <div className="grid grid-cols-4 gap-1.5 bg-white/80 p-3 rounded-xl border border-amber-50">
                         {allMonths.map(m => (
                           <div 
                             key={m} 
                             onClick={() => toggleSelection(selectedMonths, setSelectedMonths, m)}
-                            className={`flex items-center justify-center p-2 rounded-xl border text-[10px] font-bold transition-all cursor-pointer ${
+                            className={`flex items-center justify-center p-2 rounded-lg border text-[10px] font-black transition-all cursor-pointer ${
                               selectedMonths.includes(m) 
-                              ? "bg-primary text-white border-primary shadow-sm" 
-                              : "bg-white text-muted-foreground border-border/60 hover:border-primary/40 hover:text-primary"
+                              ? "bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-200" 
+                              : "bg-white text-muted-foreground border-border/60 hover:border-amber-300 hover:text-amber-700 hover:bg-amber-50"
                             }`}
                           >
                             {format(new Date(2024, Number(m) - 1, 1), "MMM", { locale: ptBR }).toUpperCase()}
@@ -614,29 +649,33 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-primary" /> Ano de Registro
+                        <h3 className="text-xs font-black text-amber-700 uppercase tracking-widest flex items-center gap-2">
+                          <div className="h-7 w-7 rounded-lg bg-amber-100 flex items-center justify-center">
+                            <Clock className="h-3.5 w-3.5 text-amber-600" />
+                          </div>
+                          Ano
+                          <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[9px] font-black bg-amber-100 text-amber-700 border-0">{selectedYears.length}/{availableYears.length}</Badge>
                         </h3>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          className="text-[10px] font-bold h-7 px-2 hover:bg-primary/5 text-primary"
+                          className="text-[9px] font-bold h-6 px-2 hover:bg-amber-100/80 text-amber-600 rounded-lg"
                           onClick={() => toggleAll(selectedYears, setSelectedYears, availableYears)}
                         >
-                          {selectedYears.length === availableYears.length ? "Desmarcar Todos" : "Selecionar Todos"}
+                          {selectedYears.length === availableYears.length ? "Desmarcar" : "Selecionar Todos"}
                         </Button>
                       </div>
-                      <div className="flex flex-wrap gap-2 bg-muted/30 p-3 rounded-2xl border border-border/50">
+                      <div className="flex flex-wrap gap-2 bg-white/80 p-3 rounded-xl border border-amber-50">
                         {availableYears.map(y => (
                           <div 
                             key={y} 
                             onClick={() => toggleSelection(selectedYears, setSelectedYears, y)}
-                            className={`px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                            className={`px-4 py-2 rounded-lg border text-[11px] font-black transition-all cursor-pointer ${
                               selectedYears.includes(y) 
-                              ? "bg-primary text-white border-primary shadow-sm" 
-                              : "bg-white text-muted-foreground border-border/60 hover:border-primary/40 hover:text-primary"
+                              ? "bg-amber-500 text-white border-amber-500 shadow-sm shadow-amber-200" 
+                              : "bg-white text-muted-foreground border-border/60 hover:border-amber-300 hover:text-amber-700 hover:bg-amber-50"
                             }`}
                           >
                             {y}
@@ -646,7 +685,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-              </ScrollArea>
+              </div>
 
               <DialogFooter className="p-8 bg-muted/30 border-t border-border/50 flex flex-col sm:flex-row gap-3 items-center">
                 <Button 
