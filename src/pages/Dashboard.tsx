@@ -300,17 +300,13 @@ export default function Dashboard() {
         const pMonth = (getMonth(d) + 1).toString();
         const pYear = getYear(d).toString();
 
-        // Core top bar filters
-        if (filterMonth !== "all" && pMonth !== filterMonth) return false;
-        if (filterYear !== "all" && pYear !== filterYear) return false;
-
-        // Custom dialog filters
+        // Custom dialog filters (Only use these, disregard global dashboard filters)
         if (activeMonths.length > 0 && !activeMonths.includes(pMonth)) return false;
         if (activeYears.length > 0 && !activeYears.includes(pYear)) return false;
         
         // Selection filters
         const matchesDesigner = activeDesigners.length === 0 || (p.project_designer && activeDesigners.includes(p.project_designer));
-        const matchesStatus = activeStatuses.length === 0 || activeStatuses.includes(p.status);
+        const matchesStatus = activeStatuses.length === 0 || (p.status && activeStatuses.includes(p.status));
         const matchesProgram = activePrograms.length === 0 || (p.credit_program && activePrograms.includes(p.credit_program));
 
         return matchesDesigner && matchesStatus && matchesProgram;
