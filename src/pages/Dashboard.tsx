@@ -135,7 +135,7 @@ export default function Dashboard() {
     [filteredProposals]
   );
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = async (filters?: { designers: string[], statuses: string[], months: string[], years: string[], programs: string[] }) => {
     setIsExporting(true);
     setIsFilterDialogOpen(false);
     
@@ -163,7 +163,10 @@ export default function Dashboard() {
           "SUPORTE ADMINISTRATIVO": 5
         };
 
-        const sortedTeam = [...members].sort((a, b) => {
+        const activeDesigners = filters?.designers || selectedDesigners;
+        const teamToPrint = members.filter(m => activeDesigners.length === 0 || activeDesigners.includes(m.id));
+
+        const sortedTeam = [...teamToPrint].sort((a, b) => {
           const rankA = HIERARCHY_RANK[a.role.toUpperCase()] || 99;
           const rankB = HIERARCHY_RANK[b.role.toUpperCase()] || 99;
           return rankA - rankB;
@@ -281,7 +284,28 @@ export default function Dashboard() {
       pdf.addPage();
       addHeader("Detalhamento Operacional de Propostas", "OPERATIONAL DATA");
 
-      const proposalsToPrint = ongoingProposals;
+      const activeDesigners = filters?.designers || selectedDesigners;
+      const activeStatuses = filters?.statuses || selectedStatuses;
+      const activeMonths = filters?.months || selectedMonths;
+      const activeYears = filters?.years || selectedYears;
+      const activePrograms = filters?.programs || selectedPrograms;
+
+      const proposalsToPrint = proposals.filter(p => {
+        if (effectiveAgencyId !== "all" && p.agency_id !== effectiveAgencyId) return false;
+        
+        const d = new Date(p.created_at);
+        if (filterMonth !== "all" && getMonth(d) + 1 !== Number(filterMonth)) return false;
+        if (filterYear !== "all" && getYear(d) !== Number(filterYear)) return false;
+
+        if (activeMonths.length > 0 && !activeMonths.includes(String(getMonth(d) + 1))) return false;
+        if (activeYears.length > 0 && !activeYears.includes(String(getYear(d)))) return false;
+        
+        const matchesDesigner = activeDesigners.length === 0 || (p.project_designer && activeDesigners.includes(p.project_designer));
+        const matchesStatus = activeStatuses.length === 0 || activeStatuses.includes(p.status);
+        const matchesProgram = activePrograms.length === 0 || (p.credit_program && activePrograms.includes(p.credit_program));
+
+        return matchesDesigner && matchesStatus && matchesProgram;
+      });
 
       const tableData = proposalsToPrint.map(p => [
         p.producer_name,
