@@ -290,16 +290,25 @@ export default function Dashboard() {
       const activeYears = filters?.years || selectedYears;
       const activePrograms = filters?.programs || selectedPrograms;
 
-      const proposalsToPrint = proposals.filter(p => {
+      const proposalsToPrint = proposals.filter((p) => {
+        // First filter by agency
         if (effectiveAgencyId !== "all" && p.agency_id !== effectiveAgencyId) return false;
         
-        const d = new Date(p.created_at);
-        if (filterMonth !== "all" && getMonth(d) + 1 !== Number(filterMonth)) return false;
-        if (filterYear !== "all" && getYear(d) !== Number(filterYear)) return false;
+        // Date filters
+        if (!p.created_at) return false;
+        const d = parseISO(p.created_at);
+        const pMonth = (getMonth(d) + 1).toString();
+        const pYear = getYear(d).toString();
 
-        if (activeMonths.length > 0 && !activeMonths.includes(String(getMonth(d) + 1))) return false;
-        if (activeYears.length > 0 && !activeYears.includes(String(getYear(d)))) return false;
+        // Core top bar filters
+        if (filterMonth !== "all" && pMonth !== filterMonth) return false;
+        if (filterYear !== "all" && pYear !== filterYear) return false;
+
+        // Custom dialog filters
+        if (activeMonths.length > 0 && !activeMonths.includes(pMonth)) return false;
+        if (activeYears.length > 0 && !activeYears.includes(pYear)) return false;
         
+        // Selection filters
         const matchesDesigner = activeDesigners.length === 0 || (p.project_designer && activeDesigners.includes(p.project_designer));
         const matchesStatus = activeStatuses.length === 0 || activeStatuses.includes(p.status);
         const matchesProgram = activePrograms.length === 0 || (p.credit_program && activePrograms.includes(p.credit_program));
@@ -307,17 +316,24 @@ export default function Dashboard() {
         return matchesDesigner && matchesStatus && matchesProgram;
       });
 
-      const tableData = proposalsToPrint.map(p => [
-        p.producer_name,
-        p.producer_cpf || '-',
-        formatCurrency(Number(p.requested_value)),
-        p.credit_program || 'Não Informado',
-        format(parseISO(p.created_at), "dd/MM/yyyy")
-      ]);
+      const tableData = proposalsToPrint.map(p => {
+        const designerLabel = p.project_designer 
+          ? (PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer) 
+          : '-';
+          
+        return [
+          p.producer_name,
+          p.producer_cpf || '-',
+          formatCurrency(Number(p.requested_value)),
+          p.credit_program || 'Não Informado',
+          designerLabel,
+          format(parseISO(p.created_at), "dd/MM/yyyy")
+        ];
+      });
 
       autoTable(pdf, {
         startY: 70,
-        head: [['PRODUTOR', 'CPF', 'VALOR (R$)', 'PROGRAMA DE CRÉDITO', 'DATA ENTRADA']],
+        head: [['PRODUTOR', 'CPF', 'VALOR (R$)', 'PROGRAMA DE CRÉDITO', 'PROJETISTA', 'DATA ENTRADA']],
         body: tableData,
         theme: 'grid',
         headStyles: { fillColor: [15, 23, 42], fontSize: 9, halign: 'center' },
