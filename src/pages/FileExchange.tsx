@@ -27,19 +27,21 @@ export default function FileExchange() {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    console.log("File selected:", file?.name, file?.size, file?.type);
     if (!file) return;
 
     setIsUploading(true);
-    await uploadFile(file);
-    setIsUploading(false);
-    // Clear input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    try {
+      const success = await uploadFile(file);
+      console.log("Upload result:", success);
+      if (success && fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (err) {
+      console.error("Upload handler error:", err);
+    } finally {
+      setIsUploading(false);
     }
-  };
-
-  const triggerUpload = () => {
-    fileInputRef.current?.click();
   };
 
   const formatSize = (bytes: number) => {
@@ -65,21 +67,23 @@ export default function FileExchange() {
           </p>
         </div>
 
-        <div className="md:relative">
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            onChange={handleFileChange}
-            disabled={isUploading}
-          />
+        <div className="relative group overflow-hidden">
           <Button 
             disabled={isUploading}
-            onClick={triggerUpload}
-            className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-white font-bold tracking-wide shadow-lg shadow-amber-200 h-12 md:h-10"
+            className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-white font-bold tracking-wide shadow-lg shadow-amber-200 h-12 md:h-10 relative"
           >
             {isUploading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Upload className="mr-2 h-5 w-5 md:h-4 md:w-4" />}
             Enviar Novo Arquivo
+            
+            {/* Native input overlay for maximum mobile compatibility */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-20"
+              onChange={handleFileChange}
+              disabled={isUploading}
+              title="Clique para selecionar arquivo"
+            />
           </Button>
         </div>
       </div>
