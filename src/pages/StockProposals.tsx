@@ -63,23 +63,23 @@ export default function StockProposals() {
   const totalEstimated = proposals.reduce((acc, p) => acc + (Number(p.estimated_value) || 0), 0);
 
   return (
-    <div className="flex flex-col gap-6 p-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full">
+    <div className="flex flex-col gap-4 md:gap-6 p-3 md:p-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full pb-20 md:pb-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 font-heading tracking-tight flex items-center gap-3">
-            <Box className="h-8 w-8 text-indigo-600" />
+          <h1 className="text-2xl md:text-3xl font-black text-slate-800 font-heading tracking-tight flex items-center gap-3">
+            <Box className="h-6 w-6 md:h-8 md:w-8 text-indigo-600" />
             Propostas em Estoque
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-xs md:text-sm text-muted-foreground mt-1">
             Controle de propostas em estágio inicial, antes do envio para a central.
           </p>
         </div>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold tracking-wide shadow-md shadow-indigo-200">
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Proposta
+            <Button className="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold tracking-wide shadow-lg shadow-indigo-200 h-12 md:h-10">
+              <Plus className="mr-2 h-5 w-5 md:h-4 md:w-4" />
+              Nova Proposta no Estoque
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
@@ -181,17 +181,17 @@ export default function StockProposals() {
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
         <Card className="bg-gradient-to-br from-indigo-50 to-white border-indigo-100 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
-                <Box className="h-6 w-6" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                <Box className="h-5 w-5 md:h-6 md:w-6" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-indigo-600/80 uppercase tracking-wider">Total em Estoque</p>
-                <h3 className="text-3xl font-black text-indigo-900 font-heading">
-                  {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : proposals.length}
+                <p className="text-[10px] md:text-sm font-semibold text-indigo-600/80 uppercase tracking-wider">Total em Estoque</p>
+                <h3 className="text-xl md:text-3xl font-black text-indigo-900 font-heading">
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : proposals.length}
                 </h3>
               </div>
             </div>
@@ -199,15 +199,15 @@ export default function StockProposals() {
         </Card>
 
         <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-100 shadow-sm md:col-span-2">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
-                <Landmark className="h-6 w-6" />
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                <Landmark className="h-5 w-5 md:h-6 md:w-6" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-emerald-600/80 uppercase tracking-wider">Volume Financeiro Estimado</p>
-                <h3 className="text-3xl font-black text-emerald-900 font-heading">
-                  {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : formatCurrency(totalEstimated)}
+                <p className="text-[10px] md:text-sm font-semibold text-emerald-600/80 uppercase tracking-wider">Volume Financeiro Estimado</p>
+                <h3 className="text-xl md:text-3xl font-black text-emerald-900 font-heading">
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(totalEstimated)}
                 </h3>
               </div>
             </div>
@@ -217,12 +217,12 @@ export default function StockProposals() {
 
       {/* Main Content */}
       <Card className="shadow-md border-slate-200">
-        <CardHeader className="bg-slate-50/50 border-b">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <FileText className="h-5 w-5 text-slate-500" />
+        <CardHeader className="bg-slate-50/50 border-b p-4">
+          <CardTitle className="text-base md:text-lg flex items-center gap-2">
+            <FileText className="h-4 w-4 md:h-5 md:w-5 text-slate-500" />
             Relação de Estoque
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs md:text-sm">
             Listagem de todas as propostas pré-cadastradas na agência.
           </CardDescription>
         </CardHeader>
@@ -237,12 +237,12 @@ export default function StockProposals() {
                 <Box className="h-8 w-8 text-slate-400" />
               </div>
               <h3 className="text-lg font-bold text-slate-700">O estoque está vazio</h3>
-              <p className="text-slate-500 mt-1 max-w-sm">
-                Nenhuma proposta foi registrada no estoque. Clique no botão "Nova Proposta" para começar.
+              <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                Nenhuma proposta registrada. Comece pelo botão acima.
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 p-3 md:p-4">
               {proposals.map((proposal) => (
                 <div 
                   key={proposal.id} 

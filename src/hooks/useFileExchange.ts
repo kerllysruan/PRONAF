@@ -18,29 +18,22 @@ export interface ExchangeFile {
 export function useFileExchange() {
   const [files, setFiles] = useState<ExchangeFile[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, agencyId } = useAuth();
   const { toast } = useToast();
 
   const fetchFiles = async () => {
     try {
-      setLoading(true);
-      
-      // Get user's agency first
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("agency_id")
-        .eq("id", user?.id)
-        .single();
-
-      if (!profile?.agency_id) {
+      if (!agencyId) {
         setFiles([]);
+        setLoading(false);
         return;
       }
 
+      setLoading(true);
       const { data, error } = await supabase
         .from("file_exchange")
         .select("*")
-        .eq("agency_id", profile.agency_id)
+        .eq("agency_id", agencyId)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -60,24 +53,14 @@ export function useFileExchange() {
   const uploadFile = async (file: File) => {
     try {
       if (!user) throw new Error("Usuário não autenticado");
-
-      // Get user's agency
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("agency_id")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile?.agency_id) throw new Error("Agência não encontrada para o usuário");
+      if (!agencyId) throw new Error("Agência não encontrada para o usuário");
 
       const fileExt = file.name.split('.').pop();
-      const filePath = `${profile.agency_id}/${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${agencyId}/${crypto.randomUUID()}.${fileExt}`;
 
       // 1. Upload to storage
       const { error: uploadError } = await supabase.storage
-        .from("proposals_documents") // Using existing bucket or will try to create if needed. 
-                                     // Actually, user context usually has one. 
-                                     // User mentioned "minimum space", so we'll use storage but delete immediately.
+        .from("proposals_documents")
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
@@ -90,7 +73,7 @@ export function useFileExchange() {
           file_path: filePath,
           file_size: file.size,
           content_type: file.type,
-          agency_id: profile.agency_id,
+          agency_id: agencyId,
           uploaded_by: user.id
         });
 
