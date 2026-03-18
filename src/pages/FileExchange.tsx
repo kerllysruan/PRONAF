@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useFileExchange, ExchangeFile } from "@/hooks/useFileExchange";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import { format, parseISO } from "date-fns";
 export default function FileExchange() {
   const { files, loading, uploadFile, downloadAndDestroy } = useFileExchange();
   const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,7 +33,13 @@ export default function FileExchange() {
     await uploadFile(file);
     setIsUploading(false);
     // Clear input
-    e.target.value = "";
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const triggerUpload = () => {
+    fileInputRef.current?.click();
   };
 
   const formatSize = (bytes: number) => {
@@ -59,27 +66,25 @@ export default function FileExchange() {
         </div>
 
         <div className="md:relative">
-          <Input
+          <input
             type="file"
-            id="file-upload"
+            ref={fileInputRef}
             className="hidden"
             onChange={handleFileChange}
             disabled={isUploading}
           />
           <Button 
-            asChild
             disabled={isUploading}
+            onClick={triggerUpload}
             className="w-full md:w-auto bg-amber-500 hover:bg-amber-600 text-white font-bold tracking-wide shadow-lg shadow-amber-200 h-12 md:h-10"
           >
-            <label htmlFor="file-upload" className="cursor-pointer flex items-center justify-center">
-              {isUploading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Upload className="mr-2 h-5 w-5 md:h-4 md:w-4" />}
-              Enviar Novo Arquivo
-            </label>
+            {isUploading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Upload className="mr-2 h-5 w-5 md:h-4 md:w-4" />}
+            Enviar Novo Arquivo
           </Button>
         </div>
       </div>
 
-      {/* Warning Card - Simplified on small mobile */}
+      {/* Warning Card */}
       <Card className="bg-amber-50 border-amber-200 overflow-hidden relative shadow-sm">
         <div className="absolute top-0 right-0 p-4 md:p-8 opacity-5 pointer-events-none">
           <ShieldAlert className="h-12 w-12 md:h-24 md:w-24 -mr-2 -mt-2 text-amber-900" />

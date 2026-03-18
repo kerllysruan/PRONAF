@@ -10,7 +10,7 @@ export interface ExchangeFile {
   file_size: number;
   content_type: string;
   uploaded_by: string;
-  agency_id: string;
+  agency_id: string | null;
   created_at: string;
   expires_at: string | null;
 }
@@ -18,23 +18,34 @@ export interface ExchangeFile {
 export function useFileExchange() {
   const [files, setFiles] = useState<ExchangeFile[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, agencyId } = useAuth();
+  const { user, agencyId, isDeveloper } = useAuth();
   const { toast } = useToast();
 
   const fetchFiles = async () => {
     try {
-      if (!agencyId) {
+      if (!user) {
         setFiles([]);
         setLoading(false);
         return;
       }
 
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from("file_exchange")
         .select("*")
-        .eq("agency_id", agencyId)
         .order("created_at", { ascending: false });
+
+      // If not a developer, only show files for their agency
+      if (!isDeveloper) {
+        if (!agencyId) {
+          setFiles([]);
+          setLoading(false);
+          return;
+        }
+        query = query.eq("agency_id", agencyId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setFiles(data || []);
@@ -53,10 +64,14 @@ export function useFileExchange() {
   const uploadFile = async (file: File) => {
     try {
       if (!user) throw new Error("Usuário não autenticado");
-      if (!agencyId) throw new Error("Agência não encontrada para o usuário");
+      
+      if (!isDeveloper && !agencyId) {
+        throw new Error("Agência não encontrada para o usuário");
+      }
 
       const fileExt = file.name.split('.').pop();
-      const filePath = `${agencyId}/${crypto.randomUUID()}.${fileExt}`;
+      const folderPath = agencyId || `admin-${user.id.substring(0, 8)}`;
+      const filePath = `${folderPath}/${crypto.randomUUID()}.${fileExt}`;
 
       // 1. Upload to storage
       const { error: uploadError } = await supabase.storage
@@ -73,7 +88,7 @@ export function useFileExchange() {
           file_path: filePath,
           file_size: file.size,
           content_type: file.type,
-          agency_id: agencyId,
+          agency_id: agencyId || null,
           uploaded_by: user.id
         })
         .select()
@@ -152,7 +167,7 @@ export function useFileExchange() {
     if (user) {
       fetchFiles();
     }
-  }, [user]);
+  }, [user, agencyId, isDeveloper]);
 
   return { files, loading, uploadFile, downloadAndDestroy, refetch: fetchFiles };
 }
