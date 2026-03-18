@@ -9,6 +9,7 @@ import {
   Settings,
   Shield,
   Building2,
+  Box
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -27,6 +28,7 @@ import {
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, permission: "can_view_dashboard" },
   { title: "Propostas", url: "/propostas", icon: FileText, permission: "can_view_proposals" },
+  { title: "Estoque", url: "/estoque", icon: Box, permission: "can_view_proposals" },
   { title: "Kanban", url: "/kanban", icon: Columns3, permission: "can_view_kanban" },
   { title: "Documentação", url: "/documentacao", icon: FolderCheck, permission: "can_view_documentation" },
   { title: "Tarefas", url: "/tarefas", icon: ClipboardList, permission: "can_view_tasks" },

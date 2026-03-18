@@ -18,6 +18,7 @@ import AccessControl from "./pages/AccessControl";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import AdminAgencies from "./pages/AdminAgencies";
+import StockProposals from "./pages/StockProposals";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Loader2 } from "lucide-react";
 
@@ -57,6 +58,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<AuthRoute />} />
     <Route path="/" element={<ProtectedRoute><PermissionGate permission="can_view_dashboard" showError><Dashboard /></PermissionGate></ProtectedRoute>} />
     <Route path="/propostas" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><Proposals /></PermissionGate></ProtectedRoute>} />
+    <Route path="/estoque" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><StockProposals /></PermissionGate></ProtectedRoute>} />
     <Route path="/kanban" element={<ProtectedRoute><PermissionGate permission="can_view_kanban" showError><KanbanBoard /></PermissionGate></ProtectedRoute>} />
     <Route path="/documentacao" element={<ProtectedRoute><PermissionGate permission="can_view_documentation" showError><Documentation /></PermissionGate></ProtectedRoute>} />
     <Route path="/tarefas" element={<ProtectedRoute><PermissionGate permission="can_view_tasks" showError><Tasks /></PermissionGate></ProtectedRoute>} />
