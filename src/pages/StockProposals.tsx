@@ -7,11 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Plus, Box, Calendar, FileText, Trash2, User, Landmark } from "lucide-react";
+import { Loader2, Plus, Box, Calendar, FileText, Trash2, User, Landmark, ChevronDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { useProposals } from "@/hooks/useProposals";
+import { useMemo } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function StockProposals() {
   const { proposals, loading, addProposal, deleteProposal } = useStockProposals();
+  const { proposals: allProposals } = useProposals();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<InsertStockProposal>>({
@@ -28,6 +32,11 @@ export default function StockProposals() {
       currency: 'BRL'
     }).format(value);
   };
+
+  const uniquePrograms = useMemo(() => {
+    const progs = new Set(allProposals.map(p => p.credit_program).filter(Boolean) as string[]);
+    return Array.from(progs).sort();
+  }, [allProposals]);
 
   const handleCreate = async () => {
     if (!formData.producer_name) return;
@@ -117,16 +126,30 @@ export default function StockProposals() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="program">Programa de Crédito</Label>
-                <div className="relative">
-                  <Landmark className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    id="program" 
-                    className="pl-9"
-                    placeholder="Ex: PRONAF A" 
-                    value={formData.credit_program || ""}
-                    onChange={(e) => setFormData({...formData, credit_program: e.target.value})}
-                  />
-                </div>
+                <Select 
+                  value={formData.credit_program || ""} 
+                  onValueChange={(v) => setFormData({...formData, credit_program: v})}
+                >
+                  <SelectTrigger id="program" className="rounded-xl h-10 bg-white/50 border-slate-200">
+                    <div className="flex items-center gap-3">
+                      <Landmark className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Selecione o programa" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-slate-200 shadow-xl max-h-[200px]">
+                    {uniquePrograms.length > 0 ? (
+                      uniquePrograms.map(program => (
+                        <SelectItem key={program} value={program} className="rounded-lg py-2.5">
+                          {program}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-xs text-muted-foreground uppercase font-black tracking-widest">
+                        Nenhum programa encontrado
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="notes">Observações</Label>
