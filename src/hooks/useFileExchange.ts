@@ -66,7 +66,7 @@ export function useFileExchange() {
       if (uploadError) throw uploadError;
 
       // 2. Insert metadata
-      const { error: dbError } = await supabase
+      const { data: newData, error: dbError } = await supabase
         .from("file_exchange")
         .insert({
           file_name: file.name,
@@ -75,7 +75,9 @@ export function useFileExchange() {
           content_type: file.type,
           agency_id: agencyId,
           uploaded_by: user.id
-        });
+        })
+        .select()
+        .single();
 
       if (dbError) {
         // Cleanup storage on DB error
@@ -85,10 +87,12 @@ export function useFileExchange() {
 
       toast({
         title: "Sucesso",
-        description: "Arquivo enviado para troca",
+        description: "Arquivo enviado com sucesso!",
       });
       
-      await fetchFiles();
+      if (newData) {
+        setFiles(prev => [newData as ExchangeFile, ...prev]);
+      }
       return true;
     } catch (error: any) {
       console.error("Error uploading file:", error);
