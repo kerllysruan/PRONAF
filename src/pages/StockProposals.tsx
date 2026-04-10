@@ -91,7 +91,7 @@ function mapCSVRow(cols: string[], index: number): Partial<InsertStockProposal> 
     linha_credito: cleanCSV(cols[10]),
     credit_program: cleanCSV(cols[10]), // same as linha
     localizacao: cleanCSV(cols[11]),
-    status: cleanCSV(cols[12]) || "novo",
+    status: cleanCSV(cols[12]),
     notes: cleanCSV(cols[13]),
     observacoes_extra: cleanCSV(cols[13]),
     order_index: index,
@@ -711,9 +711,11 @@ export default function StockProposals() {
                           <h4 className="font-bold text-slate-900 truncate text-sm">{p.producer_name}</h4>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className={`text-[9px] font-bold ${getStatusStyle(p.status)} border`}>
-                            {p.status}
-                          </Badge>
+                          {p.status && (
+                            <Badge variant="outline" className={`text-[9px] font-bold ${getStatusStyle(p.status)} border`}>
+                              {p.status}
+                            </Badge>
+                          )}
                           {p.municipio && (
                             <span className="text-[10px] text-slate-500 flex items-center gap-1">
                               <MapPin className="h-3 w-3" /> {p.municipio}
@@ -723,7 +725,7 @@ export default function StockProposals() {
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                         <span className="font-black text-sm text-indigo-700 tabular-nums">
-                          {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '—'}
+                          {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : ''}
                         </span>
                         {expandedCard === p.id ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
                       </div>
