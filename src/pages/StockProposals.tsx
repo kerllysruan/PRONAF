@@ -52,29 +52,37 @@ function parseBRLValue(raw: string): number {
   return parseFloat(clean) || 0;
 }
 
+function cleanCSV(str: string | undefined): string | null {
+  if (!str) return null;
+  const clean = str.trim();
+  // Filter out CSV noise characters
+  if (!clean || clean === '-' || clean === '' || clean === '') return null;
+  return clean;
+}
+
 function mapCSVRow(cols: string[], index: number): Partial<InsertStockProposal> | null {
   // cols: [Nº, CLIENTES, PENDÊNCIAS, SERASA, CLIENTE RENOVAÇÃO, ANO DO CONTRATO, CPF, AGÊNCIA CADASTRO, MUNICÍPIO, VALOR R$, LINHA DE CRÉDITO, LOCALIZAÇÃO, STATUS, extra?]
-  const name = cols[1]?.trim();
+  const name = cleanCSV(cols[1]);
   if (!name || /^CLIENTES?$/i.test(name)) return null; // skip header
-  const num = cols[0]?.trim();
+  const num = cleanCSV(cols[0]);
   if (!num || isNaN(Number(num))) return null; // skip title rows
 
   return {
     producer_name: name,
-    pendencias: cols[2]?.trim() || null,
-    serasa: cols[3]?.trim() || null,
-    cliente_renovacao: cols[4]?.trim() || null,
-    ano_contrato: cols[5]?.trim() || null,
-    producer_cpf: cols[6]?.trim() || null,
-    agencia_cadastro: cols[7]?.trim() || null,
-    municipio: cols[8]?.trim() || null,
+    pendencias: cleanCSV(cols[2]),
+    serasa: cleanCSV(cols[3]),
+    cliente_renovacao: cleanCSV(cols[4]),
+    ano_contrato: cleanCSV(cols[5]),
+    producer_cpf: cleanCSV(cols[6]),
+    agencia_cadastro: cleanCSV(cols[7]),
+    municipio: cleanCSV(cols[8]),
     estimated_value: parseBRLValue(cols[9] || ''),
-    linha_credito: cols[10]?.trim() || null,
-    credit_program: cols[10]?.trim() || null, // same as linha
-    localizacao: cols[11]?.trim() || null,
-    status: cols[12]?.trim() || "novo",
-    notes: cols[13]?.trim() || null,
-    observacoes_extra: cols[13]?.trim() || null,
+    linha_credito: cleanCSV(cols[10]),
+    credit_program: cleanCSV(cols[10]), // same as linha
+    localizacao: cleanCSV(cols[11]),
+    status: cleanCSV(cols[12]) || "novo",
+    notes: cleanCSV(cols[13]),
+    observacoes_extra: cleanCSV(cols[13]),
     order_index: index,
   };
 }
@@ -569,18 +577,13 @@ export default function StockProposals() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-slate-50/80">
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">#</th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Produtor</th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">CPF</th>
-                      <th className="text-center p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Renovação</th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Agência</th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Município</th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Localização</th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Linha</th>
-                      <th className="text-right p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Valor</th>
-                      <th className="text-center p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Serasa</th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Status</th>
-                      <th className="text-center p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Ações</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">#</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PRODUTOR / CPF</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">LOCALIDADE</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROJETO</th>
+                      <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider">RESTRIÇÃO / SERASA</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">STATUS</th>
+                      <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider">AÇÕES</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -588,41 +591,56 @@ export default function StockProposals() {
                       const restriction = hasSerasaRestriction(p.serasa);
                       return (
                       <tr key={p.id} className={`transition-colors group ${restriction ? 'bg-red-50/80 hover:bg-red-100/80' : 'hover:bg-indigo-50/30'}`}>
-                        <td className={`p-3 text-slate-400 font-mono text-xs ${restriction ? 'border-l-2 border-red-500' : ''}`}>{idx + 1}</td>
-                        <td className="p-3">
-                          <div>
+                        <td className={`p-3 text-slate-400 font-mono text-xs align-top ${restriction ? 'border-l-2 border-red-500' : ''}`}>{idx + 1}</td>
+                        <td className="p-3 align-top">
+                          <div className="flex flex-col gap-1">
                             <span className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors line-clamp-2" title={p.producer_name}>{p.producer_name}</span>
+                            {p.producer_cpf && <span className="text-xs text-slate-500 font-mono">{p.producer_cpf}</span>}
                             {p.pendencias && (
-                              <p className="text-[10px] text-amber-600 mt-0.5 flex items-center gap-1">
+                              <div className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-sm inline-flex items-center gap-1 w-fit mt-0.5">
                                 <AlertTriangle className="h-3 w-3" /> {p.pendencias}
-                              </p>
+                              </div>
                             )}
                           </div>
                         </td>
-                        <td className="p-3 text-slate-600 font-mono text-xs whitespace-nowrap">{p.producer_cpf || '—'}</td>
-                        <td className="p-3 text-slate-600 text-xs text-center whitespace-nowrap">
-                          {p.cliente_renovacao ? `${p.cliente_renovacao} ${p.ano_contrato || ''}`.trim() : '—'}
+                        <td className="p-3 align-top min-w-[150px]">
+                          <div className="flex flex-col gap-0.5">
+                            {(p.agencia_cadastro || p.municipio) && (
+                              <span className="text-xs font-semibold text-slate-700 line-clamp-1" title={`${p.agencia_cadastro || ''} - ${p.municipio || ''}`}>
+                                {[p.agencia_cadastro, p.municipio].filter(Boolean).join(" — ")}
+                              </span>
+                            )}
+                            {p.localizacao && <span className="text-xs text-slate-500 line-clamp-2" title={p.localizacao}>{p.localizacao}</span>}
+                          </div>
                         </td>
-                        <td className="p-3 text-slate-600 text-xs max-w-[140px] truncate" title={p.agencia_cadastro || ''}>{p.agencia_cadastro || '—'}</td>
-                        <td className="p-3 text-slate-600 text-xs max-w-[140px] truncate" title={p.municipio || ''}>{p.municipio || '—'}</td>
-                        <td className="p-3 text-slate-600 text-xs max-w-[160px] truncate" title={p.localizacao || ''}>{p.localizacao || '—'}</td>
-                        <td className="p-3 text-slate-600 text-xs whitespace-nowrap">{p.linha_credito || '—'}</td>
-                        <td className="p-3 text-right font-bold text-slate-900 tabular-nums text-xs whitespace-nowrap">
-                          {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '—'}
-                        </td>
-                        <td className="p-3 text-center">
-                          {restriction ? (
-                            <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 gap-1 rounded-full text-[10px] w-auto inline-flex justify-center uppercase shadow-sm">
-                              <XCircle className="h-3 w-3" /> SIM
-                            </Badge>
-                          ) : (
-                            <span className="flex items-center justify-center gap-1.5">
-                              {getSerasaIcon(p.serasa)}
-                              <span className="text-xs font-semibold">{getSerasaLabel(p.serasa)}</span>
+                        <td className="p-3 align-top">
+                          <div className="flex flex-col gap-1">
+                            <span className="font-bold text-slate-900 tabular-nums text-sm">
+                              {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '—'}
                             </span>
-                          )}
+                            {p.linha_credito && <span className="text-xs text-slate-500">{p.linha_credito}</span>}
+                          </div>
                         </td>
-                        <td className="p-3">
+                        <td className="p-3 align-top text-center">
+                          <div className="flex flex-col items-center gap-1.5">
+                            {restriction ? (
+                              <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 gap-1 rounded-full text-[10px] w-auto inline-flex justify-center uppercase shadow-sm">
+                                <XCircle className="h-3 w-3" /> SIM
+                              </Badge>
+                            ) : (
+                              <span className="flex items-center justify-center gap-1.5 pt-1">
+                                {getSerasaIcon(p.serasa)}
+                                <span className="text-xs font-semibold">{getSerasaLabel(p.serasa)}</span>
+                              </span>
+                            )}
+                            {p.cliente_renovacao && (
+                              <span className="text-[10px] text-slate-500 font-semibold bg-slate-100 px-1.5 py-0.5 rounded-sm">
+                                RET: {p.cliente_renovacao} {p.ano_contrato || ''}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-3 align-top">
                           <Badge variant="outline" className={`text-[10px] font-bold ${getStatusStyle(p.status)} border`}>
                             {p.status}
                           </Badge>
