@@ -592,58 +592,80 @@ export default function StockProposals() {
                       return (
                       <tr key={p.id} className={`transition-colors group ${restriction ? 'bg-red-50/80 hover:bg-red-100/80' : 'hover:bg-indigo-50/30'}`}>
                         <td className={`p-3 text-slate-400 font-mono text-xs align-top ${restriction ? 'border-l-2 border-red-500' : ''}`}>{idx + 1}</td>
-                        <td className="p-3 align-top">
-                          <div className="flex flex-col gap-1">
+                        <td className="p-3 align-top min-w-[200px]">
+                          <div className="flex flex-col gap-1.5">
                             <span className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors line-clamp-2" title={p.producer_name}>{p.producer_name}</span>
-                            {p.producer_cpf && <span className="text-xs text-slate-500 font-mono">{p.producer_cpf}</span>}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold border border-slate-200 shadow-sm">CPF</span>
+                              <span className="text-xs text-slate-500 font-mono tracking-tight">{p.producer_cpf || 'Não informado'}</span>
+                            </div>
                             {p.pendencias && (
-                              <div className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-sm inline-flex items-center gap-1 w-fit mt-0.5">
+                              <div className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-sm inline-flex items-center gap-1 w-fit mt-1 border border-amber-200">
                                 <AlertTriangle className="h-3 w-3" /> {p.pendencias}
                               </div>
                             )}
                           </div>
                         </td>
+                        <td className="p-3 align-top min-w-[200px]">
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-start gap-2">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Agência</span>
+                              <span className="text-xs font-semibold text-slate-700 line-clamp-1" title={p.agencia_cadastro || ''}>{p.agencia_cadastro || '—'}</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Município</span>
+                              <span className="text-xs text-slate-600 line-clamp-1" title={p.municipio || ''}>{p.municipio || '—'}</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Localiza.</span>
+                              <span className="text-xs text-slate-500 line-clamp-1" title={p.localizacao || ''}>{p.localizacao || '—'}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-3 align-top min-w-[140px]">
+                          <div className="flex flex-col gap-2">
+                            <div>
+                               <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Valor</span>
+                               <span className="font-bold text-emerald-700 tabular-nums text-sm bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 shadow-sm inline-block">
+                                 {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '—'}
+                               </span>
+                            </div>
+                            <div>
+                               <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Linha</span>
+                               <span className="text-xs text-slate-600 font-medium">{p.linha_credito || '—'}</span>
+                            </div>
+                          </div>
+                        </td>
                         <td className="p-3 align-top min-w-[150px]">
-                          <div className="flex flex-col gap-0.5">
-                            {(p.agencia_cadastro || p.municipio) && (
-                              <span className="text-xs font-semibold text-slate-700 line-clamp-1" title={`${p.agencia_cadastro || ''} - ${p.municipio || ''}`}>
-                                {[p.agencia_cadastro, p.municipio].filter(Boolean).join(" — ")}
+                          <div className="flex flex-col gap-2.5">
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Serasa</span>
+                              {restriction ? (
+                                <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 gap-1 rounded-full text-[10px] uppercase shadow-sm px-2">
+                                  <XCircle className="h-3 w-3" /> SIM
+                                </Badge>
+                              ) : (
+                                <span className="flex items-center justify-center gap-1.5">
+                                  {getSerasaIcon(p.serasa)}
+                                  <span className="text-xs font-semibold">{getSerasaLabel(p.serasa) || 'NÃO'}</span>
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-2">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Renovação</span>
+                              <span className="text-[10px] font-semibold bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 border border-slate-200 shadow-sm truncate max-w-[80px]" title={`${p.cliente_renovacao || 'NÃO'} ${p.ano_contrato || ''}`.trim()}>
+                                {p.cliente_renovacao || 'NÃO'} {p.ano_contrato || ''}
                               </span>
-                            )}
-                            {p.localizacao && <span className="text-xs text-slate-500 line-clamp-2" title={p.localizacao}>{p.localizacao}</span>}
+                            </div>
                           </div>
                         </td>
                         <td className="p-3 align-top">
                           <div className="flex flex-col gap-1">
-                            <span className="font-bold text-slate-900 tabular-nums text-sm">
-                              {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '—'}
-                            </span>
-                            {p.linha_credito && <span className="text-xs text-slate-500">{p.linha_credito}</span>}
+                            <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Situação</span>
+                            <Badge variant="outline" className={`text-[10px] font-bold ${getStatusStyle(p.status)} border w-fit`}>
+                              {p.status}
+                            </Badge>
                           </div>
-                        </td>
-                        <td className="p-3 align-top text-center">
-                          <div className="flex flex-col items-center gap-1.5">
-                            {restriction ? (
-                              <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 gap-1 rounded-full text-[10px] w-auto inline-flex justify-center uppercase shadow-sm">
-                                <XCircle className="h-3 w-3" /> SIM
-                              </Badge>
-                            ) : (
-                              <span className="flex items-center justify-center gap-1.5 pt-1">
-                                {getSerasaIcon(p.serasa)}
-                                <span className="text-xs font-semibold">{getSerasaLabel(p.serasa)}</span>
-                              </span>
-                            )}
-                            {p.cliente_renovacao && (
-                              <span className="text-[10px] text-slate-500 font-semibold bg-slate-100 px-1.5 py-0.5 rounded-sm">
-                                RET: {p.cliente_renovacao} {p.ano_contrato || ''}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-3 align-top">
-                          <Badge variant="outline" className={`text-[10px] font-bold ${getStatusStyle(p.status)} border`}>
-                            {p.status}
-                          </Badge>
                         </td>
                         <td className="p-3 text-center">
                           <Button
