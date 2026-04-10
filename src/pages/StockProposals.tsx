@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Plus, Box, Calendar, FileText, Trash2, User, Landmark,
   Upload, Search, Filter, MapPin, AlertTriangle, CheckCircle2, XCircle, ShieldCheck,
-  FileSpreadsheet, Download, Eye, ChevronDown, ChevronUp, Users, Hash, Send
+  FileSpreadsheet, Download, Eye, ChevronDown, ChevronUp, Users, Hash, Send, RotateCcw
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
@@ -92,6 +92,7 @@ function mapCSVRow(cols: string[], index: number): Partial<InsertStockProposal> 
     credit_program: cleanCSV(cols[10]), // same as linha
     localizacao: cleanCSV(cols[11]),
     status: cleanCSV(cols[12]),
+    original_csv_status: cleanCSV(cols[12]),
     notes: cleanCSV(cols[13]),
     observacoes_extra: cleanCSV(cols[13]),
     order_index: index,
@@ -681,7 +682,7 @@ export default function StockProposals() {
                         </td>
                         <td className="p-3 text-center align-top">
                           <div className="flex items-center justify-center gap-1">
-                             {p.status !== "AUTORIZADO ENVIO PARA CENTRAL" && (
+                             {p.status !== "AUTORIZADO ENVIO PARA CENTRAL" ? (
                                <Button
                                  variant="ghost" size="icon"
                                  className="h-7 w-7 text-blue-500 hover:text-blue-700 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -693,6 +694,19 @@ export default function StockProposals() {
                                  }}
                                >
                                  <ShieldCheck className="h-3.5 w-3.5" />
+                               </Button>
+                             ) : (
+                               <Button
+                                 variant="ghost" size="icon"
+                                 className="h-7 w-7 text-amber-500 hover:text-amber-700 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                 title="Reverter para Status Antigo"
+                                 onClick={() => {
+                                   if (confirm('Deseja reverter para o status original do sistema?')) {
+                                     updateProposal(p.id, { status: p.original_csv_status || 'novo' });
+                                   }
+                                 }}
+                               >
+                                 <RotateCcw className="h-3.5 w-3.5" />
                                </Button>
                              )}
                              <Button
@@ -803,7 +817,7 @@ export default function StockProposals() {
                           <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg mt-1">{p.notes}</div>
                         )}
                         <div className="pt-2 flex flex-col gap-2">
-                          {p.status !== "AUTORIZADO ENVIO PARA CENTRAL" && (
+                          {p.status !== "AUTORIZADO ENVIO PARA CENTRAL" ? (
                             <Button
                               variant="outline" size="sm"
                               className="w-full h-10 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 font-bold text-xs"
@@ -815,6 +829,19 @@ export default function StockProposals() {
                             >
                               <ShieldCheck className="mr-2 h-4 w-4" />
                               AUTORIZAR ENVIO PARA CENTRAL
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline" size="sm"
+                              className="w-full h-10 bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 font-bold text-xs"
+                              onClick={() => {
+                                if (confirm('Deseja reverter para o status original do sistema?')) {
+                                  updateProposal(p.id, { status: p.original_csv_status || 'novo' });
+                                }
+                              }}
+                            >
+                              <RotateCcw className="mr-2 h-4 w-4" />
+                              REVERTER AUTORIZAÇÃO
                             </Button>
                           )}
                           <Button
