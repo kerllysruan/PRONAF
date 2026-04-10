@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Plus, Box, Calendar, FileText, Trash2, User, Landmark,
-  Upload, Search, Filter, MapPin, AlertTriangle, CheckCircle2, XCircle,
-  FileSpreadsheet, Download, Eye, ChevronDown, ChevronUp, Users, Hash
+  Upload, Search, Filter, MapPin, AlertTriangle, CheckCircle2, XCircle, ShieldCheck,
+  FileSpreadsheet, Download, Eye, ChevronDown, ChevronUp, Users, Hash, Send
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
@@ -256,6 +256,7 @@ export default function StockProposals() {
   const getStatusStyle = (status: string) => {
     const s = (status || '').toLowerCase().trim();
     if (s.includes('pronto')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (s.includes('autorizado')) return 'bg-blue-50 text-blue-700 border-blue-200';
     if (s.includes('falta') || s.includes('flata')) return 'bg-amber-50 text-amber-700 border-amber-200';
     if (s === 'novo') return 'bg-indigo-50 text-indigo-700 border-indigo-200';
     return 'bg-slate-50 text-slate-600 border-slate-200';
@@ -678,16 +679,33 @@ export default function StockProposals() {
                             </Badge>
                           </div>
                         </td>
-                        <td className="p-3 text-center">
-                          <Button
-                            variant="ghost" size="icon"
-                            className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => {
-                              if (confirm('Remover esta proposta do estoque?')) deleteProposal(p.id);
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                        <td className="p-3 text-center align-top">
+                          <div className="flex items-center justify-center gap-1">
+                             {p.status !== "AUTORIZADO ENVIO PARA CENTRAL" && (
+                               <Button
+                                 variant="ghost" size="icon"
+                                 className="h-7 w-7 text-blue-500 hover:text-blue-700 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                 title="Autorizar Envio para Central"
+                                 onClick={() => {
+                                   if (confirm('Autorizar o envio desta proposta para a central?')) {
+                                     updateProposal(p.id, { status: "AUTORIZADO ENVIO PARA CENTRAL" });
+                                   }
+                                 }}
+                               >
+                                 <ShieldCheck className="h-3.5 w-3.5" />
+                               </Button>
+                             )}
+                             <Button
+                               variant="ghost" size="icon"
+                               className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                               title="Remover do Estoque"
+                               onClick={() => {
+                                 if (confirm('Remover esta proposta do estoque?')) deleteProposal(p.id);
+                               }}
+                             >
+                               <Trash2 className="h-3.5 w-3.5" />
+                             </Button>
+                          </div>
                         </td>
                       </tr>
                     )})}
@@ -784,15 +802,29 @@ export default function StockProposals() {
                         {p.notes && (
                           <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg mt-1">{p.notes}</div>
                         )}
-                        <div className="pt-2">
+                        <div className="pt-2 flex flex-col gap-2">
+                          {p.status !== "AUTORIZADO ENVIO PARA CENTRAL" && (
+                            <Button
+                              variant="outline" size="sm"
+                              className="w-full h-10 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 font-bold text-xs"
+                              onClick={() => {
+                                if (confirm('Autorizar o envio desta proposta para a central?')) {
+                                  updateProposal(p.id, { status: "AUTORIZADO ENVIO PARA CENTRAL" });
+                                }
+                              }}
+                            >
+                              <ShieldCheck className="mr-2 h-4 w-4" />
+                              AUTORIZAR ENVIO PARA CENTRAL
+                            </Button>
+                          )}
                           <Button
                             variant="outline" size="sm"
-                            className="w-full h-9 text-red-600 border-red-200 hover:bg-red-50 text-xs font-bold"
+                            className="w-full h-10 text-red-600 border-red-200 hover:bg-red-50 text-xs font-bold"
                             onClick={() => {
                               if (confirm('Remover esta proposta do estoque?')) deleteProposal(p.id);
                             }}
                           >
-                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                            <Trash2 className="mr-2 h-4 w-4" />
                             Remover do Estoque
                           </Button>
                         </div>
