@@ -266,6 +266,8 @@ export default function StockProposals() {
     return serasa;
   };
 
+  const hasSerasaRestriction = (serasa: string | null) => getSerasaLabel(serasa) === 'SIM';
+
   return (
     <div className="flex flex-col gap-4 md:gap-6 p-3 md:p-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full pb-20 md:pb-6">
       {/* ─── Header ─── */}
@@ -579,9 +581,11 @@ export default function StockProposals() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {filtered.map((p, idx) => (
-                      <tr key={p.id} className="hover:bg-indigo-50/30 transition-colors group">
-                        <td className="p-3 text-slate-400 font-mono text-xs">{idx + 1}</td>
+                    {filtered.map((p, idx) => {
+                      const restriction = hasSerasaRestriction(p.serasa);
+                      return (
+                      <tr key={p.id} className={`transition-colors group ${restriction ? 'bg-red-50/80 hover:bg-red-100/80' : 'hover:bg-indigo-50/30'}`}>
+                        <td className={`p-3 text-slate-400 font-mono text-xs ${restriction ? 'border-l-2 border-red-500' : ''}`}>{idx + 1}</td>
                         <td className="p-3">
                           <div>
                             <span className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">{p.producer_name}</span>
@@ -599,10 +603,16 @@ export default function StockProposals() {
                           {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '—'}
                         </td>
                         <td className="p-3 text-center">
-                          <span className="flex items-center justify-center gap-1.5">
-                            {getSerasaIcon(p.serasa)}
-                            <span className="text-xs font-semibold">{getSerasaLabel(p.serasa)}</span>
-                          </span>
+                          {restriction ? (
+                            <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 gap-1 rounded-full text-[10px] w-auto inline-flex justify-center uppercase shadow-sm">
+                              <XCircle className="h-3 w-3" /> SIM
+                            </Badge>
+                          ) : (
+                            <span className="flex items-center justify-center gap-1.5">
+                              {getSerasaIcon(p.serasa)}
+                              <span className="text-xs font-semibold">{getSerasaLabel(p.serasa)}</span>
+                            </span>
+                          )}
                         </td>
                         <td className="p-3">
                           <Badge variant="outline" className={`text-[10px] font-bold ${getStatusStyle(p.status)} border`}>
@@ -621,15 +631,17 @@ export default function StockProposals() {
                           </Button>
                         </td>
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                 </table>
               </div>
 
               {/* ── Mobile Cards ── */}
               <div className="md:hidden divide-y divide-slate-100">
-                {filtered.map((p, idx) => (
-                  <div key={p.id} className="p-4">
+                {filtered.map((p, idx) => {
+                  const restriction = hasSerasaRestriction(p.serasa);
+                  return (
+                  <div key={p.id} className={`p-4 ${restriction ? 'bg-red-50/80 border-l-4 border-l-red-500' : ''}`}>
                     <div
                       className="flex items-start justify-between cursor-pointer"
                       onClick={() => setExpandedCard(expandedCard === p.id ? null : p.id)}
@@ -681,7 +693,13 @@ export default function StockProposals() {
                         {p.serasa && (
                           <div className="flex justify-between items-center text-xs">
                             <span className="text-slate-500">Serasa</span>
-                            <span className="flex items-center gap-1">{getSerasaIcon(p.serasa)} {getSerasaLabel(p.serasa)}</span>
+                            {restriction ? (
+                               <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 gap-1 rounded-full text-[10px] uppercase shadow-sm">
+                                 <XCircle className="h-3 w-3" /> SIM
+                               </Badge>
+                            ) : (
+                              <span className="flex items-center gap-1">{getSerasaIcon(p.serasa)} {getSerasaLabel(p.serasa)}</span>
+                            )}
                           </div>
                         )}
                         {p.pendencias && (
@@ -720,7 +738,7 @@ export default function StockProposals() {
                       </div>
                     )}
                   </div>
-                ))}
+                )})}
               </div>
             </>
           )}
