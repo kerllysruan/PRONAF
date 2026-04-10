@@ -138,6 +138,37 @@ export function useStockProposals() {
     }
   };
 
+  const deleteAllProposals = async () => {
+    try {
+      let query = supabase.from("stock_proposals").delete();
+
+      if (effectiveAgencyId !== "all") {
+        query = query.eq("agency_id", effectiveAgencyId);
+      } else {
+        // Delete all — need a always-true filter for Supabase
+        query = query.gte("created_at", "1970-01-01");
+      }
+
+      const { error } = await query;
+      if (error) throw error;
+
+      setProposals([]);
+      toast({
+        title: "Sucesso",
+        description: "Todas as propostas foram removidas do estoque.",
+      });
+      return true;
+    } catch (err: any) {
+      console.error("Error deleting all stock proposals:", err);
+      toast({
+        title: "Erro ao apagar propostas",
+        description: err.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   return {
     proposals,
     loading,
@@ -145,6 +176,7 @@ export function useStockProposals() {
     addProposal,
     updateProposal,
     deleteProposal,
+    deleteAllProposals,
     refreshProposals: fetchProposals,
   };
 }

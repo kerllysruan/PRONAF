@@ -80,11 +80,12 @@ function mapCSVRow(cols: string[]): Partial<InsertStockProposal> | null {
 
 // ─── Main Component ────────────────────────────────────────────
 export default function StockProposals() {
-  const { proposals, loading, addProposal, deleteProposal, refreshProposals } = useStockProposals();
+  const { proposals, loading, addProposal, deleteProposal, deleteAllProposals, refreshProposals } = useStockProposals();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMunicipio, setFilterMunicipio] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -279,6 +280,24 @@ export default function StockProposals() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          {/* Delete All */}
+          {proposals.length > 0 && (
+            <Button
+              variant="outline"
+              disabled={isDeleting}
+              onClick={async () => {
+                if (!confirm(`Tem certeza que deseja APAGAR TODAS as ${proposals.length} propostas do estoque?\n\nEssa ação não pode ser desfeita.`)) return;
+                setIsDeleting(true);
+                await deleteAllProposals();
+                setIsDeleting(false);
+              }}
+              className="w-full sm:w-auto h-12 md:h-10 border-red-200 text-red-600 hover:bg-red-50 font-bold"
+            >
+              {isDeleting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Trash2 className="mr-2 h-5 w-5 md:h-4 md:w-4" />}
+              Apagar Todas
+            </Button>
+          )}
+
           {/* CSV Import */}
           <div className="relative">
             <input
