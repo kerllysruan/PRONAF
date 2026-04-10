@@ -81,7 +81,7 @@ function mapCSVRow(cols: string[], index: number): Partial<InsertStockProposal> 
 
 // ─── Main Component ────────────────────────────────────────────
 export default function StockProposals() {
-  const { proposals, loading, addProposal, deleteProposal, deleteAllProposals, refreshProposals } = useStockProposals();
+  const { proposals, loading, addProposal, addProposalsBulk, deleteProposal, deleteAllProposals, refreshProposals } = useStockProposals();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -180,21 +180,18 @@ export default function StockProposals() {
         return;
       }
 
-      let imported = 0;
-      let errors = 0;
-      // Insert in batches of 10 for speed
-      for (let i = 0; i < rows.length; i += 10) {
-        const batch = rows.slice(i, i + 10);
-        const promises = batch.map(row => addProposal(row as InsertStockProposal));
-        const results = await Promise.all(promises);
-        imported += results.filter(Boolean).length;
-        errors += results.filter(r => !r).length;
+      // Delete existing proposals before importing if not empty to prevent dupes/messing up index, or just append 
+      // let's just append as before
+      try {
+        await addProposalsBulk(rows as InsertStockProposal[]);
+        
+        toast({
+          title: "Importação concluída",
+          description: `${rows.length} propostas importadas com sucesso. A ordem foi mantida idêntica ao arquivo.`,
+        });
+      } catch (err: any) {
+        throw new Error(`Falha na importação: ${err.message}`);
       }
-
-      toast({
-        title: "Importação concluída",
-        description: `${imported} propostas importadas${errors > 0 ? `, ${errors} erros` : ''}.`,
-      });
 
       await refreshProposals();
     } catch (err: any) {

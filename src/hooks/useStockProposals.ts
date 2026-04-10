@@ -85,6 +85,42 @@ export function useStockProposals() {
     }
   };
 
+  const addProposalsBulk = async (newProposals: InsertStockProposal[]) => {
+    if (!user || newProposals.length === 0) return null;
+
+    try {
+      const proposalsToInsert = newProposals.map(p => ({
+        ...p,
+        agency_id: effectiveAgencyId === "all" ? undefined : effectiveAgencyId,
+        created_by: user.id
+      }));
+
+      const { data, error } = await supabase
+        .from("stock_proposals")
+        .insert(proposalsToInsert)
+        .select();
+
+      if (error) throw error;
+
+      setProposals((prev) => {
+        // Append all new and sort them exactly as the database query does
+        const updated = [...prev, ...(data || [])];
+        return updated.sort((a, b) => {
+          if ((a.order_index ?? 0) !== (b.order_index ?? 0)) {
+            return (a.order_index ?? 0) - (b.order_index ?? 0);
+          }
+          // fallback to created_at desc
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+      });
+      
+      return data;
+    } catch (err: any) {
+      console.error("Error adding bulk stock proposals:", err);
+      throw err;
+    }
+  };
+
   const updateProposal = async (id: string, updates: UpdateStockProposal) => {
     try {
       const { data, error } = await supabase
@@ -175,6 +211,7 @@ export function useStockProposals() {
     loading,
     error,
     addProposal,
+    addProposalsBulk,
     updateProposal,
     deleteProposal,
     deleteAllProposals,
