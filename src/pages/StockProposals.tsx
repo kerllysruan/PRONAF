@@ -180,9 +180,7 @@ export default function StockProposals() {
 
     setIsImporting(true);
     try {
-      const buffer = await file.arrayBuffer();
-      const decoder = new TextDecoder('windows-1252');
-      const text = decoder.decode(buffer);
+      const text = await file.text();
       const lines = text.split('\n').filter(l => l.trim());
       const rows: Partial<InsertStockProposal>[] = [];
 
