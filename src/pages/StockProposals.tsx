@@ -120,12 +120,26 @@ export default function StockProposals() {
     let result = proposals;
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
-      result = result.filter(p =>
-        p.producer_name?.toLowerCase().includes(q) ||
-        p.producer_cpf?.toLowerCase().includes(q) ||
-        p.municipio?.toLowerCase().includes(q) ||
-        p.localizacao?.toLowerCase().includes(q)
-      );
+      result = result.filter(p => {
+        const fields = [
+          p.producer_name,
+          p.producer_cpf,
+          p.municipio,
+          p.localizacao,
+          p.pendencias,
+          p.serasa,
+          p.cliente_renovacao,
+          p.ano_contrato,
+          p.agencia_cadastro,
+          p.linha_credito,
+          p.credit_program,
+          p.status,
+          p.notes,
+          p.observacoes_extra,
+          p.estimated_value?.toString(),
+        ];
+        return fields.some(f => f?.toLowerCase().includes(q));
+      });
     }
     if (filterMunicipio !== "all") {
       result = result.filter(p => p.municipio === filterMunicipio);
@@ -226,12 +240,28 @@ export default function StockProposals() {
     return 'bg-slate-50 text-slate-600 border-slate-200';
   };
 
+  const normalizeText = (t: string) => t.normalize('NFKC').replace(/[^a-zA-Z]/g, '').toUpperCase();
+
   const getSerasaIcon = (serasa: string | null) => {
     if (!serasa) return null;
-    const s = serasa.toUpperCase().trim();
-    if (s === 'NÃO' || s === 'NAO' || s === 'NﾃO') return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
-    if (s === 'SIM') return <XCircle className="h-3.5 w-3.5 text-red-500" />;
+    const raw = serasa.trim();
+    const norm = normalizeText(raw);
+    // "NÃO", "NAO", or any broken encoding variant
+    if (norm === 'NAO' || norm === 'NO' || raw.toUpperCase().includes('N') && (raw.includes('O') || raw.includes('o')) && !raw.toUpperCase().startsWith('S')) {
+      return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />;
+    }
+    if (norm === 'SIM' || raw.toUpperCase() === 'SIM') {
+      return <XCircle className="h-3.5 w-3.5 text-red-500" />;
+    }
     return <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />;
+  };
+
+  const getSerasaLabel = (serasa: string | null): string => {
+    if (!serasa) return '';
+    const norm = normalizeText(serasa.trim());
+    if (norm === 'NAO' || norm === 'NO') return 'NÃO';
+    if (norm === 'SIM') return 'SIM';
+    return serasa;
   };
 
   return (
@@ -437,7 +467,7 @@ export default function StockProposals() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <Input
-                placeholder="Buscar por nome, CPF, município ou localização..."
+                placeholder="Buscar em todos os campos..."
                 className="pl-9 h-10 bg-white"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -549,7 +579,10 @@ export default function StockProposals() {
                           {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '—'}
                         </td>
                         <td className="p-3 text-center">
-                          {getSerasaIcon(p.serasa)}
+                          <span className="flex items-center justify-center gap-1.5">
+                            {getSerasaIcon(p.serasa)}
+                            <span className="text-xs font-semibold">{getSerasaLabel(p.serasa)}</span>
+                          </span>
                         </td>
                         <td className="p-3">
                           <Badge variant="outline" className={`text-[10px] font-bold ${getStatusStyle(p.status)} border`}>
@@ -628,7 +661,7 @@ export default function StockProposals() {
                         {p.serasa && (
                           <div className="flex justify-between items-center text-xs">
                             <span className="text-slate-500">Serasa</span>
-                            <span className="flex items-center gap-1">{getSerasaIcon(p.serasa)} {p.serasa}</span>
+                            <span className="flex items-center gap-1">{getSerasaIcon(p.serasa)} {getSerasaLabel(p.serasa)}</span>
                           </div>
                         )}
                         {p.pendencias && (
