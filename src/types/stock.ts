@@ -20,6 +20,7 @@ export interface StockProposal {
   linha_credito: string | null;
   localizacao: string | null;
   observacoes_extra: string | null;
+  order_index: number;
 }
 
 export type InsertStockProposal = Omit<StockProposal, 'id' | 'created_at' | 'updated_at' | 'agency_id' | 'created_by'>;

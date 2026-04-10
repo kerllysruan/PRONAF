@@ -23,6 +23,7 @@ export function useStockProposals() {
       let query = supabase
         .from("stock_proposals")
         .select("*")
+        .order("order_index", { ascending: true })
         .order("created_at", { ascending: false });
 
       if (effectiveAgencyId !== "all") {

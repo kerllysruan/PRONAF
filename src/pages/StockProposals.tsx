@@ -52,7 +52,7 @@ function parseBRLValue(raw: string): number {
   return parseFloat(clean) || 0;
 }
 
-function mapCSVRow(cols: string[]): Partial<InsertStockProposal> | null {
+function mapCSVRow(cols: string[], index: number): Partial<InsertStockProposal> | null {
   // cols: [Nº, CLIENTES, PENDÊNCIAS, SERASA, CLIENTE RENOVAÇÃO, ANO DO CONTRATO, CPF, AGÊNCIA CADASTRO, MUNICÍPIO, VALOR R$, LINHA DE CRÉDITO, LOCALIZAÇÃO, STATUS, extra?]
   const name = cols[1]?.trim();
   if (!name || /^CLIENTES?$/i.test(name)) return null; // skip header
@@ -75,6 +75,7 @@ function mapCSVRow(cols: string[]): Partial<InsertStockProposal> | null {
     status: cols[12]?.trim() || "novo",
     notes: cols[13]?.trim() || null,
     observacoes_extra: cols[13]?.trim() || null,
+    order_index: index,
   };
 }
 
@@ -164,11 +165,13 @@ export default function StockProposals() {
       const lines = text.split('\n').filter(l => l.trim());
       const rows: Partial<InsertStockProposal>[] = [];
 
+      let validIndex = proposals.length + 1;
       for (const line of lines) {
         const cols = parseCSVLine(line);
-        const mapped = mapCSVRow(cols);
+        const mapped = mapCSVRow(cols, validIndex);
         if (mapped && mapped.producer_name) {
           rows.push(mapped);
+          validIndex++;
         }
       }
 
@@ -223,6 +226,7 @@ export default function StockProposals() {
       linha_credito: formData.linha_credito || null,
       localizacao: formData.localizacao || null,
       observacoes_extra: null,
+      order_index: proposals.length > 0 ? proposals.map(p => p.order_index).reduce((a, b) => Math.max(a, b), 0) + 1 : 1,
     };
     const res = await addProposal(newProposal);
     if (res) {
