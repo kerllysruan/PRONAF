@@ -15,6 +15,8 @@ import {
   FileSpreadsheet, Download, Eye, ChevronDown, ChevronUp, Users, Hash, Send, RotateCcw
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // ─── CSV parser ────────────────────────────────────────────────
 function parseCSVLine(line: string): string[] {
@@ -63,6 +65,8 @@ function fixBrokenEncoding(str: string): string {
     .replace(/ﾇ/g, 'Ç');
 }
 
+const PROJETISTAS = ["NEY MEDEIRO", "JAIRO SANTANA", "CLEDSO CLOVIS"];
+
 function cleanCSV(str: string | undefined): string | null {
   if (!str) return null;
   const clean = fixBrokenEncoding(str.trim());
@@ -104,16 +108,19 @@ export default function StockProposals() {
   const { proposals, loading, addProposal, addProposalsBulk, updateProposal, deleteProposal, deleteAllProposals, refreshProposals } = useStockProposals();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importProjetista, setImportProjetista] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMunicipio, setFilterMunicipio] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterProjetista, setFilterProjetista] = useState("all");
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<Partial<InsertStockProposal>>({
+  const [formData, setFormData] = useState<Partial<StockProposal>>({
     producer_name: "",
     producer_cpf: "",
     credit_program: "",
@@ -122,6 +129,7 @@ export default function StockProposals() {
     localizacao: "",
     linha_credito: "",
     notes: "",
+    projetista: ""
   });
 
   const formatCurrency = (value: number) =>
@@ -135,6 +143,11 @@ export default function StockProposals() {
 
   const statuses = useMemo(() => {
     const set = new Set(proposals.map(p => p.status).filter(Boolean) as string[]);
+    return Array.from(set).sort();
+  }, [proposals]);
+
+  const existingProjetistas = useMemo(() => {
+    const set = new Set(proposals.map(p => p.projetista).filter(Boolean) as string[]);
     return Array.from(set).sort();
   }, [proposals]);
 
@@ -169,8 +182,11 @@ export default function StockProposals() {
     if (filterStatus !== "all") {
       result = result.filter(p => p.status === filterStatus);
     }
+    if (filterProjetista !== "all") {
+      result = result.filter(p => p.projetista === filterProjetista);
+    }
     return result;
-  }, [proposals, searchTerm, filterMunicipio, filterStatus]);
+  }, [proposals, searchTerm, filterMunicipio, filterStatus, filterProjetista]);
 
   const totalEstimated = filtered.reduce((acc, p) => acc + (Number(p.estimated_value) || 0), 0);
 
@@ -190,7 +206,10 @@ export default function StockProposals() {
         const cols = parseCSVLine(line);
         const mapped = mapCSVRow(cols, validIndex);
         if (mapped && mapped.producer_name) {
-          rows.push(mapped);
+          rows.push({
+            ...mapped,
+            projetista: importProjetista || null
+          });
           validIndex++;
         }
       }
@@ -219,6 +238,8 @@ export default function StockProposals() {
       toast({ title: "Erro na importação", description: err.message, variant: "destructive" });
     } finally {
       setIsImporting(false);
+      setIsImportDialogOpen(false);
+      setImportProjetista("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -243,12 +264,13 @@ export default function StockProposals() {
       linha_credito: formData.linha_credito || null,
       localizacao: formData.localizacao || null,
       observacoes_extra: null,
+      projetista: formData.projetista || null,
       order_index: proposals.length > 0 ? proposals.map(p => p.order_index).reduce((a, b) => Math.max(a, b), 0) + 1 : 1,
     };
     const res = await addProposal(newProposal);
     if (res) {
       setIsDialogOpen(false);
-      setFormData({ producer_name: "", producer_cpf: "", credit_program: "", estimated_value: 0, municipio: "", localizacao: "", linha_credito: "", notes: "" });
+      setFormData({ producer_name: "", producer_cpf: "", credit_program: "", estimated_value: 0, municipio: "", localizacao: "", linha_credito: "", notes: "", projetista: "" });
     }
     setIsSubmitting(false);
   };
@@ -261,6 +283,92 @@ export default function StockProposals() {
     if (s.includes('falta') || s.includes('flata')) return 'bg-amber-50 text-amber-700 border-amber-200';
     if (s === 'novo') return 'bg-indigo-50 text-indigo-700 border-indigo-200';
     return 'bg-slate-50 text-slate-600 border-slate-200';
+  };
+
+  const generateProposalsReport = () => {
+    const doc = new jsPDF({ orientation: 'landscape' });
+    const timestamp = format(new Date(), "dd/MM/yyyy HH:mm");
+    
+    // Header
+    doc.setFillColor(30, 41, 59); // Slate 800
+    doc.rect(0, 0, 300, 40, "F");
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("RELATÓRIO DE ESTOQUE - PRONAF", 15, 18);
+    
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`GERADO EM: ${timestamp}`, 15, 26);
+    doc.text(`TOTAL DE PROPOSTAS: ${filtered.length}`, 15, 31);
+    doc.text(`VOLUME TOTAL ESTIMADO: ${formatCurrency(totalEstimated)}`, 15, 36);
+
+    // Filters Summary
+    doc.setTextColor(51, 65, 85);
+    doc.setFontSize(8);
+    let filterTxt = "FILTROS ATIVOS: ";
+    if (searchTerm) filterTxt += `Busca: "${searchTerm}" | `;
+    if (filterMunicipio !== "all") filterTxt += `Município: ${filterMunicipio} | `;
+    if (filterStatus !== "all") filterTxt += `Status: ${filterStatus} | `;
+    if (filterProjetista !== "all") filterTxt += `Projetista: ${filterProjetista} | `;
+    if (filterTxt === "FILTROS ATIVOS: ") filterTxt += "Nenhum";
+    doc.text(filterTxt, 15, 48);
+
+    const tableData = filtered.map((p, idx) => [
+      idx + 1,
+      p.producer_name.toUpperCase(),
+      p.producer_cpf || '---',
+      p.projetista || 'N/A',
+      p.municipio || '---',
+      p.status.toUpperCase(),
+      formatCurrency(p.estimated_value || 0)
+    ]);
+
+    autoTable(doc, {
+      startY: 52,
+      head: [["#", "NOME DO PRODUTOR", "CPF", "PROJETISTA", "MUNICÍPIO", "STATUS", "VALOR R$"]],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { 
+        fillColor: [79, 70, 229], // Indigo 600
+        textColor: 255,
+        fontSize: 8,
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      styles: { 
+        fontSize: 7,
+        cellPadding: 2,
+        valign: 'middle'
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 8 },
+        1: { fontStyle: 'bold', cellWidth: 80 },
+        6: { halign: 'right', fontStyle: 'bold' }
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] } // Slate 50
+    });
+
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184); // Slate 400
+      doc.text(
+        `Documento para uso interno - Sistema PRONAF Digital - Página ${i} de ${pageCount}`,
+        doc.internal.pageSize.getWidth() / 2,
+        doc.internal.pageSize.getHeight() - 10,
+        { align: "center" }
+      );
+    }
+
+    doc.save(`Relatorio_Estoque_${format(new Date(), "yyyyMMdd")}.pdf`);
+    
+    toast({
+      title: "Relatório gerado",
+      description: "O download do PDF começou automaticamente.",
+    });
   };
 
   const normalizeText = (t: string) => t.normalize('NFKC').replace(/[^a-zA-Z]/g, '').toUpperCase();
@@ -322,26 +430,96 @@ export default function StockProposals() {
             </Button>
           )}
 
+          {/* Report Generation */}
+          <Button
+            variant="outline"
+            onClick={generateProposalsReport}
+            className="w-full sm:w-auto h-12 md:h-10 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold"
+          >
+            <FileText className="mr-2 h-5 w-5 md:h-4 md:w-4" />
+            Relatório
+          </Button>
+
           {/* CSV Import */}
-          <div className="relative">
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept=".csv,.txt"
-              className="hidden"
-              onChange={handleCSVImport}
-              disabled={isImporting}
-            />
-            <Button
-              variant="outline"
-              disabled={isImporting}
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full sm:w-auto h-12 md:h-10 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold"
-            >
-              {isImporting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FileSpreadsheet className="mr-2 h-5 w-5 md:h-4 md:w-4" />}
-              Importar CSV
-            </Button>
-          </div>
+          <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                disabled={isImporting}
+                className="w-full sm:w-auto h-12 md:h-10 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold"
+              >
+                {isImporting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <FileSpreadsheet className="mr-2 h-5 w-5 md:h-4 md:w-4" />}
+                Importar CSV
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[420px]">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold flex items-center gap-2 text-indigo-900">
+                  <FileSpreadsheet className="h-5 w-5" />
+                  Importação de Propostas
+                </DialogTitle>
+                <DialogDescription>
+                  Selecione o projetista responsável por este lote e anexe o arquivo CSV.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-6 py-4">
+                <div className="space-y-3">
+                  <Label htmlFor="import-projetista" className="text-sm font-bold text-slate-700">1. Selecione o Projetista</Label>
+                  <Select
+                    value={importProjetista}
+                    onValueChange={setImportProjetista}
+                  >
+                    <SelectTrigger id="import-projetista" className="w-full h-11 border-indigo-100 bg-indigo-50/30 focus:ring-indigo-500">
+                      <SelectValue placeholder="Escolha um projetista..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROJETISTAS.map(p => (
+                        <SelectItem key={p} value={p}>{p}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-3">
+                  <Label className="text-sm font-bold text-slate-700">2. Anexe o arquivo CSV</Label>
+                  <div 
+                    onClick={() => !isImporting && importProjetista && fileInputRef.current?.click()}
+                    className={`
+                      border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer
+                      ${!importProjetista ? 'bg-slate-50 border-slate-200 opacity-50 cursor-not-allowed' : 'bg-indigo-50/30 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-400 group'}
+                    `}
+                  >
+                    <div className={`p-3 rounded-full ${!importProjetista ? 'bg-slate-100' : 'bg-white shadow-sm ring-4 ring-indigo-50 group-hover:scale-110 transition-transform'}`}>
+                      <Upload className={`h-6 w-6 ${!importProjetista ? 'text-slate-400' : 'text-indigo-600'}`} />
+                    </div>
+                    <div className="text-center">
+                      <p className={`text-sm font-bold ${!importProjetista ? 'text-slate-400' : 'text-indigo-900'}`}>Clique para selecionar o arquivo</p>
+                      <p className="text-[10px] text-slate-500 mt-1">Formatos aceitos: .csv, .txt (Separado por vírgulas)</p>
+                    </div>
+                    {!importProjetista && (
+                      <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200 text-[10px]">
+                        Selecione o projetista primeiro
+                      </Badge>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept=".csv,.txt"
+                    className="hidden"
+                    onChange={handleCSVImport}
+                    disabled={isImporting || !importProjetista}
+                  />
+                </div>
+              </div>
+              {isImporting && (
+                <div className="flex items-center justify-center gap-3 p-4 bg-indigo-50 rounded-lg animate-pulse">
+                  <Loader2 className="h-5 w-5 text-indigo-600 animate-spin" />
+                  <span className="text-sm font-bold text-indigo-900">Processando arquivo...</span>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Manual Add */}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -413,6 +591,22 @@ export default function StockProposals() {
                       onChange={(e) => setFormData({...formData, localizacao: e.target.value})}
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="projetista">Projetista Responsável</Label>
+                  <Select
+                    value={formData.projetista || ""}
+                    onValueChange={(val) => setFormData({...formData, projetista: val})}
+                  >
+                    <SelectTrigger id="projetista" className="w-full">
+                      <SelectValue placeholder="Selecione um projetista..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROJETISTAS.map(p => (
+                        <SelectItem key={p} value={p}>{p}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="notes">Observações</Label>
@@ -531,20 +725,6 @@ export default function StockProposals() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full md:w-[160px] h-10">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-3.5 w-3.5 text-slate-400" />
-                    <SelectValue placeholder="Status" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent className="max-h-[250px]">
-                  <SelectItem value="all">Todos os Status</SelectItem>
-                  {statuses.map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </CardContent>
@@ -592,6 +772,7 @@ export default function StockProposals() {
                     <tr className="border-b bg-slate-50/80">
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">#</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PRODUTOR / CPF</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROJETISTA</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">LOCALIDADE</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROJETO</th>
                       <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider">RESTRIÇÃO / SERASA</th>
@@ -617,6 +798,11 @@ export default function StockProposals() {
                                 <AlertTriangle className="h-3 w-3" /> {p.pendencias}
                               </div>
                             )}
+                          </div>
+                        </td>
+                        <td className="p-3 align-top">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-tight">{p.projetista || 'N/A'}</span>
                           </div>
                         </td>
                         <td className="p-3 align-top min-w-[200px]">
@@ -801,12 +987,14 @@ export default function StockProposals() {
                             <span className="text-amber-600">{p.pendencias}</span>
                           </div>
                         )}
-                        {p.cliente_renovacao && (
-                          <div className="flex justify-between text-xs">
-                            <span className="text-slate-500">Renovação</span>
-                            <span className="text-slate-700">{p.cliente_renovacao} {p.ano_contrato ? `(${p.ano_contrato})` : ''}</span>
-                          </div>
-                        )}
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-500">Projetista</span>
+                          <span className="text-indigo-600 font-bold uppercase">{p.projetista || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-500">Renovação</span>
+                          <span className="text-slate-700">{p.cliente_renovacao || ''} {p.ano_contrato ? `(${p.ano_contrato})` : ''}</span>
+                        </div>
                         {p.agencia_cadastro && (
                           <div className="flex justify-between text-xs">
                             <span className="text-slate-500">Ag. Cadastro</span>

@@ -21,6 +21,7 @@ export interface StockProposal {
   localizacao: string | null;
   observacoes_extra: string | null;
   original_csv_status: string | null;
+  projetista: string | null;
   order_index: number;
 }
 
