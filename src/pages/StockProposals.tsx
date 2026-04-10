@@ -608,7 +608,7 @@ export default function StockProposals() {
                             <span className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors line-clamp-2" title={p.producer_name}>{p.producer_name}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold border border-slate-200 shadow-sm">CPF</span>
-                              <span className="text-xs text-slate-500 font-mono tracking-tight">{p.producer_cpf || 'Não informado'}</span>
+                              <span className="text-xs text-slate-500 font-mono tracking-tight">{p.producer_cpf}</span>
                             </div>
                             {p.pendencias && (
                               <div className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-sm inline-flex items-center gap-1 w-fit mt-1 border border-amber-200">
@@ -621,15 +621,15 @@ export default function StockProposals() {
                           <div className="flex flex-col gap-1.5">
                             <div className="flex items-start gap-2">
                               <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Agência</span>
-                              <span className="text-xs font-semibold text-slate-700 line-clamp-1" title={p.agencia_cadastro || ''}>{p.agencia_cadastro || '—'}</span>
+                              <span className="text-xs font-semibold text-slate-700 line-clamp-1" title={p.agencia_cadastro || ''}>{p.agencia_cadastro}</span>
                             </div>
                             <div className="flex items-start gap-2">
                               <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Município</span>
-                              <span className="text-xs text-slate-600 line-clamp-1" title={p.municipio || ''}>{p.municipio || '—'}</span>
+                              <span className="text-xs text-slate-600 line-clamp-1" title={p.municipio || ''}>{p.municipio}</span>
                             </div>
                             <div className="flex items-start gap-2">
                               <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Localiza.</span>
-                              <span className="text-xs text-slate-500 line-clamp-1" title={p.localizacao || ''}>{p.localizacao || '—'}</span>
+                              <span className="text-xs text-slate-500 line-clamp-1" title={p.localizacao || ''}>{p.localizacao}</span>
                             </div>
                           </div>
                         </td>
@@ -637,19 +637,19 @@ export default function StockProposals() {
                           <div className="flex flex-col gap-2">
                             <div>
                                <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Valor</span>
-                               <span className="font-bold text-emerald-700 tabular-nums text-sm bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 shadow-sm inline-block">
-                                 {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '—'}
+                               <span className="font-bold text-emerald-700 tabular-nums text-sm bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 shadow-sm inline-block min-h-[26px]">
+                                 {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : ''}
                                </span>
                             </div>
                             <div>
                                <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Linha</span>
-                               <span className="text-xs text-slate-600 font-medium">{p.linha_credito || '—'}</span>
+                               <span className="text-xs text-slate-600 font-medium min-h-[16px] block">{p.linha_credito}</span>
                             </div>
                           </div>
                         </td>
                         <td className="p-3 align-top min-w-[150px]">
                           <div className="flex flex-col gap-2.5">
-                            <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center justify-between gap-3 min-h-[20px]">
                               <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Serasa</span>
                               {restriction ? (
                                 <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 gap-1 rounded-full text-[10px] uppercase shadow-sm px-2">
@@ -658,14 +658,14 @@ export default function StockProposals() {
                               ) : (
                                 <span className="flex items-center justify-center gap-1.5">
                                   {getSerasaIcon(p.serasa)}
-                                  <span className="text-xs font-semibold">{getSerasaLabel(p.serasa) || 'NÃO'}</span>
+                                  <span className="text-xs font-semibold">{getSerasaLabel(p.serasa)}</span>
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-2">
+                            <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-2 min-h-[28px]">
                               <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Renovação</span>
-                              <span className="text-[10px] font-semibold bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 border border-slate-200 shadow-sm truncate max-w-[80px]" title={`${p.cliente_renovacao || 'NÃO'} ${p.ano_contrato || ''}`.trim()}>
-                                {p.cliente_renovacao || 'NÃO'} {p.ano_contrato || ''}
+                              <span className="text-[10px] font-semibold bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 border border-slate-200 shadow-sm truncate max-w-[80px]" title={`${p.cliente_renovacao || ''} ${p.ano_contrato || ''}`.trim()}>
+                                {p.cliente_renovacao || ''} {p.ano_contrato || ''}
                               </span>
                             </div>
                           </div>
