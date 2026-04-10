@@ -56,7 +56,7 @@ function cleanCSV(str: string | undefined): string | null {
   if (!str) return null;
   const clean = str.trim();
   // Filter out CSV noise characters
-  if (!clean || clean === '-' || clean === '' || clean === '') return null;
+  if (!clean || clean === '-' || clean === '\uFFFD' || clean === '') return null;
   return clean;
 }
 
