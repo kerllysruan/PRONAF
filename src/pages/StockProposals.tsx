@@ -680,12 +680,12 @@ export default function StockProposals() {
                             </Badge>
                           </div>
                         </td>
-                        <td className="p-3 text-center align-top">
-                          <div className="flex items-center justify-center gap-1">
-                             {p.status !== "AUTORIZADO ENVIO PARA CENTRAL" ? (
+                        <td className="p-3 text-center align-top min-w-[100px]">
+                          <div className="flex items-center justify-center gap-2">
+                             {!(p.status || '').toUpperCase().includes("AUTORIZADO") ? (
                                <Button
-                                 variant="ghost" size="icon"
-                                 className="h-7 w-7 text-blue-500 hover:text-blue-700 hover:bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                 variant="outline" size="icon"
+                                 className="h-8 w-8 text-blue-600 border-blue-200 bg-blue-50/50 hover:bg-blue-100 hover:text-blue-700 transition-colors shadow-sm"
                                  title="Autorizar Envio para Central"
                                  onClick={() => {
                                    if (confirm('Autorizar o envio desta proposta para a central?')) {
@@ -697,8 +697,8 @@ export default function StockProposals() {
                                </Button>
                              ) : (
                                <Button
-                                 variant="ghost" size="icon"
-                                 className="h-7 w-7 text-amber-500 hover:text-amber-700 hover:bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                 variant="outline" size="icon"
+                                 className="h-8 w-8 text-amber-600 border-amber-200 bg-amber-50/50 hover:bg-amber-100 hover:text-amber-700 transition-colors shadow-sm"
                                  title="Reverter para Status Antigo"
                                  onClick={() => {
                                    if (confirm('Deseja reverter para o status original do sistema?')) {
@@ -710,8 +710,8 @@ export default function StockProposals() {
                                </Button>
                              )}
                              <Button
-                               variant="ghost" size="icon"
-                               className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                               variant="outline" size="icon"
+                               className="h-8 w-8 text-slate-400 border-slate-200 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm"
                                title="Remover do Estoque"
                                onClick={() => {
                                  if (confirm('Remover esta proposta do estoque?')) deleteProposal(p.id);
@@ -817,7 +817,7 @@ export default function StockProposals() {
                           <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg mt-1">{p.notes}</div>
                         )}
                         <div className="pt-2 flex flex-col gap-2">
-                          {p.status !== "AUTORIZADO ENVIO PARA CENTRAL" ? (
+                          {!(p.status || '').toUpperCase().includes("AUTORIZADO") ? (
                             <Button
                               variant="outline" size="sm"
                               className="w-full h-10 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 font-bold text-xs"
