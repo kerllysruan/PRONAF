@@ -82,18 +82,22 @@ function mapCSVRow(cols: string[], index: number): Partial<InsertStockProposal> 
   const num = cleanCSV(cols[0]);
   if (!num || isNaN(Number(num))) return null; // skip title rows
 
+  const renovacaoVal = cleanCSV(cols[4]);
+  const isRenovacao = (renovacaoVal || '').toUpperCase().includes('SIM');
+  const automatedLinha = isRenovacao ? 'PRONAF A 699' : 'PRONAF A 368';
+
   return {
     producer_name: name,
     pendencias: cleanCSV(cols[2]),
     serasa: cleanCSV(cols[3]),
-    cliente_renovacao: cleanCSV(cols[4]),
+    cliente_renovacao: renovacaoVal,
     ano_contrato: cleanCSV(cols[5]),
     producer_cpf: cleanCSV(cols[6]),
     agencia_cadastro: cleanCSV(cols[7]),
     municipio: cleanCSV(cols[8]),
     estimated_value: parseBRLValue(cols[9] || ''),
-    linha_credito: cleanCSV(cols[10]),
-    credit_program: cleanCSV(cols[10]), // same as linha
+    linha_credito: automatedLinha,
+    credit_program: automatedLinha,
     localizacao: cleanCSV(cols[11]),
     status: cleanCSV(cols[12]),
     original_csv_status: cleanCSV(cols[12]),
@@ -109,6 +113,12 @@ export default function StockProposals() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [reportFilters, setReportFilters] = useState({
+    municipio: "all",
+    status: "all",
+    projetista: "all"
+  });
   const [importProjetista, setImportProjetista] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -248,20 +258,25 @@ export default function StockProposals() {
   const handleCreate = async () => {
     if (!formData.producer_name) return;
     setIsSubmitting(true);
+    
+    // Auto-linha logic for manual entry
+    const isRenovacao = (formData.cliente_renovacao || '').toUpperCase().includes('SIM');
+    const automatedLinha = isRenovacao ? 'PRONAF A 699' : 'PRONAF A 368';
+
     const newProposal: InsertStockProposal = {
       producer_name: formData.producer_name!,
       producer_cpf: formData.producer_cpf || null,
-      credit_program: formData.credit_program || formData.linha_credito || null,
+      credit_program: automatedLinha,
       estimated_value: formData.estimated_value || 0,
       notes: formData.notes || null,
       status: "novo",
       pendencias: null,
       serasa: null,
-      cliente_renovacao: null,
+      cliente_renovacao: formData.cliente_renovacao || null,
       ano_contrato: null,
       agencia_cadastro: null,
       municipio: formData.municipio || null,
-      linha_credito: formData.linha_credito || null,
+      linha_credito: automatedLinha,
       localizacao: formData.localizacao || null,
       observacoes_extra: null,
       projetista: formData.projetista || null,
@@ -371,7 +386,112 @@ export default function StockProposals() {
     });
   };
 
-  const normalizeText = (t: string) => t.normalize('NFKC').replace(/[^a-zA-Z]/g, '').toUpperCase();
+  const generatePremiumReport = (filters: typeof reportFilters) => {
+    const doc = new jsPDF({ orientation: 'landscape' });
+    const timestamp = format(new Date(), "dd/MM/yyyy HH:mm");
+    
+    // Filter data specifically for this report run
+    let reportData = proposals;
+    if (filters.municipio !== "all") reportData = reportData.filter(p => p.municipio === filters.municipio);
+    if (filters.status !== "all") reportData = reportData.filter(p => p.status === filters.status);
+    if (filters.projetista !== "all") reportData = reportData.filter(p => p.projetista === filters.projetista);
+    
+    const totalVal = reportData.reduce((acc, p) => acc + (Number(p.estimated_value) || 0), 0);
+
+    // ── Capa / Resumo Executivo ─────────────────────
+    doc.setFillColor(7, 33, 20); // Deep Dark Green
+    doc.rect(0, 0, 300, 50, "F");
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("DASHBOARD DE ESTOQUE - PRONAF DIGITAL", 15, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`DATA DE EMISSÃO: ${timestamp}`, 15, 30);
+    doc.text(`PROJETISTA RESPONSÁVEL: ${filters.projetista === 'all' ? 'GERAL' : filters.projetista.toUpperCase()}`, 15, 35);
+
+    // KPI Blocks (Graphic elements)
+    const drawKPI = (x: number, y: number, title: string, value: string, color: [number, number, number]) => {
+      doc.setFillColor(...color);
+      doc.roundedRect(x, y, 65, 25, 3, 3, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.text(title.toUpperCase(), x + 5, y + 8);
+      doc.setFontSize(14);
+      doc.text(value, x + 5, y + 18);
+    };
+
+    drawKPI(15, 60, "Total de Propostas", reportData.length.toString(), [79, 70, 229]); // Indigo
+    drawKPI(85, 60, "Volume Financeiro", formatCurrency(totalVal), [16, 185, 129]); // Emerald
+    drawKPI(155, 60, "Ticket Médio", formatCurrency(reportData.length ? totalVal / reportData.length : 0), [245, 158, 11]); // Amber
+    drawKPI(225, 60, "Municípios Atendidos", municipios.length.toString(), [124, 58, 237]); // Violet
+
+    // Status Distribution Table (Mini graph-like summary)
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("DISTRIBUIÇÃO POR STATUS", 15, 100);
+    
+    const statusCounts = statuses.map(s => {
+      const count = reportData.filter(p => p.status === s).length;
+      const pct = reportData.length ? Math.round((count / reportData.length) * 100) : 0;
+      return [s.toUpperCase(), count, `${pct}%`];
+    });
+
+    autoTable(doc, {
+      startY: 105,
+      head: [["STATUS", "QUANTIDADE", "PERCENTUAL (%)"]],
+      body: statusCounts,
+      theme: 'striped',
+      headStyles: { fillColor: [51, 65, 85], fontSize: 9 },
+      styles: { fontSize: 8 },
+      margin: { left: 15, right: 180 } // Small narrow table correctly aligned
+    });
+
+    // Detailed Table with auto-overflow to new pages
+    doc.addPage();
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, 0, 300, 15, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.text("DETALHAMENTO ANALÍTICO DAS PROPOSTAS", 15, 10);
+
+    const tableData = reportData.map((p, idx) => [
+      idx + 1,
+      p.producer_name.toUpperCase(),
+      p.projetista || 'N/A',
+      p.municipio || '---',
+      p.linha_credito || '---',
+      p.status.toUpperCase(),
+      formatCurrency(p.estimated_value || 0)
+    ]);
+
+    autoTable(doc, {
+      startY: 20,
+      head: [["#", "NOME DO PRODUTOR", "PROJETISTA", "MUNICÍPIO", "LINHA", "STATUS", "VALOR R$"]],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229], fontSize: 8, halign: 'center' },
+      styles: { fontSize: 7, cellPadding: 2 },
+      columnStyles: { 0: { halign: 'center' }, 6: { halign: 'right', fontStyle: 'bold' } }
+    });
+
+    // Footer
+    const pageCount = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(7);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Emitido via PRONAF DIGITAL - ${timestamp} - Página ${i} de ${pageCount}`, 150, 205, { align: "center" });
+    }
+
+    doc.save(`Analise_Estoque_${format(new Date(), "yyyyMMdd")}.pdf`);
+    setIsReportDialogOpen(false);
+    toast({ title: "Relatório gerado com sucesso!" });
+  };
 
   const getSerasaIcon = (serasa: string | null) => {
     if (!serasa) return null;
@@ -431,14 +551,76 @@ export default function StockProposals() {
           )}
 
           {/* Report Generation */}
-          <Button
-            variant="outline"
-            onClick={generateProposalsReport}
-            className="w-full sm:w-auto h-12 md:h-10 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold"
-          >
-            <FileText className="mr-2 h-5 w-5 md:h-4 md:w-4" />
-            Relatório
-          </Button>
+          <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto h-12 md:h-10 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold"
+              >
+                <FileText className="mr-2 h-5 w-5 md:h-4 md:w-4" />
+                Relatório
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[480px]">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold flex items-center gap-2 text-indigo-900">
+                  <FileText className="h-5 w-5" />
+                  Configurar Relatório Premium
+                </DialogTitle>
+                <DialogDescription>
+                  Personalize as informações que aparecerão no seu documento PDF profissional.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label>Filtrar por Projetista</Label>
+                  <Select value={reportFilters.projetista} onValueChange={(v)=>setReportFilters({...reportFilters, projetista: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os Projetistas</SelectItem>
+                      {existingProjetistas.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Município</Label>
+                    <Select value={reportFilters.municipio} onValueChange={(v)=>setReportFilters({...reportFilters, municipio: v})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        {municipios.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select value={reportFilters.status} onValueChange={(v)=>setReportFilters({...reportFilters, status: v})}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 flex items-start gap-3 mt-2">
+                  <AlertTriangle className="h-5 w-5 text-indigo-600 mt-0.5" />
+                  <div className="text-xs text-indigo-900 leading-relaxed">
+                    <strong>Relatório de Gestão:</strong> O documento incluirá gráficos de resumo, KPIs financeiros e detalhamento analítico completo em formato PDF premium.
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsReportDialogOpen(false)}>Cancelar</Button>
+                <Button onClick={() => generatePremiumReport(reportFilters)} className="bg-indigo-600 hover:bg-indigo-700">
+                  <Download className="mr-2 h-4 w-4" />
+                  Gerar PDF agora
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {/* CSV Import */}
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
@@ -556,14 +738,29 @@ export default function StockProposals() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="renovacao">Renovação? (SIM/NAO)</Label>
+                    <Select
+                      value={formData.cliente_renovacao || ""}
+                      onValueChange={(val) => setFormData({...formData, cliente_renovacao: val})}
+                    >
+                      <SelectTrigger id="renovacao">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SIM">SIM</SelectItem>
+                        <SelectItem value="NAO">NÃO</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
                     <Label htmlFor="value">Valor R$</Label>
                     <Input id="value" type="number" placeholder="0,00"
                       value={formData.estimated_value || ""}
                       onChange={(e) => setFormData({...formData, estimated_value: parseFloat(e.target.value) || 0})}
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="municipio">Município</Label>
                     <div className="relative">
@@ -573,13 +770,6 @@ export default function StockProposals() {
                         onChange={(e) => setFormData({...formData, municipio: e.target.value})}
                       />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="linha">Linha de Crédito</Label>
-                    <Input id="linha" placeholder="Ex: PRONAF A"
-                      value={formData.linha_credito || ""}
-                      onChange={(e) => setFormData({...formData, linha_credito: e.target.value, credit_program: e.target.value})}
-                    />
                   </div>
                 </div>
                 <div className="space-y-2">
