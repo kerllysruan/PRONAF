@@ -65,7 +65,7 @@ function fixBrokenEncoding(str: string): string {
     .replace(/ﾇ/g, 'Ç');
 }
 
-const PROJETISTAS = ["NEY MEDEIRO", "JAIRO SANTANA", "CLEDSO CLOVIS"];
+const PROJETISTAS = ["NEY MEDEIRO", "JAIRO SANTANA", "CLEDSON CLOVIS"];
 
 function cleanCSV(str: string | undefined): string | null {
   if (!str) return null;
