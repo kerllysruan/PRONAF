@@ -572,8 +572,11 @@ export default function StockProposals() {
                       <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">#</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Produtor</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">CPF</th>
+                      <th className="text-center p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Renovação</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Agência</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Município</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Localização</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Linha</th>
                       <th className="text-right p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Valor</th>
                       <th className="text-center p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Serasa</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs uppercase tracking-wider">Status</th>
@@ -596,10 +599,15 @@ export default function StockProposals() {
                             )}
                           </div>
                         </td>
-                        <td className="p-3 text-slate-600 font-mono text-xs">{p.producer_cpf || '—'}</td>
-                        <td className="p-3 text-slate-600 text-xs">{p.municipio || '—'}</td>
-                        <td className="p-3 text-slate-600 text-xs">{p.localizacao || '—'}</td>
-                        <td className="p-3 text-right font-bold text-slate-900 tabular-nums text-xs">
+                        <td className="p-3 text-slate-600 font-mono text-xs whitespace-nowrap">{p.producer_cpf || '—'}</td>
+                        <td className="p-3 text-slate-600 text-xs text-center whitespace-nowrap">
+                          {p.cliente_renovacao ? `${p.cliente_renovacao} ${p.ano_contrato || ''}`.trim() : '—'}
+                        </td>
+                        <td className="p-3 text-slate-600 text-xs whitespace-nowrap">{p.agencia_cadastro || '—'}</td>
+                        <td className="p-3 text-slate-600 text-xs whitespace-nowrap">{p.municipio || '—'}</td>
+                        <td className="p-3 text-slate-600 text-xs whitespace-nowrap">{p.localizacao || '—'}</td>
+                        <td className="p-3 text-slate-600 text-xs whitespace-nowrap">{p.linha_credito || '—'}</td>
+                        <td className="p-3 text-right font-bold text-slate-900 tabular-nums text-xs whitespace-nowrap">
                           {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '—'}
                         </td>
                         <td className="p-3 text-center">
