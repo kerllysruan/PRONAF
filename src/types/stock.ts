@@ -10,6 +10,16 @@ export interface StockProposal {
   status: string;
   created_at: string;
   updated_at: string;
+  // CSV import fields
+  pendencias: string | null;
+  serasa: string | null;
+  cliente_renovacao: string | null;
+  ano_contrato: string | null;
+  agencia_cadastro: string | null;
+  municipio: string | null;
+  linha_credito: string | null;
+  localizacao: string | null;
+  observacoes_extra: string | null;
 }
 
 export type InsertStockProposal = Omit<StockProposal, 'id' | 'created_at' | 'updated_at' | 'agency_id' | 'created_by'>;
