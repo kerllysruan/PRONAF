@@ -591,7 +591,7 @@ export default function StockProposals() {
                         <td className={`p-3 text-slate-400 font-mono text-xs ${restriction ? 'border-l-2 border-red-500' : ''}`}>{idx + 1}</td>
                         <td className="p-3">
                           <div>
-                            <span className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">{p.producer_name}</span>
+                            <span className="font-bold text-slate-900 group-hover:text-indigo-700 transition-colors line-clamp-2" title={p.producer_name}>{p.producer_name}</span>
                             {p.pendencias && (
                               <p className="text-[10px] text-amber-600 mt-0.5 flex items-center gap-1">
                                 <AlertTriangle className="h-3 w-3" /> {p.pendencias}
@@ -603,9 +603,9 @@ export default function StockProposals() {
                         <td className="p-3 text-slate-600 text-xs text-center whitespace-nowrap">
                           {p.cliente_renovacao ? `${p.cliente_renovacao} ${p.ano_contrato || ''}`.trim() : '—'}
                         </td>
-                        <td className="p-3 text-slate-600 text-xs whitespace-nowrap">{p.agencia_cadastro || '—'}</td>
-                        <td className="p-3 text-slate-600 text-xs whitespace-nowrap">{p.municipio || '—'}</td>
-                        <td className="p-3 text-slate-600 text-xs whitespace-nowrap">{p.localizacao || '—'}</td>
+                        <td className="p-3 text-slate-600 text-xs max-w-[140px] truncate" title={p.agencia_cadastro || ''}>{p.agencia_cadastro || '—'}</td>
+                        <td className="p-3 text-slate-600 text-xs max-w-[140px] truncate" title={p.municipio || ''}>{p.municipio || '—'}</td>
+                        <td className="p-3 text-slate-600 text-xs max-w-[160px] truncate" title={p.localizacao || ''}>{p.localizacao || '—'}</td>
                         <td className="p-3 text-slate-600 text-xs whitespace-nowrap">{p.linha_credito || '—'}</td>
                         <td className="p-3 text-right font-bold text-slate-900 tabular-nums text-xs whitespace-nowrap">
                           {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '—'}
