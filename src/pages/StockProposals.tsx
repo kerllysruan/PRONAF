@@ -493,6 +493,8 @@ export default function StockProposals() {
     toast({ title: "Relatório gerado com sucesso!" });
   };
 
+  const normalizeText = (t: string) => t.normalize('NFKC').replace(/[^a-zA-Z]/g, '').toUpperCase();
+
   const getSerasaIcon = (serasa: string | null) => {
     if (!serasa) return null;
     const raw = serasa.trim();
