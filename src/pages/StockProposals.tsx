@@ -100,7 +100,7 @@ function mapCSVRow(cols: string[], index: number): Partial<InsertStockProposal> 
 
 // ─── Main Component ────────────────────────────────────────────
 export default function StockProposals() {
-  const { proposals, loading, addProposal, addProposalsBulk, deleteProposal, deleteAllProposals, refreshProposals } = useStockProposals();
+  const { proposals, loading, addProposal, addProposalsBulk, updateProposal, deleteProposal, deleteAllProposals, refreshProposals } = useStockProposals();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
