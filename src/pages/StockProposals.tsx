@@ -52,9 +52,20 @@ function parseBRLValue(raw: string): number {
   return parseFloat(clean) || 0;
 }
 
+function fixBrokenEncoding(str: string): string {
+  if (!str) return str;
+  return str
+    .replace(/ﾃ/g, 'Ã')
+    .replace(/ﾍ/g, 'Í')
+    .replace(/ﾉ/g, 'É')
+    .replace(/ﾊ/g, 'Ê')
+    .replace(/ｺ/g, 'º')
+    .replace(/ﾇ/g, 'Ç');
+}
+
 function cleanCSV(str: string | undefined): string | null {
   if (!str) return null;
-  const clean = str.trim();
+  const clean = fixBrokenEncoding(str.trim());
   // Filter out CSV noise characters
   if (!clean || clean === '-' || clean === '\uFFFD' || clean === '') return null;
   return clean;
