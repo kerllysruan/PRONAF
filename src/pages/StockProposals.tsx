@@ -1183,11 +1183,9 @@ export default function StockProposals() {
             </div>
             <div className="flex flex-wrap gap-2">
               <Select value={filterMunicipio} onValueChange={setFilterMunicipio}>
-                <SelectTrigger className="w-full md:w-[160px] h-10">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                    <SelectValue placeholder="Município" />
-                  </div>
+                <SelectTrigger className="w-full md:w-[160px] h-10 gap-2">
+                  <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
+                  <SelectValue placeholder="Município" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[250px]">
                   <SelectItem value="all">Todos os Municípios</SelectItem>
@@ -1198,11 +1196,9 @@ export default function StockProposals() {
               </Select>
 
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full md:w-[160px] h-10">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
-                    <SelectValue placeholder="Status" />
-                  </div>
+                <SelectTrigger className="w-full md:w-[160px] h-10 gap-2">
+                  <ShieldCheck className="h-4 w-4 text-slate-400 shrink-0" />
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Status</SelectItem>
@@ -1213,11 +1209,9 @@ export default function StockProposals() {
               </Select>
 
               <Select value={filterProjetista} onValueChange={setFilterProjetista}>
-                <SelectTrigger className="w-full md:w-[180px] h-10">
-                  <div className="flex items-center gap-2">
-                    <User className="h-3.5 w-3.5 text-slate-400" />
-                    <SelectValue placeholder="Projetista" />
-                  </div>
+                <SelectTrigger className="w-full md:w-[180px] h-10 gap-2">
+                  <Users className="h-4 w-4 text-slate-400 shrink-0" />
+                  <SelectValue placeholder="Projetista" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Projetistas</SelectItem>
