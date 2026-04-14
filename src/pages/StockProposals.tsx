@@ -1202,7 +1202,6 @@ export default function StockProposals() {
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">#</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PRODUTOR / CPF</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROJETISTA</th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">DADOS</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROGRAMA DE CRÉDITO</th>
                       <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider">RESTRIÇÃO</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">STATUS</th>
@@ -1234,19 +1233,6 @@ export default function StockProposals() {
                             <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-tight">{p.projetista || 'N/A'}</span>
                           </div>
                         </td>
-                        <td className="p-3 align-top min-w-[200px]">
-                          <div className="flex flex-col gap-1.5">
-                            <div className="flex items-start gap-2">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Agência</span>
-                              <span className="text-xs font-semibold text-slate-700 line-clamp-1" title={p.agencia_cadastro || ''}>{p.agencia_cadastro}</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Município</span>
-                              <span className="text-xs text-slate-600 line-clamp-1" title={p.municipio || ''}>{p.municipio}</span>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Localização</span>
-                              <span className="text-xs text-slate-500 line-clamp-1" title={p.localizacao || ''}>{p.localizacao}</span>
                             </div>
                           </div>
                         </td>
