@@ -77,6 +77,14 @@ const PROGRAMAS_CREDITO = [
   "PRONAF A (699)"
 ];
 
+const STATUS_OPTIONS = [
+  "PRONTO, PLANILHA NOVA",
+  "AUTORIZADO ENVIO CENTRAL",
+  "ENVIADO CENTRAL",
+  "PENDÊNCIA CENTRAL",
+  "CONTRATADO"
+];
+
 function cleanCSV(str: string | undefined): string | null {
   if (!str) return null;
   const clean = fixBrokenEncoding(str.trim());
@@ -293,11 +301,21 @@ export default function StockProposals() {
 
             const mapped = mapCSVRow(rowObj, validIndex);
             if (mapped && mapped.producer_name) {
-              rows.push({
-                ...mapped,
-                projetista: importProjetista || null
-              });
-              validIndex++;
+              // Duplicate Check
+              const isDuplicate = proposals.some(p => 
+                p.producer_cpf === mapped.producer_cpf &&
+                p.producer_name === mapped.producer_name &&
+                Number(p.estimated_value) === Number(mapped.estimated_value) &&
+                p.credit_program === mapped.credit_program
+              );
+
+              if (!isDuplicate) {
+                rows.push({
+                  ...mapped,
+                  projetista: importProjetista || null
+                });
+                validIndex++;
+              }
             }
           }
 
@@ -401,11 +419,12 @@ export default function StockProposals() {
   // ── Status helpers ──────────────────────────
   const getStatusStyle = (status: string) => {
     const s = (status || '').toLowerCase().trim();
-    if (s.includes('pronto')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    if (s.includes('autorizado')) return 'bg-blue-50 text-blue-700 border-blue-200';
-    if (s.includes('falta') || s.includes('flata')) return 'bg-amber-50 text-amber-700 border-amber-200';
-    if (s === 'novo') return 'bg-indigo-50 text-indigo-700 border-indigo-200';
-    return 'bg-slate-50 text-slate-600 border-slate-200';
+    if (s.includes('pronto') || s.includes('nova')) return "bg-emerald-100 text-emerald-700 border-emerald-200";
+    if (s.includes('autorizado')) return "bg-blue-100 text-blue-700 border-blue-200";
+    if (s.includes('enviado')) return "bg-indigo-100 text-indigo-700 border-indigo-200";
+    if (s.includes('pendência')) return "bg-amber-100 text-amber-700 border-amber-200";
+    if (s.includes('contratado')) return "bg-purple-100 text-purple-700 border-purple-200";
+    return "bg-slate-100 text-slate-700 border-slate-200";
   };
 
   const generateProposalsReport = () => {
@@ -873,6 +892,22 @@ export default function StockProposals() {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="new-status">Status Inicial</Label>
+                    <Select
+                      value={formData.status || ""}
+                      onValueChange={(val) => setFormData({...formData, status: val})}
+                    >
+                      <SelectTrigger id="new-status">
+                        <SelectValue placeholder="Selecione o status..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUS_OPTIONS.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="municipio">Município</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -1020,12 +1055,19 @@ export default function StockProposals() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-status">Status Atual</Label>
-              <Input
-                id="edit-status"
+              <Select
                 value={editFormData.status || ""}
-                onChange={(e) => setEditFormData({...editFormData, status: e.target.value})}
-                placeholder="Ex: CADASTRADO, PENDENTE..."
-              />
+                onValueChange={(val) => setEditFormData({...editFormData, status: val})}
+              >
+                <SelectTrigger id="edit-status">
+                  <SelectValue placeholder="Selecione o status..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="edit-pendencias">Pendências / Observações</Label>
@@ -1139,9 +1181,9 @@ export default function StockProposals() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Select value={filterMunicipio} onValueChange={setFilterMunicipio}>
-                <SelectTrigger className="w-full md:w-[180px] h-10">
+                <SelectTrigger className="w-full md:w-[160px] h-10">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-3.5 w-3.5 text-slate-400" />
                     <SelectValue placeholder="Município" />
@@ -1152,6 +1194,37 @@ export default function StockProposals() {
                   {municipios.map(m => (
                     <SelectItem key={m} value={m}>{m}</SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full md:w-[160px] h-10">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
+                    <SelectValue placeholder="Status" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Status</SelectItem>
+                  {STATUS_OPTIONS.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterProjetista} onValueChange={setFilterProjetista}>
+                <SelectTrigger className="w-full md:w-[180px] h-10">
+                  <div className="flex items-center gap-2">
+                    <User className="h-3.5 w-3.5 text-slate-400" />
+                    <SelectValue placeholder="Projetista" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Projetistas</SelectItem>
+                  {PROJETISTAS.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                  <SelectItem value="SISTEMA">SISTEMA (IMPORTADO)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
