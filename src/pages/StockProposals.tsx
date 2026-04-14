@@ -1181,46 +1181,55 @@ export default function StockProposals() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Select value={filterMunicipio} onValueChange={setFilterMunicipio}>
-                <SelectTrigger className="w-full md:w-[160px] h-10 gap-2">
-                  <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
-                  <SelectValue placeholder="Município" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[250px]">
-                  <SelectItem value="all">Todos os Municípios</SelectItem>
-                  {municipios.map(m => (
-                    <SelectItem key={m} value={m}>{m}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="space-y-1.5 flex-1 md:flex-none">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Município</Label>
+                <Select value={filterMunicipio} onValueChange={setFilterMunicipio}>
+                  <SelectTrigger className="w-full md:w-[160px] h-10 gap-2 bg-white">
+                    <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
+                    <SelectValue placeholder="Município" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[250px]">
+                    <SelectItem value="all">Todos os Municípios</SelectItem>
+                    {municipios.map(m => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full md:w-[160px] h-10 gap-2">
-                  <ShieldCheck className="h-4 w-4 text-slate-400 shrink-0" />
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os Status</SelectItem>
-                  {STATUS_OPTIONS.map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-1.5 flex-1 md:flex-none">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Status</Label>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-full md:w-[160px] h-10 gap-2 bg-white">
+                    <ShieldCheck className="h-4 w-4 text-slate-400 shrink-0" />
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Status</SelectItem>
+                    {STATUS_OPTIONS.map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Select value={filterProjetista} onValueChange={setFilterProjetista}>
-                <SelectTrigger className="w-full md:w-[180px] h-10 gap-2">
-                  <Users className="h-4 w-4 text-slate-400 shrink-0" />
-                  <SelectValue placeholder="Projetista" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os Projetistas</SelectItem>
-                  {PROJETISTAS.map(p => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
-                  <SelectItem value="SISTEMA">SISTEMA (IMPORTADO)</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-1.5 flex-1 md:flex-none">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Projetista</Label>
+                <Select value={filterProjetista} onValueChange={setFilterProjetista}>
+                  <SelectTrigger className="w-full md:w-[180px] h-10 gap-2 bg-white">
+                    <Users className="h-4 w-4 text-slate-400 shrink-0" />
+                    <SelectValue placeholder="Projetista" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Projetistas</SelectItem>
+                    {PROJETISTAS.map(p => (
+                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    ))}
+                    <SelectItem value="SISTEMA">SISTEMA (IMPORTADO)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </CardContent>
