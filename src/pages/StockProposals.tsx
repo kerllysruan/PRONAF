@@ -1202,7 +1202,7 @@ export default function StockProposals() {
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">#</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PRODUTOR / CPF</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROJETISTA</th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">LOCALIDADE</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">DADOS</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROGRAMA DE CRÉDITO</th>
                       <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider">RESTRIÇÃO</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">STATUS</th>
