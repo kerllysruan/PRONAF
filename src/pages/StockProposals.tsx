@@ -1199,13 +1199,13 @@ export default function StockProposals() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-slate-50/80">
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider"></th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider"></th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider"></th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider"></th>
-                      <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider"></th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">#</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PRODUTOR / CPF</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROJETISTA</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider"></th>
                       <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider"></th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">STATUS</th>
+                      <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider">AÇÕES</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
