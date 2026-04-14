@@ -1306,9 +1306,6 @@ export default function StockProposals() {
                             <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-tight">{p.projetista || 'N/A'}</span>
                           </div>
                         </td>
-                            </div>
-                          </div>
-                        </td>
                         <td className="p-3 align-top min-w-[140px]">
                           <div className="flex flex-col gap-2">
                             <div>
