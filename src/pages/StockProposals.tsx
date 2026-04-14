@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -1030,12 +1029,12 @@ export default function StockProposals() {
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="edit-pendencias">Pendências / Observações</Label>
-              <Textarea
+              <textarea
                 id="edit-pendencias"
                 value={editFormData.pendencias || ""}
                 onChange={(e) => setEditFormData({...editFormData, pendencias: e.target.value})}
                 placeholder="Descreva as pendências ou observações relevantes..."
-                className="min-h-[80px]"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
           </div>
