@@ -59,6 +59,28 @@ function parseBRLValue(raw: string): number {
 function fixBrokenEncoding(str: string): string {
   if (!str) return str;
   return str
+    // Standard UTF-8 caught as ISO-8859-1
+    .replace(/Ã¡/g, 'á')
+    .replace(/Ã /g, 'à')
+    .replace(/Ã¢/g, 'â')
+    .replace(/Ã£/g, 'ã')
+    .replace(/Ã©/g, 'é')
+    .replace(/Ãª/g, 'ê')
+    .replace(/Ã­/g, 'í')
+    .replace(/Ã³/g, 'ó')
+    .replace(/Ã´/g, 'ô')
+    .replace(/Ãµ/g, 'õ')
+    .replace(/Ãº/g, 'ú')
+    .replace(/Ã§/g, 'ç')
+    .replace(/Ã /g, 'À')
+    .replace(/Ã /g, 'Á')
+    .replace(/Ã‡/g, 'Ç')
+    .replace(/Ã‰/g, 'É')
+    .replace(/Ã‚/g, 'Â')
+    .replace(/Ãƒ/g, 'Ã')
+    .replace(/Ã“/g, 'Ó')
+    .replace(/Ã”/g, 'Ô')
+    // Old system glitches
     .replace(/ﾃ/g, 'Ã')
     .replace(/ﾍ/g, 'Í')
     .replace(/ﾉ/g, 'É')
