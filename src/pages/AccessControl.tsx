@@ -31,6 +31,7 @@ import { Separator } from "@/components/ui/separator";
 interface User {
   id: string;
   email: string;
+  matricula?: string;
   display_name?: string;
   role?: string;
   created_at: string;
@@ -132,6 +133,7 @@ function AccessControl() {
         return {
           id: uid,
           email: profile.email || "(sem email)",
+          matricula: profile.matricula,
           display_name: profile.display_name || profile.full_name || "Sem nome",
           role: rolesMap.get(uid) || "usuario",
           created_at: profile.created_at || profile.updated_at,
@@ -297,7 +299,8 @@ function AccessControl() {
   const filteredUsers = users.filter(u => {
     const matchSearch = !searchTerm ||
       u.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase());
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.matricula?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchRole = filterRole === "all" || u.role === filterRole;
     const matchAgency = filterAgency === "all" || u.agency_id === filterAgency;
     return matchSearch && matchRole && matchAgency;
@@ -483,7 +486,9 @@ function AccessControl() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground font-medium truncate opacity-70">{user.email}</p>
+                          <p className="text-xs text-muted-foreground font-medium truncate opacity-70">
+                            {(user as any).matricula || user.email}
+                          </p>
                         </div>
                       </div>
                     </TableCell>
@@ -600,13 +605,13 @@ function AccessControl() {
           <div className="p-8 space-y-6">
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">E-mail de Acesso</Label>
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Matrícula / Usuário</Label>
                 <div className="relative">
                   <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    type="email" value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="usuario@email.com" className="pl-11 h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold"
+                    type="text" value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value.toUpperCase() })}
+                    placeholder="Ex: F156870" className="pl-11 h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold tracking-widest"
                   />
                 </div>
               </div>

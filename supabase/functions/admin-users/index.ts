@@ -157,7 +157,18 @@ Deno.serve(async (req: Request) => {
 
     switch (action) {
       case "create": {
-        const { email, password, display_name, role, agency_id } = payload;
+        let { email, password, display_name, role, agency_id } = payload;
+        let matricula: string | null = null;
+
+        // Auto-detect matricula if email doesn't have @
+        if (email && !email.includes("@")) {
+          matricula = email.toUpperCase();
+          email = `admin-${matricula}@pronaf.local`;
+        } else if (email) {
+          // Try to extract matricula from email if it follows the pattern
+          const match = email.match(/admin-(.*)@pronaf\.local/);
+          if (match) matricula = match[1].toUpperCase();
+        }
 
         // Validation: Only Dev can create Admins/Devs
         if ((role === "admin" || role === "developer") && callerRole !== "developer") {
@@ -172,7 +183,7 @@ Deno.serve(async (req: Request) => {
         }
 
         const { data: authUser, error: createError } = await adminClient.auth.admin.createUser({
-          email, password, email_confirm: true, user_metadata: { display_name }
+          email, password, email_confirm: true, user_metadata: { display_name, matricula }
         });
         if (createError) throw new Error(`Erro Auth: ${createError.message}`);
 
@@ -186,6 +197,7 @@ Deno.serve(async (req: Request) => {
           id: userId,
           user_id: userId,
           email,
+          matricula,
           display_name,
           full_name: display_name,
           agency_id: finalAgencyId

@@ -12,11 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Plus, Box, Calendar, FileText, Trash2, User, Landmark,
   Upload, Search, Filter, MapPin, AlertTriangle, CheckCircle2, XCircle, ShieldCheck,
-  FileSpreadsheet, Download, Eye, ChevronDown, ChevronUp, Users, Hash, Send, RotateCcw
+  FileSpreadsheet, Download, Eye, ChevronDown, ChevronUp, Users, Hash, Send, RotateCcw,
+  Edit2
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import Papa from "papaparse";
 
 // ─── CSV parser ────────────────────────────────────────────────
 function parseCSVLine(line: string): string[] {
@@ -67,6 +69,14 @@ function fixBrokenEncoding(str: string): string {
 
 const PROJETISTAS = ["NEY MEDEIRO", "JAIRO SANTANA", "CLEDSON CLOVIS"];
 
+const PROGRAMAS_CREDITO = [
+  "RURAL (226)",
+  "PRONAF MAIS ALIMENTOS (434)",
+  "PRONAF COMUM (433)",
+  "PRONAF A (368)",
+  "PRONAF A (699)"
+];
+
 function cleanCSV(str: string | undefined): string | null {
   if (!str) return null;
   const clean = fixBrokenEncoding(str.trim());
@@ -75,34 +85,55 @@ function cleanCSV(str: string | undefined): string | null {
   return clean;
 }
 
-function mapCSVRow(cols: string[], index: number): Partial<InsertStockProposal> | null {
-  // cols: [Nº, CLIENTES, PENDÊNCIAS, SERASA, CLIENTE RENOVAÇÃO, ANO DO CONTRATO, CPF, AGÊNCIA CADASTRO, MUNICÍPIO, VALOR R$, LINHA DE CRÉDITO, LOCALIZAÇÃO, STATUS, extra?]
-  const name = cleanCSV(cols[1]);
-  if (!name || /^CLIENTES?$/i.test(name)) return null; // skip header
-  const num = cleanCSV(cols[0]);
-  if (!num || isNaN(Number(num))) return null; // skip title rows
+function getField(row: any, keys: string[]) {
+  const rowKeys = Object.keys(row);
+  for (const k of keys) {
+    const found = rowKeys.find(rk => rk.toLowerCase().trim() === k.toLowerCase().trim());
+    if (found && row[found] !== undefined && row[found] !== null && row[found] !== "") return row[found];
+  }
+  // Try cleaning weird characters (encoding issues)
+  for (const k of keys) {
+    const found = rowKeys.find(rk => {
+      const cleanRK = rk.replace(/[^\x00-\x7F]/g, "").toLowerCase().trim();
+      const cleanK = k.replace(/[^\x00-\x7F]/g, "").toLowerCase().trim();
+      return cleanRK === cleanK && cleanK.length > 2;
+    });
+    if (found && row[found] !== undefined && row[found] !== null && row[found] !== "") return row[found];
+  }
+  return "";
+}
 
-  const renovacaoVal = cleanCSV(cols[4]);
+function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null {
+  const name = cleanCSV(getField(row, ["CLIENTES", "CLIENTE", "NOME", "producer_name"]));
+  if (!name || /^CLIENTES?$/i.test(name)) return null;
+
+  const renovacaoVal = cleanCSV(getField(row, ["CLIENTE RENOVAÇÃO", "RENOVAÇÃO", "RENOVACAO", "PROGRAMA DE CRÉDITO"]));
   const isRenovacao = (renovacaoVal || '').toUpperCase().includes('SIM');
   const automatedLinha = isRenovacao ? 'PRONAF A 699' : 'PRONAF A 368';
 
+  // Join AGÊNCIA and CADASTRO if they are separate columns
+  const agencia = getField(row, ["AGÊNCIA", "AGENCIA"]);
+  const cadastro = getField(row, ["CADASTRO"]);
+  const agenciaCadastro = cleanCSV(getField(row, ["AGÊNCIA CADASTRO", "AGENCIA CADASTRO"])) || 
+                           (agencia && cadastro ? `${agencia} ${cadastro}` : (agencia || cadastro || ""));
+
   return {
     producer_name: name,
-    pendencias: cleanCSV(cols[2]),
-    serasa: cleanCSV(cols[3]),
+    pendencias: cleanCSV(getField(row, ["PENDÊNCIAS", "PENDENCIAS", "OBS"])),
+    serasa: cleanCSV(getField(row, ["RESTRIÇÃO", "RESTRICAO", "SERASA"])),
     cliente_renovacao: renovacaoVal,
-    ano_contrato: cleanCSV(cols[5]),
-    producer_cpf: cleanCSV(cols[6]),
-    agencia_cadastro: cleanCSV(cols[7]),
-    municipio: cleanCSV(cols[8]),
-    estimated_value: parseBRLValue(cols[9] || ''),
+    ano_contrato: cleanCSV(getField(row, ["ANO DO CONTRATO", "ANO CONTRATO"])),
+    producer_cpf: cleanCSV(getField(row, ["CPF", "producer_cpf"])),
+    agencia_cadastro: agenciaCadastro,
+    municipio: cleanCSV(getField(row, ["MUNICÍPIO", "MUNICIPIO"])),
+    estimated_value: parseBRLValue(getField(row, ["VALOR R$", "VALOR R", "VALOR", "estimated_value"])),
     linha_credito: automatedLinha,
-    credit_program: automatedLinha,
-    localizacao: cleanCSV(cols[11]),
-    status: cleanCSV(cols[12]),
-    original_csv_status: cleanCSV(cols[12]),
-    notes: cleanCSV(cols[13]),
-    observacoes_extra: cleanCSV(cols[13]),
+    credit_program: cleanCSV(getField(row, ["PROGRAMA DE CRÉDITO", "PROGRAMA CREDITO", "LINHA DE CRÉDITO"])) || automatedLinha,
+    localizacao: cleanCSV(getField(row, ["LOCALIZAÇÃO", "LOCALIZACAO"])),
+    status: cleanCSV(getField(row, ["STATUS", "original_csv_status"])),
+    original_csv_status: cleanCSV(getField(row, ["STATUS", "original_csv_status"])),
+    notes: cleanCSV(getField(row, ["notes", "Observações", "Observaes"])),
+    observacoes_extra: cleanCSV(getField(row, ["notes", "Observações", "Observaes"])),
     order_index: index,
   };
 }
@@ -114,6 +145,9 @@ export default function StockProposals() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingProposal, setEditingProposal] = useState<StockProposal | null>(null);
+
   const [reportFilters, setReportFilters] = useState({
     municipio: "all",
     status: "all",
@@ -121,6 +155,7 @@ export default function StockProposals() {
   });
   const [importProjetista, setImportProjetista] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -139,8 +174,12 @@ export default function StockProposals() {
     localizacao: "",
     linha_credito: "",
     notes: "",
-    projetista: ""
+    projetista: "",
+    serasa: "NAO",
+    pendencias: ""
   });
+
+  const [editFormData, setEditFormData] = useState<Partial<StockProposal>>({});
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -206,52 +245,90 @@ export default function StockProposals() {
     if (!file) return;
 
     setIsImporting(true);
-    try {
-      const text = await file.text();
-      const lines = text.split('\n').filter(l => l.trim());
-      const rows: Partial<InsertStockProposal>[] = [];
+    Papa.parse(file, {
+      header: false, // Parse as arrays first to find the header row
+      skipEmptyLines: true,
+      encoding: "ISO-8859-1",
+      complete: async (results) => {
+        try {
+          const data = results.data as string[][];
+          if (data.length === 0) {
+            toast({ title: "CSV vazio", description: "O arquivo não contém dados.", variant: "destructive" });
+            setIsImporting(false);
+            return;
+          }
 
-      let validIndex = proposals.length + 1;
-      for (const line of lines) {
-        const cols = parseCSVLine(line);
-        const mapped = mapCSVRow(cols, validIndex);
-        if (mapped && mapped.producer_name) {
-          rows.push({
-            ...mapped,
-            projetista: importProjetista || null
+          // 1. Find the header row (contains 'CLIENTE' or 'CPF' or 'Nº')
+          let headerIndex = -1;
+          for (let i = 0; i < Math.min(data.length, 10); i++) {
+            const row = data[i];
+            const isHeader = row.some(cell => {
+              const c = (cell || "").toUpperCase().trim();
+              return c === "Nº" || c === "CLIENTES" || c === "CPF" || c === "CLIENTE";
+            });
+            if (isHeader) {
+              headerIndex = i;
+              break;
+            }
+          }
+
+          if (headerIndex === -1) {
+            toast({ title: "Cabeçalho não encontrado", description: "Não foi possível identificar a linha de cabeçalho no CSV. Verifique se as colunas estão corretas.", variant: "destructive" });
+            setIsImporting(false);
+            return;
+          }
+
+          const headers = data[headerIndex].map(h => (h || "").trim());
+          const records = data.slice(headerIndex + 1);
+          
+          const rows: Partial<InsertStockProposal>[] = [];
+          let validIndex = proposals.length + 1;
+
+          for (const record of records) {
+            // Convert array record back to object using detected headers
+            const rowObj: any = {};
+            headers.forEach((h, idx) => {
+              if (h) rowObj[h] = record[idx];
+            });
+
+            const mapped = mapCSVRow(rowObj, validIndex);
+            if (mapped && mapped.producer_name) {
+              rows.push({
+                ...mapped,
+                projetista: importProjetista || null
+              });
+              validIndex++;
+            }
+          }
+
+          if (rows.length === 0) {
+            toast({ title: "Nenhuma proposta válida", description: "Nenhuma linha de proposta válida foi encontrada no arquivo.", variant: "destructive" });
+            setIsImporting(false);
+            return;
+          }
+
+          await addProposalsBulk(rows as InsertStockProposal[]);
+          toast({
+            title: "Importação concluída",
+            description: `${rows.length} propostas importadas com sucesso.`,
           });
-          validIndex++;
+          await refreshProposals();
+        } catch (err: any) {
+          console.error("CSV import error:", err);
+          toast({ title: "Erro na importação", description: err.message, variant: "destructive" });
+        } finally {
+          setIsImporting(false);
+          setIsImportDialogOpen(false);
+          setImportProjetista("");
+          if (fileInputRef.current) fileInputRef.current.value = "";
         }
+      },
+      error: (err) => {
+        console.error("PapaParse error:", err);
+        toast({ title: "Erro ao ler arquivo", description: err.message, variant: "destructive" });
+        setIsImporting(false);
       }
-
-      if (rows.length === 0) {
-        toast({ title: "CSV vazio", description: "Nenhuma linha válida encontrada no arquivo.", variant: "destructive" });
-        return;
-      }
-
-      // Delete existing proposals before importing if not empty to prevent dupes/messing up index, or just append 
-      // let's just append as before
-      try {
-        await addProposalsBulk(rows as InsertStockProposal[]);
-        
-        toast({
-          title: "Importação concluída",
-          description: `${rows.length} propostas importadas com sucesso. A ordem foi mantida idêntica ao arquivo.`,
-        });
-      } catch (err: any) {
-        throw new Error(`Falha na importação: ${err.message}`);
-      }
-
-      await refreshProposals();
-    } catch (err: any) {
-      console.error("CSV import error:", err);
-      toast({ title: "Erro na importação", description: err.message, variant: "destructive" });
-    } finally {
-      setIsImporting(false);
-      setIsImportDialogOpen(false);
-      setImportProjetista("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+    });
   };
 
   // ── Manual create ────────────────────────────
@@ -285,9 +362,40 @@ export default function StockProposals() {
     const res = await addProposal(newProposal);
     if (res) {
       setIsDialogOpen(false);
-      setFormData({ producer_name: "", producer_cpf: "", credit_program: "", estimated_value: 0, municipio: "", localizacao: "", linha_credito: "", notes: "", projetista: "" });
+      setFormData({ producer_name: "", producer_cpf: "", credit_program: "", estimated_value: 0, municipio: "", localizacao: "", linha_credito: "", notes: "", projetista: "", serasa: "NAO", pendencias: "" });
     }
     setIsSubmitting(false);
+  };
+
+  const openEditDialog = (proposal: StockProposal) => {
+    setEditingProposal(proposal);
+    setEditFormData({
+      producer_name: proposal.producer_name,
+      producer_cpf: proposal.producer_cpf,
+      credit_program: proposal.credit_program,
+      estimated_value: proposal.estimated_value,
+      municipio: proposal.municipio,
+      localizacao: proposal.localizacao,
+      linha_credito: proposal.linha_credito,
+      status: proposal.status,
+      pendencias: proposal.pendencias,
+      serasa: proposal.serasa,
+      notes: proposal.notes,
+      projetista: proposal.projetista
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingProposal || !editFormData.producer_name) return;
+    setIsUpdating(true);
+    const success = await updateProposal(editingProposal.id, editFormData);
+    if (success) {
+      setIsEditDialogOpen(false);
+      setEditingProposal(null);
+      toast({ title: "Proposta atualizada", description: "As alterações foram salvas com sucesso." });
+    }
+    setIsUpdating(false);
   };
 
   // ── Status helpers ──────────────────────────
@@ -740,17 +848,18 @@ export default function StockProposals() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="renovacao">Renovação? (SIM/NAO)</Label>
+                    <Label htmlFor="prog">Programa de Crédito</Label>
                     <Select
-                      value={formData.cliente_renovacao || ""}
-                      onValueChange={(val) => setFormData({...formData, cliente_renovacao: val})}
+                      value={formData.credit_program || ""}
+                      onValueChange={(val) => setFormData({...formData, credit_program: val})}
                     >
-                      <SelectTrigger id="renovacao">
-                        <SelectValue placeholder="Selecione..." />
+                      <SelectTrigger id="prog">
+                        <SelectValue placeholder="Selecione o programa..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="SIM">SIM</SelectItem>
-                        <SelectItem value="NAO">NÃO</SelectItem>
+                        {PROGRAMAS_CREDITO.map(p => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -821,6 +930,134 @@ export default function StockProposals() {
           </Dialog>
         </div>
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="h-5 w-5 text-indigo-600" />
+              Editar Proposta no Estoque
+            </DialogTitle>
+            <DialogDescription>
+              Atualize as informações desta proposta. As alterações serão salvas imediatamente no banco de dados.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Produtor</Label>
+              <Input
+                id="edit-name"
+                value={editFormData.producer_name || ""}
+                onChange={(e) => setEditFormData({...editFormData, producer_name: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-cpf">CPF</Label>
+              <Input
+                id="edit-cpf"
+                value={editFormData.producer_cpf || ""}
+                onChange={(e) => setEditFormData({...editFormData, producer_cpf: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-municipio">Município</Label>
+              <Input
+                id="edit-municipio"
+                value={editFormData.municipio || ""}
+                onChange={(e) => setEditFormData({...editFormData, municipio: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-localizacao">Localização</Label>
+              <Input
+                id="edit-localizacao"
+                value={editFormData.localizacao || ""}
+                onChange={(e) => setEditFormData({...editFormData, localizacao: e.target.value})}
+                placeholder="Ex: Assentamento X, Gleba Y"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-valor">Valor Estimado (R$)</Label>
+              <Input
+                id="edit-valor"
+                type="number"
+                value={editFormData.estimated_value || 0}
+                onChange={(e) => setEditFormData({...editFormData, estimated_value: Number(e.target.value)})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-prog">Programa de Crédito</Label>
+              <Select
+                value={editFormData.credit_program || ""}
+                onValueChange={(val) => setEditFormData({...editFormData, credit_program: val})}
+              >
+                <SelectTrigger id="edit-prog">
+                  <SelectValue placeholder="Selecione o programa..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROGRAMAS_CREDITO.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                  <SelectItem value="OUTRO">OUTRO...</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-serasa">Restrição (SIM/NAO)</Label>
+              <Select
+                value={editFormData.serasa || "NAO"}
+                onValueChange={(val) => setEditFormData({...editFormData, serasa: val})}
+              >
+                <SelectTrigger id="edit-serasa">
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SIM">SIM</SelectItem>
+                  <SelectItem value="NAO">NÃO</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status Atual</Label>
+              <Input
+                id="edit-status"
+                value={editFormData.status || ""}
+                onChange={(e) => setEditFormData({...editFormData, status: e.target.value})}
+                placeholder="Ex: CADASTRADO, PENDENTE..."
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-pendencias">Pendências / Observações</Label>
+              <Textarea
+                id="edit-pendencias"
+                value={editFormData.pendencias || ""}
+                onChange={(e) => setEditFormData({...editFormData, pendencias: e.target.value})}
+                placeholder="Descreva as pendências ou observações relevantes..."
+                className="min-h-[80px]"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700 font-bold"
+              onClick={handleUpdate}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "SALVAR ALTERAÇÕES"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ─── Stats ─── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -966,8 +1203,8 @@ export default function StockProposals() {
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PRODUTOR / CPF</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROJETISTA</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">LOCALIDADE</th>
-                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROJETO</th>
-                      <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider">RESTRIÇÃO / SERASA</th>
+                      <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROGRAMA DE CRÉDITO</th>
+                      <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider">RESTRIÇÃO</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">STATUS</th>
                       <th className="text-center p-3 font-bold text-slate-600 text-xs tracking-wider">AÇÕES</th>
                     </tr>
@@ -1008,7 +1245,7 @@ export default function StockProposals() {
                               <span className="text-xs text-slate-600 line-clamp-1" title={p.municipio || ''}>{p.municipio}</span>
                             </div>
                             <div className="flex items-start gap-2">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Localiza.</span>
+                              <span className="text-[9px] text-slate-400 font-bold uppercase min-w-[55px] mt-0.5 tracking-wider">Localização</span>
                               <span className="text-xs text-slate-500 line-clamp-1" title={p.localizacao || ''}>{p.localizacao}</span>
                             </div>
                           </div>
@@ -1016,21 +1253,21 @@ export default function StockProposals() {
                         <td className="p-3 align-top min-w-[140px]">
                           <div className="flex flex-col gap-2">
                             <div>
-                               <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Valor</span>
+                               <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Valor R$</span>
                                <span className="font-bold text-emerald-700 tabular-nums text-sm bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 shadow-sm inline-block min-h-[26px]">
                                  {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : ''}
                                </span>
                             </div>
                             <div>
-                               <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Linha</span>
-                               <span className="text-xs text-slate-600 font-medium min-h-[16px] block">{p.linha_credito}</span>
+                               <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Programa</span>
+                               <span className="text-xs text-slate-600 font-medium min-h-[16px] block">{p.credit_program}</span>
                             </div>
                           </div>
                         </td>
                         <td className="p-3 align-top min-w-[150px]">
                           <div className="flex flex-col gap-2.5">
                             <div className="flex items-center justify-between gap-3 min-h-[20px]">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Serasa</span>
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Restrição</span>
                               {restriction ? (
                                 <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 gap-1 rounded-full text-[10px] uppercase shadow-sm px-2">
                                   <XCircle className="h-3 w-3" /> SIM
@@ -1043,16 +1280,16 @@ export default function StockProposals() {
                               )}
                             </div>
                             <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-2 min-h-[28px]">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Renovação</span>
-                              <span className="text-[10px] font-semibold bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 border border-slate-200 shadow-sm truncate max-w-[80px]" title={`${p.cliente_renovacao || ''} ${p.ano_contrato || ''}`.trim()}>
-                                {p.cliente_renovacao || ''} {p.ano_contrato || ''}
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Programa de Crédito</span>
+                              <span className="text-[10px] font-semibold bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 border border-slate-200 shadow-sm truncate max-w-[120px]" title={`${p.credit_program || ''} ${p.ano_contrato || ''}`.trim()}>
+                                {p.credit_program || ''} {p.ano_contrato || ''}
                               </span>
                             </div>
                           </div>
                         </td>
                         <td className="p-3 align-top">
                           <div className="flex flex-col gap-1">
-                            <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Situação</span>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Status</span>
                             <Badge variant="outline" className={`text-[10px] font-bold ${getStatusStyle(p.status)} border w-fit`}>
                               {p.status}
                             </Badge>
@@ -1060,6 +1297,14 @@ export default function StockProposals() {
                         </td>
                         <td className="p-3 text-center align-top min-w-[100px]">
                           <div className="flex items-center justify-center gap-2">
+                             <Button
+                               variant="outline" size="icon"
+                               className="h-8 w-8 text-indigo-600 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 hover:text-indigo-700 transition-colors shadow-sm"
+                               title="Editar Proposta"
+                               onClick={() => openEditDialog(p)}
+                             >
+                               <Edit2 className="h-3.5 w-3.5" />
+                             </Button>
                              {!(p.status || '').toUpperCase().includes("AUTORIZADO") ? (
                                <Button
                                  variant="outline" size="icon"
@@ -1157,13 +1402,13 @@ export default function StockProposals() {
                         )}
                         {p.linha_credito && (
                           <div className="flex justify-between text-xs">
-                            <span className="text-slate-500">Linha</span>
+                            <span className="text-slate-500">Programa de Crédito</span>
                             <span className="text-slate-700">{p.linha_credito}</span>
                           </div>
                         )}
                         {p.serasa && (
                           <div className="flex justify-between items-center text-xs">
-                            <span className="text-slate-500">Serasa</span>
+                            <span className="text-slate-500">Restrição</span>
                             {restriction ? (
                                <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 gap-1 rounded-full text-[10px] uppercase shadow-sm">
                                  <XCircle className="h-3 w-3" /> SIM
@@ -1184,8 +1429,8 @@ export default function StockProposals() {
                           <span className="text-indigo-600 font-bold uppercase">{p.projetista || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-slate-500">Renovação</span>
-                          <span className="text-slate-700">{p.cliente_renovacao || ''} {p.ano_contrato ? `(${p.ano_contrato})` : ''}</span>
+                          <span className="text-slate-500">Programa de Crédito</span>
+                          <span className="text-slate-700">{p.credit_program || ''} {p.ano_contrato ? `(${p.ano_contrato})` : ''}</span>
                         </div>
                         {p.agencia_cadastro && (
                           <div className="flex justify-between text-xs">
@@ -1197,6 +1442,14 @@ export default function StockProposals() {
                           <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg mt-1">{p.notes}</div>
                         )}
                         <div className="pt-2 flex flex-col gap-2">
+                          <Button
+                            variant="outline" size="sm"
+                            className="w-full h-10 bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 font-bold text-xs"
+                            onClick={() => openEditDialog(p)}
+                          >
+                            <Edit2 className="mr-2 h-4 w-4" />
+                            EDITAR DADOS DA PROPOSTA
+                          </Button>
                           {!(p.status || '').toUpperCase().includes("AUTORIZADO") ? (
                             <Button
                               variant="outline" size="sm"
