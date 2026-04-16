@@ -104,7 +104,9 @@ const STATUS_OPTIONS = [
   "AUTORIZADO ENVIO CENTRAL",
   "ENVIADO CENTRAL",
   "PENDÊNCIA CENTRAL",
-  "CONTRATADO"
+  "CONTRATADO",
+  "RESTRIÇÃO",
+  "AGUARDANDO ENTREVISTA"
 ];
 
 function cleanCSV(str: string | undefined): string | null {
@@ -147,10 +149,18 @@ function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null
   const agenciaCadastro = cleanCSV(getField(row, ["AGÊNCIA CADASTRO", "AGENCIA CADASTRO"])) || 
                            (agencia && cadastro ? `${agencia} ${cadastro}` : (agencia || cadastro || ""));
 
+  const rawSerasa = cleanCSV(getField(row, ["RESTRIÇÃO", "RESTRICAO", "SERASA"]));
+  
+  // Normalização manual rápida para decidir o status inicial
+  let derivedStatus = cleanCSV(getField(row, ["STATUS", "original_csv_status"]));
+  const normSerasa = rawSerasa ? rawSerasa.trim().toUpperCase() : "";
+  if (normSerasa === "SIM") derivedStatus = "RESTRIÇÃO";
+  else if (normSerasa === "NAO" || normSerasa === "NÃO" || (!normSerasa && !derivedStatus)) derivedStatus = "AGUARDANDO ENTREVISTA";
+
   return {
     producer_name: name,
     pendencias: cleanCSV(getField(row, ["PENDÊNCIAS", "PENDENCIAS", "OBS"])),
-    serasa: cleanCSV(getField(row, ["RESTRIÇÃO", "RESTRICAO", "SERASA"])),
+    serasa: rawSerasa,
     cliente_renovacao: renovacaoVal,
     ano_contrato: cleanCSV(getField(row, ["ANO DO CONTRATO", "ANO CONTRATO"])),
     producer_cpf: cleanCSV(getField(row, ["CPF", "producer_cpf"])),
@@ -160,7 +170,7 @@ function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null
     linha_credito: automatedLinha,
     credit_program: cleanCSV(getField(row, ["PROGRAMA DE CRÉDITO", "PROGRAMA CREDITO", "LINHA DE CRÉDITO"])) || automatedLinha,
     localizacao: cleanCSV(getField(row, ["LOCALIZAÇÃO", "LOCALIZACAO"])),
-    status: cleanCSV(getField(row, ["STATUS", "original_csv_status"])),
+    status: derivedStatus || "AGUARDANDO ENTREVISTA",
     original_csv_status: cleanCSV(getField(row, ["STATUS", "original_csv_status"])),
     notes: cleanCSV(getField(row, ["notes", "Observações", "Observaes"])),
     observacoes_extra: cleanCSV(getField(row, ["notes", "Observações", "Observaes"])),
@@ -408,6 +418,12 @@ export default function StockProposals() {
   };
 
   const openEditDialog = (proposal: StockProposal) => {
+    // Forçar o status correto baseado na restrição ao abrir
+    let forcedStatus = proposal.status;
+    const normSerasa = (proposal.serasa || "").trim().toUpperCase();
+    if (normSerasa === "SIM") forcedStatus = "RESTRIÇÃO";
+    else if (normSerasa === "NAO" || normSerasa === "NÃO") forcedStatus = "AGUARDANDO ENTREVISTA";
+
     setEditingProposal(proposal);
     setEditFormData({
       producer_name: proposal.producer_name,
@@ -417,7 +433,7 @@ export default function StockProposals() {
       municipio: proposal.municipio,
       localizacao: proposal.localizacao,
       linha_credito: proposal.linha_credito,
-      status: proposal.status,
+      status: forcedStatus,
       pendencias: proposal.pendencias,
       serasa: proposal.serasa,
       notes: proposal.notes,
@@ -446,6 +462,8 @@ export default function StockProposals() {
     if (s.includes('enviado')) return "bg-indigo-100 text-indigo-700 border-indigo-200";
     if (s.includes('pendência')) return "bg-amber-100 text-amber-700 border-amber-200";
     if (s.includes('contratado')) return "bg-purple-100 text-purple-700 border-purple-200";
+    if (s === 'restrição') return "bg-red-100 text-red-700 border-red-200 shadow-sm";
+    if (s === 'aguardando entrevista') return "bg-cyan-100 text-cyan-700 border-cyan-200 shadow-sm";
     return "bg-slate-100 text-slate-700 border-slate-200";
   };
 
@@ -862,40 +880,85 @@ export default function StockProposals() {
                 Nova Proposta
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[480px]">
-              <DialogHeader>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2 text-indigo-900">
-                  <Box className="h-5 w-5" />
-                  Nova Proposta no Estoque
-                </DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Produtor *</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input id="name" className="pl-9" placeholder="Ex: João da Silva"
-                      value={formData.producer_name}
-                      onChange={(e) => setFormData({...formData, producer_name: e.target.value})}
-                    />
+            <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto p-0">
+              <div className="p-4">
+                <DialogHeader className="mb-4">
+                  <DialogTitle className="text-xl font-bold flex items-center gap-2 text-indigo-900">
+                    <Box className="h-5 w-5" />
+                    Nova Proposta no Estoque
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="name" className="text-[10px] font-bold uppercase text-slate-500">Nome do Produtor *</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input id="name" className="pl-9 h-9 text-sm" placeholder="Ex: João da Silva"
+                        value={formData.producer_name}
+                        onChange={(e) => setFormData(prev => ({...prev, producer_name: e.target.value}))}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="cpf">CPF</Label>
-                    <Input id="cpf" placeholder="000.000.000-00"
+                  <div className="space-y-1">
+                    <Label htmlFor="cpf" className="text-[10px] font-bold uppercase text-slate-500">CPF</Label>
+                    <Input id="cpf" className="h-9 text-sm" placeholder="000.000.000-00"
                       value={formData.producer_cpf || ""}
-                      onChange={(e) => setFormData({...formData, producer_cpf: e.target.value})}
+                      onChange={(e) => setFormData(prev => ({...prev, producer_cpf: e.target.value}))}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="prog">Programa de Crédito</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="municipio" className="text-[10px] font-bold uppercase text-slate-500">Município</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input id="municipio" className="pl-9 h-9 text-sm" placeholder="Nome do município"
+                        value={formData.municipio || ""}
+                        onChange={(e) => setFormData(prev => ({...prev, municipio: e.target.value}))}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="localizacao" className="text-[10px] font-bold uppercase text-slate-500">Localização</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input id="localizacao" className="pl-9 h-9 text-sm" placeholder="Quadra, PA, Vila..."
+                        value={formData.localizacao || ""}
+                        onChange={(e) => setFormData(prev => ({...prev, localizacao: e.target.value}))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="projetista" className="text-[10px] font-bold uppercase text-slate-500">Projetista Responsável</Label>
+                    <Select
+                      value={formData.projetista || ""}
+                      onValueChange={(val) => setFormData(prev => ({...prev, projetista: val}))}
+                    >
+                      <SelectTrigger id="projetista" className="h-9 text-sm w-full">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PROJETISTAS.map(p => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="value" className="text-[10px] font-bold uppercase text-slate-500">Valor R$</Label>
+                    <Input id="value" type="number" className="h-9 text-sm" placeholder="0,00"
+                      value={formData.estimated_value || ""}
+                      onChange={(e) => setFormData(prev => ({...prev, estimated_value: parseFloat(e.target.value) || 0}))}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="prog" className="text-[10px] font-bold uppercase text-slate-500">Programa de Crédito</Label>
                     <Select
                       value={formData.credit_program || ""}
-                      onValueChange={(val) => setFormData({...formData, credit_program: val})}
+                      onValueChange={(val) => setFormData(prev => ({...prev, credit_program: val}))}
                     >
-                      <SelectTrigger id="prog">
-                        <SelectValue placeholder="Selecione o programa..." />
+                      <SelectTrigger id="prog" className="h-9 text-sm">
+                        <SelectValue placeholder="Programa..." />
                       </SelectTrigger>
                       <SelectContent>
                         {PROGRAMAS_CREDITO.map(p => (
@@ -904,23 +967,33 @@ export default function StockProposals() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="value">Valor R$</Label>
-                    <Input id="value" type="number" placeholder="0,00"
-                      value={formData.estimated_value || ""}
-                      onChange={(e) => setFormData({...formData, estimated_value: parseFloat(e.target.value) || 0})}
-                    />
+                  <div className="space-y-1">
+                    <Label htmlFor="serasa" className="text-[10px] font-bold uppercase text-slate-500">Restrição (SERASA)</Label>
+                    <Select 
+                      value={formData.serasa || "NAO"} 
+                      onValueChange={(val) => {
+                        const newStatus = val === "SIM" ? "RESTRIÇÃO" : "AGUARDANDO ENTREVISTA";
+                        setFormData(prev => ({...prev, serasa: val, status: newStatus}));
+                      }}
+                    >
+                      <SelectTrigger id="serasa" className="h-9 text-sm">
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SIM">SIM</SelectItem>
+                        <SelectItem value="NAO">NÃO</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-status">Status Inicial</Label>
+
+                  <div className="space-y-1 md:col-span-2">
+                    <Label htmlFor="new-status" className="text-[10px] font-bold uppercase text-slate-500">Status Inicial</Label>
                     <Select
                       value={formData.status || ""}
-                      onValueChange={(val) => setFormData({...formData, status: val})}
+                      onValueChange={(val) => setFormData(prev => ({...prev, status: val}))}
                     >
-                      <SelectTrigger id="new-status">
-                        <SelectValue placeholder="Selecione o status..." />
+                      <SelectTrigger id="new-status" className="h-9 text-sm">
+                        <SelectValue placeholder="Status..." />
                       </SelectTrigger>
                       <SelectContent>
                         {STATUS_OPTIONS.map(s => (
@@ -929,197 +1002,207 @@ export default function StockProposals() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="municipio">Município</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input id="municipio" className="pl-9" placeholder="Nome do município"
-                        value={formData.municipio || ""}
-                        onChange={(e) => setFormData({...formData, municipio: e.target.value})}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="localizacao">Localização</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input id="localizacao" className="pl-9" placeholder="Quadra, PA, Vila..."
-                      value={formData.localizacao || ""}
-                      onChange={(e) => setFormData({...formData, localizacao: e.target.value})}
+
+                  <div className="space-y-1 md:col-span-2">
+                    <Label htmlFor="notes" className="text-[10px] font-bold uppercase text-slate-500">Observações</Label>
+                    <textarea id="notes"
+                      rows={2}
+                      className="flex min-h-[40px] max-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-1.5 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder="Anotações..."
+                      value={formData.notes || ""}
+                      onChange={(e) => setFormData(prev => ({...prev, notes: e.target.value}))}
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="projetista">Projetista Responsável</Label>
-                  <Select
-                    value={formData.projetista || ""}
-                    onValueChange={(val) => setFormData({...formData, projetista: val})}
-                  >
-                    <SelectTrigger id="projetista" className="w-full">
-                      <SelectValue placeholder="Selecione um projetista..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PROJETISTAS.map(p => (
-                        <SelectItem key={p} value={p}>{p}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Observações</Label>
-                  <textarea id="notes"
-                    className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    placeholder="Anotações..."
-                    value={formData.notes || ""}
-                    onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                  />
-                </div>
+
+                <DialogFooter className="mt-6 flex items-center justify-end gap-3 border-t pt-4">
+                  <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                  <Button onClick={handleCreate} disabled={!formData.producer_name || isSubmitting} className="bg-indigo-600 hover:bg-indigo-700 font-bold px-6">
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Salvar Proposta
+                  </Button>
+                </DialogFooter>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                <Button onClick={handleCreate} disabled={!formData.producer_name || isSubmitting} className="bg-indigo-600 hover:bg-indigo-700">
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Salvar
-                </Button>
-              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Edit2 className="h-5 w-5 text-indigo-600" />
-              Editar Proposta no Estoque
-            </DialogTitle>
-            <DialogDescription>
-              Atualize as informações desta proposta. As alterações serão salvas imediatamente no banco de dados.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent 
+          className="max-w-6xl max-h-[95vh] overflow-y-auto p-0"
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
+          <div className="p-4">
+            <DialogHeader className="mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle className="flex items-center gap-2 text-xl font-black text-slate-800">
+                    <Edit2 className="h-5 w-5 text-indigo-600" />
+                    Editar Proposta no Estoque
+                  </DialogTitle>
+                  <DialogDescription className="text-xs mt-1">
+                    Atualize as informações. As alterações não serão perdidas se você mudar de aba.
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Produtor</Label>
-              <Input
-                id="edit-name"
-                value={editFormData.producer_name || ""}
-                onChange={(e) => setEditFormData({...editFormData, producer_name: e.target.value})}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-2">
+              <div className="space-y-1">
+                <Label htmlFor="edit-name" className="text-[10px] font-bold uppercase text-slate-500">Produtor</Label>
+                <Input
+                  id="edit-name"
+                  className="h-9 text-sm"
+                  value={editFormData.producer_name || ""}
+                  onChange={(e) => setEditFormData(prev => ({...prev, producer_name: e.target.value}))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-cpf" className="text-[10px] font-bold uppercase text-slate-500">CPF</Label>
+                <Input
+                  id="edit-cpf"
+                  className="h-9 text-sm"
+                  value={editFormData.producer_cpf || ""}
+                  onChange={(e) => setEditFormData(prev => ({...prev, producer_cpf: e.target.value}))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-municipio" className="text-[10px] font-bold uppercase text-slate-500">Município</Label>
+                <Input
+                  id="edit-municipio"
+                  className="h-9 text-sm"
+                  value={editFormData.municipio || ""}
+                  onChange={(e) => setEditFormData(prev => ({...prev, municipio: e.target.value}))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-localizacao" className="text-[10px] font-bold uppercase text-slate-500">Localização</Label>
+                <Input
+                  id="edit-localizacao"
+                  className="h-9 text-sm"
+                  value={editFormData.localizacao || ""}
+                  onChange={(e) => setEditFormData(prev => ({...prev, localizacao: e.target.value}))}
+                  placeholder="Localidade..."
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="edit-projetista" className="text-[10px] font-bold uppercase text-slate-500">Projetista</Label>
+                <Select
+                  value={editFormData.projetista || ""}
+                  onValueChange={(val) => setEditFormData(prev => ({...prev, projetista: val}))}
+                >
+                  <SelectTrigger id="edit-projetista" className="h-9 text-sm">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROJETISTAS.map(p => (
+                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-valor" className="text-[10px] font-bold uppercase text-slate-500">Valor Estimado (R$)</Label>
+                <Input
+                  id="edit-valor"
+                  type="number"
+                  className="h-9 text-sm"
+                  value={editFormData.estimated_value || 0}
+                  onChange={(e) => setEditFormData(prev => ({...prev, estimated_value: Number(e.target.value)}))}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-prog" className="text-[10px] font-bold uppercase text-slate-500">Programa de Crédito</Label>
+                <Select
+                  value={editFormData.credit_program || ""}
+                  onValueChange={(val) => setEditFormData(prev => ({...prev, credit_program: val}))}
+                >
+                  <SelectTrigger id="edit-prog" className="h-9 text-sm">
+                    <SelectValue placeholder="Programa..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PROGRAMAS_CREDITO.map(p => (
+                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                    ))}
+                    <SelectItem value="OUTRO">OUTRO...</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-serasa" className="text-[10px] font-bold uppercase text-slate-500">Restrição (SIM/NAO)</Label>
+                <Select
+                  value={editFormData.serasa || "NAO"}
+                  onValueChange={(val) => {
+                    const newStatus = val === "SIM" ? "RESTRIÇÃO" : "AGUARDANDO ENTREVISTA";
+                    setEditFormData(prev => ({...prev, serasa: val, status: newStatus}));
+                  }}
+                >
+                  <SelectTrigger id="edit-serasa" className="h-9 text-sm">
+                    <SelectValue placeholder="Sele..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SIM">SIM</SelectItem>
+                    <SelectItem value="NAO">NÃO</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1 md:col-span-2">
+                <Label htmlFor="edit-status" className="text-[10px] font-bold uppercase text-slate-500">Status Atual</Label>
+                <Select
+                  value={editFormData.status || ""}
+                  onValueChange={(val) => setEditFormData(prev => ({...prev, status: val}))}
+                >
+                  <SelectTrigger id="edit-status" className="h-9 text-sm">
+                    <SelectValue placeholder="Status..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map(s => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1 md:col-span-2">
+                <Label htmlFor="edit-pendencias" className="text-[10px] font-bold uppercase text-slate-500">Pendências / Observações</Label>
+                <textarea
+                  id="edit-pendencias"
+                  rows={2}
+                  value={editFormData.pendencias || ""}
+                  onChange={(e) => setEditFormData(prev => ({...prev, pendencias: e.target.value}))}
+                  placeholder="Descreva as pendências relevantes..."
+                  className="flex min-h-[40px] max-h-[80px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-cpf">CPF</Label>
-              <Input
-                id="edit-cpf"
-                value={editFormData.producer_cpf || ""}
-                onChange={(e) => setEditFormData({...editFormData, producer_cpf: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-municipio">Município</Label>
-              <Input
-                id="edit-municipio"
-                value={editFormData.municipio || ""}
-                onChange={(e) => setEditFormData({...editFormData, municipio: e.target.value})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-localizacao">Localização</Label>
-              <Input
-                id="edit-localizacao"
-                value={editFormData.localizacao || ""}
-                onChange={(e) => setEditFormData({...editFormData, localizacao: e.target.value})}
-                placeholder="Ex: Assentamento X, Gleba Y"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-valor">Valor Estimado (R$)</Label>
-              <Input
-                id="edit-valor"
-                type="number"
-                value={editFormData.estimated_value || 0}
-                onChange={(e) => setEditFormData({...editFormData, estimated_value: Number(e.target.value)})}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-prog">Programa de Crédito</Label>
-              <Select
-                value={editFormData.credit_program || ""}
-                onValueChange={(val) => setEditFormData({...editFormData, credit_program: val})}
+
+            <DialogFooter className="mt-6 flex items-center justify-end gap-3 border-t pt-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setIsEditDialogOpen(false)}
+                className="text-slate-500 hover:text-slate-700 font-semibold"
               >
-                <SelectTrigger id="edit-prog">
-                  <SelectValue placeholder="Selecione o programa..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROGRAMAS_CREDITO.map(p => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
-                  <SelectItem value="OUTRO">OUTRO...</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-serasa">Restrição (SIM/NAO)</Label>
-              <Select
-                value={editFormData.serasa || "NAO"}
-                onValueChange={(val) => setEditFormData({...editFormData, serasa: val})}
+                DESCARTAR
+              </Button>
+              <Button
+                className="bg-indigo-600 hover:bg-indigo-700 font-black px-8 shadow-indigo-200 shadow-lg transition-all active:scale-95"
+                onClick={handleUpdate}
+                disabled={isUpdating}
               >
-                <SelectTrigger id="edit-serasa">
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SIM">SIM</SelectItem>
-                  <SelectItem value="NAO">NÃO</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-status">Status Atual</Label>
-              <Select
-                value={editFormData.status || ""}
-                onValueChange={(val) => setEditFormData({...editFormData, status: val})}
-              >
-                <SelectTrigger id="edit-status">
-                  <SelectValue placeholder="Selecione o status..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map(s => (
-                    <SelectItem key={s} value={s}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="edit-pendencias">Pendências / Observações</Label>
-              <textarea
-                id="edit-pendencias"
-                value={editFormData.pendencias || ""}
-                onChange={(e) => setEditFormData({...editFormData, pendencias: e.target.value})}
-                placeholder="Descreva as pendências ou observações relevantes..."
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-            </div>
+                {isUpdating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    SALVANDO...
+                  </>
+                ) : (
+                  "SALVAR ALTERAÇÕES"
+                )}
+              </Button>
+            </DialogFooter>
           </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancelar</Button>
-            <Button
-              className="bg-indigo-600 hover:bg-indigo-700 font-bold"
-              onClick={handleUpdate}
-              disabled={isUpdating}
-            >
-              {isUpdating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                "SALVAR ALTERAÇÕES"
-              )}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
