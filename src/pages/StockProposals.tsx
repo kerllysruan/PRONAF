@@ -224,47 +224,46 @@ export default function StockProposals() {
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
   // ── Persistence Hooks ─────────────────────────────
-  // 1. Auto-Save New Proposal
+  // 1. Auto-Save New Proposal & Dialog State
   useEffect(() => {
-    if (formData.producer_name || formData.producer_cpf || formData.notes) {
+    if (isDialogOpen && (formData.producer_name || formData.producer_cpf || formData.notes)) {
       localStorage.setItem('stock_proposal_new_draft', JSON.stringify(formData));
     }
-  }, [formData]);
+    localStorage.setItem('stock_proposal_new_open', JSON.stringify(isDialogOpen));
+  }, [formData, isDialogOpen]);
 
-  // 2. Auto-Save Edit Proposal
+  // 2. Auto-Save Edit Proposal & Dialog State
   useEffect(() => {
     if (isEditDialogOpen && editingProposal) {
       localStorage.setItem('stock_proposal_edit_draft', JSON.stringify({ 
         editingProposal, 
         editFormData 
       }));
-    } else if (!isEditDialogOpen) {
-      // Don't remove here, remove only on success or manual cancel to be safe
     }
+    localStorage.setItem('stock_proposal_edit_open', JSON.stringify(isEditDialogOpen));
   }, [editFormData, isEditDialogOpen, editingProposal]);
 
   // 3. Auto-Restore on Mount
   useEffect(() => {
     const newDraft = localStorage.getItem('stock_proposal_new_draft');
+    const newOpen = localStorage.getItem('stock_proposal_new_open') === 'true';
     if (newDraft) {
       try {
         const parsed = JSON.parse(newDraft);
         setFormData(prev => ({ ...prev, ...parsed }));
-        // Se houver rascunho, reabrimos o diálogo automaticamente
-        if (parsed.producer_name || parsed.producer_cpf) {
-          setIsDialogOpen(true); 
-        }
+        if (newOpen) setIsDialogOpen(true); 
       } catch (e) { console.error("Erro ao restaurar rascunho novo", e); }
     }
 
     const editDraft = localStorage.getItem('stock_proposal_edit_draft');
+    const editOpen = localStorage.getItem('stock_proposal_edit_open') === 'true';
     if (editDraft) {
       try {
         const { editingProposal: savedProp, editFormData: savedData } = JSON.parse(editDraft);
         if (savedProp && savedData) {
           setEditingProposal(savedProp);
           setEditFormData(savedData);
-          setIsEditDialogOpen(true);
+          if (editOpen) setIsEditDialogOpen(true);
         }
       } catch (e) { console.error("Erro ao restaurar rascunho edição", e); }
     }
@@ -829,7 +828,17 @@ export default function StockProposals() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsReportDialogOpen(false)}>Cancelar</Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                     localStorage.removeItem('stock_proposal_edit_draft');
+                     localStorage.removeItem('stock_proposal_edit_open');
+                     setIsEditDialogOpen(false);
+                     setEditingProposal(null);
+                  }}
+                >
+                  CANCELAR
+                </Button>
                 <Button onClick={() => generatePremiumReport(reportFilters)} className="bg-indigo-600 hover:bg-indigo-700">
                   <Download className="mr-2 h-4 w-4" />
                   Gerar PDF agora
@@ -920,7 +929,14 @@ export default function StockProposals() {
           </Dialog>
 
           {/* Manual Add */}
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              localStorage.removeItem('stock_proposal_new_draft');
+              localStorage.removeItem('stock_proposal_new_open');
+              setFormData({ producer_name: "", producer_cpf: "", credit_program: "", estimated_value: 0, municipio: "", localizacao: "", linha_credito: "", notes: "", projetista: "", serasa: "NAO", pendencias: "" });
+            }
+          }}>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold tracking-wide shadow-lg shadow-indigo-200 h-12 md:h-10">
                 <Plus className="mr-2 h-5 w-5 md:h-4 md:w-4" />
@@ -1063,7 +1079,17 @@ export default function StockProposals() {
                 </div>
 
                 <DialogFooter className="mt-6 flex items-center justify-end gap-3 border-t pt-4">
-                  <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      localStorage.removeItem('stock_proposal_new_draft');
+                      localStorage.removeItem('stock_proposal_new_open');
+                      setIsDialogOpen(false);
+                      setFormData({ producer_name: "", producer_cpf: "", credit_program: "", estimated_value: 0, municipio: "", localizacao: "", linha_credito: "", notes: "", projetista: "", serasa: "NAO", pendencias: "" });
+                    }}
+                  >
+                    Cancelar
+                  </Button>
                   <Button onClick={handleCreate} disabled={!formData.producer_name || isSubmitting} className="bg-indigo-600 hover:bg-indigo-700 font-bold px-6">
                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Salvar Proposta
@@ -1075,7 +1101,14 @@ export default function StockProposals() {
         </div>
       </div>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          localStorage.removeItem('stock_proposal_edit_draft');
+          localStorage.removeItem('stock_proposal_edit_open');
+          setEditingProposal(null);
+        }
+      }}>
         <DialogContent 
           className="max-w-6xl max-h-[95vh] overflow-y-auto p-0"
           onPointerDownOutside={(e) => e.preventDefault()}
