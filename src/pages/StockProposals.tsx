@@ -223,6 +223,51 @@ export default function StockProposals() {
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 
+  // ── Persistence Hooks ─────────────────────────────
+  // 1. Auto-Save New Proposal
+  useEffect(() => {
+    if (formData.producer_name || formData.producer_cpf || formData.notes) {
+      localStorage.setItem('stock_proposal_new_draft', JSON.stringify(formData));
+    }
+  }, [formData]);
+
+  // 2. Auto-Save Edit Proposal
+  useEffect(() => {
+    if (isEditDialogOpen && editingProposal) {
+      localStorage.setItem('stock_proposal_edit_draft', JSON.stringify({ 
+        editingProposal, 
+        editFormData 
+      }));
+    } else if (!isEditDialogOpen) {
+      // Don't remove here, remove only on success or manual cancel to be safe
+    }
+  }, [editFormData, isEditDialogOpen, editingProposal]);
+
+  // 3. Auto-Restore on Mount
+  useEffect(() => {
+    const newDraft = localStorage.getItem('stock_proposal_new_draft');
+    if (newDraft) {
+      try {
+        const parsed = JSON.parse(newDraft);
+        setFormData(prev => ({ ...prev, ...parsed }));
+        // Se o rascunho for significativo, podemos abrir o diálogo (opcional)
+        // setIsDialogOpen(true); 
+      } catch (e) { console.error("Erro ao restaurar rascunho novo", e); }
+    }
+
+    const editDraft = localStorage.getItem('stock_proposal_edit_draft');
+    if (editDraft) {
+      try {
+        const { editingProposal: savedProp, editFormData: savedData } = JSON.parse(editDraft);
+        if (savedProp && savedData) {
+          setEditingProposal(savedProp);
+          setEditFormData(savedData);
+          setIsEditDialogOpen(true);
+        }
+      } catch (e) { console.error("Erro ao restaurar rascunho edição", e); }
+    }
+  }, []);
+
   // ── Derived data ─────────────────────────────────
   const municipios = useMemo(() => {
     const set = new Set(proposals.map(p => p.municipio).filter(Boolean) as string[]);
@@ -410,6 +455,7 @@ export default function StockProposals() {
     };
     const res = await addProposal(newProposal);
     if (res) {
+      localStorage.removeItem('stock_proposal_new_draft');
       setIsDialogOpen(false);
       setFormData({ producer_name: "", producer_cpf: "", credit_program: "", estimated_value: 0, municipio: "", localizacao: "", linha_credito: "", notes: "", projetista: "", serasa: "NAO", pendencias: "" });
     }
@@ -446,6 +492,7 @@ export default function StockProposals() {
     setIsUpdating(true);
     const success = await updateProposal(editingProposal.id, editFormData);
     if (success) {
+      localStorage.removeItem('stock_proposal_edit_draft');
       setIsEditDialogOpen(false);
       setEditingProposal(null);
       toast({ title: "Proposta atualizada", description: "As alterações foram salvas com sucesso." });
