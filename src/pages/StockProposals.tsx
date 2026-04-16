@@ -100,7 +100,6 @@ const PROGRAMAS_CREDITO = [
 ];
 
 const STATUS_OPTIONS = [
-  "PRONTO, PLANILHA NOVA",
   "AUTORIZADO ENVIO CENTRAL",
   "ENVIADO CENTRAL",
   "PENDÊNCIA CENTRAL",
@@ -457,7 +456,6 @@ export default function StockProposals() {
   // ── Status helpers ──────────────────────────
   const getStatusStyle = (status: string) => {
     const s = (status || '').toLowerCase().trim();
-    if (s.includes('pronto') || s.includes('nova')) return "bg-emerald-100 text-emerald-700 border-emerald-200";
     if (s.includes('autorizado')) return "bg-blue-100 text-blue-700 border-blue-200";
     if (s.includes('enviado')) return "bg-indigo-100 text-indigo-700 border-indigo-200";
     if (s.includes('pendência')) return "bg-amber-100 text-amber-700 border-amber-200";
