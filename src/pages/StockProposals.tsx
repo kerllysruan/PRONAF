@@ -101,11 +101,13 @@ const PROGRAMAS_CREDITO = [
 
 const STATUS_OPTIONS = [
   "AUTORIZADO ENVIO CENTRAL",
-  "ENVIADO CENTRAL",
+  "CENTRAL",
   "PENDÊNCIA CENTRAL",
   "CONTRATADO",
   "RESTRIÇÃO",
-  "AGUARDANDO ENTREVISTA"
+  "AGUARDANDO ENTREVISTA",
+  "PRONTO, PLANILHA VELHA",
+  "FALTA ASSINAR"
 ];
 
 function cleanCSV(str: string | undefined): string | null {
@@ -505,7 +507,7 @@ export default function StockProposals() {
   const getStatusStyle = (status: string) => {
     const s = (status || '').toLowerCase().trim();
     if (s.includes('autorizado')) return "bg-blue-100 text-blue-700 border-blue-200";
-    if (s.includes('enviado')) return "bg-indigo-100 text-indigo-700 border-indigo-200";
+    if (s === 'central') return "bg-indigo-100 text-indigo-700 border-indigo-200";
     if (s.includes('pendência')) return "bg-amber-100 text-amber-700 border-amber-200";
     if (s.includes('contratado')) return "bg-purple-100 text-purple-700 border-purple-200";
     if (s === 'restrição') return "bg-red-100 text-red-700 border-red-200 shadow-sm";
@@ -693,7 +695,7 @@ export default function StockProposals() {
     const statusColors: Record<string, [number, number, number]> = {
       "AGUARDANDO ENTREVISTA": [6, 182, 212],   // Cyan
       "AUTORIZADO ENVIO CENTRAL": [59, 130, 246], // Blue
-      "ENVIADO CENTRAL": [99, 102, 241],          // Indigo
+      "CENTRAL": [99, 102, 241],                    // Indigo
       "PENDÊNCIA CENTRAL": [245, 158, 11],        // Amber
       "CONTRATADO": [139, 92, 246],               // Violet
       "RESTRIÇÃO": [239, 68, 68],                 // Red
