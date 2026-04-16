@@ -181,11 +181,21 @@ function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null
 export default function StockProposals() {
   const { proposals, loading, addProposal, addProposalsBulk, updateProposal, deleteProposal, deleteAllProposals, refreshProposals } = useStockProposals();
   const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(() => {
+    return localStorage.getItem('stock_proposal_new_open') === 'true';
+  });
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editingProposal, setEditingProposal] = useState<StockProposal | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(() => {
+    return localStorage.getItem('stock_proposal_edit_open') === 'true';
+  });
+  const [editingProposal, setEditingProposal] = useState<StockProposal | null>(() => {
+    const editDraft = localStorage.getItem('stock_proposal_edit_draft');
+    if (editDraft) {
+      try { return JSON.parse(editDraft).editingProposal; } catch { return null; }
+    }
+    return null;
+  });
 
   const [reportFilters, setReportFilters] = useState({
     municipio: "all",
@@ -204,7 +214,7 @@ export default function StockProposals() {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<Partial<StockProposal>>({
+  const DEFAULT_FORM_DATA = {
     producer_name: "",
     producer_cpf: "",
     credit_program: "",
@@ -216,9 +226,23 @@ export default function StockProposals() {
     projetista: "",
     serasa: "NAO",
     pendencias: ""
+  };
+
+  const [formData, setFormData] = useState<Partial<StockProposal>>(() => {
+    const newDraft = localStorage.getItem('stock_proposal_new_draft');
+    if (newDraft) {
+      try { return { ...DEFAULT_FORM_DATA, ...JSON.parse(newDraft) }; } catch { return DEFAULT_FORM_DATA; }
+    }
+    return DEFAULT_FORM_DATA;
   });
 
-  const [editFormData, setEditFormData] = useState<Partial<StockProposal>>({});
+  const [editFormData, setEditFormData] = useState<Partial<StockProposal>>(() => {
+    const editDraft = localStorage.getItem('stock_proposal_edit_draft');
+    if (editDraft) {
+      try { return JSON.parse(editDraft).editFormData; } catch { return {}; }
+    }
+    return {};
+  });
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -243,31 +267,7 @@ export default function StockProposals() {
     localStorage.setItem('stock_proposal_edit_open', JSON.stringify(isEditDialogOpen));
   }, [editFormData, isEditDialogOpen, editingProposal]);
 
-  // 3. Auto-Restore on Mount
-  useEffect(() => {
-    const newDraft = localStorage.getItem('stock_proposal_new_draft');
-    const newOpen = localStorage.getItem('stock_proposal_new_open') === 'true';
-    if (newDraft) {
-      try {
-        const parsed = JSON.parse(newDraft);
-        setFormData(prev => ({ ...prev, ...parsed }));
-        if (newOpen) setIsDialogOpen(true); 
-      } catch (e) { console.error("Erro ao restaurar rascunho novo", e); }
-    }
-
-    const editDraft = localStorage.getItem('stock_proposal_edit_draft');
-    const editOpen = localStorage.getItem('stock_proposal_edit_open') === 'true';
-    if (editDraft) {
-      try {
-        const { editingProposal: savedProp, editFormData: savedData } = JSON.parse(editDraft);
-        if (savedProp && savedData) {
-          setEditingProposal(savedProp);
-          setEditFormData(savedData);
-          if (editOpen) setIsEditDialogOpen(true);
-        }
-      } catch (e) { console.error("Erro ao restaurar rascunho edição", e); }
-    }
-  }, []);
+  // 3. Auto-Restore: Handled by state initializers for instantaneous UI (no flicker)
 
   // ── Derived data ─────────────────────────────────
   const municipios = useMemo(() => {
@@ -1085,7 +1085,7 @@ export default function StockProposals() {
                       localStorage.removeItem('stock_proposal_new_draft');
                       localStorage.removeItem('stock_proposal_new_open');
                       setIsDialogOpen(false);
-                      setFormData({ producer_name: "", producer_cpf: "", credit_program: "", estimated_value: 0, municipio: "", localizacao: "", linha_credito: "", notes: "", projetista: "", serasa: "NAO", pendencias: "" });
+                      setFormData(DEFAULT_FORM_DATA);
                     }}
                   >
                     Cancelar
