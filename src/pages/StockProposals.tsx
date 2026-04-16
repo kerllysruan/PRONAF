@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useStockProposals } from "@/hooks/useStockProposals";
 import { InsertStockProposal, StockProposal } from "@/types/stock";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
