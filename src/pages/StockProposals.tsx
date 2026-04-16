@@ -250,8 +250,10 @@ export default function StockProposals() {
       try {
         const parsed = JSON.parse(newDraft);
         setFormData(prev => ({ ...prev, ...parsed }));
-        // Se o rascunho for significativo, podemos abrir o diálogo (opcional)
-        // setIsDialogOpen(true); 
+        // Se houver rascunho, reabrimos o diálogo automaticamente
+        if (parsed.producer_name || parsed.producer_cpf) {
+          setIsDialogOpen(true); 
+        }
       } catch (e) { console.error("Erro ao restaurar rascunho novo", e); }
     }
 
