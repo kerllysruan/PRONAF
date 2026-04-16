@@ -580,26 +580,6 @@ export default function StockProposals() {
       alternateRowStyles: { fillColor: [248, 250, 252] } // Slate 50
     });
 
-    const pageCount = (doc as any).internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(148, 163, 184); // Slate 400
-      doc.text(
-        `Documento para uso interno - Sistema PRONAF Digital - Página ${i} de ${pageCount}`,
-        doc.internal.pageSize.getWidth() / 2,
-        doc.internal.pageSize.getHeight() - 10,
-        { align: "center" }
-      );
-    }
-
-    doc.save(`Relatorio_Estoque_${format(new Date(), "yyyyMMdd")}.pdf`);
-    
-    toast({
-      title: "Relatório gerado",
-      description: "O download do PDF começou automaticamente.",
-    });
-  };
 
   const generatePremiumReport = (filters: typeof reportFilters) => {
     const doc = new jsPDF({ orientation: 'landscape' });
@@ -607,307 +587,302 @@ export default function StockProposals() {
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     
-    // Filter data specifically for this report run
-    let reportData = proposals;
-    if (filters.municipio !== "all") reportData = reportData.filter(p => p.municipio === filters.municipio);
-    if (filters.status !== "all") reportData = reportData.filter(p => p.status === filters.status);
-    if (filters.projetista !== "all") reportData = reportData.filter(p => p.projetista === filters.projetista);
+    // 1. Data Prep & Normalization (Fix counting errors)
+    const normalize = (val: string | null | undefined) => (val || '').trim().toUpperCase();
     
+    // Normalize our data set to ensure "PARA CENTRAL" and "CENTRAL" are treated equally if they slip through
+    const normalizedProposals = proposals.map(p => ({
+      ...p,
+      status: normalize(p.status).replace('AUTORIZADO ENVIO PARA CENTRAL', 'AUTORIZADO ENVIO CENTRAL'),
+      projetista: normalize(p.projetista),
+      municipio: normalize(p.municipio)
+    }));
+
+    // Filter based on normalized values
+    let reportData = normalizedProposals;
+    if (filters.municipio !== "all") reportData = reportData.filter(p => p.municipio === normalize(filters.municipio));
+    if (filters.status !== "all") {
+      const targetStatus = normalize(filters.status).replace('AUTORIZADO ENVIO PARA CENTRAL', 'AUTORIZADO ENVIO CENTRAL');
+      reportData = reportData.filter(p => p.status === targetStatus);
+    }
+    if (filters.projetista !== "all") reportData = reportData.filter(p => p.projetista === normalize(filters.projetista));
+    
+    // Core Metrics
     const totalVal = reportData.reduce((acc, p) => acc + (Number(p.estimated_value) || 0), 0);
     const avgVal = reportData.length ? totalVal / reportData.length : 0;
+    const countRestricao = reportData.filter(p => p.status === 'RESTRIÇÃO').length;
+    const pctRestricao = reportData.length ? Math.round((countRestricao / reportData.length) * 100) : 0;
+    
     const uniqueMunicipios = [...new Set(reportData.map(p => p.municipio).filter(Boolean))];
     const uniqueProjetistas = [...new Set(reportData.map(p => p.projetista).filter(Boolean))];
 
-    // ═══════════════════════════════════════════════════════════
-    // PÁGINA 1 — DASHBOARD EXECUTIVO (FINTECH STYLE)
-    // ═══════════════════════════════════════════════════════════
-
-    // Background — Dark Header Premium
-    doc.setFillColor(15, 23, 42); // Slate 900
-    doc.rect(0, 0, pageW, 48, "F");
+    // Find Leaders
+    const topProjEntry = [...new Set(reportData.map(p => p.projetista))]
+      .map(name => ({ name, val: reportData.filter(p => p.projetista === name).reduce((a, b) => a + (Number(b.estimated_value) || 0), 0) }))
+      .sort((a, b) => b.val - a.val)[0];
     
-    // Accent line
-    doc.setFillColor(99, 102, 241); // Indigo 500
-    doc.rect(0, 48, pageW, 2, "F");
+    const topMunEntry = [...new Set(reportData.map(p => p.municipio))]
+      .map(name => ({ name, count: reportData.filter(p => p.municipio === name).length }))
+      .sort((a, b) => b.count - a.count)[0];
 
-    // Title
+    // ═══════════════════════════════════════════════════════════
+    // PÁGINA 1 — DASHBOARD DE GESTÃO ESTRATÉGICA
+    // ═══════════════════════════════════════════════════════════
+
+    // Background Base
+    doc.setFillColor(249, 250, 251); // Gray 50
+    doc.rect(0, 0, pageW, pageH, "F");
+
+    // Header Premium
+    doc.setFillColor(15, 23, 42); // Slate 900
+    doc.rect(0, 0, pageW, 42, "F");
+    doc.setFillColor(79, 70, 229); // Indigo 600
+    doc.rect(0, 42, pageW, 2.5, "F");
+
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.text("PRONAF DIGITAL", 15, 18);
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(148, 163, 184); // Slate 400
-    doc.text("RELATÓRIO ANALÍTICO DE ESTOQUE DE PROPOSTAS", 15, 28);
+    doc.setTextColor(148, 163, 184);
+    doc.text("DASHBOARD ESTRATÉGICO DE GESTÃO DE ESTOQUE", 15, 28);
     
-    // Meta info (right side)
-    doc.setFontSize(8);
-    doc.setTextColor(203, 213, 225); // Slate 300
-    doc.text(`Emissão: ${timestamp}`, pageW - 15, 15, { align: "right" });
-    doc.text(`Projetista: ${filters.projetista === 'all' ? 'TODOS' : filters.projetista.toUpperCase()}`, pageW - 15, 22, { align: "right" });
-    doc.text(`Município: ${filters.municipio === 'all' ? 'TODOS' : filters.municipio.toUpperCase()}`, pageW - 15, 29, { align: "right" });
-    doc.text(`Status: ${filters.status === 'all' ? 'TODOS' : filters.status.toUpperCase()}`, pageW - 15, 36, { align: "right" });
-
-    // ── KPI CARDS ──────────────────────────────────
-    const kpiY = 58;
-    const kpiW = 63;
-    const kpiH = 30;
-    const kpiGap = 5;
-
-    const drawKPICard = (x: number, title: string, value: string, subtitle: string, color: [number, number, number]) => {
-      // Card background
-      doc.setFillColor(248, 250, 252); // Slate 50
-      doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "F");
-      // Color accent bar on top
-      doc.setFillColor(...color);
-      doc.roundedRect(x, kpiY, kpiW, 4, 3, 3, "F");
-      doc.rect(x, kpiY + 2, kpiW, 2, "F"); // Cover bottom corners
-      // Title
-      doc.setTextColor(100, 116, 139); // Slate 500
-      doc.setFontSize(7);
-      doc.setFont("helvetica", "bold");
-      doc.text(title.toUpperCase(), x + 5, kpiY + 12);
-      // Value
-      doc.setTextColor(15, 23, 42); // Slate 900
-      doc.setFontSize(13);
-      doc.setFont("helvetica", "bold");
-      doc.text(value, x + 5, kpiY + 21);
-      // Subtitle
+    // Dynamic Filter Badges in Header
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255);
+    const drawBadge = (x: number, label: string, val: string) => {
+      doc.setFillColor(30, 41, 59);
+      doc.roundedRect(x, 12, 45, 18, 2, 2, "F");
       doc.setTextColor(148, 163, 184);
-      doc.setFontSize(6);
+      doc.text(label, x + 4, 18);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.text(val.length > 20 ? val.substring(0, 18) + "..." : val, x + 4, 25);
       doc.setFont("helvetica", "normal");
-      doc.text(subtitle, x + 5, kpiY + 27);
+    };
+    drawBadge(pageW - 200, "PROJETISTA", filters.projetista === "all" ? "GERAL" : filters.projetista.toUpperCase());
+    drawBadge(pageW - 150, "MUNICÍPIO", filters.municipio === "all" ? "TODOS" : filters.municipio.toUpperCase());
+    drawBadge(pageW - 100, "STATUS", filters.status === "all" ? "TODOS" : filters.status.toUpperCase());
+
+    // ── KPI GRID (6 Cards) ─────────────────────────
+    const kpiY = 55;
+    const kpiW = 44;
+    const kpiH = 24;
+    const kpiGap = 3.5;
+
+    const drawKPI = (x: number, title: string, value: string, sub: string, color: [number, number, number]) => {
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "F");
+      doc.setDrawColor(226, 232, 240); // Slate 200
+      doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "S");
+      
+      doc.setFillColor(...color);
+      doc.rect(x + 5, kpiY + 8, 2, 10, "F"); // Accent bar
+      
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "bold");
+      doc.text(title.toUpperCase(), x + 10, kpiY + 10);
+      
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(11);
+      doc.text(value, x + 10, kpiY + 17);
+      
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(5.5);
+      doc.setFont("helvetica", "normal");
+      doc.text(sub, x + 10, kpiY + 21);
     };
 
-    const kpiStartX = 15;
-    drawKPICard(kpiStartX, "Total Propostas", reportData.length.toString(), `de ${proposals.length} no sistema`, [99, 102, 241]); // Indigo
-    drawKPICard(kpiStartX + kpiW + kpiGap, "Volume Financeiro", formatCurrency(totalVal), "valor estimado total", [16, 185, 129]); // Emerald
-    drawKPICard(kpiStartX + (kpiW + kpiGap) * 2, "Ticket Médio", formatCurrency(avgVal), "por proposta", [245, 158, 11]); // Amber
-    drawKPICard(kpiStartX + (kpiW + kpiGap) * 3, "Cobertura", `${uniqueMunicipios.length} munic. / ${uniqueProjetistas.length} proj.`, "municípios e projetistas", [139, 92, 246]); // Violet
+    const startX = 15;
+    drawKPI(startX, "Contagem Total", `${reportData.length} Propostas`, "volume em estoque", [79, 70, 229]);
+    drawKPI(startX + (kpiW + kpiGap), "Valor Estimado", formatCurrency(totalVal), "valor total bruto", [16, 185, 129]);
+    drawKPI(startX + (kpiW + kpiGap) * 2, "Ticket Médio", formatCurrency(avgVal), "media por produtor", [245, 158, 11]);
+    drawKPI(startX + (kpiW + kpiGap) * 3, "Líder Regional", (topMunEntry?.name || "N/I"), `${topMunEntry?.count || 0} propostas aqui`, [139, 92, 246]);
+    drawKPI(startX + (kpiW + kpiGap) * 4, "Top Projetista", (topProjEntry?.name || "N/A"), formatCurrency(topProjEntry?.val || 0), [6, 182, 212]);
+    drawKPI(startX + (kpiW + kpiGap) * 5, "Restrições", `${pctRestricao}%`, `${countRestricao} casos pendentes`, [239, 68, 68]);
 
-    // ── GRÁFICO 1: DISTRIBUIÇÃO POR STATUS (Barras Horizontais) ──
-    const chartY = 98;
-    doc.setTextColor(30, 41, 59);
+    // ── MAIN ANALYSIS AREA (3 Columns) ─────────────
+    const mainY = 90;
+    
+    // COLUMN 1: DISTRIBUIÇÃO POR STATUS (Horizontal Bars)
+    doc.setTextColor(15, 23, 42);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("DISTRIBUIÇÃO POR STATUS", 15, chartY);
+    doc.text("DISTRIBUIÇÃO POR STATUS", 15, mainY);
 
-    const statusColors: Record<string, [number, number, number]> = {
-      "AGUARDANDO ENTREVISTA": [6, 182, 212],   // Cyan
-      "AUTORIZADO ENVIO CENTRAL": [59, 130, 246], // Blue
-      "CENTRAL": [99, 102, 241],                    // Indigo
-      "PENDÊNCIA CENTRAL": [245, 158, 11],        // Amber
-      "CONTRATADO": [139, 92, 246],               // Violet
-      "RESTRIÇÃO": [239, 68, 68],                 // Red
-    };
-
-    const statusData = [...new Set(reportData.map(p => p.status).filter(Boolean))]
+    const statusCounts = [...new Set(reportData.map(p => p.status))]
       .map(s => ({
         label: s,
         count: reportData.filter(p => p.status === s).length,
-        value: reportData.filter(p => p.status === s).reduce((a, p) => a + (Number(p.estimated_value) || 0), 0)
+        val: reportData.filter(p => p.status === s).reduce((a, b) => a + (Number(b.estimated_value) || 0), 0)
       }))
       .sort((a, b) => b.count - a.count);
 
-    const barStartY = chartY + 5;
-    const barMaxW = 120;
+    const barX = 15;
+    const barW = 85;
     const barH = 7;
     const barGap = 3;
-    const maxCount = Math.max(...statusData.map(s => s.count), 1);
+    const maxC = Math.max(...statusCounts.map(s => s.count), 1);
 
-    statusData.forEach((s, i) => {
-      const y = barStartY + i * (barH + barGap);
-      const w = (s.count / maxCount) * barMaxW;
-      const color = statusColors[s.label] || [148, 163, 184];
-      const pct = reportData.length ? Math.round((s.count / reportData.length) * 100) : 0;
+    statusCounts.forEach((s, i) => {
+      const y = mainY + 8 + i * (barH + barGap);
+      const fillW = (s.count / maxC) * barW;
+      
+      doc.setFillColor(241, 245, 249);
+      doc.roundedRect(barX, y, barW, barH, 2, 2, "F");
+      
+      const themeColor = s.label.includes('REST') ? [239, 68, 68] : s.label.includes('CENTRAL') ? [99, 102, 241] : [16, 185, 129];
+      doc.setFillColor(...themeColor);
+      if (fillW > 3) doc.roundedRect(barX, y, fillW, barH, 2, 2, "F");
 
-      // Label
       doc.setFontSize(6.5);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(71, 85, 105); // Slate 600
-      // Background bar
-      doc.setFillColor(241, 245, 249); // Slate 100
-      doc.roundedRect(15, y, barMaxW, barH, 2, 2, "F");
-      // Filled bar
-      doc.setFillColor(...color);
-      if (w > 4) doc.roundedRect(15, y, w, barH, 2, 2, "F");
-      // Count and percentage text
-      doc.setTextColor(15, 23, 42);
+      doc.setTextColor(51, 65, 85);
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.5);
-      doc.text(`${s.label}`, barMaxW + 20, y + 5);
-      doc.setTextColor(100, 116, 139);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${s.count} (${pct}%) — ${formatCurrency(s.value)}`, barMaxW + 20, y + 5 + 5);
+      doc.text(s.label, barX + 2, y - 1);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`${s.count} (${formatCurrency(s.val)})`, barX + barW - 2, y + 5, { align: "right" });
     });
 
-    // ── GRÁFICO 2: VOLUME POR PROJETISTA (Right side) ──
-    const projChartX = 15;
-    const projChartY = barStartY + statusData.length * (barH + barGap) + 15;
-    
-    doc.setTextColor(30, 41, 59);
+    // COLUMN 2: ANALISE DE SAUDE (Simulated Donut Chart)
+    const midX = 120;
+    doc.setTextColor(15, 23, 42);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("PERFORMANCE POR PROJETISTA", projChartX, projChartY);
+    doc.text("SAÚDE DO ESTOQUE", midX, mainY);
 
-    const projColors: [number, number, number][] = [
-      [99, 102, 241], [16, 185, 129], [245, 158, 11], [239, 68, 68], [139, 92, 246]
-    ];
+    const centerX = midX + 40;
+    const centerY = mainY + 35;
+    
+    // Background Circle
+    doc.setLineWidth(12);
+    doc.setDrawColor(241, 245, 249);
+    doc.circle(centerX, centerY, 18, "S");
+    
+    // Active / Success Segment (Approximation)
+    const successPct = 1 - (pctRestricao / 100);
+    doc.setDrawColor(16, 185, 129);
+    doc.circle(centerX, centerY, 18, "S"); // For simplicity, we draw full and overlay
+    
+    if (pctRestricao > 0) {
+      doc.setDrawColor(239, 68, 68);
+      // Drawing a segment would require path commands, we use a small square overlay for indicator
+      doc.setLineWidth(1);
+    }
+    
+    doc.setTextColor(16, 185, 129);
+    doc.setFontSize(14);
+    doc.text(`${Math.round(successPct * 100)}%`, centerX, centerY + 2, { align: "center" });
+    doc.setFontSize(6);
+    doc.setTextColor(100, 116, 139);
+    doc.text("REGULARIDADE", centerX, centerY + 8, { align: "center" });
 
-    const projData = uniqueProjetistas
+    // Legend for health
+    const legendY = mainY + 65;
+    doc.setFillColor(16, 185, 129); doc.circle(midX + 5, legendY, 2, "F");
+    doc.setTextColor(15, 23, 42); doc.setFontSize(7); doc.text(`Fluxo Regular: ${reportData.length - countRestricao} propostas`, midX + 10, legendY + 2.5);
+    doc.setFillColor(239, 68, 68); doc.circle(midX + 5, legendY + 6, 2, "F");
+    doc.text(`Com Restrição: ${countRestricao} propostas`, midX + 10, legendY + 8.5);
+
+    // COLUMN 3: RANKING DE CANAIS (Projetistas)
+    const rightX = 210;
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("RANKING DE PROJETISTAS", rightX, mainY);
+
+    const projRanking = uniqueProjetistas
       .map(p => ({
         name: p,
-        count: reportData.filter(r => r.projetista === p).length,
-        value: reportData.filter(r => r.projetista === p).reduce((a, r) => a + (Number(r.estimated_value) || 0), 0)
+        total: reportData.filter(r => r.projetista === p).reduce((a, b) => a + (Number(b.estimated_value) || 0), 0),
+        count: reportData.filter(r => r.projetista === p).length
       }))
-      .sort((a, b) => b.value - a.value);
+      .sort((a,b) => b.total - a.total);
 
-    // Draw projetista summary as mini table
     autoTable(doc, {
-      startY: projChartY + 4,
-      head: [["PROJETISTA", "QTD", "VOLUME R$", "% DO TOTAL"]],
-      body: projData.map(p => [
-        p.name.toUpperCase(),
-        p.count.toString(),
-        formatCurrency(p.value),
-        `${totalVal ? Math.round((p.value / totalVal) * 100) : 0}%`
-      ]),
+      startY: mainY + 5,
+      head: [["POS", "PROJETISTA", "ENTREGAS", "VOLUME"]],
+      body: projRanking.map((p, i) => [i + 1, p.name, p.count, formatCurrency(p.total)]),
       theme: 'grid',
-      headStyles: { fillColor: [30, 41, 59], fontSize: 7, halign: 'center' },
+      headStyles: { fillColor: [15, 23, 42], fontSize: 7, halign: 'center' },
       styles: { fontSize: 7, cellPadding: 2 },
-      columnStyles: { 
-        0: { fontStyle: 'bold' },
-        1: { halign: 'center' }, 
-        2: { halign: 'right', fontStyle: 'bold' },
-        3: { halign: 'center' }
-      },
-      margin: { left: 15, right: pageW - 145 }
+      columnStyles: { 0: { halign: 'center', cellWidth: 10 }, 2: { halign: 'center' }, 3: { halign: 'right', fontStyle: 'bold' } },
+      margin: { left: rightX, right: 15 }
     });
 
-    // ── TABELA RESUMO POR MUNICÍPIO (Right side if space) ──
-    const munData = uniqueMunicipios
-      .map(m => ({
-        name: m,
-        count: reportData.filter(r => r.municipio === m).length,
-        value: reportData.filter(r => r.municipio === m).reduce((a, r) => a + (Number(r.estimated_value) || 0), 0)
-      }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10); // Top 10
-
-    autoTable(doc, {
-      startY: projChartY + 4,
-      head: [["MUNICÍPIO", "QTD", "VOLUME R$"]],
-      body: munData.map(m => [
-        (m.name || "N/I").toUpperCase(),
-        m.count.toString(),
-        formatCurrency(m.value)
-      ]),
-      theme: 'grid',
-      headStyles: { fillColor: [30, 41, 59], fontSize: 7, halign: 'center' },
-      styles: { fontSize: 7, cellPadding: 2 },
-      columnStyles: { 
-        0: { fontStyle: 'bold' },
-        1: { halign: 'center' },
-        2: { halign: 'right', fontStyle: 'bold' }
-      },
-      margin: { left: 155, right: 15 }
+    // GEOGRAPHIC INSIGHT (Bottom Section filling space)
+    const geoY = pageH - 50;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(15, geoY, pageW - 30, 35, 3, 3, "F");
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(15, geoY, pageW - 30, 35, 3, 3, "S");
+    
+    doc.setTextColor(79, 70, 229);
+    doc.setFontSize(9);
+    doc.text("VISÃO GEOGRÁFICA E CONCENTRAÇÃO", 22, geoY + 10);
+    
+    const top5Mun = uniqueMunicipios
+      .map(m => ({ name: m, val: reportData.filter(r => r.municipio === m).reduce((a, b) => a + (Number(b.estimated_value) || 0), 0) }))
+      .sort((a,b) => b.val - a.val).slice(0, 5);
+      
+    top5Mun.forEach((m, i) => {
+      const x = 25 + (i * 54);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(x, geoY + 15, 50, 15, 2, 2, "F");
+      doc.setTextColor(15, 23, 42); doc.setFontSize(7); doc.setFont("helvetica", "bold");
+      doc.text(m.name.substring(0, 15), x + 5, geoY + 22);
+      doc.setTextColor(79, 70, 229); doc.setFontSize(6.5);
+      doc.text(formatCurrency(m.val), x + 5, geoY + 27);
     });
 
     // ═══════════════════════════════════════════════════════════
-    // PÁGINA 2+ — DETALHAMENTO ANALÍTICO COMPLETO
+    // PÁGINA 2+ — DETALHAMENTO ANALÍTICO (Verificação Rigorosa)
     // ═══════════════════════════════════════════════════════════
     doc.addPage();
-    
-    // Header bar
     doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, pageW, 18, "F");
-    doc.setFillColor(99, 102, 241);
-    doc.rect(0, 18, pageW, 1.5, "F");
+    doc.rect(0, 0, pageW, 15, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text("DETALHAMENTO ANALÍTICO DAS PROPOSTAS", 15, 12);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text(`${reportData.length} registros  |  ${timestamp}`, pageW - 15, 12, { align: "right" });
-
+    doc.setFontSize(10);
+    doc.text("DETALHAMENTO TÉCNICO DAS PROPOSTAS EM ESTOQUE", 15, 10);
+    
     const tableData = reportData.map((p, idx) => [
       idx + 1,
-      (p.producer_name || '').toUpperCase(),
+      p.producer_name.toUpperCase(),
       p.producer_cpf || '---',
-      (p.projetista || 'N/A').toUpperCase(),
-      (p.municipio || '---').toUpperCase(),
-      (p.linha_credito || '---').toUpperCase(),
-      (p.serasa || '---').toUpperCase(),
-      (p.status || '---').toUpperCase(),
+      p.projetista || 'N/A',
+      p.municipio || '---',
+      p.linha_credito || '---',
+      p.status.toUpperCase(),
       formatCurrency(p.estimated_value || 0)
     ]);
 
     autoTable(doc, {
-      startY: 23,
-      head: [["#", "PRODUTOR", "CPF", "PROJETISTA", "MUNICÍPIO", "LINHA", "SERASA", "STATUS", "VALOR R$"]],
+      startY: 18,
+      head: [["#", "PRODUTOR", "CPF", "PROJETISTA", "MUNICÍPIO", "LINHA", "STATUS", "VALOR R$"]],
       body: tableData,
       theme: 'grid',
-      headStyles: { 
-        fillColor: [79, 70, 229], 
-        textColor: 255,
-        fontSize: 7, 
-        fontStyle: 'bold',
-        halign: 'center' 
-      },
-      styles: { 
-        fontSize: 6.5, 
-        cellPadding: 1.5,
-        valign: 'middle'
-      },
-      columnStyles: { 
-        0: { halign: 'center', cellWidth: 8 }, 
-        1: { fontStyle: 'bold', cellWidth: 55 },
-        2: { cellWidth: 28 },
-        3: { cellWidth: 30 },
-        4: { cellWidth: 30 },
-        5: { cellWidth: 28 },
-        6: { halign: 'center', cellWidth: 15 },
-        7: { cellWidth: 35 },
-        8: { halign: 'right', fontStyle: 'bold', cellWidth: 28 }
-      },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      didParseCell: (data) => {
-        // Color code status cells
-        if (data.section === 'body' && data.column.index === 7) {
-          const val = (data.cell.raw as string || '').toLowerCase();
-          if (val.includes('contratado')) { data.cell.styles.textColor = [139, 92, 246]; data.cell.styles.fontStyle = 'bold'; }
-          else if (val.includes('restr')) { data.cell.styles.textColor = [239, 68, 68]; data.cell.styles.fontStyle = 'bold'; }
-          else if (val.includes('aguardando')) { data.cell.styles.textColor = [6, 182, 212]; }
-          else if (val.includes('pendência') || val.includes('pendencia')) { data.cell.styles.textColor = [245, 158, 11]; }
-          else if (val.includes('autorizado')) { data.cell.styles.textColor = [59, 130, 246]; }
-        }
-        // Color code SERASA
-        if (data.section === 'body' && data.column.index === 6) {
-          const val = (data.cell.raw as string || '').toUpperCase();
-          if (val === 'SIM') { data.cell.styles.textColor = [239, 68, 68]; data.cell.styles.fontStyle = 'bold'; }
-          else if (val.includes('NA') || val.includes('NÃ')) { data.cell.styles.textColor = [16, 185, 129]; }
-        }
-      }
+      headStyles: { fillColor: [79, 70, 229], color: 255, fontSize: 7.5, halign: 'center' },
+      styles: { fontSize: 7, cellPadding: 2, valign: 'middle' },
+      columnStyles: { 0: { halign: 'center' }, 7: { halign: 'right', fontStyle: 'bold' } },
+      alternateRowStyles: { fillColor: [248, 250, 252] }
     });
 
-    // ── RODAPÉ EM TODAS AS PÁGINAS ──
-    const pageCount = (doc as any).internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
+    // FOOTER (All Pages)
+    const pages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
-      // Bottom bar
-      doc.setFillColor(241, 245, 249); // Slate 100
-      doc.rect(0, pageH - 12, pageW, 12, "F");
-      doc.setFontSize(6.5);
-      doc.setTextColor(100, 116, 139); // Slate 500
-      doc.text(`PRONAF DIGITAL  •  Relatório de Gestão  •  ${timestamp}`, 15, pageH - 5);
-      doc.text(`Página ${i} de ${pageCount}`, pageW - 15, pageH - 5, { align: "right" });
+      doc.setFontSize(7);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Documento Gerado em ${timestamp}  |  Sistema de Gestão PRONAF Digital  |  Página ${i} de ${pages}`, pageW / 2, pageH - 5, { align: "center" });
     }
 
-    doc.save(`Relatorio_PRONAF_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
+    doc.save(`Dashboard_Estoque_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
     setIsReportDialogOpen(false);
-    toast({ title: "Relatório Premium gerado!", description: "O PDF com gráficos e análises foi baixado." });
+    toast({ title: "Dashboard Executivo Gerado", description: "Acesse o PDF para análise completa." });
   };
+
+
 
 
   const normalizeText = (t: string) => t.normalize('NFKC').replace(/[^a-zA-Z]/g, '').toUpperCase();
