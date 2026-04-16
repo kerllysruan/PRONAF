@@ -602,6 +602,8 @@ export default function StockProposals() {
   const generatePremiumReport = (filters: typeof reportFilters) => {
     const doc = new jsPDF({ orientation: 'landscape' });
     const timestamp = format(new Date(), "dd/MM/yyyy HH:mm");
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
     
     // Filter data specifically for this report run
     let reportData = proposals;
@@ -610,101 +612,301 @@ export default function StockProposals() {
     if (filters.projetista !== "all") reportData = reportData.filter(p => p.projetista === filters.projetista);
     
     const totalVal = reportData.reduce((acc, p) => acc + (Number(p.estimated_value) || 0), 0);
+    const avgVal = reportData.length ? totalVal / reportData.length : 0;
+    const uniqueMunicipios = [...new Set(reportData.map(p => p.municipio).filter(Boolean))];
+    const uniqueProjetistas = [...new Set(reportData.map(p => p.projetista).filter(Boolean))];
 
-    // ── Capa / Resumo Executivo ─────────────────────
-    doc.setFillColor(7, 33, 20); // Deep Dark Green
-    doc.rect(0, 0, 300, 50, "F");
+    // ═══════════════════════════════════════════════════════════
+    // PÁGINA 1 — DASHBOARD EXECUTIVO (FINTECH STYLE)
+    // ═══════════════════════════════════════════════════════════
+
+    // Background — Dark Header Premium
+    doc.setFillColor(15, 23, 42); // Slate 900
+    doc.rect(0, 0, pageW, 48, "F");
     
+    // Accent line
+    doc.setFillColor(99, 102, 241); // Indigo 500
+    doc.rect(0, 48, pageW, 2, "F");
+
+    // Title
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text("DASHBOARD DE ESTOQUE - PRONAF DIGITAL", 15, 20);
-    
-    doc.setFontSize(10);
+    doc.setFontSize(20);
+    doc.text("PRONAF DIGITAL", 15, 18);
+    doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`DATA DE EMISSÃO: ${timestamp}`, 15, 30);
-    doc.text(`PROJETISTA RESPONSÁVEL: ${filters.projetista === 'all' ? 'GERAL' : filters.projetista.toUpperCase()}`, 15, 35);
+    doc.setTextColor(148, 163, 184); // Slate 400
+    doc.text("RELATÓRIO ANALÍTICO DE ESTOQUE DE PROPOSTAS", 15, 28);
+    
+    // Meta info (right side)
+    doc.setFontSize(8);
+    doc.setTextColor(203, 213, 225); // Slate 300
+    doc.text(`Emissão: ${timestamp}`, pageW - 15, 15, { align: "right" });
+    doc.text(`Projetista: ${filters.projetista === 'all' ? 'TODOS' : filters.projetista.toUpperCase()}`, pageW - 15, 22, { align: "right" });
+    doc.text(`Município: ${filters.municipio === 'all' ? 'TODOS' : filters.municipio.toUpperCase()}`, pageW - 15, 29, { align: "right" });
+    doc.text(`Status: ${filters.status === 'all' ? 'TODOS' : filters.status.toUpperCase()}`, pageW - 15, 36, { align: "right" });
 
-    // KPI Blocks (Graphic elements)
-    const drawKPI = (x: number, y: number, title: string, value: string, color: [number, number, number]) => {
+    // ── KPI CARDS ──────────────────────────────────
+    const kpiY = 58;
+    const kpiW = 63;
+    const kpiH = 30;
+    const kpiGap = 5;
+
+    const drawKPICard = (x: number, title: string, value: string, subtitle: string, color: [number, number, number]) => {
+      // Card background
+      doc.setFillColor(248, 250, 252); // Slate 50
+      doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "F");
+      // Color accent bar on top
       doc.setFillColor(...color);
-      doc.roundedRect(x, y, 65, 25, 3, 3, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
+      doc.roundedRect(x, kpiY, kpiW, 4, 3, 3, "F");
+      doc.rect(x, kpiY + 2, kpiW, 2, "F"); // Cover bottom corners
+      // Title
+      doc.setTextColor(100, 116, 139); // Slate 500
+      doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
-      doc.text(title.toUpperCase(), x + 5, y + 8);
-      doc.setFontSize(14);
-      doc.text(value, x + 5, y + 18);
+      doc.text(title.toUpperCase(), x + 5, kpiY + 12);
+      // Value
+      doc.setTextColor(15, 23, 42); // Slate 900
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.text(value, x + 5, kpiY + 21);
+      // Subtitle
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "normal");
+      doc.text(subtitle, x + 5, kpiY + 27);
     };
 
-    drawKPI(15, 60, "Total de Propostas", reportData.length.toString(), [79, 70, 229]); // Indigo
-    drawKPI(85, 60, "Volume Financeiro", formatCurrency(totalVal), [16, 185, 129]); // Emerald
-    drawKPI(155, 60, "Ticket Médio", formatCurrency(reportData.length ? totalVal / reportData.length : 0), [245, 158, 11]); // Amber
-    drawKPI(225, 60, "Municípios Atendidos", municipios.length.toString(), [124, 58, 237]); // Violet
+    const kpiStartX = 15;
+    drawKPICard(kpiStartX, "Total Propostas", reportData.length.toString(), `de ${proposals.length} no sistema`, [99, 102, 241]); // Indigo
+    drawKPICard(kpiStartX + kpiW + kpiGap, "Volume Financeiro", formatCurrency(totalVal), "valor estimado total", [16, 185, 129]); // Emerald
+    drawKPICard(kpiStartX + (kpiW + kpiGap) * 2, "Ticket Médio", formatCurrency(avgVal), "por proposta", [245, 158, 11]); // Amber
+    drawKPICard(kpiStartX + (kpiW + kpiGap) * 3, "Cobertura", `${uniqueMunicipios.length} munic. / ${uniqueProjetistas.length} proj.`, "municípios e projetistas", [139, 92, 246]); // Violet
 
-    // Status Distribution Table (Mini graph-like summary)
+    // ── GRÁFICO 1: DISTRIBUIÇÃO POR STATUS (Barras Horizontais) ──
+    const chartY = 98;
     doc.setTextColor(30, 41, 59);
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("DISTRIBUIÇÃO POR STATUS", 15, 100);
-    
-    const statusCounts = statuses.map(s => {
-      const count = reportData.filter(p => p.status === s).length;
-      const pct = reportData.length ? Math.round((count / reportData.length) * 100) : 0;
-      return [s.toUpperCase(), count, `${pct}%`];
+    doc.text("DISTRIBUIÇÃO POR STATUS", 15, chartY);
+
+    const statusColors: Record<string, [number, number, number]> = {
+      "AGUARDANDO ENTREVISTA": [6, 182, 212],   // Cyan
+      "AUTORIZADO ENVIO CENTRAL": [59, 130, 246], // Blue
+      "ENVIADO CENTRAL": [99, 102, 241],          // Indigo
+      "PENDÊNCIA CENTRAL": [245, 158, 11],        // Amber
+      "CONTRATADO": [139, 92, 246],               // Violet
+      "RESTRIÇÃO": [239, 68, 68],                 // Red
+    };
+
+    const statusData = [...new Set(reportData.map(p => p.status).filter(Boolean))]
+      .map(s => ({
+        label: s,
+        count: reportData.filter(p => p.status === s).length,
+        value: reportData.filter(p => p.status === s).reduce((a, p) => a + (Number(p.estimated_value) || 0), 0)
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    const barStartY = chartY + 5;
+    const barMaxW = 120;
+    const barH = 7;
+    const barGap = 3;
+    const maxCount = Math.max(...statusData.map(s => s.count), 1);
+
+    statusData.forEach((s, i) => {
+      const y = barStartY + i * (barH + barGap);
+      const w = (s.count / maxCount) * barMaxW;
+      const color = statusColors[s.label] || [148, 163, 184];
+      const pct = reportData.length ? Math.round((s.count / reportData.length) * 100) : 0;
+
+      // Label
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105); // Slate 600
+      // Background bar
+      doc.setFillColor(241, 245, 249); // Slate 100
+      doc.roundedRect(15, y, barMaxW, barH, 2, 2, "F");
+      // Filled bar
+      doc.setFillColor(...color);
+      if (w > 4) doc.roundedRect(15, y, w, barH, 2, 2, "F");
+      // Count and percentage text
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.5);
+      doc.text(`${s.label}`, barMaxW + 20, y + 5);
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${s.count} (${pct}%) — ${formatCurrency(s.value)}`, barMaxW + 20, y + 5 + 5);
     });
+
+    // ── GRÁFICO 2: VOLUME POR PROJETISTA (Right side) ──
+    const projChartX = 15;
+    const projChartY = barStartY + statusData.length * (barH + barGap) + 15;
+    
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("PERFORMANCE POR PROJETISTA", projChartX, projChartY);
+
+    const projColors: [number, number, number][] = [
+      [99, 102, 241], [16, 185, 129], [245, 158, 11], [239, 68, 68], [139, 92, 246]
+    ];
+
+    const projData = uniqueProjetistas
+      .map(p => ({
+        name: p,
+        count: reportData.filter(r => r.projetista === p).length,
+        value: reportData.filter(r => r.projetista === p).reduce((a, r) => a + (Number(r.estimated_value) || 0), 0)
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    // Draw projetista summary as mini table
+    autoTable(doc, {
+      startY: projChartY + 4,
+      head: [["PROJETISTA", "QTD", "VOLUME R$", "% DO TOTAL"]],
+      body: projData.map(p => [
+        p.name.toUpperCase(),
+        p.count.toString(),
+        formatCurrency(p.value),
+        `${totalVal ? Math.round((p.value / totalVal) * 100) : 0}%`
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [30, 41, 59], fontSize: 7, halign: 'center' },
+      styles: { fontSize: 7, cellPadding: 2 },
+      columnStyles: { 
+        0: { fontStyle: 'bold' },
+        1: { halign: 'center' }, 
+        2: { halign: 'right', fontStyle: 'bold' },
+        3: { halign: 'center' }
+      },
+      margin: { left: 15, right: pageW - 145 }
+    });
+
+    // ── TABELA RESUMO POR MUNICÍPIO (Right side if space) ──
+    const munData = uniqueMunicipios
+      .map(m => ({
+        name: m,
+        count: reportData.filter(r => r.municipio === m).length,
+        value: reportData.filter(r => r.municipio === m).reduce((a, r) => a + (Number(r.estimated_value) || 0), 0)
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10); // Top 10
 
     autoTable(doc, {
-      startY: 105,
-      head: [["STATUS", "QUANTIDADE", "PERCENTUAL (%)"]],
-      body: statusCounts,
-      theme: 'striped',
-      headStyles: { fillColor: [51, 65, 85], fontSize: 9 },
-      styles: { fontSize: 8 },
-      margin: { left: 15, right: 180 } // Small narrow table correctly aligned
+      startY: projChartY + 4,
+      head: [["MUNICÍPIO", "QTD", "VOLUME R$"]],
+      body: munData.map(m => [
+        (m.name || "N/I").toUpperCase(),
+        m.count.toString(),
+        formatCurrency(m.value)
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: [30, 41, 59], fontSize: 7, halign: 'center' },
+      styles: { fontSize: 7, cellPadding: 2 },
+      columnStyles: { 
+        0: { fontStyle: 'bold' },
+        1: { halign: 'center' },
+        2: { halign: 'right', fontStyle: 'bold' }
+      },
+      margin: { left: 155, right: 15 }
     });
 
-    // Detailed Table with auto-overflow to new pages
+    // ═══════════════════════════════════════════════════════════
+    // PÁGINA 2+ — DETALHAMENTO ANALÍTICO COMPLETO
+    // ═══════════════════════════════════════════════════════════
     doc.addPage();
-    doc.setFillColor(30, 41, 59);
-    doc.rect(0, 0, 300, 15, "F");
+    
+    // Header bar
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageW, 18, "F");
+    doc.setFillColor(99, 102, 241);
+    doc.rect(0, 18, pageW, 1.5, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.text("DETALHAMENTO ANALÍTICO DAS PROPOSTAS", 15, 10);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("DETALHAMENTO ANALÍTICO DAS PROPOSTAS", 15, 12);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${reportData.length} registros  |  ${timestamp}`, pageW - 15, 12, { align: "right" });
 
     const tableData = reportData.map((p, idx) => [
       idx + 1,
-      p.producer_name.toUpperCase(),
-      p.projetista || 'N/A',
-      p.municipio || '---',
-      p.linha_credito || '---',
-      p.status.toUpperCase(),
+      (p.producer_name || '').toUpperCase(),
+      p.producer_cpf || '---',
+      (p.projetista || 'N/A').toUpperCase(),
+      (p.municipio || '---').toUpperCase(),
+      (p.linha_credito || '---').toUpperCase(),
+      (p.serasa || '---').toUpperCase(),
+      (p.status || '---').toUpperCase(),
       formatCurrency(p.estimated_value || 0)
     ]);
 
     autoTable(doc, {
-      startY: 20,
-      head: [["#", "NOME DO PRODUTOR", "PROJETISTA", "MUNICÍPIO", "LINHA", "STATUS", "VALOR R$"]],
+      startY: 23,
+      head: [["#", "PRODUTOR", "CPF", "PROJETISTA", "MUNICÍPIO", "LINHA", "SERASA", "STATUS", "VALOR R$"]],
       body: tableData,
       theme: 'grid',
-      headStyles: { fillColor: [79, 70, 229], fontSize: 8, halign: 'center' },
-      styles: { fontSize: 7, cellPadding: 2 },
-      columnStyles: { 0: { halign: 'center' }, 6: { halign: 'right', fontStyle: 'bold' } }
+      headStyles: { 
+        fillColor: [79, 70, 229], 
+        textColor: 255,
+        fontSize: 7, 
+        fontStyle: 'bold',
+        halign: 'center' 
+      },
+      styles: { 
+        fontSize: 6.5, 
+        cellPadding: 1.5,
+        valign: 'middle'
+      },
+      columnStyles: { 
+        0: { halign: 'center', cellWidth: 8 }, 
+        1: { fontStyle: 'bold', cellWidth: 55 },
+        2: { cellWidth: 28 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 30 },
+        5: { cellWidth: 28 },
+        6: { halign: 'center', cellWidth: 15 },
+        7: { cellWidth: 35 },
+        8: { halign: 'right', fontStyle: 'bold', cellWidth: 28 }
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      didParseCell: (data) => {
+        // Color code status cells
+        if (data.section === 'body' && data.column.index === 7) {
+          const val = (data.cell.raw as string || '').toLowerCase();
+          if (val.includes('contratado')) { data.cell.styles.textColor = [139, 92, 246]; data.cell.styles.fontStyle = 'bold'; }
+          else if (val.includes('restr')) { data.cell.styles.textColor = [239, 68, 68]; data.cell.styles.fontStyle = 'bold'; }
+          else if (val.includes('aguardando')) { data.cell.styles.textColor = [6, 182, 212]; }
+          else if (val.includes('pendência') || val.includes('pendencia')) { data.cell.styles.textColor = [245, 158, 11]; }
+          else if (val.includes('autorizado')) { data.cell.styles.textColor = [59, 130, 246]; }
+        }
+        // Color code SERASA
+        if (data.section === 'body' && data.column.index === 6) {
+          const val = (data.cell.raw as string || '').toUpperCase();
+          if (val === 'SIM') { data.cell.styles.textColor = [239, 68, 68]; data.cell.styles.fontStyle = 'bold'; }
+          else if (val.includes('NA') || val.includes('NÃ')) { data.cell.styles.textColor = [16, 185, 129]; }
+        }
+      }
     });
 
-    // Footer
+    // ── RODAPÉ EM TODAS AS PÁGINAS ──
     const pageCount = (doc as any).internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
-      doc.setFontSize(7);
-      doc.setTextColor(148, 163, 184);
-      doc.text(`Emitido via PRONAF DIGITAL - ${timestamp} - Página ${i} de ${pageCount}`, 150, 205, { align: "center" });
+      // Bottom bar
+      doc.setFillColor(241, 245, 249); // Slate 100
+      doc.rect(0, pageH - 12, pageW, 12, "F");
+      doc.setFontSize(6.5);
+      doc.setTextColor(100, 116, 139); // Slate 500
+      doc.text(`PRONAF DIGITAL  •  Relatório de Gestão  •  ${timestamp}`, 15, pageH - 5);
+      doc.text(`Página ${i} de ${pageCount}`, pageW - 15, pageH - 5, { align: "right" });
     }
 
-    doc.save(`Analise_Estoque_${format(new Date(), "yyyyMMdd")}.pdf`);
+    doc.save(`Relatorio_PRONAF_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
     setIsReportDialogOpen(false);
-    toast({ title: "Relatório gerado com sucesso!" });
+    toast({ title: "Relatório Premium gerado!", description: "O PDF com gráficos e análises foi baixado." });
   };
+
 
   const normalizeText = (t: string) => t.normalize('NFKC').replace(/[^a-zA-Z]/g, '').toUpperCase();
 
@@ -830,14 +1032,9 @@ export default function StockProposals() {
               <DialogFooter>
                 <Button 
                   variant="outline" 
-                  onClick={() => {
-                     localStorage.removeItem('stock_proposal_edit_draft');
-                     localStorage.removeItem('stock_proposal_edit_open');
-                     setIsEditDialogOpen(false);
-                     setEditingProposal(null);
-                  }}
+                  onClick={() => setIsReportDialogOpen(false)}
                 >
-                  CANCELAR
+                  Cancelar
                 </Button>
                 <Button onClick={() => generatePremiumReport(reportFilters)} className="bg-indigo-600 hover:bg-indigo-700">
                   <Download className="mr-2 h-4 w-4" />
