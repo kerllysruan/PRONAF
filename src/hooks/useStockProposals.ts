@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useAgency } from "@/contexts/AgencyContext";
@@ -12,12 +12,18 @@ export function useStockProposals() {
   const { user } = useAuth();
   const { effectiveAgencyId } = useAgency();
   const { toast } = useToast();
+  const hasLoadedRef = useRef(false);
+  const userIdRef = useRef(user?.id);
+  const agencyRef = useRef(effectiveAgencyId);
 
-  const fetchProposals = useCallback(async () => {
+  const fetchProposals = useCallback(async (silent = false) => {
     if (!user) return;
     
     try {
-      setLoading(true);
+      // Only show loading spinner on the FIRST fetch
+      if (!silent && !hasLoadedRef.current) {
+        setLoading(true);
+      }
       setError(null);
 
       let query = supabase
@@ -35,6 +41,7 @@ export function useStockProposals() {
       if (fetchError) throw fetchError;
 
       setProposals(data || []);
+      hasLoadedRef.current = true;
     } catch (err: any) {
       console.error("Error fetching stock proposals:", err);
       setError(err.message);
@@ -49,7 +56,19 @@ export function useStockProposals() {
   }, [user, effectiveAgencyId, toast]);
 
   useEffect(() => {
-    fetchProposals();
+    // Only refetch if user or agency actually changed (not just object reference)
+    const userChanged = user?.id !== userIdRef.current;
+    const agencyChanged = effectiveAgencyId !== agencyRef.current;
+    
+    userIdRef.current = user?.id;
+    agencyRef.current = effectiveAgencyId;
+
+    if (!hasLoadedRef.current || userChanged || agencyChanged) {
+      fetchProposals();
+    } else {
+      // Silent background refresh — no loading state shown
+      fetchProposals(true);
+    }
   }, [fetchProposals]);
 
   const addProposal = async (proposal: InsertStockProposal) => {
