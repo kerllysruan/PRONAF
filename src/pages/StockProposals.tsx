@@ -153,10 +153,18 @@ function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null
   const rawSerasa = cleanCSV(getField(row, ["RESTRIÇÃO", "RESTRICAO", "SERASA"]));
   
   // Normalização manual rápida para decidir o status inicial
-  let derivedStatus = cleanCSV(getField(row, ["STATUS", "original_csv_status"]));
+  const rawStatus = cleanCSV(getField(row, ["STATUS", "original_csv_status"]));
+  let derivedStatus = rawStatus ? rawStatus.trim().toUpperCase() : "";
+  
+  // Normalização Estrita (Evitar duplicidade no Dashboard)
+  if (derivedStatus === 'ENVIADO CENTRAL') derivedStatus = 'CENTRAL';
+  if (derivedStatus === 'AUTORIZADO ENVIO PARA CENTRAL') derivedStatus = 'AUTORIZADO ENVIO CENTRAL';
+  
   const normSerasa = rawSerasa ? rawSerasa.trim().toUpperCase() : "";
   if (normSerasa === "SIM") derivedStatus = "RESTRIÇÃO";
-  else if (normSerasa === "NAO" || normSerasa === "NÃO" || (!normSerasa && !derivedStatus)) derivedStatus = "AGUARDANDO ENTREVISTA";
+  else if (normSerasa === "NAO" || normSerasa === "NÃO" || (!normSerasa && !derivedStatus)) {
+    if (!derivedStatus) derivedStatus = "AGUARDANDO ENTREVISTA";
+  }
 
   return {
     producer_name: name,
@@ -1576,7 +1584,6 @@ export default function StockProposals() {
                     {PROJETISTAS.map(p => (
                       <SelectItem key={p} value={p}>{p}</SelectItem>
                     ))}
-                    <SelectItem value="SISTEMA">SISTEMA (IMPORTADO)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
