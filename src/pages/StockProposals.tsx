@@ -20,7 +20,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Papa from "papaparse";
 
-// ─── CSV parser ────────────────────────────────────────────────
+// ─── CSV parser (Force Refresh) ────────────────────────────────
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
   let current = "";
