@@ -89,7 +89,7 @@ function fixBrokenEncoding(str: string): string {
     .replace(/ﾇ/g, 'Ç');
 }
 
-const PROJETISTAS = ["NEY MEDEIRO", "JAIRO SANTANA", "CLEDSON CLOVIS"];
+const PROJETISTAS = ["NEY MEDEIRO", "JAIRO SANTANA", "CLEDSON CLOVIS", "JAILSON"];
 
 const PROGRAMAS_CREDITO = [
   "RURAL (226)",
@@ -929,21 +929,18 @@ export default function StockProposals() {
           </Dialog>
 
           {/* Manual Add */}
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              localStorage.removeItem('stock_proposal_new_draft');
-              localStorage.removeItem('stock_proposal_new_open');
-              setFormData({ producer_name: "", producer_cpf: "", credit_program: "", estimated_value: 0, municipio: "", localizacao: "", linha_credito: "", notes: "", projetista: "", serasa: "NAO", pendencias: "" });
-            }
-          }}>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold tracking-wide shadow-lg shadow-indigo-200 h-12 md:h-10">
                 <Plus className="mr-2 h-5 w-5 md:h-4 md:w-4" />
                 Nova Proposta
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto p-0">
+            <DialogContent 
+              className="max-w-6xl max-h-[95vh] overflow-y-auto p-0"
+              onPointerDownOutside={(e) => e.preventDefault()}
+              onEscapeKeyDown={(e) => e.preventDefault()}
+            >
               <div className="p-4">
                 <DialogHeader className="mb-4">
                   <DialogTitle className="text-xl font-bold flex items-center gap-2 text-indigo-900">
@@ -1101,17 +1098,11 @@ export default function StockProposals() {
         </div>
       </div>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-        setIsEditDialogOpen(open);
-        if (!open) {
-          localStorage.removeItem('stock_proposal_edit_draft');
-          localStorage.removeItem('stock_proposal_edit_open');
-          setEditingProposal(null);
-        }
-      }}>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent 
           className="max-w-6xl max-h-[95vh] overflow-y-auto p-0"
           onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
         >
           <div className="p-4">
             <DialogHeader className="mb-4">
