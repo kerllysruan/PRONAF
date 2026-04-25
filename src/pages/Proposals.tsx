@@ -47,7 +47,7 @@ const formatCurrency = (value: number) =>
 export default function Proposals() {
   const navigate = useNavigate();
   const { proposals, loading, createProposal, updateProposal, deleteProposal, refetch } = useProposals();
-  const { proposals: stockProposals, updateProposal: updateStockProposal } = useStockProposals();
+  const { proposals: stockProposals, updateProposal: updateStockProposal, addProposal: addStockProposal } = useStockProposals();
   const { members, createTask } = useTeam();
   const { permissions } = usePermissions();
 
@@ -247,8 +247,13 @@ export default function Proposals() {
 
   const handleSave = async () => {
     if (!formData.producer_name.trim() || !formData.producer_cpf.trim()) return;
+    
+    let targetProposalId = editingId;
+    let saveSuccess = false;
+
     if (editingId) {
       await updateProposal(editingId, formData);
+      saveSuccess = true;
       // Se uma tarefa foi selecionada, criar a tarefa vinculada à proposta
       if (selectedTaskType && selectedMember) {
         await createTask({
@@ -262,12 +267,11 @@ export default function Proposals() {
           document_name: selectedTaskType,
         });
       }
-      setSelectedTaskType("");
-      setSelectedMember("");
-      setIsDialogOpen(false);
     } else {
       const result = await createProposal(formData as any);
       if (result) {
+        targetProposalId = result.id;
+        saveSuccess = true;
         // Se uma tarefa foi selecionada na criação, criar a tarefa
         if (selectedTaskType && selectedMember && result.id) {
           await createTask({
@@ -281,10 +285,40 @@ export default function Proposals() {
             document_name: selectedTaskType,
           });
         }
-        setSelectedTaskType("");
-        setSelectedMember("");
-        setIsDialogOpen(false);
       }
+    }
+
+    if (saveSuccess && targetProposalId) {
+      // Lógica de Migração Automática para o Estoque se o status for "CONTRATO ASSINADO"
+      if (formData.status === 'aprovada') {
+        const stockData = {
+          producer_name: formData.producer_name,
+          producer_cpf: formData.producer_cpf,
+          credit_program: formData.credit_program,
+          estimated_value: formData.requested_value,
+          notes: formData.notes,
+          projetista: PROJECT_DESIGNER_LABELS[formData.project_designer as ProjectDesigner] || formData.project_designer,
+          municipio: formData.producer_address,
+          original_csv_status: formData.sicad || null,
+          linha_credito: formData.credit_purpose || null,
+          status: 'CONCLUÍDO',
+          order_index: 0
+        };
+
+        const migrated = await addStockProposal(stockData as any);
+        if (migrated) {
+          // Remover da lista de propostas ativas após migrar com sucesso
+          await deleteProposal(targetProposalId);
+          setIsDialogOpen(false);
+          // Opcional: Redirecionar para o estoque para ver o resultado
+          navigate('/estoque');
+          return;
+        }
+      }
+      
+      setSelectedTaskType("");
+      setSelectedMember("");
+      setIsDialogOpen(false);
     }
   };
 
