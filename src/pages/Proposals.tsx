@@ -68,6 +68,7 @@ export default function Proposals() {
   const allConcludedProposalsCount = concludedStockProposals.length + concludedMainProposals.length;
   const [revertingId, setRevertingId] = useState<string | null>(null);
   const [viewingStockProposal, setViewingStockProposal] = useState<any | null>(null);
+  const [viewingProposal, setViewingProposal] = useState<any | null>(null);
 
   const handleRevertToStock = async (id: string) => {
     setRevertingId(id);
@@ -780,6 +781,14 @@ export default function Proposals() {
                       </TableCell>
                       <TableCell className="py-4 text-right pr-6">
                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 rounded-lg hover:bg-emerald-100/50 text-emerald-600" 
+                            onClick={() => setViewingProposal(proposal)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           {permissions.can_edit_proposals && (
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-primary/10 text-primary" onClick={() => openEdit(proposal)}>
                               <Pencil className="h-4 w-4" />
@@ -860,6 +869,130 @@ export default function Proposals() {
           </Card>
         </div>
       </div>
+
+      {/* Dialog de Detalhes da Proposta Ativa (Configuração Gráfica Premium) */}
+      <Dialog open={!!viewingProposal} onOpenChange={() => setViewingProposal(null)}>
+        <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border-0 shadow-2xl">
+          <div className="bg-primary p-6 text-primary-foreground relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+              <Plus className="h-32 w-32 -mr-8 -mt-8" />
+            </div>
+            <div className="flex items-center gap-4 relative z-10">
+              <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+                <ClipboardList className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black">{viewingProposal?.producer_name}</h2>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-xs font-medium text-primary-foreground/80 flex items-center gap-1">
+                    <User className="h-3 w-3" /> {viewingProposal?.producer_cpf || '---'}
+                  </span>
+                  <span className="h-1 w-1 rounded-full bg-primary-foreground/30"></span>
+                  <Badge className={`rounded-full px-2 py-0.5 text-[9px] font-black border-0 shadow-sm ${STATUS_COLORS[viewingProposal?.status as ProposalStatus]}`}>
+                    {STATUS_LABELS[viewingProposal?.status as ProposalStatus]?.toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <Landmark className="h-3.5 w-3.5" /> Informações Financeiras
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                      <p className="text-[10px] font-bold text-primary uppercase mb-1">Valor Solicitado</p>
+                      <p className="text-xl font-black text-primary">
+                        {viewingProposal?.requested_value ? formatCurrency(Number(viewingProposal.requested_value)) : '---'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Programa de Crédito</p>
+                      <p className="text-sm font-semibold text-slate-700">{viewingProposal?.credit_program || '---'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">SICAD</p>
+                      <p className="text-sm font-semibold text-indigo-600 font-mono tracking-tighter">{viewingProposal?.sicad || 'SEM SICAD'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <MapPin className="h-3.5 w-3.5" /> Localização e Equipe
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Endereço</span>
+                      <span className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{viewingProposal?.producer_address || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Projetista</span>
+                      <span className="text-xs font-bold text-indigo-600">{PROJECT_DESIGNER_LABELS[viewingProposal?.project_designer as ProjectDesigner] || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Agência</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingProposal?.agency_name || '---'} ({viewingProposal?.agency_code || '---'})</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <Info className="h-3.5 w-3.5" /> Detalhes Técnicos
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Data de Entrada</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingProposal?.entry_date ? format(parseISO(viewingProposal.entry_date), 'dd/MM/yyyy') : '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Finalidade</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingProposal?.credit_purpose || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">ID Atividade</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingProposal?.activity_id || '---'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <ClipboardList className="h-3.5 w-3.5" /> Notas e Observações
+                  </h4>
+                  <div className="bg-slate-50 rounded-2xl p-4 text-xs text-slate-600 leading-relaxed min-h-[100px] border border-slate-100 italic whitespace-pre-wrap">
+                    {viewingProposal?.notes || 'Sem observações adicionais para esta proposta.'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="bg-slate-50/80 p-6 border-t border-slate-100 flex sm:justify-between items-center rounded-b-3xl">
+            <div className="flex flex-col">
+              <p className="text-[10px] text-slate-400">Origem: {viewingProposal?.originator || 'Sistema'}</p>
+              <p className="text-[10px] text-slate-400 italic">Última Análise: {viewingProposal?.last_analyst || 'Não informada'}</p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setViewingProposal(null)} className="rounded-xl font-bold text-xs h-10 border-slate-200">
+                Fechar
+              </Button>
+              {permissions.can_edit_proposals && (
+                <Button onClick={() => { setViewingProposal(null); openEdit(viewingProposal); }} className="rounded-xl font-bold text-xs h-10 shadow-lg shadow-primary/20">
+                  Editar Proposta
+                </Button>
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialogs */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
