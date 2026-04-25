@@ -67,6 +67,8 @@ export default function Proposals() {
 
   const allConcludedProposalsCount = concludedStockProposals.length + concludedMainProposals.length;
   const [revertingId, setRevertingId] = useState<string | null>(null);
+  const [migratingId, setMigratingId] = useState<string | null>(null);
+  const [isMigratingAll, setIsMigratingAll] = useState(false);
   const [viewingStockProposal, setViewingStockProposal] = useState<any | null>(null);
   const [viewingProposal, setViewingProposal] = useState<any | null>(null);
 
@@ -74,6 +76,58 @@ export default function Proposals() {
     setRevertingId(id);
     await updateStockProposal(id, { status: 'AGUARDANDO ENTREVISTA' });
     setRevertingId(null);
+    navigate('/estoque');
+  };
+
+  const handleMigrateToStock = async (p: any) => {
+    setMigratingId(p.id);
+    const stockData = {
+      producer_name: p.producer_name,
+      producer_cpf: p.producer_cpf,
+      credit_program: p.credit_program,
+      estimated_value: p.requested_value,
+      notes: p.notes,
+      projetista: PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer,
+      municipio: p.producer_address,
+      original_csv_status: p.sicad || null,
+      linha_credito: p.credit_purpose || null,
+      status: 'CONCLUÍDO',
+      order_index: 0
+    };
+
+    const migrated = await addStockProposal(stockData as any);
+    if (migrated) {
+      await deleteProposal(p.id);
+    }
+    setMigratingId(null);
+  };
+
+  const handleMigrateAllToStock = async () => {
+    if (concludedMainProposals.length === 0) return;
+    if (!confirm(`Deseja migrar todas as ${concludedMainProposals.length} propostas assinadas para o estoque?`)) return;
+    
+    setIsMigratingAll(true);
+    for (const p of concludedMainProposals) {
+      const stockData = {
+        producer_name: p.producer_name,
+        producer_cpf: p.producer_cpf,
+        credit_program: p.credit_program,
+        estimated_value: p.requested_value,
+        notes: p.notes,
+        projetista: PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer,
+        municipio: p.producer_address,
+        original_csv_status: p.sicad || null,
+        linha_credito: p.credit_purpose || null,
+        status: 'CONCLUÍDO',
+        order_index: 0
+      };
+      
+      const migrated = await addStockProposal(stockData as any);
+      if (migrated) {
+        await deleteProposal(p.id);
+      }
+    }
+    setIsMigratingAll(false);
     navigate('/estoque');
   };
   const [selectedTaskType, setSelectedTaskType] = useState<string>("");
@@ -409,9 +463,21 @@ export default function Proposals() {
               <h2 className="text-lg font-black text-slate-800">Propostas Concluídas</h2>
               <p className="text-xs text-muted-foreground">Finalizadas no estoque ou com contrato assinado.</p>
             </div>
-            <span className="ml-auto bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
-              {allConcludedProposalsCount} registro{allConcludedProposalsCount > 1 ? 's' : ''}
-            </span>
+            <div className="ml-auto flex items-center gap-3">
+              <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
+                {allConcludedProposalsCount} registro{allConcludedProposalsCount > 1 ? 's' : ''}
+              </span>
+              {concludedMainProposals.length > 0 && (
+                <Button 
+                  onClick={handleMigrateAllToStock}
+                  disabled={isMigratingAll}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase h-8 px-4 rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center gap-2"
+                >
+                  {isMigratingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : <Box className="h-3 w-3" />}
+                  Migrar Tudo para Estoque
+                </Button>
+              )}
+            </div>
           </div>
 
           <Card className="border-0 shadow-premium rounded-3xl overflow-hidden bg-emerald-50/20 border border-emerald-100/50">
@@ -513,8 +579,26 @@ export default function Proposals() {
                       <td className="py-3 pr-6 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
+                            onClick={() => setViewingProposal(p)}
+                            title="Ver todos os detalhes"
+                            className="h-8 w-8 rounded-lg bg-white border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-50 transition-all shadow-sm"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleMigrateToStock(p)}
+                            disabled={migratingId === p.id}
+                            className="inline-flex items-center gap-1.5 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-3 py-1.5 shadow-md shadow-emerald-100 transition-all disabled:opacity-50"
+                          >
+                            {migratingId === p.id
+                              ? <Loader2 className="h-3 w-3 animate-spin" />
+                              : <Box className="h-3 w-3" />}
+                            Migrar
+                          </button>
+
+                          <button
                             onClick={() => {
-                              setEditingId(p.id);
                               setFormData({
                                 producer_name: p.producer_name,
                                 producer_cpf: p.producer_cpf,
