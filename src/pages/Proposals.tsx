@@ -374,11 +374,11 @@ export default function Proposals() {
               <table className="w-full text-sm">
                 <thead className="bg-emerald-100/30 border-b border-emerald-100/50">
                   <tr>
-                    <th className="text-left py-3 pl-6 text-[10px] font-black uppercase tracking-wider text-emerald-700">Produtor</th>
-                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Município</th>
-                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Projetista</th>
-                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Prog. Crédito</th>
-                    <th className="text-right py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Valor</th>
+                    <th className="text-left py-3 pl-6 text-[10px] font-black uppercase tracking-wider text-emerald-700 w-[250px]">Produtor / CPF</th>
+                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Operação / Projetista</th>
+                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Município / Local</th>
+                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Pendências / Serasa</th>
+                    <th className="text-right py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Valor Estimado</th>
                     <th className="text-right py-3 pr-6 text-[10px] font-black uppercase tracking-wider text-emerald-700">Ações</th>
                   </tr>
                 </thead>
@@ -389,9 +389,29 @@ export default function Proposals() {
                         <div className="font-bold text-slate-800 text-xs">{p.producer_name}</div>
                         <div className="text-[10px] text-muted-foreground font-mono">{p.producer_cpf || '---'}</div>
                       </td>
-                      <td className="py-3 text-xs text-slate-600">{p.municipio || '---'}</td>
-                      <td className="py-3 text-xs text-indigo-600 font-semibold">{p.projetista || '---'}</td>
-                      <td className="py-3 text-[10px] text-slate-500 font-medium">{p.credit_program || '---'}</td>
+                      <td className="py-3">
+                        <div className="text-xs font-semibold text-slate-700">{p.credit_program || '---'}</div>
+                        <div className="text-[10px] text-indigo-600 font-bold uppercase">{p.projetista || 'SEM PROJETISTA'}</div>
+                      </td>
+                      <td className="py-3">
+                        <div className="text-xs text-slate-600">{p.municipio || '---'}</div>
+                        <div className="text-[9px] text-muted-foreground truncate max-w-[150px]">{p.localizacao || '---'}</div>
+                      </td>
+                      <td className="py-3">
+                        <div className="flex flex-col gap-1">
+                          {p.pendencias && (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[9px] py-0 px-1.5 w-fit">
+                              P: {p.pendencias}
+                            </Badge>
+                          )}
+                          {p.serasa && (
+                            <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 text-[9px] py-0 px-1.5 w-fit">
+                              S: {p.serasa}
+                            </Badge>
+                          )}
+                          {!p.pendencias && !p.serasa && <span className="text-[10px] text-muted-foreground italic">Nada constando</span>}
+                        </div>
+                      </td>
                       <td className="py-3 text-right text-xs font-bold text-emerald-700 tabular-nums">
                         {p.estimated_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(p.estimated_value)) : '---'}
                       </td>
@@ -399,10 +419,10 @@ export default function Proposals() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => setViewingStockProposal(p)}
-                            className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-white border border-emerald-200 hover:bg-emerald-50 rounded-lg px-3 py-1.5 shadow-sm transition-all"
+                            title="Ver todos os detalhes"
+                            className="h-8 w-8 rounded-lg bg-white border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-50 transition-all shadow-sm"
                           >
-                            <Eye className="h-3 w-3" />
-                            Dados
+                            <Eye className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleRevertToStock(p.id)}
