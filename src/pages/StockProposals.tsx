@@ -104,6 +104,7 @@ const STATUS_OPTIONS = [
   "CENTRAL",
   "PENDÊNCIA CENTRAL",
   "CONTRATADO",
+  "CONCLUÍDO",
   "RESTRIÇÃO",
   "AGUARDANDO ENTREVISTA",
   "PRONTO, PLANILHA VELHA",
@@ -518,6 +519,7 @@ export default function StockProposals() {
     if (s === 'central') return "bg-indigo-100 text-indigo-700 border-indigo-200";
     if (s.includes('pendência')) return "bg-amber-100 text-amber-700 border-amber-200";
     if (s.includes('contratado')) return "bg-purple-100 text-purple-700 border-purple-200";
+    if (s === 'concluído') return "bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm";
     if (s === 'restrição') return "bg-red-100 text-red-700 border-red-200 shadow-sm";
     if (s === 'aguardando entrevista') return "bg-cyan-100 text-cyan-700 border-cyan-200 shadow-sm";
     return "bg-slate-100 text-slate-700 border-slate-200";
@@ -587,6 +589,8 @@ export default function StockProposals() {
       },
       alternateRowStyles: { fillColor: [248, 250, 252] } // Slate 50
     });
+    doc.save(`Relatorio_Estoque_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
+  };
 
 
   const generatePremiumReport = (filters: typeof reportFilters) => {
