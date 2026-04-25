@@ -51,7 +51,7 @@ export default function Proposals() {
   const { members, createTask } = useTeam();
   const { permissions } = usePermissions();
 
-  // Propostas concluídas vindas do Estoque
+  // Propostas concluídas (Estoque + Contrato Assinado da Lista Principal)
   const concludedStockProposals = useMemo(
     () => stockProposals.filter(p => {
       const s = (p.status || '').toUpperCase().trim();
@@ -59,6 +59,13 @@ export default function Proposals() {
     }),
     [stockProposals]
   );
+
+  const concludedMainProposals = useMemo(
+    () => proposals.filter(p => p.status === 'aprovada'),
+    [proposals]
+  );
+
+  const allConcludedProposalsCount = concludedStockProposals.length + concludedMainProposals.length;
   const [revertingId, setRevertingId] = useState<string | null>(null);
   const [viewingStockProposal, setViewingStockProposal] = useState<any | null>(null);
 
@@ -136,6 +143,9 @@ export default function Proposals() {
   const filtered = useMemo(() => {
     // Removed setPage(0) to prevent reset on data update
     let result = proposals.filter((p) => {
+      // Excluir as que já estão assinadas (concluídas) da lista principal
+      if (p.status === 'aprovada') return false;
+
       const matchesSearch =
         p.producer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.producer_cpf.includes(searchTerm);
@@ -361,11 +371,11 @@ export default function Proposals() {
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-slate-800">Concluídas do Estoque</h2>
-              <p className="text-xs text-muted-foreground">Propostas finalizadas no estoque aguardando sua conferência.</p>
+              <h2 className="text-lg font-black text-slate-800">Propostas Concluídas</h2>
+              <p className="text-xs text-muted-foreground">Finalizadas no estoque ou com contrato assinado.</p>
             </div>
             <span className="ml-auto bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
-              {concludedStockProposals.length} registro{concludedStockProposals.length > 1 ? 's' : ''}
+              {allConcludedProposalsCount} registro{allConcludedProposalsCount > 1 ? 's' : ''}
             </span>
           </div>
 
@@ -383,11 +393,13 @@ export default function Proposals() {
                   </tr>
                 </thead>
                 <tbody>
+                  {/* Propostas do Estoque */}
                   {concludedStockProposals.map((p) => (
                     <tr key={p.id} className="border-b border-emerald-100/20 hover:bg-emerald-100/10 transition-colors">
                       <td className="py-3 pl-6">
                         <div className="font-bold text-slate-800 text-xs">{p.producer_name}</div>
                         <div className="text-[10px] text-muted-foreground font-mono">{p.producer_cpf || '---'}</div>
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border-0 text-[8px] font-black h-4 px-1 mt-0.5">ESTOQUE</Badge>
                       </td>
                       <td className="py-3">
                         <div className="text-xs font-semibold text-slate-700">{p.credit_program || '---'}</div>
@@ -433,6 +445,92 @@ export default function Proposals() {
                               ? <Loader2 className="h-3 w-3 animate-spin" />
                               : <RotateCcw className="h-3 w-3" />}
                             Reverter
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {/* Propostas da Lista Principal (Contrato Assinado) */}
+                  {concludedMainProposals.map((p) => (
+                    <tr key={p.id} className="border-b border-emerald-100/20 hover:bg-emerald-100/10 transition-colors">
+                      <td className="py-3 pl-6">
+                        <div className="font-bold text-slate-800 text-xs">{p.producer_name}</div>
+                        <div className="text-[10px] text-muted-foreground font-mono">{p.producer_cpf || '---'}</div>
+                        <Badge className="bg-blue-500/10 text-blue-600 border-0 text-[8px] font-black h-4 px-1 mt-0.5">LISTA ATIVA</Badge>
+                      </td>
+                      <td className="py-3">
+                        <div className="text-xs font-semibold text-slate-700">{p.credit_program || '---'}</div>
+                        <div className="text-[10px] text-indigo-600 font-bold uppercase">{PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || 'SEM PROJETISTA'}</div>
+                      </td>
+                      <td className="py-3">
+                        <div className="text-xs text-slate-600">{p.producer_address || '---'}</div>
+                        <div className="text-[9px] text-muted-foreground truncate max-w-[150px]">Sicad: {p.sicad || '---'}</div>
+                      </td>
+                      <td className="py-3">
+                        <Badge className="bg-green-50 text-green-700 border border-green-200 text-[9px] py-0.5 px-2 font-black">
+                          CONTRATO ASSINADO
+                        </Badge>
+                      </td>
+                      <td className="py-3 text-right text-xs font-bold text-emerald-700 tabular-nums">
+                        {p.requested_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(p.requested_value)) : '---'}
+                      </td>
+                      <td className="py-3 pr-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingId(p.id);
+                              setFormData({
+                                producer_name: p.producer_name,
+                                producer_cpf: p.producer_cpf,
+                                producer_address: p.producer_address || "",
+                                producer_phone: p.producer_phone || "",
+                                pronaf_line: p.pronaf_line,
+                                project_designer: p.project_designer || "ney_medeiros",
+                                requested_value: p.requested_value,
+                                status: p.status,
+                                entry_date: p.entry_date,
+                                notes: p.notes || "",
+                                sicad: p.sicad || "",
+                                credit_program: p.credit_program || "",
+                                request_type: p.request_type || "",
+                                agency_code: p.agency_code || "",
+                                agency_name: p.agency_name || "",
+                                task: p.task || "",
+                                central_date: p.central_date || "",
+                                activity_start_date: p.activity_start_date || "",
+                                last_analyst: p.last_analyst || "",
+                                owner: p.owner || "",
+                                originator: p.originator || "",
+                                current_state: p.current_state || "",
+                                category: p.category || "",
+                                client_size: p.client_size || "",
+                                proposal_number: p.proposal_number || "",
+                                credit_purpose: p.credit_purpose || "",
+                                resource_application: p.resource_application || "",
+                                special_treatment: p.special_treatment || "",
+                                central: p.central || "",
+                                superintendence_code: p.superintendence_code || "",
+                                superintendence_name: p.superintendence_name || "",
+                                microcredit: p.microcredit || "",
+                                renegotiation_type: p.renegotiation_type || "",
+                                guarantee_type: p.guarantee_type || "",
+                                registration_central_task: p.registration_central_task || "",
+                                registration_central_activity_start: p.registration_central_activity_start || "",
+                                judicial_period: p.judicial_period || "",
+                                requesting_unit: p.requesting_unit || "",
+                                agreement: p.agreement || "",
+                                culture: p.culture || "",
+                                roc_type: p.roc_type || "",
+                                poa_prd_subject: p.poa_prd_subject || "",
+                                activity_id: p.activity_id || "",
+                              });
+                              setIsDialogOpen(true);
+                            }}
+                            title="Editar Proposta"
+                            className="h-8 w-8 rounded-lg bg-white border border-blue-200 flex items-center justify-center text-blue-700 hover:bg-blue-50 transition-all shadow-sm"
+                          >
+                            <Pencil className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
