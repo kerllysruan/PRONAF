@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, FileUp, RotateCcw, CheckCircle2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, FileUp, RotateCcw, CheckCircle2, Eye, MapPin, User, Landmark, ClipboardList, Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +60,7 @@ export default function Proposals() {
     [stockProposals]
   );
   const [revertingId, setRevertingId] = useState<string | null>(null);
+  const [viewingStockProposal, setViewingStockProposal] = useState<any | null>(null);
 
   const handleRevertToStock = async (id: string) => {
     setRevertingId(id);
@@ -376,6 +377,7 @@ export default function Proposals() {
                     <th className="text-left py-3 pl-6 text-[10px] font-black uppercase tracking-wider text-emerald-700">Produtor</th>
                     <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Município</th>
                     <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Projetista</th>
+                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Prog. Crédito</th>
                     <th className="text-right py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Valor</th>
                     <th className="text-right py-3 pr-6 text-[10px] font-black uppercase tracking-wider text-emerald-700">Ações</th>
                   </tr>
@@ -389,20 +391,30 @@ export default function Proposals() {
                       </td>
                       <td className="py-3 text-xs text-slate-600">{p.municipio || '---'}</td>
                       <td className="py-3 text-xs text-indigo-600 font-semibold">{p.projetista || '---'}</td>
+                      <td className="py-3 text-[10px] text-slate-500 font-medium">{p.credit_program || '---'}</td>
                       <td className="py-3 text-right text-xs font-bold text-emerald-700 tabular-nums">
                         {p.estimated_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(p.estimated_value)) : '---'}
                       </td>
                       <td className="py-3 pr-6 text-right">
-                        <button
-                          onClick={() => handleRevertToStock(p.id)}
-                          disabled={revertingId === p.id}
-                          className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-white border border-amber-200 hover:bg-amber-50 rounded-lg px-3 py-1.5 shadow-sm transition-all disabled:opacity-50"
-                        >
-                          {revertingId === p.id
-                            ? <Loader2 className="h-3 w-3 animate-spin" />
-                            : <RotateCcw className="h-3 w-3" />}
-                          Reverter para Estoque
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setViewingStockProposal(p)}
+                            className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-700 bg-white border border-emerald-200 hover:bg-emerald-50 rounded-lg px-3 py-1.5 shadow-sm transition-all"
+                          >
+                            <Eye className="h-3 w-3" />
+                            Dados
+                          </button>
+                          <button
+                            onClick={() => handleRevertToStock(p.id)}
+                            disabled={revertingId === p.id}
+                            className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-white border border-amber-200 hover:bg-amber-50 rounded-lg px-3 py-1.5 shadow-sm transition-all disabled:opacity-50"
+                          >
+                            {revertingId === p.id
+                              ? <Loader2 className="h-3 w-3 animate-spin" />
+                              : <RotateCcw className="h-3 w-3" />}
+                            Reverter
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -412,6 +424,117 @@ export default function Proposals() {
           </Card>
         </div>
       )}
+
+      {/* Dialog de Detalhes da Proposta Concluída */}
+      <Dialog open={!!viewingStockProposal} onOpenChange={() => setViewingStockProposal(null)}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border-0 shadow-2xl">
+          <div className="bg-emerald-600 p-6 text-white relative">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+                <ClipboardList className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black">{viewingStockProposal?.producer_name}</h2>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-xs font-medium text-emerald-100 flex items-center gap-1">
+                    <User className="h-3 w-3" /> {viewingStockProposal?.producer_cpf || 'CPF não informado'}
+                  </span>
+                  <span className="h-1 w-1 rounded-full bg-emerald-300"></span>
+                  <span className="text-xs font-bold text-white bg-emerald-500/50 px-2 py-0.5 rounded-full border border-emerald-400/30">
+                    CONCLUÍDO NO ESTOQUE
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <Landmark className="h-3.5 w-3.5" /> Informações Financeiras
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Valor Estimado</p>
+                      <p className="text-xl font-black text-emerald-700">
+                        {viewingStockProposal?.estimated_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(viewingStockProposal.estimated_value)) : '---'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Programa de Crédito</p>
+                      <p className="text-sm font-semibold text-slate-700">{viewingStockProposal?.credit_program || '---'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Linha de Crédito</p>
+                      <p className="text-sm font-semibold text-slate-700">{viewingStockProposal?.linha_credito || '---'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <MapPin className="h-3.5 w-3.5" /> Localização e Agência
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Município</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.municipio || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Agência</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.agencia_cadastro || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Projetista</span>
+                      <span className="text-xs font-bold text-indigo-600">{viewingStockProposal?.projetista || '---'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <Info className="h-3.5 w-3.5" /> Detalhes Adicionais
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Pendências</span>
+                      <span className="text-xs font-bold text-amber-600">{viewingStockProposal?.pendencias || 'Nenhuma'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Serasa</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.serasa || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Localização</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.localizacao || '---'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <ClipboardList className="h-3.5 w-3.5" /> Observações
+                  </h4>
+                  <div className="bg-slate-50 rounded-2xl p-4 text-xs text-slate-600 leading-relaxed min-h-[100px] border border-slate-100 italic">
+                    {viewingStockProposal?.notes || viewingStockProposal?.observacoes_extra || 'Sem observações adicionais.'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="bg-slate-50/80 p-6 border-t border-slate-100 flex sm:justify-between items-center rounded-b-3xl">
+            <p className="text-[10px] text-slate-400 italic">Criado em: {viewingStockProposal?.created_at ? new Date(viewingStockProposal.created_at).toLocaleDateString('pt-BR') : '---'}</p>
+            <Button variant="outline" onClick={() => setViewingStockProposal(null)} className="rounded-xl font-bold text-xs h-10 border-slate-200">
+              Fechar Detalhes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         {/* Filtros Lateral */}
@@ -872,11 +995,6 @@ export default function Proposals() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <ImportProposalsDialog
-        open={isImportDialogOpen}
-        onOpenChange={setIsImportDialogOpen}
-      />
 
       <ImportProposalsDialog
         open={isImportDialogOpen}
