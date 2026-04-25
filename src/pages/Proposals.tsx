@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, FileUp, RotateCcw, CheckCircle2, Eye, MapPin, User, Landmark, ClipboardList, Info } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, FileUp, RotateCcw, CheckCircle2, Eye, MapPin, User, Landmark, ClipboardList, Info, Box } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
