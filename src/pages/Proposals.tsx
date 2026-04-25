@@ -53,7 +53,10 @@ export default function Proposals() {
 
   // Propostas concluídas vindas do Estoque
   const concludedStockProposals = useMemo(
-    () => stockProposals.filter(p => (p.status || '').toUpperCase() === 'CONCLUÍDO'),
+    () => stockProposals.filter(p => {
+      const s = (p.status || '').toUpperCase().trim();
+      return s === 'CONCLUÍDO' || s === 'CONCLUIDO';
+    }),
     [stockProposals]
   );
   const [revertingId, setRevertingId] = useState<string | null>(null);
@@ -348,6 +351,67 @@ export default function Proposals() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ─── Seção: Concluídas do Estoque (Movida para o Topo para Visibilidade) ─── */}
+      {concludedStockProposals.length > 0 && (
+        <div className="space-y-4 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-800">Concluídas do Estoque</h2>
+              <p className="text-xs text-muted-foreground">Propostas finalizadas no estoque aguardando sua conferência.</p>
+            </div>
+            <span className="ml-auto bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
+              {concludedStockProposals.length} registro{concludedStockProposals.length > 1 ? 's' : ''}
+            </span>
+          </div>
+
+          <Card className="border-0 shadow-premium rounded-3xl overflow-hidden bg-emerald-50/20 border border-emerald-100/50">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-emerald-100/30 border-b border-emerald-100/50">
+                  <tr>
+                    <th className="text-left py-3 pl-6 text-[10px] font-black uppercase tracking-wider text-emerald-700">Produtor</th>
+                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Município</th>
+                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Projetista</th>
+                    <th className="text-right py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Valor</th>
+                    <th className="text-right py-3 pr-6 text-[10px] font-black uppercase tracking-wider text-emerald-700">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {concludedStockProposals.map((p) => (
+                    <tr key={p.id} className="border-b border-emerald-100/20 hover:bg-emerald-100/10 transition-colors">
+                      <td className="py-3 pl-6">
+                        <div className="font-bold text-slate-800 text-xs">{p.producer_name}</div>
+                        <div className="text-[10px] text-muted-foreground font-mono">{p.producer_cpf || '---'}</div>
+                      </td>
+                      <td className="py-3 text-xs text-slate-600">{p.municipio || '---'}</td>
+                      <td className="py-3 text-xs text-indigo-600 font-semibold">{p.projetista || '---'}</td>
+                      <td className="py-3 text-right text-xs font-bold text-emerald-700 tabular-nums">
+                        {p.estimated_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(p.estimated_value)) : '---'}
+                      </td>
+                      <td className="py-3 pr-6 text-right">
+                        <button
+                          onClick={() => handleRevertToStock(p.id)}
+                          disabled={revertingId === p.id}
+                          className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-white border border-amber-200 hover:bg-amber-50 rounded-lg px-3 py-1.5 shadow-sm transition-all disabled:opacity-50"
+                        >
+                          {revertingId === p.id
+                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                            : <RotateCcw className="h-3 w-3" />}
+                          Reverter para Estoque
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
         {/* Filtros Lateral */}
@@ -814,66 +878,10 @@ export default function Proposals() {
         onOpenChange={setIsImportDialogOpen}
       />
 
-      {/* ─── Seção: Concluídas do Estoque ─── */}
-      {concludedStockProposals.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-xl bg-emerald-100 flex items-center justify-center">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            </div>
-            <div>
-              <h2 className="text-lg font-black text-slate-800">Concluídas do Estoque</h2>
-              <p className="text-xs text-muted-foreground">Propostas finalizadas. Você pode reverter o status para retorná-las ao Estoque.</p>
-            </div>
-            <span className="ml-auto bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
-              {concludedStockProposals.length} registro{concludedStockProposals.length > 1 ? 's' : ''}
-            </span>
-          </div>
-
-          <Card className="border-0 shadow-premium rounded-3xl overflow-hidden bg-card/80">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-emerald-50/60 border-b border-emerald-100">
-                  <tr>
-                    <th className="text-left py-3 pl-6 text-[10px] font-black uppercase tracking-wider text-emerald-700">Produtor</th>
-                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Município</th>
-                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Projetista</th>
-                    <th className="text-right py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Valor</th>
-                    <th className="text-right py-3 pr-6 text-[10px] font-black uppercase tracking-wider text-emerald-700">Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {concludedStockProposals.map((p) => (
-                    <tr key={p.id} className="border-b border-slate-100 hover:bg-emerald-50/30 transition-colors">
-                      <td className="py-3 pl-6">
-                        <div className="font-bold text-slate-800 text-xs">{p.producer_name}</div>
-                        <div className="text-[10px] text-muted-foreground font-mono">{p.producer_cpf || '---'}</div>
-                      </td>
-                      <td className="py-3 text-xs text-slate-600">{p.municipio || '---'}</td>
-                      <td className="py-3 text-xs text-indigo-600 font-semibold">{p.projetista || '---'}</td>
-                      <td className="py-3 text-right text-xs font-bold text-emerald-700 tabular-nums">
-                        {p.estimated_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(p.estimated_value)) : '---'}
-                      </td>
-                      <td className="py-3 pr-6 text-right">
-                        <button
-                          onClick={() => handleRevertToStock(p.id)}
-                          disabled={revertingId === p.id}
-                          className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
-                        >
-                          {revertingId === p.id
-                            ? <Loader2 className="h-3 w-3 animate-spin" />
-                            : <RotateCcw className="h-3 w-3" />}
-                          Reverter para Estoque
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
-      )}
+      <ImportProposalsDialog
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+      />
     </div>
   );
 }
