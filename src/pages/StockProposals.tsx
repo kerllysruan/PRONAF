@@ -107,8 +107,7 @@ const STATUS_OPTIONS = [
   "CONCLUÍDO",
   "RESTRIÇÃO",
   "AGUARDANDO ENTREVISTA",
-  "PRONTO, PLANILHA VELHA",
-  "FALTA ASSINAR"
+  "EMITIR CONSIDERAÇÕES GERENCIAIS"
 ];
 
 function cleanCSV(str: string | undefined): string | null {
@@ -522,6 +521,7 @@ export default function StockProposals() {
     if (s === 'concluído') return "bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm";
     if (s === 'restrição') return "bg-red-100 text-red-700 border-red-200 shadow-sm";
     if (s === 'aguardando entrevista') return "bg-cyan-100 text-cyan-700 border-cyan-200 shadow-sm";
+    if (s.includes('considerações') || s.includes('gerenciais')) return "bg-orange-100 text-orange-700 border-orange-200 shadow-sm";
     return "bg-slate-100 text-slate-700 border-slate-200";
   };
 
