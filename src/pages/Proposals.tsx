@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, FileUp, RotateCcw, CheckCircle2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
 export default function Proposals() {
+  const navigate = useNavigate();
   const { proposals, loading, createProposal, updateProposal, deleteProposal, refetch } = useProposals();
   const { proposals: stockProposals, updateProposal: updateStockProposal } = useStockProposals();
   const { members, createTask } = useTeam();
@@ -60,6 +62,7 @@ export default function Proposals() {
     setRevertingId(id);
     await updateStockProposal(id, { status: 'AGUARDANDO ENTREVISTA' });
     setRevertingId(null);
+    navigate('/estoque');
   };
   const [selectedTaskType, setSelectedTaskType] = useState<string>("");
   const [selectedMember, setSelectedMember] = useState<string>("");

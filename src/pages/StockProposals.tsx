@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useStockProposals } from "@/hooks/useStockProposals";
 import { InsertStockProposal, StockProposal } from "@/types/stock";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -189,6 +190,7 @@ function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null
 
 // ─── Main Component ────────────────────────────────────────────
 export default function StockProposals() {
+  const navigate = useNavigate();
   const { proposals, loading, addProposal, addProposalsBulk, updateProposal, deleteProposal, deleteAllProposals, refreshProposals } = useStockProposals();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(() => {
@@ -513,7 +515,13 @@ export default function StockProposals() {
       localStorage.removeItem('stock_proposal_edit_draft');
       setIsEditDialogOpen(false);
       setEditingProposal(null);
-      toast({ title: "Proposta atualizada", description: "As alterações foram salvas com sucesso." });
+      const isConcluido = (editFormData.status || '').toUpperCase() === 'CONCLUÍDO';
+      if (isConcluido) {
+        toast({ title: "✅ Proposta Concluída", description: "A proposta foi encaminhada para Gestão de Propostas." });
+        navigate('/propostas');
+      } else {
+        toast({ title: "Proposta atualizada", description: "As alterações foram salvas com sucesso." });
+      }
     }
     setIsUpdating(false);
   };
