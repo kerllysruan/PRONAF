@@ -296,7 +296,8 @@ export default function StockProposals() {
   }, [proposals]);
 
   const filtered = useMemo(() => {
-    let result = proposals;
+    // Exclude CONCLUÍDO — they live in the Proposals page
+    let result = proposals.filter(p => (p.status || '').toUpperCase() !== 'CONCLUÍDO');
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       result = result.filter(p => {
@@ -331,6 +332,12 @@ export default function StockProposals() {
     }
     return result;
   }, [proposals, searchTerm, filterMunicipio, filterStatus, filterProjetista]);
+
+  // Propostas concluídas (encaminhadas para a página de Propostas)
+  const concludedProposals = useMemo(
+    () => proposals.filter(p => (p.status || '').toUpperCase() === 'CONCLUÍDO'),
+    [proposals]
+  );
 
   const totalEstimated = filtered.reduce((acc, p) => acc + (Number(p.estimated_value) || 0), 0);
 
@@ -935,6 +942,12 @@ export default function StockProposals() {
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
             Controle de propostas prontas para envio à central. Importe via CSV ou cadastre manualmente.
           </p>
+          {concludedProposals.length > 0 && (
+            <div className="mt-2 flex items-center gap-2 text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg px-3 py-1.5 w-fit font-semibold">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {concludedProposals.length} proposta{concludedProposals.length > 1 ? 's' : ''} concluída{concludedProposals.length > 1 ? 's' : ''} — disponível em <strong className="ml-1">Gestão de Propostas</strong>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
