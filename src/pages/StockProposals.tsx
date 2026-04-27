@@ -2014,7 +2014,31 @@ export default function StockProposals() {
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
                       <span className="text-xs text-slate-500">Localização</span>
-                      <span className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{viewingDetailProposal?.localizacao || '---'}</span>
+                      <span className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{viewingDetailProposal?.localizacao || viewingDetailProposal?.producer_address || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Telefone</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.producer_phone || '---'}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <Box className="h-3.5 w-3.5" /> Dados do Sistema
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Origem</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.originator || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Data de Entrada</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.entry_date ? format(parseISO(viewingDetailProposal.entry_date), 'dd/MM/yyyy') : '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Último Analista</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.last_analyst || '---'}</span>
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, FileUp, RotateCcw, CheckCircle2, Eye, MapPin, User, Landmark, ClipboardList, Info, Box } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, FileUp, RotateCcw, CheckCircle2, Eye, MapPin, User, Landmark, ClipboardList, Info, Box, TrendingUp, Calendar, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,6 +72,33 @@ export default function Proposals() {
   const [viewingStockProposal, setViewingStockProposal] = useState<any | null>(null);
   const [viewingProposal, setViewingProposal] = useState<any | null>(null);
 
+  const concludedStats = useMemo(() => {
+    const totalCount = allConcludedProposalsCount;
+    const totalValue = [...concludedStockProposals, ...concludedMainProposals].reduce(
+      (acc, p) => acc + Number(p.estimated_value || p.requested_value || 0), 
+      0
+    );
+    
+    const now = new Date();
+    const currentMonth = getMonth(now);
+    const currentYear = getYear(now);
+    
+    const thisMonthProposals = [...concludedStockProposals, ...concludedMainProposals].filter(p => {
+      const dateStr = p.created_at || p.entry_date;
+      if (!dateStr) return false;
+      const date = parseISO(dateStr);
+      return getMonth(date) === currentMonth && getYear(date) === currentYear;
+    });
+    
+    const monthCount = thisMonthProposals.length;
+    const monthValue = thisMonthProposals.reduce(
+      (acc, p) => acc + Number(p.estimated_value || p.requested_value || 0), 
+      0
+    );
+
+    return { totalCount, totalValue, monthCount, monthValue };
+  }, [concludedStockProposals, concludedMainProposals, allConcludedProposalsCount]);
+
   const handleRevertToStock = async (id: string) => {
     setRevertingId(id);
     await updateStockProposal(id, { status: 'AGUARDANDO ENTREVISTA' });
@@ -79,21 +106,60 @@ export default function Proposals() {
     navigate('/estoque');
   };
 
+  const mapToStockData = (p: any) => ({
+    producer_name: p.producer_name,
+    producer_cpf: p.producer_cpf,
+    credit_program: p.credit_program,
+    estimated_value: p.requested_value,
+    notes: p.notes,
+    projetista: PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer,
+    municipio: p.producer_address,
+    original_csv_status: p.sicad || null,
+    linha_credito: p.credit_purpose || null,
+    status: 'CONCLUÍDO',
+    order_index: 0,
+    entry_date: p.entry_date,
+    producer_address: p.producer_address,
+    producer_phone: p.producer_phone,
+    pronaf_line: p.pronaf_line,
+    sicad: p.sicad,
+    request_type: p.request_type,
+    agency_code: p.agency_code,
+    agency_name: p.agency_name,
+    task: p.task,
+    central_date: p.central_date,
+    activity_start_date: p.activity_start_date,
+    last_analyst: p.last_analyst,
+    owner: p.owner,
+    originator: p.originator,
+    current_state: p.current_state,
+    category: p.category,
+    client_size: p.client_size,
+    proposal_number: p.proposal_number,
+    credit_purpose: p.credit_purpose,
+    resource_application: p.resource_application,
+    special_treatment: p.special_treatment,
+    central: p.central,
+    superintendence_code: p.superintendence_code,
+    superintendence_name: p.superintendence_name,
+    microcredit: p.microcredit,
+    renegotiation_type: p.renegotiation_type,
+    guarantee_type: p.guarantee_type,
+    registration_central_task: p.registration_central_task,
+    registration_central_activity_start: p.registration_central_activity_start,
+    judicial_period: p.judicial_period,
+    requesting_unit: p.requesting_unit,
+    agreement: p.agreement,
+    culture: p.culture,
+    roc_type: p.roc_type,
+    poa_prd_subject: p.poa_prd_subject,
+    activity_id: p.activity_id,
+    technical_summary: p.technical_summary,
+  });
+
   const handleMigrateToStock = async (p: any) => {
     setMigratingId(p.id);
-    const stockData = {
-      producer_name: p.producer_name,
-      producer_cpf: p.producer_cpf,
-      credit_program: p.credit_program,
-      estimated_value: p.requested_value,
-      notes: p.notes,
-      projetista: PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer,
-      municipio: p.producer_address,
-      original_csv_status: p.sicad || null,
-      linha_credito: p.credit_purpose || null,
-      status: 'CONCLUÍDO',
-      order_index: 0
-    };
+    const stockData = mapToStockData(p);
 
     const migrated = await addStockProposal(stockData as any);
     if (migrated) {
@@ -108,19 +174,7 @@ export default function Proposals() {
     
     setIsMigratingAll(true);
     for (const p of concludedMainProposals) {
-      const stockData = {
-        producer_name: p.producer_name,
-        producer_cpf: p.producer_cpf,
-        credit_program: p.credit_program,
-        estimated_value: p.requested_value,
-        notes: p.notes,
-        projetista: PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer,
-        municipio: p.producer_address,
-        original_csv_status: p.sicad || null,
-        linha_credito: p.credit_purpose || null,
-        status: 'CONCLUÍDO',
-        order_index: 0
-      };
+      const stockData = mapToStockData(p);
       
       const migrated = await addStockProposal(stockData as any);
       if (migrated) {
@@ -382,34 +436,33 @@ export default function Proposals() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-[1600px] mx-auto pb-10">
-      {/* Header Premium */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card/40 backdrop-blur-md p-6 rounded-3xl border border-border/50 shadow-premium">
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-            <DollarSign className="h-6 w-6" />
+      {/* ─── Fintech Header ─── */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200/60 pb-8 pt-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="h-2 w-8 bg-emerald-500 rounded-full" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">Gestão de Crédito</span>
           </div>
-          <div>
-            <h1 className="text-3xl font-extrabold font-heading text-foreground tracking-tight">Gestão de Propostas</h1>
-            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              {proposals.length} registros ativos na agência
-            </p>
-          </div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight font-heading italic">
+            Propostas <span className="text-emerald-600">Concluídas</span>
+          </h1>
+          <p className="text-sm text-slate-500 font-medium">Relatório detalhado de propostas finalizadas e contratos assinados.</p>
         </div>
+
         <div className="flex items-center gap-3">
-          {permissions.can_create_proposals && (
+          {permissions.can_import_csv && (
             <Button
               variant="outline"
               onClick={() => setIsImportDialogOpen(true)}
-              className="rounded-xl border-border/60 hover:bg-background/80 transition-all font-bold text-xs px-5 h-11 flex items-center gap-2"
+              className="rounded-2xl border-slate-200 bg-white hover:bg-slate-50 transition-all font-bold text-xs px-6 h-12 flex items-center gap-2 shadow-sm"
             >
-              <FileUp className="h-4 w-4" /> Importar CSV
+              <FileUp className="h-4 w-4 text-slate-600" /> Importar CSV
             </Button>
           )}
           {permissions.can_create_proposals && (
             <Button
               onClick={openNew}
-              className="rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all font-bold text-xs px-5 h-11 flex items-center gap-2"
+              className="rounded-2xl bg-slate-900 hover:bg-slate-800 text-white shadow-xl shadow-slate-200 transition-all font-bold text-xs px-6 h-12 flex items-center gap-2"
             >
               <Plus className="h-4 w-4" /> Nova Proposta
             </Button>
@@ -417,135 +470,156 @@ export default function Proposals() {
         </div>
       </div>
 
-      {/* KPI Resumo */}
-      <div className="grid gap-4 md:grid-cols-1">
-        <Card className="border-0 shadow-premium bg-gradient-to-r from-primary/5 via-primary/[0.02] to-transparent overflow-hidden relative rounded-3xl">
-          <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
-            <DollarSign className="h-32 w-32 -mr-8 -mt-8" />
-          </div>
-          <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner">
-                <span className="text-xl font-bold font-heading">{filteredForSum.length}</span>
+      {/* ─── Fintech Stats Grid ─── */}
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-300">
+          <CardContent className="p-7 relative overflow-hidden">
+            <div className="absolute -right-6 -top-6 h-32 w-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md">
+                <Wallet className="h-6 w-6 text-emerald-400" />
               </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">Volume em Propostas Filtradas</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="bg-primary/5 text-primary border-primary/10 text-[10px] uppercase font-bold px-2 py-0">
-                    {filteredForSum.length} {filteredForSum.length === 1 ? 'registro' : 'registros'}
-                  </Badge>
-                  {statusFilter !== "all" && (
-                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground px-2 py-0 border-muted-foreground/20">
-                      Filtro: {STATUS_LABELS[statusFilter as ProposalStatus]}
-                    </Badge>
-                  )}
-                </div>
+              <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-[10px] font-black px-3 text-white">TOTAL GERAL</Badge>
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Montante Concluído</p>
+              <h3 className="text-3xl font-black font-heading tracking-tight">
+                {formatCurrency(concludedStats.totalValue)}
+              </h3>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs text-slate-400 font-medium">{concludedStats.totalCount} propostas no histórico</span>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 mb-1">Montante Financeiro</p>
-              <span className="text-4xl font-black bg-gradient-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent font-heading tracking-tight italic">
-                {formatCurrency(filteredForSum.reduce((acc, curr) => acc + Number(curr.requested_value || 0), 0))}
-              </span>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-white border border-slate-100 group transition-transform hover:scale-[1.02] duration-300">
+          <CardContent className="p-7">
+            <div className="flex items-center justify-between mb-6">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-emerald-600" />
+              </div>
+              <Badge className="bg-emerald-50 text-emerald-600 border-0 text-[10px] font-black px-3">PERFORMANCE MÊS</Badge>
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Resultado Mensal</p>
+              <h3 className="text-3xl font-black text-slate-900 font-heading tracking-tight">
+                {formatCurrency(concludedStats.monthValue)}
+              </h3>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-0.5 rounded-full">
+                  <CheckCircle2 className="h-3 w-3 mr-1" /> {concludedStats.monthCount} concluídas
+                </div>
+                <span className="text-xs text-slate-400 font-medium">este mês</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-white border border-slate-100 group transition-transform hover:scale-[1.02] duration-300">
+          <CardContent className="p-7">
+            <div className="flex items-center justify-between mb-6">
+              <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-indigo-600" />
+              </div>
+              <Badge className="bg-indigo-50 text-indigo-600 border-0 text-[10px] font-black px-3">FLUXO ATIVO</Badge>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500">Propostas em Aberto</span>
+                <span className="text-xs font-black text-slate-900">{proposals.length}</span>
+              </div>
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div className="bg-indigo-600 h-full rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, (concludedStats.totalCount / (proposals.length + 1)) * 100)}%` }} />
+              </div>
+              <p className="text-[10px] text-slate-400 font-medium italic">Taxa de conversão baseada no histórico.</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* ─── Seção: Concluídas do Estoque (Movida para o Topo para Visibilidade) ─── */}
-      {concludedStockProposals.length > 0 && (
-        <div className="space-y-4 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-xl bg-emerald-100 flex items-center justify-center">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+      {/* ─── Seção Principal de Concluídas ─── */}
+      <div className="space-y-6 mt-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="h-12 w-12 rounded-[20px] bg-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-200">
+              <CheckCircle2 className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-slate-800">Propostas Concluídas</h2>
-              <p className="text-xs text-muted-foreground">Finalizadas no estoque ou com contrato assinado.</p>
-            </div>
-            <div className="ml-auto flex items-center gap-3">
-              <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">
-                {allConcludedProposalsCount} registro{allConcludedProposalsCount > 1 ? 's' : ''}
-              </span>
-              {concludedMainProposals.length > 0 && (
-                <Button 
-                  onClick={handleMigrateAllToStock}
-                  disabled={isMigratingAll}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase h-8 px-4 rounded-xl shadow-lg shadow-emerald-200 transition-all flex items-center gap-2"
-                >
-                  {isMigratingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : <Box className="h-3 w-3" />}
-                  Migrar Tudo para Estoque
-                </Button>
-              )}
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight italic">Histórico de <span className="text-emerald-600">Sucesso</span></h2>
+              <p className="text-xs text-slate-500 font-medium tracking-tight">Visualização consolidada de propostas do estoque e assinadas.</p>
             </div>
           </div>
+          
+          <div className="flex items-center gap-3">
+            {concludedMainProposals.length > 0 && (
+              <Button 
+                onClick={handleMigrateAllToStock}
+                disabled={isMigratingAll}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase h-10 px-6 rounded-2xl shadow-xl shadow-emerald-100 transition-all flex items-center gap-2"
+              >
+                {isMigratingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : <Box className="h-4 w-4" />}
+                Migrar Tudo para o Histórico
+              </Button>
+            )}
+          </div>
+        </div>
 
-          <Card className="border-0 shadow-premium rounded-3xl overflow-hidden bg-emerald-50/20 border border-emerald-100/50">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-emerald-100/30 border-b border-emerald-100/50">
-                  <tr>
-                    <th className="text-left py-3 pl-6 text-[10px] font-black uppercase tracking-wider text-emerald-700 w-[250px]">Produtor / CPF</th>
-                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Operação / Projetista</th>
-                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Município / Local</th>
-                    <th className="text-left py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Pendências / Serasa</th>
-                    <th className="text-right py-3 text-[10px] font-black uppercase tracking-wider text-emerald-700">Valor Estimado</th>
-                    <th className="text-right py-3 pr-6 text-[10px] font-black uppercase tracking-wider text-emerald-700">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
+        <Card className="border-0 shadow-premium rounded-[40px] overflow-hidden bg-white border border-slate-100">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50/50 border-b border-slate-100">
+                <tr>
+                  <th className="text-left py-6 pl-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Origem</th>
+                  <th className="text-left py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Produtor / Beneficiário</th>
+                  <th className="text-left py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Operação Financeira</th>
+                  <th className="text-left py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Município / Local</th>
+                  <th className="text-right py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Valor Estimado</th>
+                  <th className="text-right py-6 pr-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Ações</th>
+                </tr>
+              </thead>
+                <tbody className="divide-y divide-slate-100">
                   {/* Propostas do Estoque */}
                   {concludedStockProposals.map((p) => (
-                    <tr key={p.id} className="border-b border-emerald-100/20 hover:bg-emerald-100/10 transition-colors">
-                      <td className="py-3 pl-6">
-                        <div className="font-bold text-slate-800 text-xs">{p.producer_name}</div>
-                        <div className="text-[10px] text-muted-foreground font-mono">{p.producer_cpf || '---'}</div>
-                        <Badge className="bg-emerald-500/10 text-emerald-600 border-0 text-[8px] font-black h-4 px-1 mt-0.5">ESTOQUE</Badge>
+                    <tr key={p.id} className="group hover:bg-slate-50/80 transition-all">
+                      <td className="py-5 pl-8">
+                        <Badge className="bg-indigo-500/10 text-indigo-600 border-0 text-[8px] font-black h-4 px-1.5 rounded-md uppercase tracking-tighter">Histórico</Badge>
                       </td>
-                      <td className="py-3">
-                        <div className="text-xs font-semibold text-slate-700">{p.credit_program || '---'}</div>
-                        <div className="text-[10px] text-indigo-600 font-bold uppercase">{p.projetista || 'SEM PROJETISTA'}</div>
+                      <td className="py-5">
+                        <div className="font-bold text-slate-800 text-sm tracking-tight">{p.producer_name}</div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">{p.producer_cpf || '---'}</div>
                       </td>
-                      <td className="py-3">
-                        <div className="text-xs text-slate-600">{p.municipio || '---'}</div>
-                        <div className="text-[9px] text-muted-foreground truncate max-w-[150px]">{p.localizacao || '---'}</div>
+                      <td className="py-5">
+                        <div className="text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md w-fit">{p.credit_program || '---'}</div>
+                        <div className="text-[9px] text-indigo-600 font-black uppercase mt-1 tracking-wider">{p.projetista || 'SEM PROJETISTA'}</div>
                       </td>
-                      <td className="py-3">
-                        <div className="flex flex-col gap-1">
-                          {p.pendencias && (
-                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[9px] py-0 px-1.5 w-fit">
-                              P: {p.pendencias}
-                            </Badge>
-                          )}
-                          {p.serasa && (
-                            <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 text-[9px] py-0 px-1.5 w-fit">
-                              S: {p.serasa}
-                            </Badge>
-                          )}
-                          {!p.pendencias && !p.serasa && <span className="text-[10px] text-muted-foreground italic">Nada constando</span>}
+                      <td className="py-5">
+                        <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                          <MapPin className="h-3 w-3 text-slate-300" /> {p.municipio || '---'}
+                        </div>
+                        <div className="text-[9px] text-slate-400 truncate max-w-[150px] mt-0.5">{p.localizacao || '---'}</div>
+                      </td>
+                      <td className="py-5 text-right">
+                        <div className="text-sm font-black text-slate-900 tabular-nums tracking-tighter">
+                          {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '---'}
                         </div>
                       </td>
-                      <td className="py-3 text-right text-xs font-bold text-emerald-700 tabular-nums">
-                        {p.estimated_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(p.estimated_value)) : '---'}
-                      </td>
-                      <td className="py-3 pr-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="py-5 pr-8 text-right">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => setViewingStockProposal(p)}
-                            title="Ver todos os detalhes"
-                            className="h-8 w-8 rounded-lg bg-white border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-50 transition-all shadow-sm"
+                            title="Ver Detalhes"
+                            className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleRevertToStock(p.id)}
                             disabled={revertingId === p.id}
-                            className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-700 bg-white border border-amber-200 hover:bg-amber-50 rounded-lg px-3 py-1.5 shadow-sm transition-all disabled:opacity-50"
+                            title="Reverter para Fluxo Ativo"
+                            className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-amber-500 hover:text-white transition-all shadow-sm disabled:opacity-50"
                           >
-                            {revertingId === p.id
-                              ? <Loader2 className="h-3 w-3 animate-spin" />
-                              : <RotateCcw className="h-3 w-3" />}
-                            Reverter
+                            {revertingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
                           </button>
                         </div>
                       </td>
@@ -554,34 +628,35 @@ export default function Proposals() {
 
                   {/* Propostas da Lista Principal (Contrato Assinado) */}
                   {concludedMainProposals.map((p) => (
-                    <tr key={p.id} className="border-b border-emerald-100/20 hover:bg-emerald-100/10 transition-colors">
-                      <td className="py-3 pl-6">
-                        <div className="font-bold text-slate-800 text-xs">{p.producer_name}</div>
-                        <div className="text-[10px] text-muted-foreground font-mono">{p.producer_cpf || '---'}</div>
-                        <Badge className="bg-blue-500/10 text-blue-600 border-0 text-[8px] font-black h-4 px-1 mt-0.5">LISTA ATIVA</Badge>
+                    <tr key={p.id} className="group hover:bg-emerald-50/40 transition-all border-l-4 border-l-transparent hover:border-l-emerald-500">
+                      <td className="py-5 pl-8">
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border-0 text-[8px] font-black h-4 px-1.5 rounded-md uppercase tracking-tighter">Lista Ativa</Badge>
                       </td>
-                      <td className="py-3">
-                        <div className="text-xs font-semibold text-slate-700">{p.credit_program || '---'}</div>
-                        <div className="text-[10px] text-indigo-600 font-bold uppercase">{PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || 'SEM PROJETISTA'}</div>
+                      <td className="py-5">
+                        <div className="font-bold text-slate-800 text-sm tracking-tight">{p.producer_name}</div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">{p.producer_cpf || '---'}</div>
                       </td>
-                      <td className="py-3">
-                        <div className="text-xs text-slate-600">{p.producer_address || '---'}</div>
-                        <div className="text-[9px] text-muted-foreground truncate max-w-[150px]">Sicad: {p.sicad || '---'}</div>
+                      <td className="py-5">
+                        <div className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md w-fit">{p.credit_program || '---'}</div>
+                        <div className="text-[9px] text-indigo-600 font-black uppercase mt-1 tracking-wider">{PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer}</div>
                       </td>
-                      <td className="py-3">
-                        <Badge className="bg-green-50 text-green-700 border border-green-200 text-[9px] py-0.5 px-2 font-black">
-                          CONTRATO ASSINADO
-                        </Badge>
+                      <td className="py-5">
+                        <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                          <MapPin className="h-3 w-3 text-slate-300" /> {p.producer_address || '---'}
+                        </div>
+                        <div className="text-[9px] text-slate-400 truncate max-w-[150px] mt-0.5">{p.sicad || '---'}</div>
                       </td>
-                      <td className="py-3 text-right text-xs font-bold text-emerald-700 tabular-nums">
-                        {p.requested_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(p.requested_value)) : '---'}
+                      <td className="py-5 text-right">
+                        <div className="text-sm font-black text-emerald-700 tabular-nums tracking-tighter">
+                          {p.requested_value ? formatCurrency(Number(p.requested_value)) : '---'}
+                        </div>
                       </td>
-                      <td className="py-3 pr-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="py-5 pr-8 text-right">
+                        <div className="flex items-center justify-end gap-3">
                           <button
                             onClick={() => setViewingProposal(p)}
-                            title="Ver todos os detalhes"
-                            className="h-8 w-8 rounded-lg bg-white border border-emerald-200 flex items-center justify-center text-emerald-700 hover:bg-emerald-50 transition-all shadow-sm"
+                            title="Detalhes Premium"
+                            className="h-9 w-9 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
@@ -589,67 +664,10 @@ export default function Proposals() {
                           <button
                             onClick={() => handleMigrateToStock(p)}
                             disabled={migratingId === p.id}
-                            className="inline-flex items-center gap-1.5 text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-3 py-1.5 shadow-md shadow-emerald-100 transition-all disabled:opacity-50"
+                            className="h-9 px-4 rounded-2xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 flex items-center gap-2"
                           >
-                            {migratingId === p.id
-                              ? <Loader2 className="h-3 w-3 animate-spin" />
-                              : <Box className="h-3 w-3" />}
-                            Migrar
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setFormData({
-                                producer_name: p.producer_name,
-                                producer_cpf: p.producer_cpf,
-                                producer_address: p.producer_address || "",
-                                producer_phone: p.producer_phone || "",
-                                pronaf_line: p.pronaf_line,
-                                project_designer: p.project_designer || "ney_medeiros",
-                                requested_value: p.requested_value,
-                                status: p.status,
-                                entry_date: p.entry_date,
-                                notes: p.notes || "",
-                                sicad: p.sicad || "",
-                                credit_program: p.credit_program || "",
-                                request_type: p.request_type || "",
-                                agency_code: p.agency_code || "",
-                                agency_name: p.agency_name || "",
-                                task: p.task || "",
-                                central_date: p.central_date || "",
-                                activity_start_date: p.activity_start_date || "",
-                                last_analyst: p.last_analyst || "",
-                                owner: p.owner || "",
-                                originator: p.originator || "",
-                                current_state: p.current_state || "",
-                                category: p.category || "",
-                                client_size: p.client_size || "",
-                                proposal_number: p.proposal_number || "",
-                                credit_purpose: p.credit_purpose || "",
-                                resource_application: p.resource_application || "",
-                                special_treatment: p.special_treatment || "",
-                                central: p.central || "",
-                                superintendence_code: p.superintendence_code || "",
-                                superintendence_name: p.superintendence_name || "",
-                                microcredit: p.microcredit || "",
-                                renegotiation_type: p.renegotiation_type || "",
-                                guarantee_type: p.guarantee_type || "",
-                                registration_central_task: p.registration_central_task || "",
-                                registration_central_activity_start: p.registration_central_activity_start || "",
-                                judicial_period: p.judicial_period || "",
-                                requesting_unit: p.requesting_unit || "",
-                                agreement: p.agreement || "",
-                                culture: p.culture || "",
-                                roc_type: p.roc_type || "",
-                                poa_prd_subject: p.poa_prd_subject || "",
-                                activity_id: p.activity_id || "",
-                              });
-                              setIsDialogOpen(true);
-                            }}
-                            title="Editar Proposta"
-                            className="h-8 w-8 rounded-lg bg-white border border-blue-200 flex items-center justify-center text-blue-700 hover:bg-blue-50 transition-all shadow-sm"
-                          >
-                            <Pencil className="h-4 w-4" />
+                            {migratingId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Box className="h-3 w-3" />}
+                            Arquivar
                           </button>
                         </div>
                       </td>
@@ -747,7 +765,31 @@ export default function Proposals() {
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
                       <span className="text-xs text-slate-500">Localização</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.localizacao || '---'}</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.localizacao || viewingStockProposal?.producer_address || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Telefone</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.producer_phone || '---'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <Box className="h-3.5 w-3.5" /> Dados do Sistema
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Origem</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.originator || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Data de Entrada</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.entry_date ? format(parseISO(viewingStockProposal.entry_date), 'dd/MM/yyyy') : '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Último Analista</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.last_analyst || '---'}</span>
                     </div>
                   </div>
                 </div>
@@ -863,52 +905,61 @@ export default function Proposals() {
           <Card className="border-0 shadow-premium rounded-3xl overflow-hidden bg-card/80 backdrop-blur-md transition-all">
             <div className="overflow-x-auto scrollbar-thin">
               <Table>
-                <TableHeader className="bg-muted/30">
+                <TableHeader className="bg-slate-50/80 border-b border-slate-100">
                   <TableRow className="hover:bg-transparent border-0">
-                    <TableHead className="w-[300px] py-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground pl-6">Beneficiário</TableHead>
-                    <TableHead className="py-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Operação</TableHead>
-                    <TableHead className="py-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right">Valor Solicitado</TableHead>
-                    <TableHead className="py-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Status</TableHead>
-                    <TableHead className="py-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right pr-6">Ações</TableHead>
+                    <TableHead className="w-[300px] py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 pl-8">Beneficiário</TableHead>
+                    <TableHead className="py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Operação</TableHead>
+                    <TableHead className="py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Valor Solicitado</TableHead>
+                    <TableHead className="py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Status</TableHead>
+                    <TableHead className="py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right pr-8">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paged.map((proposal) => (
-                    <TableRow key={proposal.id} className="group hover:bg-primary/5 transition-colors border-border/30">
-                      <TableCell className="py-4 pl-6">
+                    <TableRow key={proposal.id} className="group hover:bg-slate-50/50 transition-all border-b border-slate-100/50 border-l-4 border-l-transparent hover:border-l-indigo-500">
+                      <TableCell className="py-5 pl-8">
                         <div className="flex flex-col">
-                          <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors cursor-pointer" onClick={() => openEdit(proposal)}>{proposal.producer_name}</span>
-                          <span className="text-[10px] font-medium text-muted-foreground tabular-nums">{proposal.producer_cpf}</span>
+                          <span className="text-sm font-black text-slate-800 tracking-tight group-hover:text-indigo-700 transition-colors cursor-pointer" onClick={() => openEdit(proposal)}>
+                            {proposal.producer_name}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-400 mt-0.5">{proposal.producer_cpf || '---'}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="py-4">
-                        <div className="flex flex-col">
-                          <span className="text-xs font-semibold">{proposal.credit_program || 'Não Informado'}</span>
-                          <span className="text-[9px] text-muted-foreground/60 uppercase font-black">{proposal.sicad || 'SEM SICAD'}</span>
+                      <TableCell className="py-5">
+                        <div className="flex flex-col items-start">
+                          <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md w-fit">{proposal.credit_program || '---'}</span>
+                          <span className="text-[9px] text-indigo-500 uppercase font-black tracking-wider mt-1.5">{proposal.sicad || 'S/ SICAD'}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="py-4 text-right">
-                        <span className="text-sm font-bold tabular-nums text-primary">
-                          {formatCurrency(Number(proposal.requested_value))}
+                      <TableCell className="py-5 text-right">
+                        <span className="text-sm font-black tabular-nums text-slate-800 tracking-tighter">
+                          {proposal.requested_value ? formatCurrency(Number(proposal.requested_value)) : '---'}
                         </span>
                       </TableCell>
-                      <TableCell className="py-4 text-center">
-                        <Badge className={`rounded-lg px-2 py-0.5 text-[9px] font-bold shadow-sm border-0 ${STATUS_COLORS[proposal.status as ProposalStatus]}`}>
+                      <TableCell className="py-5 text-center">
+                        <Badge className={`rounded-md px-2 py-1 text-[9px] font-black uppercase tracking-widest shadow-sm border-0 ${STATUS_COLORS[proposal.status as ProposalStatus]}`}>
                           {STATUS_LABELS[proposal.status as ProposalStatus]}
                         </Badge>
                       </TableCell>
-                      <TableCell className="py-4 text-right pr-6">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                      <TableCell className="py-5 text-right pr-8">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 rounded-lg hover:bg-emerald-100/50 text-emerald-600" 
+                            className="h-8 w-8 rounded-xl hover:bg-slate-900 text-slate-400 hover:text-white transition-all shadow-sm border border-transparent hover:border-slate-800" 
                             onClick={() => setViewingProposal(proposal)}
+                            title="Ver Detalhes"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           {permissions.can_edit_proposals && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-primary/10 text-primary" onClick={() => openEdit(proposal)}>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 rounded-xl hover:bg-indigo-600 text-indigo-400 hover:text-white transition-all shadow-sm border border-transparent hover:border-indigo-500" 
+                              onClick={() => openEdit(proposal)}
+                              title="Editar Proposta"
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
                           )}
@@ -920,7 +971,8 @@ export default function Proposals() {
                                 setDeleteId(proposal.id);
                                 setIsDeleteAlertOpen(true);
                               }}
-                              className="h-8 w-8 rounded-lg hover:bg-destructive/10 text-destructive"
+                              className="h-8 w-8 rounded-xl hover:bg-red-600 text-red-400 hover:text-white transition-all shadow-sm border border-transparent hover:border-red-500"
+                              title="Excluir Proposta"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -931,10 +983,10 @@ export default function Proposals() {
                   ))}
                   {filtered.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-48 text-center">
+                      <TableCell colSpan={5} className="h-48 text-center bg-slate-50/50">
                         <div className="flex flex-col items-center justify-center space-y-3 opacity-40">
-                          <Search className="h-10 w-10" />
-                          <p className="text-sm font-medium">Nenhuma proposta encontrada</p>
+                          <Search className="h-10 w-10 text-slate-400" />
+                          <p className="text-sm font-black text-slate-500 uppercase tracking-widest">Nenhuma proposta encontrada</p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -945,15 +997,15 @@ export default function Proposals() {
 
             {/* Paginação Premium */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/10 backdrop-blur-sm">
-                <p className="text-xs text-muted-foreground font-medium">
-                  Mostrando <span className="font-bold text-foreground">{paged.length}</span> de <span className="font-bold text-foreground">{filtered.length}</span> propostas
+              <div className="flex items-center justify-between px-8 py-4 border-t border-slate-100 bg-slate-50/50 backdrop-blur-sm">
+                <p className="text-xs text-slate-400 font-medium">
+                  Mostrando <span className="font-black text-slate-700">{paged.length}</span> de <span className="font-black text-slate-700">{filtered.length}</span> propostas
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 rounded-lg border-border/50 hover:bg-background/80"
+                    className="h-8 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold text-[10px] uppercase tracking-widest"
                     disabled={page === 0}
                     onClick={() => setPage(page - 1)}
                   >
@@ -965,7 +1017,7 @@ export default function Proposals() {
                         key={i}
                         variant={page === i ? "default" : "outline"}
                         size="icon"
-                        className={`h-8 w-8 rounded-lg text-xs font-bold ${page === i ? 'shadow-md shadow-primary/20' : 'border-border/50'}`}
+                        className={`h-8 w-8 rounded-xl text-xs font-black transition-all ${page === i ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100'}`}
                         onClick={() => setPage(i)}
                       >
                         {i + 1}
@@ -975,7 +1027,7 @@ export default function Proposals() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 rounded-lg border-border/50 hover:bg-background/80"
+                    className="h-8 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-bold text-[10px] uppercase tracking-widest"
                     disabled={page >= totalPages - 1}
                     onClick={() => setPage(page + 1)}
                   >

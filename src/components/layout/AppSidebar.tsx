@@ -28,7 +28,7 @@ import {
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, permission: "can_view_dashboard" },
-  { title: "Propostas", url: "/propostas", icon: FileText, permission: "can_view_proposals" },
+  { title: "Propostas Concluídas", url: "/propostas", icon: FileText, permission: "can_view_proposals" },
   { title: "Estoque", url: "/estoque", icon: Box, permission: "can_view_proposals" },
   { title: "Troca de Arquivos", url: "/troca-arquivos", icon: Share2, permission: "can_view_proposals" },
   { title: "Kanban", url: "/kanban", icon: Columns3, permission: "can_view_kanban" },
