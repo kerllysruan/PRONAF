@@ -249,59 +249,50 @@ export default function Proposals() {
     }
   }, [formData.requested_value, formData.credit_program]);
 
-  const filtered = useMemo(() => {
-    // Removed setPage(0) to prevent reset on data update
-    let result = proposals.filter((p) => {
-      // Excluir as que já estão assinadas (concluídas) da lista principal
-      if (p.status === 'aprovada') return false;
-
-      const matchesSearch =
-        p.producer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.producer_cpf.includes(searchTerm);
-      const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-      const matchesDesigner = designerFilter === "all" || p.project_designer === designerFilter;
-      const d = parseISO(p.entry_date);
-      const matchesMonth = filterMonth === "all" || getMonth(d) + 1 === Number(filterMonth);
-      const matchesYear = filterYear === "all" || getYear(d) === Number(filterYear);
-      return matchesSearch && matchesStatus && matchesDesigner && matchesMonth && matchesYear;
+  const allConcluded = useMemo(() => {
+    const mainMapped = concludedMainProposals.map(p => ({
+      ...p,
+      isMain: true,
+      displayValue: Number(p.requested_value) || 0,
+      displayLocation: p.producer_address || '---',
+      displayDesigner: PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer,
+      displayDate: p.entry_date
+    }));
+    const stockMapped = concludedStockProposals.map(p => ({
+      ...p,
+      isMain: false,
+      displayValue: Number(p.estimated_value) || 0,
+      displayLocation: p.municipio || '---',
+      displayDesigner: p.projetista || 'SEM PROJETISTA',
+      displayDate: p.entry_date || p.created_at
+    }));
+    return [...mainMapped, ...stockMapped].sort((a, b) => {
+      if (sortBy === "nome") return a.producer_name.localeCompare(b.producer_name);
+      return new Date(b.displayDate || 0).getTime() - new Date(a.displayDate || 0).getTime();
     });
+  }, [concludedMainProposals, concludedStockProposals, sortBy]);
 
-    // Aplicar ordenamento
-    if (sortBy === "nome") {
-      result.sort((a, b) => a.producer_name.localeCompare(b.producer_name));
-    } else if (sortBy === "data") {
-      result.sort((a, b) => new Date(b.entry_date).getTime() - new Date(a.entry_date).getTime());
-    }
+  const filtered = useMemo(() => {
+    return allConcluded.filter((p) => {
+      const matchesSearch =
+        p.producer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.producer_cpf?.includes(searchTerm);
+      
+      const d = p.displayDate ? new Date(p.displayDate) : new Date();
+      const matchesMonth = filterMonth === "all" || d.getMonth() + 1 === Number(filterMonth);
+      const matchesYear = filterYear === "all" || d.getFullYear() === Number(filterYear);
+      return matchesSearch && matchesMonth && matchesYear;
+    });
+  }, [allConcluded, searchTerm, filterMonth, filterYear]);
 
-    return result;
-  }, [proposals, searchTerm, statusFilter, designerFilter, filterMonth, filterYear, sortBy]);
-
-  // Reset page when filters change
   useEffect(() => {
     setPage(0);
-  }, [searchTerm, statusFilter, designerFilter, filterMonth, filterYear, sortBy]);
+  }, [searchTerm, filterMonth, filterYear, sortBy]);
 
-  // Keep page valid if data shrinks
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-
-  useEffect(() => {
-    if (page > 0 && page >= totalPages) {
-      setPage(Math.max(0, totalPages - 1));
-    }
-  }, [page, totalPages]);
-
-  const filteredForSum = useMemo(() => {
-    return proposals.filter((p) => {
-      const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-      const matchesDesigner = designerFilter === "all" || p.project_designer === designerFilter;
-      const d = parseISO(p.entry_date);
-      const matchesMonth = filterMonth === "all" || getMonth(d) + 1 === Number(filterMonth);
-      const matchesYear = filterYear === "all" || getYear(d) === Number(filterYear);
-      return matchesStatus && matchesDesigner && matchesMonth && matchesYear;
-    });
-  }, [proposals, statusFilter, designerFilter, filterMonth, filterYear]);
-
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -362,42 +353,15 @@ export default function Proposals() {
     if (editingId) {
       await updateProposal(editingId, formData);
       saveSuccess = true;
-      // Se uma tarefa foi selecionada, criar a tarefa vinculada à proposta
-      if (selectedTaskType && selectedMember) {
-        await createTask({
-          title: ASSIGNABLE_TASK_TYPES[selectedTaskType as AssignableTaskType],
-          description: `Tarefa atribuída para proposta de ${formData.producer_name}`,
-          assigned_to: selectedMember,
-          priority: 'media',
-          status: 'pendente',
-          due_date: null,
-          proposal_id: editingId,
-          document_name: selectedTaskType,
-        });
-      }
     } else {
       const result = await createProposal(formData as any);
       if (result) {
         targetProposalId = result.id;
         saveSuccess = true;
-        // Se uma tarefa foi selecionada na criação, criar a tarefa
-        if (selectedTaskType && selectedMember && result.id) {
-          await createTask({
-            title: ASSIGNABLE_TASK_TYPES[selectedTaskType as AssignableTaskType],
-            description: `Tarefa atribuída para proposta de ${formData.producer_name}`,
-            assigned_to: selectedMember,
-            priority: 'media',
-            status: 'pendente',
-            due_date: null,
-            proposal_id: result.id,
-            document_name: selectedTaskType,
-          });
-        }
       }
     }
 
     if (saveSuccess && targetProposalId) {
-      // Lógica de Migração Automática para o Estoque se o status for "CONTRATO ASSINADO"
       if (formData.status === 'aprovada') {
         const stockData = {
           producer_name: formData.producer_name,
@@ -415,17 +379,11 @@ export default function Proposals() {
 
         const migrated = await addStockProposal(stockData as any);
         if (migrated) {
-          // Remover da lista de propostas ativas após migrar com sucesso
           await deleteProposal(targetProposalId);
           setIsDialogOpen(false);
-          // Opcional: Redirecionar para o estoque para ver o resultado
-          navigate('/estoque');
           return;
         }
       }
-      
-      setSelectedTaskType("");
-      setSelectedMember("");
       setIsDialogOpen(false);
     }
   };
@@ -436,7 +394,6 @@ export default function Proposals() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-[1600px] mx-auto pb-10">
-      {/* ─── Fintech Header ─── */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200/60 pb-8 pt-4">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 mb-1">
@@ -448,29 +405,8 @@ export default function Proposals() {
           </h1>
           <p className="text-sm text-slate-500 font-medium">Relatório detalhado de propostas finalizadas e contratos assinados.</p>
         </div>
-
-        <div className="flex items-center gap-3">
-          {permissions.can_import_csv && (
-            <Button
-              variant="outline"
-              onClick={() => setIsImportDialogOpen(true)}
-              className="rounded-2xl border-slate-200 bg-white hover:bg-slate-50 transition-all font-bold text-xs px-6 h-12 flex items-center gap-2 shadow-sm"
-            >
-              <FileUp className="h-4 w-4 text-slate-600" /> Importar CSV
-            </Button>
-          )}
-          {permissions.can_create_proposals && (
-            <Button
-              onClick={openNew}
-              className="rounded-2xl bg-slate-900 hover:bg-slate-800 text-white shadow-xl shadow-slate-200 transition-all font-bold text-xs px-6 h-12 flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" /> Nova Proposta
-            </Button>
-          )}
-        </div>
       </div>
 
-      {/* ─── Fintech Stats Grid ─── */}
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-300">
           <CardContent className="p-7 relative overflow-hidden">
@@ -515,28 +451,50 @@ export default function Proposals() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-white border border-slate-100 group transition-transform hover:scale-[1.02] duration-300">
-          <CardContent className="p-7">
-            <div className="flex items-center justify-between mb-6">
-              <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-indigo-600" />
-              </div>
-              <Badge className="bg-indigo-50 text-indigo-600 border-0 text-[10px] font-black px-3">FLUXO ATIVO</Badge>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-500">Propostas em Aberto</span>
-                <span className="text-xs font-black text-slate-900">{proposals.length}</span>
-              </div>
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                <div className="bg-indigo-600 h-full rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, (concludedStats.totalCount / (proposals.length + 1)) * 100)}%` }} />
-              </div>
-              <p className="text-[10px] text-slate-400 font-medium italic">Taxa de conversão baseada no histórico.</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
+
+      {/* ─── Search & Filters Top Bar (Estilo Estoque) ─── */}
+      <Card className="shadow-sm border-slate-200 mt-8 rounded-[32px]">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-3 h-5 w-5 text-slate-400" />
+              <Input
+                placeholder="Buscar por Nome ou CPF..."
+                className="pl-12 h-11 bg-slate-50 border-slate-200 rounded-2xl text-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="space-y-1.5 flex-1 md:flex-none">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Mês/Ano</Label>
+                <MonthYearFilter
+                  month={filterMonth}
+                  year={filterYear}
+                  onMonthChange={setFilterMonth}
+                  onYearChange={setFilterYear}
+                  years={availableYears}
+                />
+              </div>
+
+              <div className="space-y-1.5 flex-1 md:flex-none">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Ordenar por</Label>
+                <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
+                  <SelectTrigger className="w-full md:w-[160px] h-11 gap-2 bg-slate-50 border-slate-200 rounded-2xl">
+                    <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />
+                    <SelectValue placeholder="Ordenar" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl">
+                    <SelectItem value="data">Data (Mais Novas)</SelectItem>
+                    <SelectItem value="nome">Alfabética (A-Z)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ─── Seção Principal de Concluídas ─── */}
       <div className="space-y-6 mt-8">
@@ -549,19 +507,6 @@ export default function Proposals() {
               <h2 className="text-2xl font-black text-slate-900 tracking-tight italic">Histórico de <span className="text-emerald-600">Sucesso</span></h2>
               <p className="text-xs text-slate-500 font-medium tracking-tight">Visualização consolidada de propostas do estoque e assinadas.</p>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {concludedMainProposals.length > 0 && (
-              <Button 
-                onClick={handleMigrateAllToStock}
-                disabled={isMigratingAll}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase h-10 px-6 rounded-2xl shadow-xl shadow-emerald-100 transition-all flex items-center gap-2"
-              >
-                {isMigratingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : <Box className="h-4 w-4" />}
-                Migrar Tudo para o Histórico
-              </Button>
-            )}
           </div>
         </div>
 
@@ -579,11 +524,14 @@ export default function Proposals() {
                 </tr>
               </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {/* Propostas do Estoque */}
-                  {concludedStockProposals.map((p) => (
+                  {paged.map((p) => (
                     <tr key={p.id} className="group hover:bg-slate-50/80 transition-all">
                       <td className="py-5 pl-8">
-                        <Badge className="bg-indigo-500/10 text-indigo-600 border-0 text-[8px] font-black h-4 px-1.5 rounded-md uppercase tracking-tighter">Histórico</Badge>
+                        {p.isMain ? (
+                           <Badge className="bg-emerald-500/10 text-emerald-600 border-0 text-[8px] font-black h-4 px-1.5 rounded-md uppercase tracking-tighter">Lista Ativa</Badge>
+                        ) : (
+                           <Badge className="bg-indigo-500/10 text-indigo-600 border-0 text-[8px] font-black h-4 px-1.5 rounded-md uppercase tracking-tighter">Histórico</Badge>
+                        )}
                       </td>
                       <td className="py-5">
                         <div className="font-bold text-slate-800 text-sm tracking-tight">{p.producer_name}</div>
@@ -591,410 +539,65 @@ export default function Proposals() {
                       </td>
                       <td className="py-5">
                         <div className="text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md w-fit">{p.credit_program || '---'}</div>
-                        <div className="text-[9px] text-indigo-600 font-black uppercase mt-1 tracking-wider">{p.projetista || 'SEM PROJETISTA'}</div>
+                        <div className="text-[9px] text-indigo-600 font-black uppercase mt-1 tracking-wider">{p.displayDesigner}</div>
                       </td>
                       <td className="py-5">
                         <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                          <MapPin className="h-3 w-3 text-slate-300" /> {p.municipio || '---'}
+                          <MapPin className="h-3 w-3 text-slate-300" /> {p.displayLocation}
                         </div>
-                        <div className="text-[9px] text-slate-400 truncate max-w-[150px] mt-0.5">{p.localizacao || '---'}</div>
                       </td>
                       <td className="py-5 text-right">
                         <div className="text-sm font-black text-slate-900 tabular-nums tracking-tighter">
-                          {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : '---'}
+                          {p.displayValue ? formatCurrency(Number(p.displayValue)) : '---'}
                         </div>
                       </td>
                       <td className="py-5 pr-8 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
-                            onClick={() => setViewingStockProposal(p)}
+                            onClick={() => p.isMain ? setViewingProposal(p) : setViewingStockProposal(p)}
                             title="Ver Detalhes"
                             className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
-                          <button
-                            onClick={() => handleRevertToStock(p.id)}
-                            disabled={revertingId === p.id}
-                            title="Reverter para Fluxo Ativo"
-                            className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-amber-500 hover:text-white transition-all shadow-sm disabled:opacity-50"
-                          >
-                            {revertingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-                          </button>
+                          {p.isMain ? (
+                            <button
+                              onClick={() => handleMigrateToStock(p)}
+                              disabled={migratingId === p.id}
+                              title="Arquivar no Estoque"
+                              className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                            >
+                              {migratingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Box className="h-4 w-4" />}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleRevertToStock(p.id)}
+                              disabled={revertingId === p.id}
+                              title="Reverter para Fluxo Ativo"
+                              className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-amber-500 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                            >
+                              {revertingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
-                  ))}
-
-                  {/* Propostas da Lista Principal (Contrato Assinado) */}
-                  {concludedMainProposals.map((p) => (
-                    <tr key={p.id} className="group hover:bg-emerald-50/40 transition-all border-l-4 border-l-transparent hover:border-l-emerald-500">
-                      <td className="py-5 pl-8">
-                        <Badge className="bg-emerald-500/10 text-emerald-600 border-0 text-[8px] font-black h-4 px-1.5 rounded-md uppercase tracking-tighter">Lista Ativa</Badge>
-                      </td>
-                      <td className="py-5">
-                        <div className="font-bold text-slate-800 text-sm tracking-tight">{p.producer_name}</div>
-                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">{p.producer_cpf || '---'}</div>
-                      </td>
-                      <td className="py-5">
-                        <div className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md w-fit">{p.credit_program || '---'}</div>
-                        <div className="text-[9px] text-indigo-600 font-black uppercase mt-1 tracking-wider">{PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer}</div>
-                      </td>
-                      <td className="py-5">
-                        <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                          <MapPin className="h-3 w-3 text-slate-300" /> {p.producer_address || '---'}
-                        </div>
-                        <div className="text-[9px] text-slate-400 truncate max-w-[150px] mt-0.5">{p.sicad || '---'}</div>
-                      </td>
-                      <td className="py-5 text-right">
-                        <div className="text-sm font-black text-emerald-700 tabular-nums tracking-tighter">
-                          {p.requested_value ? formatCurrency(Number(p.requested_value)) : '---'}
-                        </div>
-                      </td>
-                      <td className="py-5 pr-8 text-right">
-                        <div className="flex items-center justify-end gap-3">
-                          <button
-                            onClick={() => setViewingProposal(p)}
-                            title="Detalhes Premium"
-                            className="h-9 w-9 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          
-                          <button
-                            onClick={() => handleMigrateToStock(p)}
-                            disabled={migratingId === p.id}
-                            className="h-9 px-4 rounded-2xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 disabled:opacity-50 flex items-center gap-2"
-                          >
-                            {migratingId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Box className="h-3 w-3" />}
-                            Arquivar
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        </div>
-
-      {/* Dialog de Detalhes da Proposta Concluída */}
-      <Dialog open={!!viewingStockProposal} onOpenChange={() => setViewingStockProposal(null)}>
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border-0 shadow-2xl">
-          <div className="bg-emerald-600 p-6 text-white relative">
-            <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
-                <ClipboardList className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black">{viewingStockProposal?.producer_name}</h2>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-xs font-medium text-emerald-100 flex items-center gap-1">
-                    <User className="h-3 w-3" /> {viewingStockProposal?.producer_cpf || 'CPF não informado'}
-                  </span>
-                  <span className="h-1 w-1 rounded-full bg-emerald-300"></span>
-                  <span className="text-xs font-bold text-white bg-emerald-500/50 px-2 py-0.5 rounded-full border border-emerald-400/30">
-                    CONCLUÍDO NO ESTOQUE
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-8 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <Landmark className="h-3.5 w-3.5" /> Informações Financeiras
-                  </h4>
-                  <div className="space-y-4">
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Valor Estimado</p>
-                      <p className="text-xl font-black text-emerald-700">
-                        {viewingStockProposal?.estimated_value ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(viewingStockProposal.estimated_value)) : '---'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Programa de Crédito</p>
-                      <p className="text-sm font-semibold text-slate-700">{viewingStockProposal?.credit_program || '---'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Linha de Crédito</p>
-                      <p className="text-sm font-semibold text-slate-700">{viewingStockProposal?.linha_credito || '---'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <MapPin className="h-3.5 w-3.5" /> Localização e Agência
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Município</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.municipio || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Agência</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.agencia_cadastro || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Projetista</span>
-                      <span className="text-xs font-bold text-indigo-600">{viewingStockProposal?.projetista || '---'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <Info className="h-3.5 w-3.5" /> Detalhes Adicionais
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Pendências</span>
-                      <span className="text-xs font-bold text-amber-600">{viewingStockProposal?.pendencias || 'Nenhuma'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Serasa</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.serasa || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Localização</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.localizacao || viewingStockProposal?.producer_address || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Telefone</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.producer_phone || '---'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <Box className="h-3.5 w-3.5" /> Dados do Sistema
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Origem</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.originator || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Data de Entrada</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.entry_date ? format(parseISO(viewingStockProposal.entry_date), 'dd/MM/yyyy') : '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Último Analista</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingStockProposal?.last_analyst || '---'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <ClipboardList className="h-3.5 w-3.5" /> Observações
-                  </h4>
-                  <div className="bg-slate-50 rounded-2xl p-4 text-xs text-slate-600 leading-relaxed min-h-[100px] border border-slate-100 italic">
-                    {viewingStockProposal?.notes || viewingStockProposal?.observacoes_extra || 'Sem observações adicionais.'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="bg-slate-50/80 p-6 border-t border-slate-100 flex sm:justify-between items-center rounded-b-3xl">
-            <p className="text-[10px] text-slate-400 italic">Criado em: {viewingStockProposal?.created_at ? new Date(viewingStockProposal.created_at).toLocaleDateString('pt-BR') : '---'}</p>
-            <Button variant="outline" onClick={() => setViewingStockProposal(null)} className="rounded-xl font-bold text-xs h-10 border-slate-200">
-              Fechar Detalhes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-        {/* Filtros Lateral */}
-        <aside className="md:col-span-3 space-y-6 sticky top-24">
-          <Card className="border-0 shadow-premium rounded-3xl overflow-hidden bg-card/60 backdrop-blur-sm">
-            <div className="bg-primary/5 p-4 border-b border-primary/10">
-              <p className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                <Search className="h-3 w-3" /> Filtros Avançados
-              </p>
-            </div>
-            <CardContent className="p-5 space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Busca Rápida</label>
-                <div className="relative group">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
-                  <Input
-                    placeholder="Nome ou CPF..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-11 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 transition-all shadow-inner"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Filtrar por Status</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="h-11 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 shadow-inner">
-                    <SelectValue placeholder="Todos os Status" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-border/50">
-                    <SelectItem value="all" className="rounded-lg">Todos os Status</SelectItem>
-                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value} className="rounded-lg">{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Ordenar por</label>
-                <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
-                  <SelectTrigger className="h-11 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 shadow-inner">
-                    <SelectValue placeholder="Ordenar" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-border/50">
-                    <SelectItem value="data" className="rounded-lg">Data (Mais Novas)</SelectItem>
-                    <SelectItem value="nome" className="rounded-lg">Ordem Alfabética (A-Z)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Mês/Ano</label>
-                <MonthYearFilter
-                  month={filterMonth}
-                  year={filterYear}
-                  onMonthChange={setFilterMonth}
-                  onYearChange={setFilterYear}
-                  years={availableYears}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1">Projetista</label>
-                <Select value={designerFilter} onValueChange={setDesignerFilter}>
-                  <SelectTrigger className="h-11 rounded-xl bg-background/50 border-border/50 focus:border-primary/50 shadow-inner">
-                    <SelectValue placeholder="Projetista" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl border-border/50">
-                    <SelectItem value="all" className="rounded-lg">Todos os Projetistas</SelectItem>
-                    {Object.entries(PROJECT_DESIGNER_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key} className="rounded-lg">{label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-primary/10 to-transparent border border-primary/10">
-            <p className="text-xs font-bold text-primary mb-2">Dica Pro</p>
-            <p className="text-[10px] text-muted-foreground leading-relaxed font-medium">Use os filtros para analisar o desempenho de projetistas específicos ou períodos de tempo.</p>
-          </div>
-        </aside>
-
-        {/* Tabela de Propostas */}
-        <div className="md:col-span-9 space-y-6">
-          <Card className="border-0 shadow-premium rounded-3xl overflow-hidden bg-card/80 backdrop-blur-md transition-all">
-            <div className="overflow-x-auto scrollbar-thin">
-              <Table>
-                <TableHeader className="bg-slate-50/80 border-b border-slate-100">
-                  <TableRow className="hover:bg-transparent border-0">
-                    <TableHead className="w-[300px] py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 pl-8">Beneficiário</TableHead>
-                    <TableHead className="py-5 text-[10px] font-black uppercase tracking-widest text-slate-500">Operação</TableHead>
-                    <TableHead className="py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Valor Solicitado</TableHead>
-                    <TableHead className="py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-center">Status</TableHead>
-                    <TableHead className="py-5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right pr-8">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paged.map((proposal) => (
-                    <TableRow key={proposal.id} className="group hover:bg-slate-50/50 transition-all border-b border-slate-100/50 border-l-4 border-l-transparent hover:border-l-indigo-500">
-                      <TableCell className="py-5 pl-8">
-                        <div className="flex flex-col">
-                          <span className="text-sm font-black text-slate-800 tracking-tight group-hover:text-indigo-700 transition-colors cursor-pointer" onClick={() => openEdit(proposal)}>
-                            {proposal.producer_name}
-                          </span>
-                          <span className="text-[10px] font-mono text-slate-400 mt-0.5">{proposal.producer_cpf || '---'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-5">
-                        <div className="flex flex-col items-start">
-                          <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md w-fit">{proposal.credit_program || '---'}</span>
-                          <span className="text-[9px] text-indigo-500 uppercase font-black tracking-wider mt-1.5">{proposal.sicad || 'S/ SICAD'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-5 text-right">
-                        <span className="text-sm font-black tabular-nums text-slate-800 tracking-tighter">
-                          {proposal.requested_value ? formatCurrency(Number(proposal.requested_value)) : '---'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="py-5 text-center">
-                        <Badge className={`rounded-md px-2 py-1 text-[9px] font-black uppercase tracking-widest shadow-sm border-0 ${STATUS_COLORS[proposal.status as ProposalStatus]}`}>
-                          {STATUS_LABELS[proposal.status as ProposalStatus]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-5 text-right pr-8">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 rounded-xl hover:bg-slate-900 text-slate-400 hover:text-white transition-all shadow-sm border border-transparent hover:border-slate-800" 
-                            onClick={() => setViewingProposal(proposal)}
-                            title="Ver Detalhes"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {permissions.can_edit_proposals && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 rounded-xl hover:bg-indigo-600 text-indigo-400 hover:text-white transition-all shadow-sm border border-transparent hover:border-indigo-500" 
-                              onClick={() => openEdit(proposal)}
-                              title="Editar Proposta"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {permissions.can_delete_proposals && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setDeleteId(proposal.id);
-                                setIsDeleteAlertOpen(true);
-                              }}
-                              className="h-8 w-8 rounded-xl hover:bg-red-600 text-red-400 hover:text-white transition-all shadow-sm border border-transparent hover:border-red-500"
-                              title="Excluir Proposta"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
                   ))}
                   {filtered.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-48 text-center bg-slate-50/50">
+                    <tr>
+                      <td colSpan={6} className="h-48 text-center bg-slate-50/50">
                         <div className="flex flex-col items-center justify-center space-y-3 opacity-40">
                           <Search className="h-10 w-10 text-slate-400" />
                           <p className="text-sm font-black text-slate-500 uppercase tracking-widest">Nenhuma proposta encontrada</p>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   )}
-                </TableBody>
-              </Table>
+                </tbody>
+              </table>
             </div>
 
-            {/* Paginação Premium */}
+            {/* Paginação */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-8 py-4 border-t border-slate-100 bg-slate-50/50 backdrop-blur-sm">
                 <p className="text-xs text-slate-400 font-medium">
@@ -1010,19 +613,6 @@ export default function Proposals() {
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
                   </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => (
-                      <Button
-                        key={i}
-                        variant={page === i ? "default" : "outline"}
-                        size="icon"
-                        className={`h-8 w-8 rounded-xl text-xs font-black transition-all ${page === i ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'border-slate-200 text-slate-500 hover:bg-slate-100'}`}
-                        onClick={() => setPage(i)}
-                      >
-                        {i + 1}
-                      </Button>
-                    ))}
-                  </div>
                   <Button
                     variant="outline"
                     size="sm"
@@ -1037,7 +627,6 @@ export default function Proposals() {
             )}
           </Card>
         </div>
-      </div>
 
       {/* Dialog de Detalhes da Proposta Ativa (Configuração Gráfica Premium) */}
       <Dialog open={!!viewingProposal} onOpenChange={() => setViewingProposal(null)}>
