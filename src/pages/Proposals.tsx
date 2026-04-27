@@ -678,7 +678,6 @@ export default function Proposals() {
             </div>
           </Card>
         </div>
-      )}
 
       {/* Dialog de Detalhes da Proposta Concluída */}
       <Dialog open={!!viewingStockProposal} onOpenChange={() => setViewingStockProposal(null)}>
