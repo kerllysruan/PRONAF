@@ -16,8 +16,10 @@ export function useStockProposals() {
   const userIdRef = useRef(user?.id);
   const agencyRef = useRef(effectiveAgencyId);
 
+  const userId = user?.id;
+
   const fetchProposals = useCallback(async (silent = false) => {
-    if (!user) return;
+    if (!userId) return;
     
     try {
       // Only show loading spinner on the FIRST fetch
@@ -53,7 +55,7 @@ export function useStockProposals() {
     } finally {
       setLoading(false);
     }
-  }, [user, effectiveAgencyId, toast]);
+  }, [userId, effectiveAgencyId, toast]);
 
   useEffect(() => {
     // Only refetch if user or agency actually changed (not just object reference)

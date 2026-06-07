@@ -71,8 +71,10 @@ export function useProposals() {
   const [proposals, setProposals] = useState<(DbProposal & { documents: DbDocument[] })[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const userId = user?.id;
+
   const fetchProposals = useCallback(async (silent = false) => {
-    if (!user) return;
+    if (!userId) return;
     if (!silent) setLoading(true);
 
     let query = supabase
@@ -102,7 +104,7 @@ export function useProposals() {
       );
     }
     if (!silent) setLoading(false);
-  }, [user, toast, effectiveAgencyId]);
+  }, [userId, toast, effectiveAgencyId]);
 
   useEffect(() => {
     fetchProposals();
