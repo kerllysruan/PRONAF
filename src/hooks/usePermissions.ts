@@ -50,13 +50,15 @@ export function usePermissions() {
   const [role, setRole] = useState<string>("usuario");
   const [loading, setLoading] = useState(true);
 
+  const userId = user?.id;
+
   const fetchPermissions = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     setLoading(true);
 
     const [permRes, roleRes] = await Promise.all([
-      supabase.from("user_permissions").select("*").eq("user_id", user.id).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle(),
+      supabase.from("user_permissions").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
     ]);
 
     if (permRes.data) {
@@ -69,23 +71,23 @@ export function usePermissions() {
     setRole(userRole);
 
     setLoading(false);
-  }, [user]);
+  }, [userId]);
 
   useEffect(() => {
     fetchPermissions();
 
-    if (!user) return;
+    if (!userId) return;
 
     // Real-time permission changes
     const channel = supabase
-      .channel(`perms-${user.id}`)
+      .channel(`perms-${userId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'user_permissions',
-          filter: `user_id=eq.${user.id}`
+          filter: `user_id=eq.${userId}`
         },
         () => fetchPermissions()
       )
@@ -94,7 +96,7 @@ export function usePermissions() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchPermissions, user]);
+  }, [fetchPermissions, userId]);
 
   const isAdmin = role === "admin" || role === "developer";
   const isDeveloper = role === "developer";

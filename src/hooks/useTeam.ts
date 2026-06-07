@@ -36,8 +36,10 @@ export function useTeam() {
   const [tasks, setTasks] = useState<DbDocumentTask[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const userId = user?.id;
+
   const fetchAll = useCallback(async (silent = false) => {
-    if (!user) return;
+    if (!userId) return;
     if (!silent) setLoading(true);
 
     let membersQuery = supabase.from("team_members").select("*").order("created_at");
@@ -56,7 +58,7 @@ export function useTeam() {
     setMembers(membersRes.data || []);
     setTasks(tasksRes.data || []);
     if (!silent) setLoading(false);
-  }, [user, effectiveAgencyId]);
+  }, [userId, effectiveAgencyId]);
 
   useEffect(() => {
     fetchAll();
