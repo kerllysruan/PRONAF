@@ -36,8 +36,9 @@ import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { ImportProposalsDialog } from "@/components/proposals/ImportProposalsDialog";
 
-import { usePermissions } from "@/hooks/usePermissions";
 import { useStockProposals } from "@/hooks/useStockProposals";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const PAGE_SIZE = 10;
 
@@ -71,6 +72,11 @@ export default function Proposals() {
   const [isMigratingAll, setIsMigratingAll] = useState(false);
   const [viewingStockProposal, setViewingStockProposal] = useState<any | null>(null);
   const [viewingProposal, setViewingProposal] = useState<any | null>(null);
+
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [reportFilterMonth, setReportFilterMonth] = useState("all");
+  const [reportFilterYear, setReportFilterYear] = useState("all");
+  const [reportFilterDesigner, setReportFilterDesigner] = useState("all");
 
   const concludedStats = useMemo(() => {
     const totalCount = allConcludedProposalsCount;
@@ -271,6 +277,118 @@ export default function Proposals() {
       return new Date(b.displayDate || 0).getTime() - new Date(a.displayDate || 0).getTime();
     });
   }, [concludedMainProposals, concludedStockProposals, sortBy]);
+
+  const uniqueDesigners = useMemo(() => {
+    const designers = new Set(allConcluded.map(p => p.displayDesigner).filter(Boolean));
+    return Array.from(designers).sort();
+  }, [allConcluded]);
+
+  const generateReport = () => {
+    const doc = new jsPDF({ orientation: "landscape" });
+    const timestamp = format(new Date(), "dd/MM/yyyy HH:mm");
+    
+    // Filter the proposals for the report
+    const reportData = allConcluded.filter(p => {
+      const d = p.displayDate ? new Date(p.displayDate) : new Date();
+      const matchesMonth = reportFilterMonth === "all" || d.getMonth() + 1 === Number(reportFilterMonth);
+      const matchesYear = reportFilterYear === "all" || d.getFullYear() === Number(reportFilterYear);
+      const matchesDesigner = reportFilterDesigner === "all" || p.displayDesigner === reportFilterDesigner;
+      return matchesMonth && matchesYear && matchesDesigner;
+    });
+
+    const totalValue = reportData.reduce((acc, p) => acc + (Number(p.displayValue) || 0), 0);
+    const totalCount = reportData.length;
+    const avgTicket = totalCount > 0 ? totalValue / totalCount : 0;
+
+    // --- Header ---
+    doc.setFillColor(15, 23, 42); // slate-900
+    doc.rect(0, 0, doc.internal.pageSize.width, 35, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("Relatório Executivo", 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("Gestão de Propostas Concluídas", 14, 28);
+
+    doc.setFontSize(9);
+    doc.text(`Gerado em: ${timestamp}`, doc.internal.pageSize.width - 14, 25, { align: "right" });
+
+    // --- KPI Cards ---
+    let startY = 45;
+    
+    // Card 1
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.rect(14, startY, 80, 25, 'FD');
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(9);
+    doc.text("VOLUME TOTAL (QTD)", 18, startY + 8);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(String(totalCount), 18, startY + 18);
+
+    // Card 2
+    doc.setFillColor(248, 250, 252);
+    doc.rect(100, startY, 80, 25, 'FD');
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text("MONTANTE CONCLUÍDO", 104, startY + 8);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(formatCurrency(totalValue), 104, startY + 18);
+
+    // Card 3
+    doc.setFillColor(248, 250, 252);
+    doc.rect(186, startY, 80, 25, 'FD');
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text("TICKET MÉDIO", 190, startY + 8);
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(formatCurrency(avgTicket), 190, startY + 18);
+
+    startY += 35;
+
+    // --- Table ---
+    const tableData = reportData.map(p => [
+      p.isMain ? "Lista Ativa" : "Estoque",
+      p.producer_name,
+      p.producer_cpf || "-",
+      p.credit_program || "-",
+      p.displayDesigner || "-",
+      p.displayLocation || "-",
+      formatCurrency(Number(p.displayValue) || 0)
+    ]);
+
+    autoTable(doc, {
+      startY: startY,
+      head: [["Origem", "Produtor", "CPF", "Operação", "Projetista", "Município", "Valor"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold' },
+      styles: { fontSize: 8, cellPadding: 3 },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+    });
+
+    const pages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(7);
+      doc.setTextColor(148, 163, 184);
+      doc.text(`Documento Gerado pelo Sistema de Gestão  |  Página ${i} de ${pages}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 5, { align: "center" });
+    }
+
+    doc.save(`Relatorio_Propostas_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
+    setIsReportDialogOpen(false);
+  };
 
   const filtered = useMemo(() => {
     return allConcluded.filter((p) => {
@@ -517,6 +635,15 @@ export default function Proposals() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-end pb-0.5 ml-2">
+                <Button 
+                  onClick={() => setIsReportDialogOpen(true)}
+                  className="h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold px-6 shadow-sm shadow-indigo-200"
+                >
+                  <FileUp className="h-4 w-4 mr-2" />
+                  Gerar Relatório
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -656,6 +783,48 @@ export default function Proposals() {
             )}
           </Card>
         </div>
+
+      {/* Dialog de Relatório */}
+      <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-indigo-900">
+              <FileUp className="h-5 w-5" />
+              Configurar Relatório
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Mês/Ano</Label>
+              <MonthYearFilter
+                month={reportFilterMonth}
+                year={reportFilterYear}
+                onMonthChange={setReportFilterMonth}
+                onYearChange={setReportFilterYear}
+                years={availableYears}
+              />
+            </div>
+            <div className="grid gap-2 mt-2">
+              <Label>Projetista</Label>
+              <Select value={reportFilterDesigner} onValueChange={setReportFilterDesigner}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os Projetistas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Projetistas</SelectItem>
+                  {uniqueDesigners.map(d => (
+                    <SelectItem key={d as string} value={d as string}>{d as string}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsReportDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={generateReport} className="bg-indigo-600 hover:bg-indigo-700">Baixar PDF</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog de Detalhes da Proposta Ativa (Configuração Gráfica Premium) */}
       <Dialog open={!!viewingProposal} onOpenChange={() => setViewingProposal(null)}>
