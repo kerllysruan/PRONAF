@@ -408,18 +408,20 @@ export default function Proposals() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-300">
-          <CardContent className="p-7 relative overflow-hidden">
-            <div className="absolute -right-6 -top-6 h-32 w-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all" />
+        {/* Card 1: Montante Concluído */}
+        <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-500 relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-7 relative overflow-hidden z-10">
+            <div className="absolute -right-6 -top-6 h-32 w-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700" />
             <div className="flex items-center justify-between mb-6">
-              <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md">
+              <div className="h-12 w-12 rounded-2xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
                 <Wallet className="h-6 w-6 text-emerald-400" />
               </div>
-              <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-[10px] font-black px-3 text-white">TOTAL GERAL</Badge>
+              <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-3 text-white backdrop-blur-md uppercase tracking-wider">Total Geral</Badge>
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Montante Concluído</p>
-              <h3 className="text-3xl font-black font-heading tracking-tight">
+              <h3 className="text-3xl font-black font-heading tracking-tight drop-shadow-sm">
                 {formatCurrency(concludedStats.totalValue)}
               </h3>
               <div className="flex items-center gap-2 mt-2">
@@ -429,24 +431,48 @@ export default function Proposals() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-white border border-slate-100 group transition-transform hover:scale-[1.02] duration-300">
-          <CardContent className="p-7">
+        {/* Card 2: Performance Mês */}
+        <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-7 relative z-10">
             <div className="flex items-center justify-between mb-6">
-              <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
                 <TrendingUp className="h-6 w-6 text-emerald-600" />
               </div>
-              <Badge className="bg-emerald-50 text-emerald-600 border-0 text-[10px] font-black px-3">PERFORMANCE MÊS</Badge>
+              <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-[10px] font-black px-3 uppercase tracking-wider">Performance Mês</Badge>
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Resultado Mensal</p>
-              <h3 className="text-3xl font-black text-slate-900 font-heading tracking-tight">
+              <h3 className="text-3xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm">
                 {formatCurrency(concludedStats.monthValue)}
               </h3>
               <div className="flex items-center gap-2 mt-2">
-                <div className="flex items-center text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-0.5 rounded-full">
+                <div className="flex items-center text-emerald-700 font-bold text-xs bg-emerald-100/50 border border-emerald-200/50 px-2 py-0.5 rounded-full shadow-sm">
                   <CheckCircle2 className="h-3 w-3 mr-1" /> {concludedStats.monthCount} concluídas
                 </div>
                 <span className="text-xs text-slate-400 font-medium">este mês</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card 3: Ticket Médio */}
+        <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-7 relative z-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="h-12 w-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
+                <DollarSign className="h-6 w-6 text-indigo-600" />
+              </div>
+              <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200/50 text-[10px] font-black px-3 uppercase tracking-wider">Ticket Médio</Badge>
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Valor por Proposta</p>
+              <h3 className="text-3xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm">
+                {formatCurrency(concludedStats.totalCount > 0 ? concludedStats.totalValue / concludedStats.totalCount : 0)}
+              </h3>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs text-slate-400 font-medium">Média histórica global</span>
               </div>
             </div>
           </CardContent>
@@ -510,73 +536,76 @@ export default function Proposals() {
           </div>
         </div>
 
-        <Card className="border-0 shadow-premium rounded-[40px] overflow-hidden bg-white border border-slate-100">
+        <Card className="border border-slate-200/60 shadow-premium rounded-[40px] overflow-hidden bg-white/70 backdrop-blur-2xl">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50/50 border-b border-slate-100">
+              <thead className="bg-slate-50/80 border-b border-slate-200/60 backdrop-blur-md">
                 <tr>
-                  <th className="text-left py-6 pl-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Origem</th>
-                  <th className="text-left py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Produtor / Beneficiário</th>
-                  <th className="text-left py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Operação Financeira</th>
-                  <th className="text-left py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Município / Local</th>
-                  <th className="text-right py-6 text-[10px] font-black uppercase tracking-widest text-slate-400">Valor Estimado</th>
-                  <th className="text-right py-6 pr-8 text-[10px] font-black uppercase tracking-widest text-slate-400">Ações</th>
+                  <th className="text-left py-6 pl-8 text-[10px] font-black uppercase tracking-widest text-slate-500">Origem</th>
+                  <th className="text-left py-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Produtor / Beneficiário</th>
+                  <th className="text-left py-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Operação Financeira</th>
+                  <th className="text-left py-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Município / Local</th>
+                  <th className="text-right py-6 text-[10px] font-black uppercase tracking-widest text-slate-500">Valor Estimado</th>
+                  <th className="text-right py-6 pr-8 text-[10px] font-black uppercase tracking-widest text-slate-500">Ações</th>
                 </tr>
               </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-200/40">
                   {paged.map((p) => (
-                    <tr key={p.id} className="group hover:bg-slate-50/80 transition-all">
+                    <tr key={p.id} className="group hover:bg-white/90 transition-all duration-300">
                       <td className="py-5 pl-8">
                         {p.isMain ? (
-                           <Badge className="bg-emerald-500/10 text-emerald-600 border-0 text-[8px] font-black h-4 px-1.5 rounded-md uppercase tracking-tighter">Lista Ativa</Badge>
+                           <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-[9px] font-black h-5 px-2 rounded-lg uppercase tracking-wider shadow-sm">Lista Ativa</Badge>
                         ) : (
-                           <Badge className="bg-indigo-500/10 text-indigo-600 border-0 text-[8px] font-black h-4 px-1.5 rounded-md uppercase tracking-tighter">Histórico</Badge>
+                           <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200/50 text-[9px] font-black h-5 px-2 rounded-lg uppercase tracking-wider shadow-sm">Histórico</Badge>
                         )}
                       </td>
                       <td className="py-5">
-                        <div className="font-bold text-slate-800 text-sm tracking-tight">{p.producer_name}</div>
-                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">{p.producer_cpf || '---'}</div>
+                        <div className="font-extrabold text-slate-900 text-sm tracking-tight">{p.producer_name}</div>
+                        <div className="text-[10px] text-slate-500 font-mono mt-0.5 bg-slate-100/50 w-fit px-1.5 py-0.5 rounded-md">{p.producer_cpf || '---'}</div>
                       </td>
                       <td className="py-5">
-                        <div className="text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md w-fit">{p.credit_program || '---'}</div>
-                        <div className="text-[9px] text-indigo-600 font-black uppercase mt-1 tracking-wider">{p.displayDesigner}</div>
+                        <div className="text-[11px] font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg w-fit border border-slate-200/60 shadow-sm">{p.credit_program || '---'}</div>
+                        <div className="text-[9px] text-indigo-600 font-black uppercase mt-1.5 tracking-widest flex items-center gap-1">
+                           <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                           {p.displayDesigner}
+                        </div>
                       </td>
                       <td className="py-5">
-                        <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                          <MapPin className="h-3 w-3 text-slate-300" /> {p.displayLocation}
+                        <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5 bg-slate-50 w-fit px-2.5 py-1 rounded-lg border border-slate-100">
+                          <MapPin className="h-3.5 w-3.5 text-slate-400" /> {p.displayLocation}
                         </div>
                       </td>
                       <td className="py-5 text-right">
-                        <div className="text-sm font-black text-slate-900 tabular-nums tracking-tighter">
+                        <div className="text-sm font-black text-slate-900 tabular-nums tracking-tighter bg-emerald-50/50 w-fit ml-auto px-3 py-1 rounded-lg border border-emerald-100 text-emerald-900">
                           {p.displayValue ? formatCurrency(Number(p.displayValue)) : '---'}
                         </div>
                       </td>
                       <td className="py-5 pr-8 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <button
                             onClick={() => p.isMain ? setViewingProposal(p) : setViewingStockProposal(p)}
                             title="Ver Detalhes"
-                            className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-900 hover:text-white transition-all shadow-sm"
+                            className="h-9 w-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4.5 w-4.5" />
                           </button>
                           {p.isMain ? (
                             <button
                               onClick={() => handleMigrateToStock(p)}
                               disabled={migratingId === p.id}
                               title="Arquivar no Estoque"
-                              className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                              className="h-9 w-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-emerald-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-all shadow-sm disabled:opacity-50"
                             >
-                              {migratingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Box className="h-4 w-4" />}
+                              {migratingId === p.id ? <Loader2 className="h-4.5 w-4.5 animate-spin" /> : <Box className="h-4.5 w-4.5" />}
                             </button>
                           ) : (
                             <button
                               onClick={() => handleRevertToStock(p.id)}
                               disabled={revertingId === p.id}
                               title="Reverter para Fluxo Ativo"
-                              className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-amber-500 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                              className="h-9 w-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-amber-600 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all shadow-sm disabled:opacity-50"
                             >
-                              {revertingId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                              {revertingId === p.id ? <Loader2 className="h-4.5 w-4.5 animate-spin" /> : <RotateCcw className="h-4.5 w-4.5" />}
                             </button>
                           )}
                         </div>
