@@ -301,7 +301,7 @@ export default function Proposals() {
     const totalCount = reportData.length;
     const avgTicket = totalCount > 0 ? totalValue / totalCount : 0;
 
-    // --- Header ---
+    // --- Header Premium ---
     doc.setFillColor(15, 23, 42); // slate-900
     doc.rect(0, 0, doc.internal.pageSize.width, 35, 'F');
     
@@ -315,50 +315,104 @@ export default function Proposals() {
     doc.text("Gestão de Propostas Concluídas", 14, 28);
 
     doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184); // slate-400
     doc.text(`Gerado em: ${timestamp}`, doc.internal.pageSize.width - 14, 25, { align: "right" });
 
-    // --- KPI Cards ---
+    // --- KPI Cards (Professional) ---
     let startY = 45;
     
     // Card 1
     doc.setFillColor(248, 250, 252);
-    doc.setDrawColor(226, 232, 240);
-    doc.rect(14, startY, 80, 25, 'FD');
+    doc.setDrawColor(203, 213, 225); // slate-300
+    doc.roundedRect(14, startY, 80, 26, 3, 3, 'FD');
+    doc.setFillColor(56, 189, 248); // sky-400 as accent
+    doc.roundedRect(14, startY, 3, 26, 3, 3, 'F'); // Left border accent
     doc.setTextColor(100, 116, 139);
-    doc.setFontSize(9);
-    doc.text("VOLUME TOTAL (QTD)", 18, startY + 8);
+    doc.setFontSize(8);
+    doc.text("VOLUME TOTAL (QTD)", 22, startY + 8);
     doc.setTextColor(15, 23, 42);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(String(totalCount), 18, startY + 18);
+    doc.setFontSize(18);
+    doc.text(String(totalCount), 22, startY + 19);
 
     // Card 2
     doc.setFillColor(248, 250, 252);
-    doc.rect(100, startY, 80, 25, 'FD');
+    doc.setDrawColor(203, 213, 225);
+    doc.roundedRect(100, startY, 80, 26, 3, 3, 'FD');
+    doc.setFillColor(52, 211, 153); // emerald-400 as accent
+    doc.roundedRect(100, startY, 3, 26, 3, 3, 'F');
     doc.setTextColor(100, 116, 139);
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text("MONTANTE CONCLUÍDO", 104, startY + 8);
+    doc.text("MONTANTE CONCLUÍDO", 108, startY + 8);
     doc.setTextColor(15, 23, 42);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(formatCurrency(totalValue), 104, startY + 18);
+    doc.setFontSize(18);
+    doc.text(formatCurrency(totalValue), 108, startY + 19);
 
     // Card 3
     doc.setFillColor(248, 250, 252);
-    doc.rect(186, startY, 80, 25, 'FD');
+    doc.setDrawColor(203, 213, 225);
+    doc.roundedRect(186, startY, 80, 26, 3, 3, 'FD');
+    doc.setFillColor(129, 140, 248); // indigo-400 as accent
+    doc.roundedRect(186, startY, 3, 26, 3, 3, 'F');
     doc.setTextColor(100, 116, 139);
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text("TICKET MÉDIO", 190, startY + 8);
+    doc.text("TICKET MÉDIO", 194, startY + 8);
     doc.setTextColor(15, 23, 42);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(formatCurrency(avgTicket), 190, startY + 18);
+    doc.setFontSize(18);
+    doc.text(formatCurrency(avgTicket), 194, startY + 19);
 
-    startY += 35;
+    startY += 40;
 
-    // --- Table ---
+    // --- Performance por Projetista ---
+    const statsByDesigner = reportData.reduce((acc, p) => {
+      const designer = p.displayDesigner || "Sem Projetista";
+      if (!acc[designer]) acc[designer] = { count: 0, value: 0 };
+      acc[designer].count += 1;
+      acc[designer].value += (Number(p.displayValue) || 0);
+      return acc;
+    }, {} as Record<string, { count: number; value: number }>);
+
+    const designerStatsArray = Object.entries(statsByDesigner)
+      .sort((a, b) => b[1].value - a[1].value)
+      .map(entry => [
+        entry[0],
+        String(entry[1].count),
+        formatCurrency(entry[1].value),
+        `${((entry[1].value / totalValue) * 100 || 0).toFixed(1)}%`
+      ]);
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Estatísticas por Projetista", 14, startY);
+    
+    autoTable(doc, {
+      startY: startY + 4,
+      head: [["Projetista", "Qtd Propostas", "Valor Total Captado", "% do Total"]],
+      body: designerStatsArray,
+      theme: "grid",
+      headStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold' },
+      styles: { fontSize: 8, cellPadding: 3 },
+      columnStyles: {
+        1: { halign: 'center' },
+        2: { halign: 'right' },
+        3: { halign: 'right' }
+      },
+      margin: { left: 14, right: 14 }
+    });
+
+    startY = (doc as any).lastAutoTable.finalY + 14;
+
+    // --- Table Principal ---
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Detalhamento das Propostas", 14, startY);
+
     const tableData = reportData.map(p => [
       p.isMain ? "Lista Ativa" : "Estoque",
       p.producer_name,
@@ -370,13 +424,14 @@ export default function Proposals() {
     ]);
 
     autoTable(doc, {
-      startY: startY,
+      startY: startY + 4,
       head: [["Origem", "Produtor", "CPF", "Operação", "Projetista", "Município", "Valor"]],
       body: tableData,
       theme: "grid",
       headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold' },
       styles: { fontSize: 8, cellPadding: 3 },
       alternateRowStyles: { fillColor: [248, 250, 252] },
+      margin: { left: 14, right: 14 }
     });
 
     const pages = (doc as any).internal.getNumberOfPages();
