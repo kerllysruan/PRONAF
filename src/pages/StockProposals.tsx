@@ -398,12 +398,17 @@ export default function StockProposals() {
 
             const mapped = mapCSVRow(rowObj, validIndex);
             if (mapped && mapped.producer_name) {
-              // Duplicate Check
+              // Duplicate Check against both existing proposals and already processed rows
               const isDuplicate = proposals.some(p => 
                 p.producer_cpf === mapped.producer_cpf &&
                 p.producer_name === mapped.producer_name &&
                 Number(p.estimated_value) === Number(mapped.estimated_value) &&
                 p.credit_program === mapped.credit_program
+              ) || rows.some(r => 
+                r.producer_cpf === mapped.producer_cpf &&
+                r.producer_name === mapped.producer_name &&
+                Number(r.estimated_value) === Number(mapped.estimated_value) &&
+                r.credit_program === mapped.credit_program
               );
 
               if (!isDuplicate) {
