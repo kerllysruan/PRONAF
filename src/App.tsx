@@ -23,7 +23,13 @@ import FileExchange from "./pages/FileExchange";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Loader2 } from "lucide-react";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
