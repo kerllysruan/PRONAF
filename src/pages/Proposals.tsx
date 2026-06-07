@@ -36,6 +36,7 @@ import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { ImportProposalsDialog } from "@/components/proposals/ImportProposalsDialog";
 
+import { usePermissions } from "@/hooks/usePermissions";
 import { useStockProposals } from "@/hooks/useStockProposals";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
