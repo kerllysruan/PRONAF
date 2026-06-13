@@ -196,6 +196,7 @@ export default function Proposals() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [designerFilter, setDesignerFilter] = useState<string>("all");
+  const [programFilter, setProgramFilter] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
   const [sortBy, setSortBy] = useState<"nome" | "data">("data");
@@ -455,13 +456,16 @@ export default function Proposals() {
       const d = p.displayDate ? new Date(p.displayDate) : new Date();
       const matchesMonth = filterMonth === "all" || d.getMonth() + 1 === Number(filterMonth);
       const matchesYear = filterYear === "all" || d.getFullYear() === Number(filterYear);
-      return matchesSearch && matchesMonth && matchesYear;
+      const matchesDesigner = designerFilter === "all" || p.displayDesigner === designerFilter;
+      const matchesProgram = programFilter === "all" || p.credit_program === programFilter;
+
+      return matchesSearch && matchesMonth && matchesYear && matchesDesigner && matchesProgram;
     });
-  }, [allConcluded, searchTerm, filterMonth, filterYear]);
+  }, [allConcluded, searchTerm, filterMonth, filterYear, designerFilter, programFilter]);
 
   useEffect(() => {
     setPage(0);
-  }, [searchTerm, filterMonth, filterYear, sortBy]);
+  }, [searchTerm, filterMonth, filterYear, sortBy, designerFilter, programFilter]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -653,21 +657,30 @@ export default function Proposals() {
         </Card>
       </div>
 
-      {/* ─── Search & Filters Top Bar (Estilo Estoque) ─── */}
-      <Card className="shadow-sm border-slate-200 mt-8 rounded-[32px]">
-        <CardContent className="p-4 md:p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-3 h-5 w-5 text-slate-400" />
-              <Input
-                placeholder="Buscar por Nome ou CPF..."
-                className="pl-12 h-11 bg-slate-50 border-slate-200 rounded-2xl text-sm"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      {/* ─── Search & Filters Top Bar (Redesenhado) ─── */}
+      <Card className="shadow-premium border-slate-200 mt-8 rounded-[32px] overflow-hidden bg-white/70 backdrop-blur-2xl">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Search */}
+            <div className="lg:col-span-12 xl:col-span-4 relative flex items-end">
+              <div className="w-full">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Buscar Propostas</Label>
+                <div className="relative">
+                  <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
+                  <Input
+                    placeholder="Nome, CPF..."
+                    className="pl-12 h-12 bg-slate-50/50 border-slate-200 rounded-2xl text-sm transition-all hover:bg-slate-50 focus:bg-white"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-4 items-end">
-              <div className="space-y-1.5 flex-1 md:flex-none">
+
+            {/* Filters Row */}
+            <div className="lg:col-span-12 xl:col-span-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              
+              <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
                 <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Mês/Ano</Label>
                 <MonthYearFilter
                   month={filterMonth}
@@ -678,10 +691,10 @@ export default function Proposals() {
                 />
               </div>
 
-              <div className="space-y-1.5 flex-1 md:flex-none">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Ordenar por</Label>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Ordenar</Label>
                 <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
-                  <SelectTrigger className="w-full md:w-[160px] h-11 gap-2 bg-slate-50 border-slate-200 rounded-2xl">
+                  <SelectTrigger className="w-full h-12 gap-2 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all">
                     <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />
                     <SelectValue placeholder="Ordenar" />
                   </SelectTrigger>
@@ -691,15 +704,47 @@ export default function Proposals() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-end pb-0.5 ml-2">
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Projetista</Label>
+                <Select value={designerFilter} onValueChange={setDesignerFilter}>
+                  <SelectTrigger className="w-full h-12 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl max-h-[300px]">
+                    <SelectItem value="all">Todos</SelectItem>
+                    {uniqueDesigners.map(designer => (
+                      <SelectItem key={designer} value={designer}>{designer}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Linha</Label>
+                <Select value={programFilter} onValueChange={setProgramFilter}>
+                  <SelectTrigger className="w-full h-12 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all truncate text-left">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl max-h-[300px] w-[350px]">
+                    <SelectItem value="all">Todos</SelectItem>
+                    {uniquePrograms.map(prog => (
+                      <SelectItem key={prog} value={prog} className="text-xs truncate">{prog}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-end sm:col-span-2 md:col-span-4 lg:col-span-1 h-full pt-1.5 lg:pt-0">
                 <Button 
                   onClick={() => setIsReportDialogOpen(true)}
-                  className="h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold px-6 shadow-sm shadow-indigo-200"
+                  className="h-12 w-full lg:w-auto bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold px-6 shadow-md shadow-indigo-200/50 transition-all hover:scale-[1.02]"
                 >
                   <FileUp className="h-4 w-4 mr-2" />
-                  Gerar Relatório
+                  Relatório
                 </Button>
               </div>
+
             </div>
           </div>
         </CardContent>
