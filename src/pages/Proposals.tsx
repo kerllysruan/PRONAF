@@ -754,7 +754,6 @@ export default function Proposals() {
           </CardContent>
         </Card>
       </div>
-      </div>
 
       {/* ─── Search & Filters Top Bar (Redesenhado) ─── */}
       <Card className="shadow-premium border-slate-200 mt-8 rounded-[32px] overflow-hidden bg-white/70 backdrop-blur-2xl">
