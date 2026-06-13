@@ -21,7 +21,8 @@ export type ProjectDesigner =
   | 'ney_medeiros'
   | 'jairo_santana'
   | 'cledson'
-  | 'jailson';
+  | 'jailson'
+  | 'oliveira';
 
 export interface Producer {
   name: string;
@@ -71,6 +72,7 @@ export const PROJECT_DESIGNER_LABELS: Record<ProjectDesigner, string> = {
   jairo_santana: 'Jairo Santana',
   cledson: 'Cledson',
   jailson: 'Jailson',
+  oliveira: 'Oliveira',
 };
 
 export const STATUS_LABELS: Record<ProposalStatus, string> = {

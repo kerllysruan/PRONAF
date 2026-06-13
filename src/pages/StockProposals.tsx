@@ -90,7 +90,7 @@ function fixBrokenEncoding(str: string): string {
     .replace(/ﾇ/g, 'Ç');
 }
 
-const PROJETISTAS = ["NEY MEDEIRO", "JAIRO SANTANA", "CLEDSON CLOVIS", "JAILSON"];
+const PROJETISTAS = ["NEY MEDEIRO", "JAIRO SANTANA", "CLEDSON CLOVIS", "JAILSON", "OLIVEIRA"];
 
 const PROGRAMAS_CREDITO = [
   "RURAL (226)",
