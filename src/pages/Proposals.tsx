@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, FileUp, RotateCcw, CheckCircle2, Eye, MapPin, User, Landmark, ClipboardList, Info, Box, TrendingUp, Calendar, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -566,6 +567,38 @@ export default function Proposals() {
     }
   };
 
+  const designerChartData = useMemo(() => {
+    const dataMap: Record<string, number> = {};
+    allConcluded.forEach((p) => {
+      const designer = p.displayDesigner || "Sem Projetista";
+      if (!dataMap[designer]) dataMap[designer] = 0;
+      dataMap[designer] += Number(p.displayValue) || 0;
+    });
+    return Object.entries(dataMap)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [allConcluded]);
+
+  const programChartData = useMemo(() => {
+    const dataMap: Record<string, number> = {};
+    allConcluded.forEach((p) => {
+      let program = p.credit_program || "Sem Linha";
+      if (program.includes("699")) program = "PRONAF A (699)";
+      else if (program.includes("368")) program = "PRONAF A (368)";
+      else if (program.includes("434")) program = "MAIS ALIMENTOS";
+      else if (program.includes("406")) program = "MULHER";
+      else if (program.includes("226")) program = "RURAL (226)";
+      
+      if (!dataMap[program]) dataMap[program] = 0;
+      dataMap[program] += 1;
+    });
+    return Object.entries(dataMap)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [allConcluded]);
+  
+  const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#3b82f6", "#8b5cf6", "#ec4899"];
+
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -589,21 +622,21 @@ export default function Proposals() {
         {/* Card 1: Montante Concluído */}
         <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-500 relative">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-7 relative overflow-hidden z-10">
+          <CardContent className="p-5 relative overflow-hidden z-10">
             <div className="absolute -right-6 -top-6 h-32 w-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700" />
-            <div className="flex items-center justify-between mb-6">
-              <div className="h-12 w-12 rounded-2xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
-                <Wallet className="h-6 w-6 text-emerald-400" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-10 w-10 rounded-2xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
+                <Wallet className="h-5 w-5 text-emerald-400" />
               </div>
-              <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-3 text-white backdrop-blur-md uppercase tracking-wider">Total Geral</Badge>
+              <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-3 py-0.5 text-white backdrop-blur-md uppercase tracking-wider">Total Geral</Badge>
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Montante Concluído</p>
-              <h3 className="text-3xl font-black font-heading tracking-tight drop-shadow-sm">
+              <h3 className="text-2xl font-black font-heading tracking-tight drop-shadow-sm">
                 {formatCurrency(concludedStats.totalValue)}
               </h3>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-slate-400 font-medium">{concludedStats.totalCount} propostas no histórico</span>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="text-[11px] text-slate-400 font-medium">{concludedStats.totalCount} propostas no histórico</span>
               </div>
             </div>
           </CardContent>
@@ -612,23 +645,23 @@ export default function Proposals() {
         {/* Card 2: Performance Mês */}
         <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-7 relative z-10">
-            <div className="flex items-center justify-between mb-6">
-              <div className="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
-                <TrendingUp className="h-6 w-6 text-emerald-600" />
+          <CardContent className="p-5 relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-10 w-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
               </div>
-              <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-[10px] font-black px-3 uppercase tracking-wider">Performance Mês</Badge>
+              <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-[10px] font-black px-3 py-0.5 uppercase tracking-wider">Performance Mês</Badge>
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Resultado Mensal</p>
-              <h3 className="text-3xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm">
+              <h3 className="text-2xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm">
                 {formatCurrency(concludedStats.monthValue)}
               </h3>
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex items-center text-emerald-700 font-bold text-xs bg-emerald-100/50 border border-emerald-200/50 px-2 py-0.5 rounded-full shadow-sm">
+              <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex items-center text-emerald-700 font-bold text-[10px] bg-emerald-100/50 border border-emerald-200/50 px-2 py-0.5 rounded-full shadow-sm">
                   <CheckCircle2 className="h-3 w-3 mr-1" /> {concludedStats.monthCount} concluídas
                 </div>
-                <span className="text-xs text-slate-400 font-medium">este mês</span>
+                <span className="text-[11px] text-slate-400 font-medium">este mês</span>
               </div>
             </div>
           </CardContent>
@@ -637,24 +670,90 @@ export default function Proposals() {
         {/* Card 3: Ticket Médio */}
         <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-7 relative z-10">
-            <div className="flex items-center justify-between mb-6">
-              <div className="h-12 w-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
-                <DollarSign className="h-6 w-6 text-indigo-600" />
+          <CardContent className="p-5 relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-10 w-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
+                <DollarSign className="h-5 w-5 text-indigo-600" />
               </div>
-              <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200/50 text-[10px] font-black px-3 uppercase tracking-wider">Ticket Médio</Badge>
+              <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200/50 text-[10px] font-black px-3 py-0.5 uppercase tracking-wider">Ticket Médio</Badge>
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Valor por Proposta</p>
-              <h3 className="text-3xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm">
+              <h3 className="text-2xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm">
                 {formatCurrency(concludedStats.totalCount > 0 ? concludedStats.totalValue / concludedStats.totalCount : 0)}
               </h3>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-slate-400 font-medium">Média histórica global</span>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="text-[11px] text-slate-400 font-medium">Média histórica global</span>
               </div>
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* ─── Gráficos Interativos ─── */}
+      <div className="grid gap-6 md:grid-cols-2 mt-2">
+        <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-6 relative z-10">
+            <div className="flex flex-col mb-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-slate-500">Volume por Projetista</h3>
+              <p className="text-xs text-slate-400">Total financeiro captado por cada profissional</p>
+            </div>
+            <div className="h-[260px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={designerChartData} margin={{ top: 10, right: 10, left: 20, bottom: 30 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} angle={-25} textAnchor="end" />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`} />
+                  <Tooltip 
+                    cursor={{ fill: '#f1f5f9' }} 
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: number) => [formatCurrency(value), 'Volume Captado']}
+                  />
+                  <Bar dataKey="value" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={32} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-6 relative z-10">
+            <div className="flex flex-col mb-4">
+              <h3 className="text-sm font-black uppercase tracking-widest text-slate-500">Aderência por Linha</h3>
+              <p className="text-xs text-slate-400">Quantidade de contratos por programa</p>
+            </div>
+            <div className="h-[260px] w-full flex items-center justify-center relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={programChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={70}
+                    outerRadius={100}
+                    paddingAngle={3}
+                    dataKey="count"
+                  >
+                    {programChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: number) => [`${value} propostas`, 'Quantidade']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute flex flex-col items-center justify-center pointer-events-none mt-2">
+                <span className="text-4xl font-black text-slate-800 tracking-tighter">{concludedStats.totalCount}</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total Geral</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
       </div>
 
       {/* ─── Search & Filters Top Bar (Redesenhado) ─── */}
