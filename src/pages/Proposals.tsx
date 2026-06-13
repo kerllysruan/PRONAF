@@ -622,22 +622,19 @@ export default function Proposals() {
         {/* Card 1: Montante Concluído */}
         <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-500 relative">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-5 relative overflow-hidden z-10">
+          <CardContent className="p-4 md:p-5 relative overflow-hidden z-10 flex items-center gap-4">
             <div className="absolute -right-6 -top-6 h-32 w-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700" />
-            <div className="flex items-center justify-between mb-4">
-              <div className="h-10 w-10 rounded-2xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
-                <Wallet className="h-5 w-5 text-emerald-400" />
-              </div>
-              <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-3 py-0.5 text-white backdrop-blur-md uppercase tracking-wider">Total Geral</Badge>
+            <div className="h-12 w-12 shrink-0 rounded-2xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
+              <Wallet className="h-5 w-5 text-emerald-400" />
             </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Montante Concluído</p>
-              <h3 className="text-2xl font-black font-heading tracking-tight drop-shadow-sm">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Montante Concluído</p>
+              </div>
+              <h3 className="text-xl md:text-2xl font-black font-heading tracking-tight drop-shadow-sm leading-none">
                 {formatCurrency(concludedStats.totalValue)}
               </h3>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-[11px] text-slate-400 font-medium">{concludedStats.totalCount} propostas no histórico</span>
-              </div>
+              <p className="text-[10px] text-slate-400 font-medium mt-1">{concludedStats.totalCount} propostas</p>
             </div>
           </CardContent>
         </Card>
@@ -645,24 +642,18 @@ export default function Proposals() {
         {/* Card 2: Performance Mês */}
         <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-5 relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="h-10 w-10 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
-                <TrendingUp className="h-5 w-5 text-emerald-600" />
-              </div>
-              <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200/50 text-[10px] font-black px-3 py-0.5 uppercase tracking-wider">Performance Mês</Badge>
+          <CardContent className="p-4 md:p-5 relative z-10 flex items-center gap-4">
+            <div className="h-12 w-12 shrink-0 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
+              <TrendingUp className="h-5 w-5 text-emerald-600" />
             </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Resultado Mensal</p>
-              <h3 className="text-2xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Performance Mês</p>
+              </div>
+              <h3 className="text-xl md:text-2xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
                 {formatCurrency(concludedStats.monthValue)}
               </h3>
-              <div className="flex items-center gap-2 mt-1.5">
-                <div className="flex items-center text-emerald-700 font-bold text-[10px] bg-emerald-100/50 border border-emerald-200/50 px-2 py-0.5 rounded-full shadow-sm">
-                  <CheckCircle2 className="h-3 w-3 mr-1" /> {concludedStats.monthCount} concluídas
-                </div>
-                <span className="text-[11px] text-slate-400 font-medium">este mês</span>
-              </div>
+              <p className="text-[10px] text-slate-500 font-medium mt-1 flex items-center"><CheckCircle2 className="h-3 w-3 mr-1 text-emerald-500" /> {concludedStats.monthCount} neste mês</p>
             </div>
           </CardContent>
         </Card>
@@ -670,21 +661,18 @@ export default function Proposals() {
         {/* Card 3: Ticket Médio */}
         <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-5 relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <div className="h-10 w-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
-                <DollarSign className="h-5 w-5 text-indigo-600" />
-              </div>
-              <Badge className="bg-indigo-50 text-indigo-700 border border-indigo-200/50 text-[10px] font-black px-3 py-0.5 uppercase tracking-wider">Ticket Médio</Badge>
+          <CardContent className="p-4 md:p-5 relative z-10 flex items-center gap-4">
+            <div className="h-12 w-12 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
+              <DollarSign className="h-5 w-5 text-indigo-600" />
             </div>
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Valor por Proposta</p>
-              <h3 className="text-2xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-0.5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ticket Médio</p>
+              </div>
+              <h3 className="text-xl md:text-2xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
                 {formatCurrency(concludedStats.totalCount > 0 ? concludedStats.totalValue / concludedStats.totalCount : 0)}
               </h3>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-[11px] text-slate-400 font-medium">Média histórica global</span>
-              </div>
+              <p className="text-[10px] text-slate-500 font-medium mt-1">Média histórica</p>
             </div>
           </CardContent>
         </Card>
@@ -699,7 +687,7 @@ export default function Proposals() {
               <h3 className="text-sm font-black uppercase tracking-widest text-slate-500">Volume por Projetista</h3>
               <p className="text-xs text-slate-400">Total financeiro captado por cada profissional</p>
             </div>
-            <div className="h-[260px] w-full">
+            <div className="h-[140px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={designerChartData} margin={{ top: 10, right: 10, left: 20, bottom: 30 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -724,15 +712,15 @@ export default function Proposals() {
               <h3 className="text-sm font-black uppercase tracking-widest text-slate-500">Aderência por Linha</h3>
               <p className="text-xs text-slate-400">Quantidade de contratos por programa</p>
             </div>
-            <div className="h-[260px] w-full flex items-center justify-center relative">
+            <div className="h-[140px] w-full flex items-center justify-center relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={programChartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={70}
-                    outerRadius={100}
+                    innerRadius={45}
+                    outerRadius={65}
                     paddingAngle={3}
                     dataKey="count"
                   >
