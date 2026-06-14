@@ -623,16 +623,15 @@ export default function Proposals() {
         {/* Lado Esquerdo: KPIs (3 cards compactos empilhados) */}
         <div className="lg:col-span-3 flex flex-col gap-3">
           {/* Card 1: Montante Concluído */}
-          <Card className="border-0 shadow-premium rounded-[20px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardContent className="p-3.5 relative overflow-hidden z-10 flex items-center gap-3 w-full">
-              <div className="absolute -right-6 -top-6 h-32 w-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700" />
-              <div className="h-10 w-10 shrink-0 rounded-xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
-                <Wallet className="h-4 w-4 text-emerald-400" />
+          <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
+                <Wallet className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="flex-1">
                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Montante Concluído</p>
-                <h3 className="text-lg font-black font-heading tracking-tight drop-shadow-sm leading-none">
+                <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
                   {formatCurrency(concludedStats.totalValue)}
                 </h3>
               </div>
