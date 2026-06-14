@@ -304,7 +304,8 @@ function AccessControl() {
 
   const stats = {
     total: agencyScopedUsers.length,
-    admins: agencyScopedUsers.filter(u => u.role === "admin" || u.role === "developer").length,
+    developers: agencyScopedUsers.filter(u => u.role === "developer").length,
+    admins: agencyScopedUsers.filter(u => u.role === "admin").length,
     managers: agencyScopedUsers.filter(u => u.role === "manager").length,
     analysts: agencyScopedUsers.filter(u => u.role === "analyst").length,
     projetistas: agencyScopedUsers.filter(u => u.role === "projetista").length,
@@ -367,12 +368,13 @@ function AccessControl() {
       </header>
 
       {/* Stats Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {[
           { label: "Total Equipe", value: stats.total, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Desenvolvedores", value: stats.developers, icon: Code2, color: "text-indigo-600", bg: "bg-indigo-50" },
           { label: "Gerentes Geral", value: stats.admins, icon: ShieldAlert, color: "text-rose-600", bg: "bg-rose-50" },
           { label: "G. Negócios", value: stats.managers, icon: ShieldCheck, color: "text-amber-600", bg: "bg-amber-50" },
-          { label: "Analistas", value: stats.analysts, icon: FileText, color: "text-indigo-600", bg: "bg-indigo-50" },
+          { label: "Analistas", value: stats.analysts, icon: FileText, color: "text-purple-600", bg: "bg-purple-50" },
           { label: "Projetistas", value: stats.projetistas, icon: PenTool, color: "text-teal-600", bg: "bg-teal-50" },
         ].map((s, idx) => (
           <Card key={idx} className="group border-border/40 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
