@@ -598,7 +598,7 @@ export default function Proposals() {
       .sort((a, b) => b.count - a.count);
   }, [allConcluded]);
   
-  const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#3b82f6", "#8b5cf6", "#ec4899"];
+  const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316", "#84cc16", "#6366f1"];
 
   if (loading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -677,21 +677,25 @@ export default function Proposals() {
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-5 relative z-10 flex-1 flex flex-col">
               <div className="flex flex-col mb-3">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-700">Volume por Projetista</h3>
-                <p className="text-[10px] text-slate-600 font-medium">Total financeiro captado por cada profissional</p>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Volume por Projetista</h3>
+                <p className="text-[10px] text-slate-700 font-medium">Total financeiro captado por cada profissional</p>
               </div>
               <div className="flex-1 w-full min-h-[140px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={designerChartData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748b' }} angle={-25} textAnchor="end" />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748b' }} tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#374151', fontWeight: 600 }} angle={-25} textAnchor="end" />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#374151', fontWeight: 600 }} tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`} />
                     <Tooltip 
                       cursor={{ fill: '#f1f5f9' }} 
                       contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
                       formatter={(value: number) => [formatCurrency(value), 'Volume Captado']}
                     />
-                    <Bar dataKey="value" fill="#4f46e5" radius={[4, 4, 0, 0]} barSize={24} />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={24}>
+                      {designerChartData.map((_, index) => (
+                        <Cell key={`bar-cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -705,16 +709,16 @@ export default function Proposals() {
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-5 relative z-10 flex-1 flex flex-col justify-between">
               <div className="flex flex-col mb-2">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-700">Aderência por Linha</h3>
-                <p className="text-[10px] text-slate-600 font-medium">Quantidade de contratos por programa</p>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Aderência por Linha</h3>
+                <p className="text-[10px] text-slate-700 font-medium">Quantidade de contratos por programa</p>
               </div>
               <div className="flex-grow flex flex-col sm:flex-row items-center gap-4 justify-between min-h-[160px]">
                 {/* Donut Chart Container */}
                 <div className="w-full sm:w-[42%] h-[160px] flex items-center justify-center relative shrink-0">
                   {/* Texto Central */}
                   <div className="absolute flex flex-col items-center justify-center pointer-events-none mt-1 z-0">
-                    <span className="text-2xl font-black text-slate-800 tracking-tighter leading-none">{concludedStats.totalCount}</span>
-                    <span className="text-[8px] font-bold text-slate-600 uppercase tracking-widest mt-0.5">Total</span>
+                    <span className="text-2xl font-black text-slate-900 tracking-tighter leading-none">{concludedStats.totalCount}</span>
+                    <span className="text-[8px] font-bold text-slate-700 uppercase tracking-widest mt-0.5">Total</span>
                   </div>
 
                   <ResponsiveContainer width="100%" height="100%" className="z-10 relative">
@@ -750,10 +754,10 @@ export default function Proposals() {
                       <div key={entry.name} className="flex items-start gap-2 text-[10px] leading-tight hover:bg-slate-50/50 p-1 rounded-lg transition-colors">
                         <span className="h-2 w-2 rounded-full mt-1 shrink-0" style={{ backgroundColor: color }} />
                         <div className="flex-1 min-w-0">
-                          <p className="font-extrabold text-slate-700 truncate uppercase tracking-tight" title={entry.name}>
+                          <p className="font-extrabold text-slate-900 truncate uppercase tracking-tight" title={entry.name}>
                             {entry.name}
                           </p>
-                          <div className="flex items-center gap-1.5 text-slate-600 font-semibold mt-0.5">
+                          <div className="flex items-center gap-1.5 text-slate-700 font-semibold mt-0.5">
                             <span>{entry.count} {entry.count === 1 ? 'proposta' : 'propostas'}</span>
                             <span className="text-slate-300">•</span>
                             <span className="font-extrabold text-emerald-600">{formatCurrency(entry.value)}</span>
