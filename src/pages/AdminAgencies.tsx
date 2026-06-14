@@ -31,7 +31,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAgency } from "@/contexts/AgencyContext";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Plus, Building2, Users, ArrowRightLeft, Loader2, Trash2 } from "lucide-react";
+import { Plus, Building2, Users, ArrowRightLeft, Loader2, Trash2, Settings } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -74,6 +74,7 @@ export default function AdminAgencies() {
     // Delete Agency Dialog
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [agencyToDelete, setAgencyToDelete] = useState<Agency | null>(null);
+    const [configAgency, setConfigAgency] = useState<Agency | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -308,66 +309,29 @@ export default function AdminAgencies() {
                                         </div>
                                     </div>
                                     {permissions.can_manage_agencies && (
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-11 w-11 rounded-2xl text-rose-500 hover:bg-rose-50 transition-all shadow-sm"
-                                            onClick={() => {
-                                                setAgencyToDelete(agency);
-                                                setIsDeleteOpen(true);
-                                            }}
-                                        >
-                                            <Trash2 className="h-5 w-5" />
-                                        </Button>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                className="h-11 rounded-2xl border-border/40 font-bold gap-2 hover:bg-muted/50 transition-all shadow-sm"
+                                                onClick={() => setConfigAgency(agency)}
+                                            >
+                                                <Settings className="h-4 w-4" /> Configurar
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-11 w-11 rounded-2xl text-rose-500 hover:bg-rose-50 transition-all shadow-sm"
+                                                onClick={() => {
+                                                    setAgencyToDelete(agency);
+                                                    setIsDeleteOpen(true);
+                                                }}
+                                            >
+                                                <Trash2 className="h-5 w-5" />
+                                            </Button>
+                                        </div>
                                     )}
                                 </div>
                             </CardHeader>
-                            <CardContent className="p-0">
-                                <div className="overflow-x-auto scrollbar-thin text-foreground">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow className="bg-muted/30 border-b border-border/40 hover:bg-muted/30 transition-none">
-                                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 whitespace-nowrap">Profissional</TableHead>
-                                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 whitespace-nowrap">Contato Corporativo</TableHead>
-                                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 whitespace-nowrap">Identificação (CPF)</TableHead>
-                                                <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 text-right whitespace-nowrap">Controle</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {agencyUsers.map((user) => (
-                                                <TableRow key={user.id} className="group hover:bg-white/60 transition-colors border-b border-border/40 last:border-0 h-16">
-                                                    <TableCell className="px-6 py-4 font-bold text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
-                                                        {user.full_name || "Colaborador sem nome"}
-                                                    </TableCell>
-                                                    <TableCell className="px-6 py-4 font-medium text-muted-foreground whitespace-nowrap">{user.email || "-"}</TableCell>
-                                                    <TableCell className="px-6 py-4 font-mono text-[11px] text-muted-foreground whitespace-nowrap">{user.cpf || "-"}</TableCell>
-                                                    <TableCell className="px-6 py-4 text-right whitespace-nowrap">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-9 px-4 rounded-xl text-xs font-black uppercase tracking-widest gap-2 text-primary hover:bg-primary/10 transition-all opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 duration-300"
-                                                            onClick={() => openMoveDialog(user)}
-                                                            disabled={!permissions.can_manage_agencies}
-                                                        >
-                                                            <ArrowRightLeft className="h-3.5 w-3.5" /> Reatribuir
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                            {agencyUsers.length === 0 && (
-                                                <TableRow>
-                                                    <TableCell colSpan={4} className="text-center py-12">
-                                                        <div className="flex flex-col items-center gap-2 opacity-50">
-                                                            <Users className="h-8 w-8 text-muted-foreground" />
-                                                            <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Nenhum profissional alocado</p>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            </CardContent>
                         </Card>
                     );
                 })}
@@ -486,6 +450,69 @@ export default function AdminAgencies() {
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
+            {/* Agency Config Dialog */}
+            <Dialog open={!!configAgency} onOpenChange={(open) => !open && setConfigAgency(null)}>
+                <DialogContent className="rounded-3xl border-border/40 shadow-premium max-w-4xl p-0 overflow-hidden bg-card/95 backdrop-blur-xl max-h-[85vh] flex flex-col">
+                    <DialogHeader className="p-8 bg-muted/30 border-b border-border/50 shrink-0">
+                        <DialogTitle className="text-2xl font-black font-heading tracking-tight flex items-center gap-3">
+                            <Building2 className="h-8 w-8 text-primary" /> 
+                            Configuração: {configAgency?.name}
+                        </DialogTitle>
+                        <DialogDescription className="font-medium mt-2">
+                            Gerencie os profissionais alocados nesta agência.
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="flex-1 overflow-auto p-0 scrollbar-thin">
+                        <Table>
+                            <TableHeader className="sticky top-0 bg-muted/80 backdrop-blur-sm z-10 shadow-sm">
+                                <TableRow className="border-b border-border/40 hover:bg-transparent">
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 whitespace-nowrap">Profissional</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 whitespace-nowrap">Contato Corporativo</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 whitespace-nowrap">Identificação (CPF)</TableHead>
+                                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70 h-12 px-6 text-right whitespace-nowrap">Controle</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {configAgency && getUsersForAgency(configAgency.id).map((user) => (
+                                    <TableRow key={user.id} className="group hover:bg-white/60 transition-colors border-b border-border/40 last:border-0 h-16">
+                                        <TableCell className="px-6 py-4 font-bold text-foreground group-hover:text-primary transition-colors whitespace-nowrap">
+                                            {user.full_name || "Colaborador sem nome"}
+                                        </TableCell>
+                                        <TableCell className="px-6 py-4 font-medium text-muted-foreground whitespace-nowrap">{user.email || "-"}</TableCell>
+                                        <TableCell className="px-6 py-4 font-mono text-[11px] text-muted-foreground whitespace-nowrap">{user.cpf || "-"}</TableCell>
+                                        <TableCell className="px-6 py-4 text-right whitespace-nowrap">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-9 px-4 rounded-xl text-xs font-black uppercase tracking-widest gap-2 text-primary hover:bg-primary/10 transition-all"
+                                                onClick={() => {
+                                                    // Fechar o dialog atual antes de abrir o de reatribuir para evitar sobreposição bugada visualmente
+                                                    setConfigAgency(null);
+                                                    setTimeout(() => openMoveDialog(user), 150);
+                                                }}
+                                                disabled={!permissions.can_manage_agencies}
+                                            >
+                                                <ArrowRightLeft className="h-3.5 w-3.5" /> Reatribuir
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {configAgency && getUsersForAgency(configAgency.id).length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center py-12">
+                                            <div className="flex flex-col items-center gap-2 opacity-50">
+                                                <Users className="h-8 w-8 text-muted-foreground" />
+                                                <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Nenhum profissional alocado</p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
