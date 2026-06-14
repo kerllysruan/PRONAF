@@ -155,8 +155,10 @@ function AccessControl() {
     }
     try {
       setSaving(true);
+      const finalAgencyId = (formData.agency_id === "" || formData.agency_id === "none") ? null : formData.agency_id;
+      
       const { data, error } = await supabase.functions.invoke('admin-users', {
-        body: { action: 'create', email: formData.email, password: formData.password, display_name: formData.display_name, role: formData.role, agency_id: formData.agency_id }
+        body: { action: 'create', email: formData.email, password: formData.password, display_name: formData.display_name, role: formData.role, agency_id: finalAgencyId }
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -195,8 +197,9 @@ function AccessControl() {
     setUsers(users.map(u => u.id === userId ? { ...u, agency_id: agencyId || undefined } : u));
 
     try {
+      const finalAgencyId = (agencyId === "" || agencyId === "none") ? null : agencyId;
       const { data, error } = await supabase.functions.invoke('admin-users', {
-        body: { action: 'update_agency', user_id: userId, agency_id: agencyId || null }
+        body: { action: 'update_agency', user_id: userId, agency_id: finalAgencyId }
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
