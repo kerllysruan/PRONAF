@@ -31,11 +31,7 @@ const menuItems = [
   { title: "Propostas Concluídas", url: "/propostas", icon: FileText, permission: "can_view_proposals" },
   { title: "Estoque", url: "/estoque", icon: Box, permission: "can_view_proposals" },
   { title: "Troca de Arquivos", url: "/troca-arquivos", icon: Share2, permission: "can_view_proposals" },
-  { title: "Kanban", url: "/kanban", icon: Columns3, permission: "can_view_kanban" },
   { title: "Documentação", url: "/documentacao", icon: FolderCheck, permission: "can_view_documentation" },
-  { title: "Tarefas", url: "/tarefas", icon: ClipboardList, permission: "can_view_tasks" },
-  { title: "Desembolsos", url: "/desembolsos", icon: DollarSign, permission: "can_view_disbursements" },
-  { title: "Gerenciamento", url: "/gerenciamento", icon: Settings, permission: "can_view_management" },
   { title: "Controle de Acesso", url: "/controle-acesso", icon: Shield, permission: "can_view_access_control" },
   { title: "Gestão de Agências", url: "/admin/agencies", icon: Building2, permission: "can_manage_agencies" },
 ];

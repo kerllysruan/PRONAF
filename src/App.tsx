@@ -9,11 +9,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";
 import Proposals from "./pages/Proposals";
-import KanbanBoard from "./pages/KanbanBoard";
 import Documentation from "./pages/Documentation";
-import Tasks from "./pages/Tasks";
-import Disbursements from "./pages/Disbursements";
-import Management from "./pages/Management";
 import AccessControl from "./pages/AccessControl";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -67,11 +63,7 @@ const AppRoutes = () => (
     <Route path="/propostas" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><Proposals /></PermissionGate></ProtectedRoute>} />
     <Route path="/estoque" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><StockProposals /></PermissionGate></ProtectedRoute>} />
     <Route path="/troca-arquivos" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><FileExchange /></PermissionGate></ProtectedRoute>} />
-    <Route path="/kanban" element={<ProtectedRoute><PermissionGate permission="can_view_kanban" showError><KanbanBoard /></PermissionGate></ProtectedRoute>} />
     <Route path="/documentacao" element={<ProtectedRoute><PermissionGate permission="can_view_documentation" showError><Documentation /></PermissionGate></ProtectedRoute>} />
-    <Route path="/tarefas" element={<ProtectedRoute><PermissionGate permission="can_view_tasks" showError><Tasks /></PermissionGate></ProtectedRoute>} />
-    <Route path="/desembolsos" element={<ProtectedRoute><PermissionGate permission="can_view_disbursements" showError><Disbursements /></PermissionGate></ProtectedRoute>} />
-    <Route path="/gerenciamento" element={<ProtectedRoute><PermissionGate permission="can_view_management" showError><Management /></PermissionGate></ProtectedRoute>} />
     <Route path="/controle-acesso" element={<ProtectedRoute><PermissionGate permission="can_view_access_control" showError><AccessControl /></PermissionGate></ProtectedRoute>} />
     <Route path="/admin/agencies" element={<ProtectedRoute><PermissionGate requireAdmin showError><AdminAgencies /></PermissionGate></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
