@@ -101,6 +101,15 @@ function AccessControl() {
   const [editPerms, setEditPerms] = useState<UserPermission>({ user_id: "" });
   const [saving, setSaving] = useState(false);
 
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    id: "",
+    email: "",
+    display_name: "",
+    matricula: "",
+    password: ""
+  });
+
   const fetchUsers = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
@@ -253,6 +262,54 @@ function AccessControl() {
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally { setSaving(false); }
+  };
+
+  const handleEditProfile = async () => {
+    if (!selectedUser) return;
+    if (!editForm.email || !editForm.display_name) {
+      toast({ title: "Erro", description: "Nome e e-mail são obrigatórios.", variant: "destructive" });
+      return;
+    }
+    
+    try {
+      setSaving(true);
+      // 1. Update Profile (email, display_name, matricula)
+      const { data: profileData, error: profileError } = await supabase.functions.invoke('admin-users', {
+        body: {
+          action: 'update_profile',
+          user_id: selectedUser.id,
+          email: editForm.email,
+          display_name: editForm.display_name,
+          matricula: editForm.matricula
+        }
+      });
+      if (profileError) throw profileError;
+      if (profileData?.error) throw new Error(profileData.error);
+
+      // 2. If password is provided, update password
+      if (editForm.password) {
+        if (editForm.password.length < 6) {
+          throw new Error("A nova senha deve ter pelo menos 6 caracteres.");
+        }
+        const { data: passData, error: passError } = await supabase.functions.invoke('admin-users', {
+          body: {
+            action: 'update_password',
+            user_id: selectedUser.id,
+            password: editForm.password
+          }
+        });
+        if (passError) throw passError;
+        if (passData?.error) throw new Error(passData.error);
+      }
+
+      toast({ title: "Sucesso", description: "Perfil do usuário atualizado com sucesso." });
+      setIsEditOpen(false);
+      await fetchUsers(true);
+    } catch (err: any) {
+      toast({ title: "Erro ao atualizar perfil", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const executeDeleteUser = async () => {
@@ -549,6 +606,24 @@ function AccessControl() {
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 duration-300">
                         <Button
                           variant="ghost" size="icon"
+                          className="h-10 w-10 rounded-xl text-blue-500 hover:bg-blue-50 transition-all"
+                          title="Editar Perfil"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setEditForm({
+                              id: user.id,
+                              email: user.email,
+                              display_name: user.display_name || "",
+                              matricula: user.matricula || "",
+                              password: ""
+                            });
+                            setIsEditOpen(true);
+                          }}
+                        >
+                          <Edit3 className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          variant="ghost" size="icon"
                           className="h-10 w-10 rounded-xl text-primary hover:bg-primary/10 transition-all"
                           title="Editar Permissões"
                           onClick={() => {
@@ -811,6 +886,71 @@ function AccessControl() {
               >
                 {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
                 Confirmar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="rounded-3xl border-border/40 shadow-premium max-w-md p-0 overflow-hidden bg-card/95 backdrop-blur-xl">
+          <DialogHeader className="p-6 bg-blue-500 text-white">
+            <DialogTitle className="font-heading font-black text-xl flex items-center gap-2">
+              <Edit3 className="h-6 w-6" /> Editar Perfil do Usuário
+            </DialogTitle>
+            <DialogDescription className="text-white/80 font-medium">
+              Altere os dados de perfil e credenciais para {selectedUser?.display_name || selectedUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-8 space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nome de Exibição</Label>
+                <Input
+                  value={editForm.display_name}
+                  onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
+                  placeholder="Ex: João Silva" className="h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold px-4"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">E-mail</Label>
+                <Input
+                  type="email" value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  placeholder="Ex: joao@empresa.com" className="h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold px-4"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Matrícula</Label>
+                <Input
+                  value={editForm.matricula}
+                  onChange={(e) => setEditForm({ ...editForm, matricula: e.target.value })}
+                  placeholder="Ex: M12345" className="h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold px-4"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nova Senha (deixe em branco para manter)</Label>
+                <Input
+                  type="password" value={editForm.password}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                  placeholder="Mínimo 6 caracteres" className="h-12 rounded-xl border-border/40 bg-muted/10 focus:bg-background transition-all font-bold px-4"
+                />
+              </div>
+            </div>
+
+            <div className="pt-4 flex gap-3">
+              <Button variant="outline" onClick={() => setIsEditOpen(false)} className="flex-1 h-12 rounded-2xl border-border/40 font-bold">Cancelar</Button>
+              <Button
+                onClick={handleEditProfile}
+                disabled={saving}
+                className="flex-1 h-12 rounded-2xl bg-blue-500 shadow-lg shadow-blue-500/20 font-black gap-2 text-white hover:bg-blue-600"
+              >
+                {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+                Salvar Alterações
               </Button>
             </div>
           </div>

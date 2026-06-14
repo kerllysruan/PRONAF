@@ -267,6 +267,33 @@ Deno.serve(async (req: Request) => {
         break;
       }
 
+      case "update_profile": {
+        const { user_id, email, display_name, matricula } = payload;
+        
+        if (callerRole === "admin") {
+          const { data: targetProfile } = await adminClient.from("profiles").select("agency_id").eq("user_id", user_id).single();
+          if (targetProfile?.agency_id !== callerAgencyId) {
+            throw new Error("Acesso negado. Usuário pertence a outra agência.");
+          }
+        }
+
+        const { error: authError } = await adminClient.auth.admin.updateUserById(user_id, { 
+          email, 
+          user_metadata: { display_name, matricula } 
+        });
+        if (authError) throw new Error(`Erro Auth: ${authError.message}`);
+
+        const { error: profileError } = await adminClient.from("profiles").update({ 
+          email, 
+          display_name, 
+          full_name: display_name,
+          matricula 
+        }).eq("user_id", user_id);
+        if (profileError) throw new Error(`Erro Perfil: ${profileError.message}`);
+        
+        break;
+      }
+
       case "update_password": {
         const { user_id, password } = payload;
         // Verify target is in agency if caller is admin
