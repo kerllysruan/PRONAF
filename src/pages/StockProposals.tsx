@@ -14,12 +14,17 @@ import {
   Loader2, Plus, Box, Calendar, FileText, Trash2, User, Landmark,
   Upload, Search, Filter, MapPin, AlertTriangle, CheckCircle2, XCircle, ShieldCheck,
   FileSpreadsheet, Download, Eye, ChevronDown, ChevronUp, Users, Hash, Send, RotateCcw,
-  Edit2
+  Edit2, TrendingUp, DollarSign
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Papa from "papaparse";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
+} from "recharts";
+import { ChartTooltip } from "@/components/ChartTooltip";
 
 // ─── CSV parser (Force Refresh) ────────────────────────────────
 function parseCSVLine(line: string): string[] {
@@ -343,6 +348,40 @@ export default function StockProposals() {
   );
 
   const totalEstimated = filtered.reduce((acc, p) => acc + (Number(p.estimated_value) || 0), 0);
+  const ticketMedio = filtered.length > 0 ? totalEstimated / filtered.length : 0;
+
+  // ── Chart Data ─────────────────────────────────
+  const STOCK_CHART_COLORS = [
+    "hsl(215, 70%, 50%)", "hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)",
+    "hsl(346, 87%, 60%)", "hsl(199, 89%, 48%)", "hsl(280, 60%, 50%)",
+    "hsl(175, 70%, 41%)", "hsl(15, 80%, 55%)",
+  ];
+
+  const projetistaChartData = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach(p => {
+      const proj = p.projetista || "N/A";
+      map.set(proj, (map.get(proj) || 0) + (Number(p.estimated_value) || 0));
+    });
+    return Array.from(map.entries())
+      .map(([name, valor]) => ({ name, valor }))
+      .sort((a, b) => b.valor - a.valor);
+  }, [filtered]);
+
+  const statusPieData = useMemo(() => {
+    const map = new Map<string, number>();
+    filtered.forEach(p => {
+      const s = p.status || "N/A";
+      map.set(s, (map.get(s) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([name, value], i) => ({
+        name,
+        value,
+        fill: STOCK_CHART_COLORS[i % STOCK_CHART_COLORS.length],
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [filtered]);
 
   // ── CSV Import ─────────────────────────────────
   const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1495,65 +1534,132 @@ export default function StockProposals() {
         </DialogContent>
       </Dialog>
 
-      {/* ─── Stats ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-2">
-        <Card className="border-0 shadow-premium rounded-[20px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-3.5 relative overflow-hidden z-10 flex items-center gap-3 w-full">
-            <div className="absolute -right-6 -top-6 h-32 w-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-700" />
-            <div className="h-10 w-10 shrink-0 rounded-xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
-              <Box className="h-4 w-4 text-indigo-400" />
-            </div>
-            <div className="flex-1">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Total</p>
-              <h3 className="text-lg font-black font-heading tracking-tight drop-shadow-sm leading-none">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : proposals.length}
+      {/* ─── Top Row: KPIs + Charts (same design as Propostas page) ─── */}
+      <div className="flex flex-col lg:flex-row gap-5 mt-2">
+        {/* LEFT — KPI Cards stacked */}
+        <div className="flex flex-col gap-4 lg:w-[280px] shrink-0">
+          <Card className="border-0 shadow-premium rounded-[20px] overflow-hidden bg-gradient-to-br from-indigo-50 to-white group transition-transform hover:scale-[1.02] duration-500 relative">
+            <CardContent className="p-5 relative overflow-hidden">
+              <div className="absolute -right-6 -top-6 h-24 w-24 bg-indigo-500/5 rounded-full blur-2xl" />
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-10 w-10 shrink-0 rounded-xl bg-indigo-100 border border-indigo-200/60 flex items-center justify-center shadow-sm">
+                  <Box className="h-4 w-4 text-indigo-600" />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Montante Estoque</p>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 font-heading tracking-tight tabular-nums">
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(totalEstimated)}
               </h3>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-10 w-10 shrink-0 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
+                  <TrendingUp className="h-4 w-4 text-emerald-600" />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Performance Mês</p>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 font-heading tracking-tight tabular-nums">
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(totalEstimated)}
+              </h3>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="h-10 w-10 shrink-0 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center shadow-sm">
+                  <DollarSign className="h-4 w-4 text-amber-600" />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ticket Médio</p>
+              </div>
+              <h3 className="text-xl font-black text-slate-900 font-heading tracking-tight tabular-nums">
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(ticketMedio)}
+              </h3>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* CENTER — Bar Chart: Volume por Projetista */}
+        <Card className="flex-1 border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl min-w-0">
+          <CardHeader className="pb-1 pt-5 px-5">
+            <CardTitle className="text-xs font-black text-slate-500 uppercase tracking-widest">Volume por Projetista</CardTitle>
+            <p className="text-[10px] text-slate-400 font-medium">Total financeiro captado por cada profissional</p>
+          </CardHeader>
+          <CardContent className="px-2 pb-4">
+            <div className="h-[260px]">
+              {projetistaChartData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={projetistaChartData} margin={{ top: 10, right: 20, left: -10, bottom: 40 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 92%)" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 10, fontWeight: 600 }}
+                      axisLine={false}
+                      tickLine={false}
+                      angle={-35}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 10 }}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(v) => v >= 1000000 ? `R$ ${(v / 1000000).toFixed(1)}mi` : v >= 1000 ? `R$ ${(v / 1000).toFixed(0)}k` : `R$ ${v}`}
+                    />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Bar dataKey="valor" name="Volume" radius={[8, 8, 0, 0]} barSize={40}>
+                      {projetistaChartData.map((_, i) => (
+                        <Cell key={i} fill={STOCK_CHART_COLORS[i % STOCK_CHART_COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
-            <div className="h-10 w-10 shrink-0 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
-              <Landmark className="h-4 w-4 text-emerald-600" />
-            </div>
-            <div className="flex-1">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Volume</p>
-              <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none tabular-nums">
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : formatCurrency(totalEstimated)}
-              </h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
-            <div className="h-10 w-10 shrink-0 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center shadow-sm">
-              <Filter className="h-4 w-4 text-amber-600" />
-            </div>
-            <div className="flex-1">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Filtrados</p>
-              <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
-                {filtered.length}
-              </h3>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
-            <div className="h-10 w-10 shrink-0 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center shadow-sm">
-              <MapPin className="h-4 w-4 text-violet-600" />
-            </div>
-            <div className="flex-1">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Municípios</p>
-              <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
-                {municipios.length}
-              </h3>
+        {/* RIGHT — Doughnut Chart: Aderência por Status */}
+        <Card className="lg:w-[300px] shrink-0 border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl">
+          <CardHeader className="pb-1 pt-5 px-5">
+            <CardTitle className="text-xs font-black text-slate-500 uppercase tracking-widest">Aderência por Status</CardTitle>
+            <p className="text-[10px] text-slate-400 font-medium">Quantidade de propostas por status</p>
+          </CardHeader>
+          <CardContent className="px-2 pb-4">
+            <div className="h-[260px] relative">
+              {statusPieData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
+              ) : (
+                <>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={statusPieData}
+                        cx="50%"
+                        cy="45%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={3}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {statusPieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                      </Pie>
+                      <Tooltip content={<ChartTooltip formatter={(v) => `${v} propostas`} />} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  {/* Central Total Label */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ top: '-10%' }}>
+                    <span className="text-3xl font-black text-slate-800 font-heading">{filtered.length}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total</span>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
