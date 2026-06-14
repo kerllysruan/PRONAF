@@ -618,220 +618,217 @@ export default function Proposals() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Card 1: Montante Concluído */}
-        <Card className="border-0 shadow-premium rounded-[32px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-500 relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-4 md:p-5 relative overflow-hidden z-10 flex items-center gap-4">
-            <div className="absolute -right-6 -top-6 h-32 w-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700" />
-            <div className="h-12 w-12 shrink-0 rounded-2xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
-              <Wallet className="h-5 w-5 text-emerald-400" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-0.5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Montante Concluído</p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-2">
+        {/* Lado Esquerdo: KPIs (3 cards compactos empilhados) */}
+        <div className="lg:col-span-3 flex flex-col gap-3">
+          {/* Card 1: Montante Concluído */}
+          <Card className="border-0 shadow-premium rounded-[20px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-3.5 relative overflow-hidden z-10 flex items-center gap-3 w-full">
+              <div className="absolute -right-6 -top-6 h-32 w-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700" />
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
+                <Wallet className="h-4 w-4 text-emerald-400" />
               </div>
-              <h3 className="text-xl md:text-2xl font-black font-heading tracking-tight drop-shadow-sm leading-none">
-                {formatCurrency(concludedStats.totalValue)}
-              </h3>
-              <p className="text-[10px] text-slate-400 font-medium mt-1">{concludedStats.totalCount} propostas</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Card 2: Performance Mês */}
-        <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-4 md:p-5 relative z-10 flex items-center gap-4">
-            <div className="h-12 w-12 shrink-0 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
-              <TrendingUp className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-0.5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Performance Mês</p>
+              <div className="flex-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Montante Concluído</p>
+                <h3 className="text-lg font-black font-heading tracking-tight drop-shadow-sm leading-none">
+                  {formatCurrency(concludedStats.totalValue)}
+                </h3>
               </div>
-              <h3 className="text-xl md:text-2xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
-                {formatCurrency(concludedStats.monthValue)}
-              </h3>
-              <p className="text-[10px] text-slate-500 font-medium mt-1 flex items-center"><CheckCircle2 className="h-3 w-3 mr-1 text-emerald-500" /> {concludedStats.monthCount} neste mês</p>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Card 3: Ticket Médio */}
-        <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-4 md:p-5 relative z-10 flex items-center gap-4">
-            <div className="h-12 w-12 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
-              <DollarSign className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-0.5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ticket Médio</p>
+          {/* Card 2: Performance Mês */}
+          <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
+                <TrendingUp className="h-4 w-4 text-emerald-600" />
               </div>
-              <h3 className="text-xl md:text-2xl font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
-                {formatCurrency(concludedStats.totalCount > 0 ? concludedStats.totalValue / concludedStats.totalCount : 0)}
-              </h3>
-              <p className="text-[10px] text-slate-500 font-medium mt-1">Média histórica</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ─── Gráficos Interativos ─── */}
-      <div className="grid gap-6 md:grid-cols-2 mt-2">
-        <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-6 relative z-10">
-            <div className="flex flex-col mb-4">
-              <h3 className="text-sm font-black uppercase tracking-widest text-slate-500">Volume por Projetista</h3>
-              <p className="text-xs text-slate-400">Total financeiro captado por cada profissional</p>
-            </div>
-            <div className="h-[140px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={designerChartData} margin={{ top: 10, right: 10, left: 20, bottom: 30 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} angle={-25} textAnchor="end" />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`} />
-                  <Tooltip 
-                    cursor={{ fill: '#f1f5f9' }} 
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value: number) => [formatCurrency(value), 'Volume Captado']}
-                  />
-                  <Bar dataKey="value" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={32} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200/60 shadow-premium rounded-[32px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-6 relative z-10">
-            <div className="flex flex-col mb-4">
-              <h3 className="text-sm font-black uppercase tracking-widest text-slate-500">Aderência por Linha</h3>
-              <p className="text-xs text-slate-400">Quantidade de contratos por programa</p>
-            </div>
-            <div className="h-[140px] w-full flex items-center justify-center relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={programChartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={65}
-                    paddingAngle={3}
-                    dataKey="count"
-                  >
-                    {programChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                    formatter={(value: number) => [`${value} propostas`, 'Quantidade']}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute flex flex-col items-center justify-center pointer-events-none mt-2">
-                <span className="text-4xl font-black text-slate-800 tracking-tighter">{concludedStats.totalCount}</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Total Geral</span>
+              <div className="flex-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Performance Mês</p>
+                <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
+                  {formatCurrency(concludedStats.monthValue)}
+                </h3>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* Card 3: Ticket Médio */}
+          <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
+                <DollarSign className="h-4 w-4 text-indigo-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Ticket Médio</p>
+                <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
+                  {formatCurrency(concludedStats.totalCount > 0 ? concludedStats.totalValue / concludedStats.totalCount : 0)}
+                </h3>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Centro: Gráfico de Barras */}
+        <div className="lg:col-span-5 h-full">
+          <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-5 relative z-10 flex-1 flex flex-col">
+              <div className="flex flex-col mb-3">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Volume por Projetista</h3>
+                <p className="text-[10px] text-slate-400">Total financeiro captado por cada profissional</p>
+              </div>
+              <div className="flex-1 w-full min-h-[140px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={designerChartData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748b' }} angle={-25} textAnchor="end" />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748b' }} tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`} />
+                    <Tooltip 
+                      cursor={{ fill: '#f1f5f9' }} 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                      formatter={(value: number) => [formatCurrency(value), 'Volume Captado']}
+                    />
+                    <Bar dataKey="value" fill="#4f46e5" radius={[4, 4, 0, 0]} barSize={24} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Lado Direito: Gráfico de Rosca */}
+        <div className="lg:col-span-4 h-full">
+          <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-5 relative z-10 flex-1 flex flex-col">
+              <div className="flex flex-col mb-3">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Aderência por Linha</h3>
+                <p className="text-[10px] text-slate-400">Quantidade de contratos por programa</p>
+              </div>
+              <div className="flex-1 w-full min-h-[140px] flex items-center justify-center relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={programChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={65}
+                      paddingAngle={3}
+                      dataKey="count"
+                    >
+                      {programChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                      formatter={(value: number) => [`${value} propostas`, 'Quantidade']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute flex flex-col items-center justify-center pointer-events-none mt-1">
+                  <span className="text-3xl font-black text-slate-800 tracking-tighter leading-none">{concludedStats.totalCount}</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Total</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* ─── Search & Filters Top Bar (Redesenhado) ─── */}
-      <Card className="shadow-premium border-slate-200 mt-8 rounded-[32px] overflow-hidden bg-white/70 backdrop-blur-2xl">
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <Card className="shadow-premium border-slate-200 mt-6 rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-end gap-4">
+            
             {/* Search */}
-            <div className="lg:col-span-12 xl:col-span-4 relative flex items-end">
-              <div className="w-full">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Buscar Propostas</Label>
-                <div className="relative">
-                  <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
-                  <Input
-                    placeholder="Nome, CPF..."
-                    className="pl-12 h-12 bg-slate-50/50 border-slate-200 rounded-2xl text-sm transition-all hover:bg-slate-50 focus:bg-white"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Filters Row */}
-            <div className="lg:col-span-12 xl:col-span-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              
-              <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Mês/Ano</Label>
-                <MonthYearFilter
-                  month={filterMonth}
-                  year={filterYear}
-                  onMonthChange={setFilterMonth}
-                  onYearChange={setFilterYear}
-                  years={availableYears}
+            <div className="flex-1 min-w-[200px]">
+              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Buscar Propostas</Label>
+              <div className="relative">
+                <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
+                <Input
+                  placeholder="Nome, CPF..."
+                  className="pl-12 h-12 bg-slate-50/50 border-slate-200 rounded-2xl text-sm transition-all hover:bg-slate-50 focus:bg-white"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Ordenar</Label>
-                <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
-                  <SelectTrigger className="w-full h-12 gap-2 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all">
-                    <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />
-                    <SelectValue placeholder="Ordenar" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl">
-                    <SelectItem value="data">Data (Mais Novas)</SelectItem>
-                    <SelectItem value="nome">Alfabética (A-Z)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Projetista</Label>
-                <Select value={designerFilter} onValueChange={setDesignerFilter}>
-                  <SelectTrigger className="w-full h-12 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all">
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl max-h-[300px]">
-                    <SelectItem value="all">Todos</SelectItem>
-                    {uniqueDesigners.map(designer => (
-                      <SelectItem key={designer} value={designer}>{designer}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Linha</Label>
-                <Select value={programFilter} onValueChange={setProgramFilter}>
-                  <SelectTrigger className="w-full h-12 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all truncate text-left">
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl max-h-[300px] w-[350px]">
-                    <SelectItem value="all">Todos</SelectItem>
-                    {uniquePrograms.map(prog => (
-                      <SelectItem key={prog} value={prog} className="text-xs truncate">{prog}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-end sm:col-span-2 md:col-span-4 lg:col-span-1 h-full pt-1.5 lg:pt-0">
-                <Button 
-                  onClick={() => setIsReportDialogOpen(true)}
-                  className="h-12 w-full lg:w-auto bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold px-6 shadow-md shadow-indigo-200/50 transition-all hover:scale-[1.02]"
-                >
-                  <FileUp className="h-4 w-4 mr-2" />
-                  Relatório
-                </Button>
-              </div>
-
             </div>
+
+            {/* Mês/Ano */}
+            <div className="w-[140px] shrink-0">
+              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Mês/Ano</Label>
+              <MonthYearFilter
+                month={filterMonth}
+                year={filterYear}
+                onMonthChange={setFilterMonth}
+                onYearChange={setFilterYear}
+                years={availableYears}
+              />
+            </div>
+
+            {/* Ordenar */}
+            <div className="w-[160px] shrink-0">
+              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Ordenar</Label>
+              <Select value={sortBy} onValueChange={(val: any) => setSortBy(val)}>
+                <SelectTrigger className="w-full h-12 gap-2 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all">
+                  <ArrowUpDown className="h-4 w-4 text-slate-400 shrink-0" />
+                  <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  <SelectItem value="data">Data (Mais Novas)</SelectItem>
+                  <SelectItem value="nome">Alfabética (A-Z)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Projetista */}
+            <div className="w-[180px] shrink-0">
+              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Projetista</Label>
+              <Select value={designerFilter} onValueChange={setDesignerFilter}>
+                <SelectTrigger className="w-full h-12 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl max-h-[300px]">
+                  <SelectItem value="all">Todos</SelectItem>
+                  {uniqueDesigners.map(designer => (
+                    <SelectItem key={designer} value={designer}>{designer}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Linha */}
+            <div className="w-[180px] shrink-0">
+              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Linha</Label>
+              <Select value={programFilter} onValueChange={setProgramFilter}>
+                <SelectTrigger className="w-full h-12 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all truncate text-left">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl max-h-[300px] w-[250px]">
+                  <SelectItem value="all">Todos</SelectItem>
+                  {uniquePrograms.map(prog => (
+                    <SelectItem key={prog} value={prog} className="text-xs truncate">{prog}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Botão Relatório */}
+            <div className="shrink-0">
+              <Button 
+                onClick={() => setIsReportDialogOpen(true)}
+                className="h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold px-6 shadow-md shadow-indigo-200/50 transition-all hover:scale-[1.02]"
+              >
+                <FileUp className="h-4 w-4 mr-2" />
+                Relatório
+              </Button>
+            </div>
+
           </div>
         </CardContent>
       </Card>
