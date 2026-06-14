@@ -760,7 +760,7 @@ export default function Proposals() {
             </div>
 
             {/* Mês/Ano */}
-            <div className="w-[140px] shrink-0">
+            <div className="w-auto shrink-0">
               <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Mês/Ano</Label>
               <MonthYearFilter
                 month={filterMonth}
