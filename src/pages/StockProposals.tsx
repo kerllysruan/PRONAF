@@ -350,6 +350,25 @@ export default function StockProposals() {
   const totalEstimated = filtered.reduce((acc, p) => acc + (Number(p.estimated_value) || 0), 0);
   const ticketMedio = filtered.length > 0 ? totalEstimated / filtered.length : 0;
 
+  const performanceMes = useMemo(() => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    return filtered.reduce((acc, p) => {
+      if (p.entry_date) {
+        const d = parseISO(p.entry_date);
+        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+          return acc + (Number(p.estimated_value) || 0);
+        }
+      } else if (p.created_at) {
+        const d = parseISO(p.created_at);
+        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+          return acc + (Number(p.estimated_value) || 0);
+        }
+      }
+      return acc;
+    }, 0);
+  }, [filtered]);
+
   // ── Chart Data ─────────────────────────────────
   const STOCK_CHART_COLORS = [
     "hsl(215, 70%, 50%)", "hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)",
@@ -528,11 +547,13 @@ export default function StockProposals() {
   };
 
   const openEditDialog = (proposal: StockProposal) => {
-    // Forçar o status correto baseado na restrição ao abrir
-    let forcedStatus = proposal.status;
-    const normSerasa = (proposal.serasa || "").trim().toUpperCase();
-    if (normSerasa === "SIM") forcedStatus = "RESTRIÇÃO";
-    else if (normSerasa === "NAO" || normSerasa === "NÃO") forcedStatus = "AGUARDANDO ENTREVISTA";
+    let currentStatus = proposal.status;
+    if (!currentStatus) {
+      const normSerasa = (proposal.serasa || "").trim().toUpperCase();
+      if (normSerasa === "SIM") currentStatus = "RESTRIÇÃO";
+      else if (normSerasa === "NAO" || normSerasa === "NÃO") currentStatus = "AGUARDANDO ENTREVISTA";
+      else currentStatus = "novo";
+    }
 
     setEditingProposal(proposal);
     setEditFormData({
@@ -543,7 +564,7 @@ export default function StockProposals() {
       municipio: proposal.municipio,
       localizacao: proposal.localizacao,
       linha_credito: proposal.linha_credito,
-      status: forcedStatus,
+      status: currentStatus,
       pendencias: proposal.pendencias,
       serasa: proposal.serasa,
       notes: proposal.notes,
@@ -1463,8 +1484,7 @@ export default function StockProposals() {
                 <Select
                   value={editFormData.serasa || "NAO"}
                   onValueChange={(val) => {
-                    const newStatus = val === "SIM" ? "RESTRIÇÃO" : "AGUARDANDO ENTREVISTA";
-                    setEditFormData(prev => ({...prev, serasa: val, status: newStatus}));
+                    setEditFormData(prev => ({...prev, serasa: val}));
                   }}
                 >
                   <SelectTrigger id="edit-serasa" className="h-9 text-sm">
@@ -1535,134 +1555,129 @@ export default function StockProposals() {
       </Dialog>
 
       {/* ─── Top Row: KPIs + Charts (same design as Propostas page) ─── */}
-      <div className="flex flex-col lg:flex-row gap-5 mt-2">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-2">
         {/* LEFT — KPI Cards stacked */}
-        <div className="flex flex-col gap-4 lg:w-[280px] shrink-0">
-          <Card className="border-0 shadow-premium rounded-[20px] overflow-hidden bg-gradient-to-br from-indigo-50 to-white group transition-transform hover:scale-[1.02] duration-500 relative">
-            <CardContent className="p-5 relative overflow-hidden">
-              <div className="absolute -right-6 -top-6 h-24 w-24 bg-indigo-500/5 rounded-full blur-2xl" />
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 shrink-0 rounded-xl bg-indigo-100 border border-indigo-200/60 flex items-center justify-center shadow-sm">
-                  <Box className="h-4 w-4 text-indigo-600" />
-                </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Montante Estoque</p>
+        <div className="lg:col-span-3 flex flex-col gap-3">
+          <Card className="border-0 shadow-premium rounded-[20px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-3.5 relative overflow-hidden z-10 flex items-center gap-3 w-full">
+              <div className="absolute -right-6 -top-6 h-32 w-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-700" />
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
+                <Box className="h-4 w-4 text-indigo-400" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 font-heading tracking-tight tabular-nums">
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(totalEstimated)}
-              </h3>
+              <div className="flex-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Montante Estoque</p>
+                <h3 className="text-lg font-black font-heading tracking-tight drop-shadow-sm leading-none">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : formatCurrency(totalEstimated)}
+                </h3>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 shrink-0 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
-                  <TrendingUp className="h-4 w-4 text-emerald-600" />
-                </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Performance Mês</p>
+          <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
+                <TrendingUp className="h-4 w-4 text-emerald-600" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 font-heading tracking-tight tabular-nums">
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(totalEstimated)}
-              </h3>
+              <div className="flex-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Performance Mês</p>
+                <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : formatCurrency(performanceMes)}
+                </h3>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 shrink-0 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center shadow-sm">
-                  <DollarSign className="h-4 w-4 text-amber-600" />
-                </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ticket Médio</p>
+          <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
+              <div className="h-10 w-10 shrink-0 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
+                <DollarSign className="h-4 w-4 text-indigo-600" />
               </div>
-              <h3 className="text-xl font-black text-slate-900 font-heading tracking-tight tabular-nums">
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(ticketMedio)}
-              </h3>
+              <div className="flex-1">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Ticket Médio</p>
+                <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : formatCurrency(ticketMedio)}
+                </h3>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* CENTER — Bar Chart: Volume por Projetista */}
-        <Card className="flex-1 border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl min-w-0">
-          <CardHeader className="pb-1 pt-5 px-5">
-            <CardTitle className="text-xs font-black text-slate-500 uppercase tracking-widest">Volume por Projetista</CardTitle>
-            <p className="text-[10px] text-slate-400 font-medium">Total financeiro captado por cada profissional</p>
-          </CardHeader>
-          <CardContent className="px-2 pb-4">
-            <div className="h-[260px]">
-              {projetistaChartData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={projetistaChartData} margin={{ top: 10, right: 20, left: -10, bottom: 40 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 92%)" vertical={false} />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 10, fontWeight: 600 }}
-                      axisLine={false}
-                      tickLine={false}
-                      angle={-35}
-                      textAnchor="end"
-                      height={60}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 10 }}
-                      axisLine={false}
-                      tickLine={false}
-                      tickFormatter={(v) => v >= 1000000 ? `R$ ${(v / 1000000).toFixed(1)}mi` : v >= 1000 ? `R$ ${(v / 1000).toFixed(0)}k` : `R$ ${v}`}
-                    />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Bar dataKey="valor" name="Volume" radius={[8, 8, 0, 0]} barSize={40}>
-                      {projetistaChartData.map((_, i) => (
-                        <Cell key={i} fill={STOCK_CHART_COLORS[i % STOCK_CHART_COLORS.length]} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-5 h-full">
+          <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-5 relative z-10 flex-1 flex flex-col">
+              <div className="flex flex-col mb-3">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Volume por Projetista</h3>
+                <p className="text-[10px] text-slate-400">Total financeiro captado por cada profissional</p>
+              </div>
+              <div className="flex-1 w-full min-h-[140px]">
+                {projetistaChartData.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={projetistaChartData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748b' }} angle={-25} textAnchor="end" />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748b' }} tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`} />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Bar dataKey="valor" name="Volume" radius={[4, 4, 0, 0]} barSize={24}>
+                        {projetistaChartData.map((_, i) => (
+                          <Cell key={i} fill={STOCK_CHART_COLORS[i % STOCK_CHART_COLORS.length]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* RIGHT — Doughnut Chart: Aderência por Status */}
-        <Card className="lg:w-[300px] shrink-0 border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl">
-          <CardHeader className="pb-1 pt-5 px-5">
-            <CardTitle className="text-xs font-black text-slate-500 uppercase tracking-widest">Aderência por Status</CardTitle>
-            <p className="text-[10px] text-slate-400 font-medium">Quantidade de propostas por status</p>
-          </CardHeader>
-          <CardContent className="px-2 pb-4">
-            <div className="h-[260px] relative">
-              {statusPieData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
-              ) : (
-                <>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statusPieData}
-                        cx="50%"
-                        cy="45%"
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={3}
-                        dataKey="value"
-                        stroke="none"
-                      >
-                        {statusPieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-                      </Pie>
-                      <Tooltip content={<ChartTooltip formatter={(v) => `${v} propostas`} />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  {/* Central Total Label */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ top: '-10%' }}>
-                    <span className="text-3xl font-black text-slate-800 font-heading">{filtered.length}</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-4 h-full">
+          <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <CardContent className="p-5 relative z-10 flex-1 flex flex-col">
+              <div className="flex flex-col mb-3">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Aderência por Status</h3>
+                <p className="text-[10px] text-slate-400">Quantidade de propostas por status</p>
+              </div>
+              <div className="flex-1 w-full min-h-[140px] flex items-center justify-center relative">
+                {statusPieData.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
+                ) : (
+                  <>
+                    <div className="absolute flex flex-col items-center justify-center pointer-events-none mt-1 z-0">
+                      <span className="text-3xl font-black text-slate-800 tracking-tighter leading-none">{filtered.length}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Total</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height="100%" className="z-10 relative">
+                      <PieChart>
+                        <Pie
+                          data={statusPieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={45}
+                          outerRadius={65}
+                          paddingAngle={3}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          {statusPieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                        </Pie>
+                        <Tooltip content={<ChartTooltip formatter={(v) => `${v} propostas`} />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* ─── Search & Filters Top Bar (Premium) ─── */}
