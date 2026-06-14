@@ -947,21 +947,26 @@ export default function StockProposals() {
   return (
     <div className="flex flex-col gap-4 md:gap-6 p-3 md:p-6 animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full pb-20 md:pb-6">
       {/* ─── Header ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-800 font-heading tracking-tight flex items-center gap-3">
-            <Box className="h-6 w-6 md:h-8 md:w-8 text-indigo-600" />
-            Propostas em Estoque
-          </h1>
-          <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Controle de propostas prontas para envio à central. Importe via CSV ou cadastre manualmente.
-          </p>
-          {concludedProposals.length > 0 && (
-            <div className="mt-2 flex items-center gap-2 text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg px-3 py-1.5 w-fit font-semibold">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {concludedProposals.length} proposta{concludedProposals.length > 1 ? 's' : ''} concluída{concludedProposals.length > 1 ? 's' : ''} — disponível em <strong className="ml-1">Gestão de Propostas</strong>
-            </div>
-          )}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card/40 backdrop-blur-xl p-6 rounded-3xl border border-border/50 shadow-premium">
+        <div className="flex items-center gap-4">
+          <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center shadow-inner group/icon transform transition-all duration-500 hover:rotate-6">
+            <Box className="h-7 w-7 text-indigo-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold font-heading text-foreground tracking-tight">
+              Propostas em Estoque
+            </h1>
+            <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              Controle de propostas prontas para envio à central
+            </p>
+            {concludedProposals.length > 0 && (
+              <div className="mt-2 flex items-center gap-2 text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg px-3 py-1.5 w-fit font-semibold">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                {concludedProposals.length} proposta{concludedProposals.length > 1 ? 's' : ''} concluída{concludedProposals.length > 1 ? 's' : ''} — disponível em <strong className="ml-1">Gestão de Propostas</strong>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
@@ -1491,133 +1496,133 @@ export default function StockProposals() {
       </Dialog>
 
       {/* ─── Stats ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="bg-gradient-to-br from-indigo-50 to-white border-indigo-100 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
-                <Box className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold text-indigo-600/80 uppercase tracking-wider">Total</p>
-                <h3 className="text-xl md:text-2xl font-black text-indigo-900">
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : proposals.length}
-                </h3>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mt-2">
+        <Card className="border-0 shadow-premium rounded-[20px] overflow-hidden bg-slate-900 text-white group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-3.5 relative overflow-hidden z-10 flex items-center gap-3 w-full">
+            <div className="absolute -right-6 -top-6 h-32 w-32 bg-indigo-500/10 rounded-full blur-3xl group-hover:bg-indigo-500/20 transition-all duration-700" />
+            <div className="h-10 w-10 shrink-0 rounded-xl bg-white/10 border border-white/5 flex items-center justify-center backdrop-blur-md shadow-inner">
+              <Box className="h-4 w-4 text-indigo-400" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Total</p>
+              <h3 className="text-lg font-black font-heading tracking-tight drop-shadow-sm leading-none">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : proposals.length}
+              </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-100 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
-                <Landmark className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold text-emerald-600/80 uppercase tracking-wider">Volume</p>
-                <h3 className="text-lg md:text-xl font-black text-emerald-900 tabular-nums">
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : formatCurrency(totalEstimated)}
-                </h3>
-              </div>
+        <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
+            <div className="h-10 w-10 shrink-0 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shadow-sm">
+              <Landmark className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Volume</p>
+              <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none tabular-nums">
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : formatCurrency(totalEstimated)}
+              </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-50 to-white border-amber-100 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
-                <Filter className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold text-amber-600/80 uppercase tracking-wider">Filtrados</p>
-                <h3 className="text-xl md:text-2xl font-black text-amber-900">
-                  {filtered.length}
-                </h3>
-              </div>
+        <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
+            <div className="h-10 w-10 shrink-0 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center shadow-sm">
+              <Filter className="h-4 w-4 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Filtrados</p>
+              <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
+                {filtered.length}
+              </h3>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-violet-50 to-white border-violet-100 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-violet-100 flex items-center justify-center text-violet-600">
-                <MapPin className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold text-violet-600/80 uppercase tracking-wider">Municípios</p>
-                <h3 className="text-xl md:text-2xl font-black text-violet-900">
-                  {municipios.length}
-                </h3>
-              </div>
+        <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-3.5 relative z-10 flex items-center gap-3 w-full">
+            <div className="h-10 w-10 shrink-0 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center shadow-sm">
+              <MapPin className="h-4 w-4 text-violet-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Municípios</p>
+              <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
+                {municipios.length}
+              </h3>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* ─── Search & Filters ─── */}
-      <Card className="shadow-sm border-slate-200">
-        <CardContent className="p-3 md:p-4">
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Buscar em todos os campos..."
-                className="pl-9 h-10 bg-white"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+      {/* ─── Search & Filters Top Bar (Premium) ─── */}
+      <Card className="shadow-premium border-slate-200 mt-6 rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-end gap-4">
+            {/* Search */}
+            <div className="flex-1 min-w-[200px]">
+              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Buscar no Estoque</Label>
+              <div className="relative">
+                <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
+                <Input
+                  placeholder="Buscar em todos os campos..."
+                  className="pl-12 h-12 bg-slate-50/50 border-slate-200 rounded-2xl text-sm transition-all hover:bg-slate-50 focus:bg-white"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="flex flex-wrap gap-4 items-end">
-              <div className="space-y-1.5 flex-1 md:flex-none">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Município</Label>
-                <Select value={filterMunicipio} onValueChange={setFilterMunicipio}>
-                  <SelectTrigger className="w-full md:w-[160px] h-10 gap-2 bg-white">
-                    <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
-                    <SelectValue placeholder="Município" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[250px]">
-                    <SelectItem value="all">Todos os Municípios</SelectItem>
-                    {municipios.map(m => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
-              <div className="space-y-1.5 flex-1 md:flex-none">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Status</Label>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full md:w-[160px] h-10 gap-2 bg-white">
-                    <ShieldCheck className="h-4 w-4 text-slate-400 shrink-0" />
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Status</SelectItem>
-                    {STATUS_OPTIONS.map(s => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Município */}
+            <div className="w-[180px] shrink-0">
+              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Município</Label>
+              <Select value={filterMunicipio} onValueChange={setFilterMunicipio}>
+                <SelectTrigger className="w-full h-12 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all truncate text-left">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl max-h-[300px] w-[250px]">
+                  <SelectItem value="all">Todos</SelectItem>
+                  {municipios.map(m => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-1.5 flex-1 md:flex-none">
-                <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Projetista</Label>
-                <Select value={filterProjetista} onValueChange={setFilterProjetista}>
-                  <SelectTrigger className="w-full md:w-[180px] h-10 gap-2 bg-white">
-                    <Users className="h-4 w-4 text-slate-400 shrink-0" />
-                    <SelectValue placeholder="Projetista" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Projetistas</SelectItem>
-                    {PROJETISTAS.map(p => (
-                      <SelectItem key={p} value={p}>{p}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Status */}
+            <div className="w-[180px] shrink-0">
+              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Status</Label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full h-12 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all truncate text-left">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl">
+                  <SelectItem value="all">Todos</SelectItem>
+                  {STATUS_OPTIONS.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Projetista */}
+            <div className="w-[180px] shrink-0">
+              <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1 mb-1.5 block">Projetista</Label>
+              <Select value={filterProjetista} onValueChange={setFilterProjetista}>
+                <SelectTrigger className="w-full h-12 bg-slate-50/50 hover:bg-slate-50 border-slate-200 rounded-2xl transition-all truncate text-left">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl max-h-[300px]">
+                  <SelectItem value="all">Todos</SelectItem>
+                  {PROJETISTAS.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>

@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from "react";
+import { ChartTooltip } from "@/components/ChartTooltip";
 import {
   FileText, CheckCircle2, Search, DollarSign, TrendingUp, Loader2,
   Sparkles, AlertTriangle, Clock, BarChart3, PieChart as PieChartIcon, ArrowUpRight, ArrowDownRight,
@@ -918,7 +919,7 @@ export default function Dashboard() {
                     >
                       {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} />
+                    <Tooltip content={<ChartTooltip formatter={(v) => `${v} propostas`} />} />
                   </PieChart>
                 </ResponsiveContainer>
               )}
@@ -950,11 +951,8 @@ export default function Dashboard() {
                     tickLine={false}
                     tickFormatter={(value) => value >= 1000000 ? `R$ ${(value / 1000000).toFixed(1)}mi` : value >= 1000 ? `R$ ${(value / 1000).toFixed(0)}k` : `R$ ${value}`}
                   />
-                  <Tooltip 
-                    formatter={(value: number) => [formatCurrency(value), "Volume Acumulado"]}
-                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} 
-                  />
-                  <Area type="monotone" dataKey="valor" stroke="#052e16" fill="url(#colorValor)" strokeWidth={3} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Area type="monotone" dataKey="valor" name="Volume Acumulado" stroke="#052e16" fill="url(#colorValor)" strokeWidth={3} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -988,10 +986,7 @@ export default function Dashboard() {
                     tickLine={false}
                     tickFormatter={(value) => value >= 1000000 ? `R$ ${(value / 1000000).toFixed(1)}mi` : value >= 1000 ? `R$ ${(value / 1000).toFixed(0)}k` : `R$ ${value}`}
                   />
-                  <Tooltip 
-                    formatter={(value: number) => [formatCurrency(value), "Volume Financeiro"]}
-                    contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px" }} 
-                  />
+                  <Tooltip content={<ChartTooltip />} />
                   <Area type="monotone" dataKey="valor" name="Volume Financeiro" stroke="#052e16" fill="url(#colorValorLine)" strokeWidth={3} />
                 </AreaChart>
               </ResponsiveContainer>
@@ -1025,13 +1020,7 @@ export default function Dashboard() {
                       width={120}
                       tickFormatter={(value) => value.length > 20 ? `${value.substring(0, 20)}...` : value}
                     />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: "12px", maxWidth: "250px", whiteSpace: "normal" }} 
-                      formatter={(value: number) => [
-                        new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value), 
-                        "Valor Total"
-                      ]} 
-                    />
+                    <Tooltip content={<ChartTooltip />} />
                     <Bar dataKey="valor" fill="hsl(210, 80%, 55%)" radius={[0, 6, 6, 0]}>
                       <LabelList 
                         dataKey="valor" 
