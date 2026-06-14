@@ -279,6 +279,7 @@ Deno.serve(async (req: Request) => {
 
         const { error: authError } = await adminClient.auth.admin.updateUserById(user_id, { 
           email, 
+          email_confirm: true,
           user_metadata: { display_name, matricula } 
         });
         if (authError) throw new Error(`Erro Auth: ${authError.message}`);
@@ -375,7 +376,7 @@ Deno.serve(async (req: Request) => {
       error: errorMessage,
       details: errorDetails
     }), {
-      status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" }
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
 });
