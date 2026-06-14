@@ -277,12 +277,25 @@ Deno.serve(async (req: Request) => {
           }
         }
 
-        const { error: authError } = await adminClient.auth.admin.updateUserById(user_id, { 
-          email, 
-          email_confirm: true,
-          user_metadata: { display_name, matricula } 
-        });
-        if (authError) throw new Error(`Erro Auth: ${authError.message}`);
+        const { data: userResponse, error: getUserError } = await adminClient.auth.admin.getUserById(user_id);
+        if (getUserError) throw new Error(`Erro ao buscar usuário: ${getUserError.message}`);
+
+        // Only update via Auth API if email actually changed, to avoid GoTrue bugs
+        if (userResponse?.user?.email !== email) {
+          const { error: authError } = await adminClient.auth.admin.updateUserById(user_id, { 
+            email,
+            user_metadata: { display_name, matricula } 
+          });
+          if (authError) throw new Error(`Erro Auth (Email): ${authError.message}`);
+        } else {
+          // Bypass GoTrue for metadata if email didn't change
+          const { error: rpcError } = await adminClient.rpc('admin_update_user_metadata', {
+            p_user_id: user_id,
+            p_display_name: display_name,
+            p_matricula: matricula
+          });
+          if (rpcError) throw new Error(`Erro RPC Metadata: ${rpcError.message}`);
+        }
 
         const { error: profileError } = await adminClient.from("profiles").update({ 
           email, 
