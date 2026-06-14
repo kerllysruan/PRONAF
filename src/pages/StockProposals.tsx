@@ -390,15 +390,22 @@ export default function StockProposals() {
   }, [filtered]);
 
   const statusPieData = useMemo(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, { count: number; value: number }>();
     filtered.forEach(p => {
       const s = p.status || "N/A";
-      map.set(s, (map.get(s) || 0) + 1);
+      if (!map.has(s)) {
+        map.set(s, { count: 0, value: 0 });
+      }
+      const data = map.get(s)!;
+      data.count += 1;
+      data.value += Number(p.estimated_value) || 0;
     });
     return Array.from(map.entries())
-      .map(([name, value], i) => ({
+      .map(([name, data], i) => ({
         name,
-        value,
+        value: data.count,
+        count: data.count,
+        totalValue: data.value,
         fill: STOCK_CHART_COLORS[i % STOCK_CHART_COLORS.length],
       }))
       .sort((a, b) => b.value - a.value);
@@ -1643,37 +1650,63 @@ export default function StockProposals() {
         <div className="lg:col-span-4 h-full">
           <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <CardContent className="p-5 relative z-10 flex-1 flex flex-col">
-              <div className="flex flex-col mb-3">
+            <CardContent className="p-5 relative z-10 flex-1 flex flex-col justify-between">
+              <div className="flex flex-col mb-2">
                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Aderência por Status</h3>
                 <p className="text-[10px] text-slate-400">Quantidade de propostas por status</p>
               </div>
-              <div className="flex-1 w-full min-h-[140px] flex items-center justify-center relative">
+              <div className="flex-grow flex flex-col sm:flex-row items-center gap-4 justify-between min-h-[160px]">
                 {statusPieData.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
+                  <div className="flex items-center justify-center h-full w-full text-sm text-muted-foreground">Sem dados</div>
                 ) : (
                   <>
-                    <div className="absolute flex flex-col items-center justify-center pointer-events-none mt-1 z-0">
-                      <span className="text-3xl font-black text-slate-800 tracking-tighter leading-none">{filtered.length}</span>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Total</span>
+                    {/* Donut Chart Container */}
+                    <div className="w-full sm:w-[42%] h-[160px] flex items-center justify-center relative shrink-0">
+                      {/* Texto Central */}
+                      <div className="absolute flex flex-col items-center justify-center pointer-events-none mt-1 z-0">
+                        <span className="text-2xl font-black text-slate-800 tracking-tighter leading-none">{filtered.length}</span>
+                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Total</span>
+                      </div>
+
+                      <ResponsiveContainer width="100%" height="100%" className="z-10 relative">
+                        <PieChart>
+                          <Pie
+                            data={statusPieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={40}
+                            outerRadius={55}
+                            paddingAngle={3}
+                            dataKey="value"
+                            stroke="none"
+                          >
+                            {statusPieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                          </Pie>
+                          <Tooltip content={<ChartTooltip formatter={(v) => `${v} propostas`} />} />
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
-                    <ResponsiveContainer width="100%" height="100%" className="z-10 relative">
-                      <PieChart>
-                        <Pie
-                          data={statusPieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={45}
-                          outerRadius={65}
-                          paddingAngle={3}
-                          dataKey="value"
-                          stroke="none"
-                        >
-                          {statusPieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-                        </Pie>
-                        <Tooltip content={<ChartTooltip formatter={(v) => `${v} propostas`} />} />
-                      </PieChart>
-                    </ResponsiveContainer>
+
+                    {/* List Legend Container */}
+                    <div className="flex-1 w-full space-y-1.5 self-center max-h-[160px] overflow-y-auto pr-1 scrollbar-thin">
+                      {statusPieData.map((entry, index) => {
+                        return (
+                          <div key={entry.name} className="flex items-start gap-2 text-[10px] leading-tight hover:bg-slate-50/50 p-1 rounded-lg transition-colors">
+                            <span className="h-2 w-2 rounded-full mt-1 shrink-0" style={{ backgroundColor: entry.fill }} />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-extrabold text-slate-700 truncate uppercase tracking-tight" title={entry.name}>
+                                {entry.name}
+                              </p>
+                              <div className="flex items-center gap-1.5 text-slate-500 font-semibold mt-0.5">
+                                <span>{entry.count} {entry.count === 1 ? 'proposta' : 'propostas'}</span>
+                                <span className="text-slate-300">•</span>
+                                <span className="font-extrabold text-emerald-600">{formatCurrency(entry.totalValue)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </>
                 )}
               </div>
