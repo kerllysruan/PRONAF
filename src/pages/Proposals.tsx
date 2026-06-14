@@ -630,7 +630,7 @@ export default function Proposals() {
                 <Wallet className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="flex-1">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Montante Concluído</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-0.5">Montante Concluído</p>
                 <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
                   {formatCurrency(concludedStats.totalValue)}
                 </h3>
@@ -646,7 +646,7 @@ export default function Proposals() {
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="flex-1">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Performance Mês</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-0.5">Performance Mês</p>
                 <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
                   {formatCurrency(concludedStats.monthValue)}
                 </h3>
@@ -662,7 +662,7 @@ export default function Proposals() {
                 <DollarSign className="h-4 w-4 text-indigo-600" />
               </div>
               <div className="flex-1">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Ticket Médio</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-0.5">Ticket Médio</p>
                 <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
                   {formatCurrency(concludedStats.totalCount > 0 ? concludedStats.totalValue / concludedStats.totalCount : 0)}
                 </h3>
@@ -677,8 +677,8 @@ export default function Proposals() {
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-5 relative z-10 flex-1 flex flex-col">
               <div className="flex flex-col mb-3">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Volume por Projetista</h3>
-                <p className="text-[10px] text-slate-400">Total financeiro captado por cada profissional</p>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-700">Volume por Projetista</h3>
+                <p className="text-[10px] text-slate-600 font-medium">Total financeiro captado por cada profissional</p>
               </div>
               <div className="flex-1 w-full min-h-[140px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -705,8 +705,8 @@ export default function Proposals() {
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-5 relative z-10 flex-1 flex flex-col justify-between">
               <div className="flex flex-col mb-2">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Aderência por Linha</h3>
-                <p className="text-[10px] text-slate-400">Quantidade de contratos por programa</p>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-700">Aderência por Linha</h3>
+                <p className="text-[10px] text-slate-600 font-medium">Quantidade de contratos por programa</p>
               </div>
               <div className="flex-grow flex flex-col sm:flex-row items-center gap-4 justify-between min-h-[160px]">
                 {/* Donut Chart Container */}
@@ -714,7 +714,7 @@ export default function Proposals() {
                   {/* Texto Central */}
                   <div className="absolute flex flex-col items-center justify-center pointer-events-none mt-1 z-0">
                     <span className="text-2xl font-black text-slate-800 tracking-tighter leading-none">{concludedStats.totalCount}</span>
-                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Total</span>
+                    <span className="text-[8px] font-bold text-slate-600 uppercase tracking-widest mt-0.5">Total</span>
                   </div>
 
                   <ResponsiveContainer width="100%" height="100%" className="z-10 relative">
@@ -753,7 +753,7 @@ export default function Proposals() {
                           <p className="font-extrabold text-slate-700 truncate uppercase tracking-tight" title={entry.name}>
                             {entry.name}
                           </p>
-                          <div className="flex items-center gap-1.5 text-slate-500 font-semibold mt-0.5">
+                          <div className="flex items-center gap-1.5 text-slate-600 font-semibold mt-0.5">
                             <span>{entry.count} {entry.count === 1 ? 'proposta' : 'propostas'}</span>
                             <span className="text-slate-300">•</span>
                             <span className="font-extrabold text-emerald-600">{formatCurrency(entry.value)}</span>

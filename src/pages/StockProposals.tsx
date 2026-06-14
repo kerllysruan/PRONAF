@@ -1574,7 +1574,7 @@ export default function StockProposals() {
                 <Box className="h-4 w-4 text-indigo-600" />
               </div>
               <div className="flex-1">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Montante Estoque</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-0.5">Montante Estoque</p>
                 <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : formatCurrency(totalEstimated)}
                 </h3>
@@ -1589,7 +1589,7 @@ export default function StockProposals() {
                 <TrendingUp className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="flex-1">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Performance Mês</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-0.5">Performance Mês</p>
                 <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : formatCurrency(performanceMes)}
                 </h3>
@@ -1604,7 +1604,7 @@ export default function StockProposals() {
                 <DollarSign className="h-4 w-4 text-indigo-600" />
               </div>
               <div className="flex-1">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Ticket Médio</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-0.5">Ticket Médio</p>
                 <h3 className="text-lg font-black text-slate-900 font-heading tracking-tight drop-shadow-sm leading-none">
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : formatCurrency(ticketMedio)}
                 </h3>
