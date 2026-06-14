@@ -709,7 +709,13 @@ export default function Proposals() {
                 <p className="text-[10px] text-slate-400">Quantidade de contratos por programa</p>
               </div>
               <div className="flex-1 w-full min-h-[140px] flex items-center justify-center relative">
-                <ResponsiveContainer width="100%" height="100%">
+                {/* Texto Central - Agora renderizado antes do gráfico para ficar abaixo do Tooltip */}
+                <div className="absolute flex flex-col items-center justify-center pointer-events-none mt-1 z-0">
+                  <span className="text-3xl font-black text-slate-800 tracking-tighter leading-none">{concludedStats.totalCount}</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Total</span>
+                </div>
+
+                <ResponsiveContainer width="100%" height="100%" className="z-10 relative">
                   <PieChart>
                     <Pie
                       data={programChartData}
@@ -719,21 +725,19 @@ export default function Proposals() {
                       outerRadius={65}
                       paddingAngle={3}
                       dataKey="count"
+                      nameKey="name"
                     >
                       {programChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip 
-                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
-                      formatter={(value: number) => [`${value} propostas`, 'Quantidade']}
+                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', backgroundColor: 'rgba(255, 255, 255, 0.95)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                      itemStyle={{ fontWeight: 'bold' }}
+                      formatter={(value: number, name: string) => [`${value} propostas`, name]}
                     />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute flex flex-col items-center justify-center pointer-events-none mt-1">
-                  <span className="text-3xl font-black text-slate-800 tracking-tighter leading-none">{concludedStats.totalCount}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Total</span>
-                </div>
               </div>
             </CardContent>
           </Card>
