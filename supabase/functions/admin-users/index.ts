@@ -150,6 +150,13 @@ Deno.serve(async (req: Request) => {
             can_view_disbursements: true,
             can_manage_disbursements: true,
           };
+        case "projetista": // Projetista vinculado à agência
+          return {
+            ...perms,
+            can_view_proposals: true,
+            can_create_proposals: true,
+            can_edit_proposals: true,
+          };
         default: // 'usuario' or others
           return perms;
       }

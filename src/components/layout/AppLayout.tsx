@@ -26,7 +26,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                   PRONAF
                 </span>
                 <span className="text-[10px] text-muted-foreground font-medium hidden sm:block">
-                  Sistema de Gestão
+                  Sistema de Gestão Estoque
                 </span>
               </div>
             </div>

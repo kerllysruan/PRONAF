@@ -18,7 +18,8 @@ import {
   Shield, Plus, Trash2, Loader2, Users, Lock, AlertCircle,
   CheckCircle2, UserPlus, ShieldCheck, ShieldAlert,
   Eye, Edit3, Settings2, Fingerprint, DollarSign, Search,
-  KeyRound, UserCog, ChevronRight, Activity, Building2, CheckSquare, Code2, FileText
+  KeyRound, UserCog, ChevronRight, Activity, Building2, CheckSquare, Code2, FileText,
+  PenTool
 } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -39,7 +40,7 @@ interface User {
 }
 
 
-type UserRole = "usuario" | "manager" | "analyst" | "financial" | "admin" | "developer";
+type UserRole = "usuario" | "manager" | "analyst" | "financial" | "projetista" | "admin" | "developer";
 
 interface UserPermission {
   [key: string]: string | boolean | undefined;
@@ -51,13 +52,7 @@ interface UserPermission {
   can_delete_proposals?: boolean;
   can_approve_proposals?: boolean;
   can_view_access_control?: boolean;
-  can_view_kanban?: boolean;
   can_view_documentation?: boolean;
-  can_view_tasks?: boolean;
-  can_manage_tasks?: boolean;
-  can_view_disbursements?: boolean;
-  can_manage_disbursements?: boolean;
-  can_view_management?: boolean;
   can_manage_users?: boolean;
   can_view_agencies?: boolean;
   can_manage_agencies?: boolean;
@@ -67,11 +62,7 @@ interface UserPermission {
 const PERMISSIONS = [
   { key: "can_view_dashboard", label: "Dashboard", group: "Visualização", icon: Eye },
   { key: "can_view_proposals", label: "Propostas", group: "Visualização", icon: Eye },
-  { key: "can_view_kanban", label: "Kanban", group: "Visualização", icon: Eye },
   { key: "can_view_documentation", label: "Documentação", group: "Visualização", icon: Eye },
-  { key: "can_view_tasks", label: "Tarefas", group: "Visualização", icon: Eye },
-  { key: "can_view_disbursements", label: "Desembolsos", group: "Visualização", icon: Eye },
-  { key: "can_view_management", label: "Gerenciamento", group: "Administração", icon: Settings2 },
   { key: "can_view_access_control", label: "Controle Acesso", group: "Administração", icon: ShieldCheck },
   { key: "can_manage_users", label: "Gestão Usuários", group: "Administração", icon: ShieldAlert },
   { key: "can_view_agencies", label: "Visualizar Agências", group: "Administração", icon: Building2 },
@@ -80,14 +71,12 @@ const PERMISSIONS = [
   { key: "can_edit_proposals", label: "Editar Propostas", group: "Operacional", icon: Edit3 },
   { key: "can_delete_proposals", label: "Deletar Propostas", group: "Operacional", icon: Trash2 },
   { key: "can_approve_proposals", label: "Aprovar Propostas", group: "Operacional", icon: CheckCircle2 },
-  { key: "can_manage_tasks", label: "Gerir Tarefas", group: "Equipe", icon: Edit3 },
-  { key: "can_manage_disbursements", label: "Gerir Desembolsos", group: "Equipe", icon: DollarSign },
   { key: "read_only", label: "Somente Leitura", group: "Segurança", icon: Lock },
 ];
 
 function AccessControl() {
   const { toast } = useToast();
-  const { user: currentUser, isDeveloper } = useAuth();
+  const { user: currentUser, isDeveloper, agencyId: currentAgencyId, role: currentRole } = useAuth();
   const { agencies } = useAgency();
   const [users, setUsers] = useState<User[]>([]);
   const [permissions, setPermissions] = useState<Map<string, UserPermission>>(new Map());
@@ -291,12 +280,16 @@ function AccessControl() {
       case "manager": return { label: "Gerente de Negócios", color: "bg-amber-500/10 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: ShieldCheck };
       case "analyst": return { label: "Analista", color: "bg-blue-500/10 text-blue-600 border-blue-200", dot: "bg-blue-500", icon: FileText };
       case "financial": return { label: "Desembolso", color: "bg-emerald-500/10 text-emerald-600 border-emerald-200", dot: "bg-emerald-500", icon: DollarSign };
+      case "projetista": return { label: "Projetista", color: "bg-teal-500/10 text-teal-600 border-teal-200", dot: "bg-teal-500", icon: PenTool };
       case "developer": return { label: "Desenvolvedor", color: "bg-indigo-500/10 text-indigo-700 border-indigo-200", dot: "bg-indigo-500", icon: Code2 };
       default: return { label: "Usuário", color: "bg-slate-100 text-slate-600 border-slate-200", dot: "bg-slate-400", icon: Fingerprint };
     }
   };
 
-  const filteredUsers = users.filter(u => {
+  // Non-developers only see users from their own agency
+  const agencyScopedUsers = isDeveloper ? users : users.filter(u => u.agency_id === currentAgencyId);
+
+  const filteredUsers = agencyScopedUsers.filter(u => {
     const matchSearch = !searchTerm ||
       u.display_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -307,12 +300,13 @@ function AccessControl() {
   });
 
   const stats = {
-    total: users.length,
-    admins: users.filter(u => u.role === "admin" || u.role === "developer").length,
-    managers: users.filter(u => u.role === "manager").length,
-    analysts: users.filter(u => u.role === "analyst").length,
-    financials: users.filter(u => u.role === "financial").length,
-    usuarios: users.filter(u => u.role === "usuario").length,
+    total: agencyScopedUsers.length,
+    admins: agencyScopedUsers.filter(u => u.role === "admin" || u.role === "developer").length,
+    managers: agencyScopedUsers.filter(u => u.role === "manager").length,
+    analysts: agencyScopedUsers.filter(u => u.role === "analyst").length,
+    projetistas: agencyScopedUsers.filter(u => u.role === "projetista").length,
+    financials: agencyScopedUsers.filter(u => u.role === "financial").length,
+    usuarios: agencyScopedUsers.filter(u => u.role === "usuario").length,
   };
 
   if (loading) {
@@ -372,11 +366,11 @@ function AccessControl() {
       {/* Stats Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {[
-          { label: "Total Usuários", value: stats.total, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Total Equipe", value: stats.total, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
           { label: "Gerentes Geral", value: stats.admins, icon: ShieldAlert, color: "text-rose-600", bg: "bg-rose-50" },
           { label: "G. Negócios", value: stats.managers, icon: ShieldCheck, color: "text-amber-600", bg: "bg-amber-50" },
           { label: "Analistas", value: stats.analysts, icon: FileText, color: "text-indigo-600", bg: "bg-indigo-50" },
-          { label: "Desembolsos", value: stats.financials, icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Projetistas", value: stats.projetistas, icon: PenTool, color: "text-teal-600", bg: "bg-teal-50" },
         ].map((s, idx) => (
           <Card key={idx} className="group border-border/40 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
             <CardContent className="p-5">
@@ -419,6 +413,7 @@ function AccessControl() {
               <SelectItem value="admin">Gerente Geral</SelectItem>
               <SelectItem value="manager">Gerente Negócios</SelectItem>
               <SelectItem value="analyst">Analista</SelectItem>
+              <SelectItem value="projetista">Projetista</SelectItem>
               <SelectItem value="financial">Desembolso</SelectItem>
               <SelectItem value="usuario">Usuário</SelectItem>
             </SelectContent>
@@ -507,6 +502,7 @@ function AccessControl() {
                           <SelectItem value="usuario" className="rounded-lg">Usuário</SelectItem>
                           <SelectItem value="manager" className="rounded-lg">Gerente Negócios</SelectItem>
                           <SelectItem value="analyst" className="rounded-lg">Analista</SelectItem>
+                          <SelectItem value="projetista" className="rounded-lg">Projetista</SelectItem>
                           <SelectItem value="financial" className="rounded-lg">Desembolso</SelectItem>
                           {isDeveloper && <SelectItem value="admin" className="rounded-lg">Gerente Geral</SelectItem>}
                           {isDeveloper && <SelectItem value="developer" className="rounded-lg">Desenvolvedor</SelectItem>}
@@ -648,6 +644,7 @@ function AccessControl() {
                       <SelectItem value="usuario" className="rounded-lg">Usuário</SelectItem>
                       <SelectItem value="manager" className="rounded-lg">Gerente Negócios</SelectItem>
                       <SelectItem value="analyst" className="rounded-lg">Analista</SelectItem>
+                      <SelectItem value="projetista" className="rounded-lg">Projetista</SelectItem>
                       <SelectItem value="financial" className="rounded-lg">Desembolso</SelectItem>
                       {isDeveloper && <SelectItem value="admin" className="rounded-lg">Gerente Geral</SelectItem>}
                       {isDeveloper && <SelectItem value="developer" className="rounded-lg">Desenvolvedor</SelectItem>}
