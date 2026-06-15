@@ -25,6 +25,7 @@ import {
   PieChart, Pie, Cell, AreaChart, Area, Legend, LabelList,
 } from "recharts";
 import { useProposals } from "@/hooks/useProposals";
+import { useStockProposals } from "@/hooks/useStockProposals";
 import { useTeam } from "@/hooks/useTeam";
 import { STATUS_LABELS, PRONAF_LINE_LABELS, PROJECT_DESIGNER_LABELS, type ProposalStatus, type PronafLine, type ProjectDesigner } from "@/types/proposal";
 import { format, parseISO, subMonths, startOfMonth, endOfMonth, isWithinInterval, getMonth, getYear } from "date-fns";
@@ -57,6 +58,7 @@ const STATUS_CHART_COLORS: Record<string, string> = {
 
 export default function Dashboard() {
   const { proposals, loading: loadingP } = useProposals();
+  const { proposals: stockProposals, loading: loadingStock } = useStockProposals();
   const { tasks, members, loading: loadingT } = useTeam();
   const { agencies, effectiveAgencyId } = useAgency();
   const [filterMonth, setFilterMonth] = useState("all");
@@ -367,8 +369,14 @@ export default function Dashboard() {
     const valorTotal = filteredProposals.reduce((sum, p) => sum + Number(p.requested_value), 0);
     const valorAprovado = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").reduce((s, p) => s + Number(p.requested_value), 0);
     const taxaAprovacao = total > 0 ? Math.round((aprovadas / total) * 100) : 0;
-    return { total, aprovadas, ativos, pendentes, novas, negadas, valorTotal, valorAprovado, taxaAprovacao };
-  }, [filteredProposals]);
+    
+    const estoqueTotal = stockProposals.length;
+    const estoqueValor = stockProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
+    const concluidasEstoque = stockProposals.filter(p => p.status === 'CONCLUÍDO' || p.status === 'CONCLUIDO').length;
+    const concluidasTotal = concluidasEstoque + aprovadas;
+
+    return { total, aprovadas, ativos, pendentes, novas, negadas, valorTotal, valorAprovado, taxaAprovacao, estoqueTotal, estoqueValor, concluidasTotal, concluidasEstoque };
+  }, [filteredProposals, stockProposals]);
 
   const statusChartData = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -762,6 +770,66 @@ export default function Dashboard() {
       </div>
 
       <div ref={dashboardRef} className="space-y-8 p-1">
+      {/* Visão Geral Consolidada (Estoque e Concluídas) */}
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-3 mb-2">
+        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total em Estoque</p>
+                <p className="text-4xl font-extrabold font-heading text-foreground">{stats.estoqueTotal}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-600 border-0 text-[10px] font-bold">AGUARDANDO ESTEIRA</Badge>
+                </div>
+              </div>
+              <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 transform group-hover:scale-110 group-hover:rotate-3 transition-all">
+                <FileText className="h-7 w-7" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Volume em Estoque</p>
+                <p className="text-2xl font-extrabold font-heading text-foreground mt-1">{formatCurrency(stats.estoqueValor)}</p>
+                <p className="text-[10px] font-bold text-muted-foreground mt-2 flex items-center gap-1 italic">
+                  <DollarSign className="h-3 w-3 opacity-50" /> TOTAL ESTIMADO
+                </p>
+              </div>
+              <div className="h-14 w-14 rounded-2xl bg-violet-500/10 flex items-center justify-center text-violet-600 transform group-hover:scale-110 group-hover:rotate-6 transition-all">
+                <DollarSign className="h-7 w-7" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-emerald-600/80 uppercase tracking-widest mb-1">Geral Concluídas</p>
+                <p className="text-4xl font-extrabold font-heading text-emerald-600">{stats.concluidasTotal}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="secondary" className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 border-0 text-[10px] font-bold">
+                    {stats.concluidasEstoque} DO ESTOQUE
+                  </Badge>
+                </div>
+              </div>
+              <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all">
+                <CheckCircle2 className="h-7 w-7" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* KPIs da Esteira Principal */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Robust profile fetch: user_id is the preferred link, but id might be synced
       const { data: profile } = await supabase
         .from('profiles')
-        .select('agency_id, display_name')
+        .select('agency_id, display_name, full_name')
         .or(`user_id.eq.${uid},id.eq.${uid}`)
         .maybeSingle();
 
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (profile) {
         setAgencyId((profile as any).agency_id);
-        setDisplayName((profile as any).display_name || null);
+        setDisplayName((profile as any).display_name || (profile as any).full_name || null);
       }
       if (roleData) setRole(roleData.role);
     };
