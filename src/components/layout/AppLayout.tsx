@@ -10,7 +10,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, signOut, role } = useAuth();
+  const { user, signOut, role, displayName } = useAuth();
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -42,7 +42,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               <div className="h-8 w-px bg-border/60 mx-1 hidden md:block" />
               <div className="flex flex-col items-end hidden sm:flex">
                 <span className="text-xs font-bold text-foreground">
-                  {user?.user_metadata?.displayName || user?.email?.split('@')[0]}
+                  {displayName || user?.email?.split('@')[0]}
                 </span>
                 <span className="text-[9px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary uppercase tracking-wider font-bold">
                   {role === 'developer' ? 'Desenvolvedor' :
