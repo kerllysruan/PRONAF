@@ -914,19 +914,21 @@ export default function Dashboard() {
 
       {/* Secondary KPIs */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-0 shadow-premium/50 rounded-2xl bg-background/40 backdrop-blur-sm">
-          <CardContent className="p-5">
+        <Card className="group relative overflow-hidden border border-slate-200/60 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-[24px] bg-white/70 backdrop-blur-2xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-5 relative z-10">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Documentação</p>
+              <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Documentação</p>
               <span className="text-sm font-black text-primary">{docStats.rate}%</span>
             </div>
             <Progress value={docStats.rate} className="h-1.5 bg-primary/10" />
-            <p className="text-[10px] text-muted-foreground mt-2 font-medium">{docStats.completedDocs}/{docStats.totalDocs} documentos validados</p>
+            <p className="text-[10px] text-slate-700 mt-2 font-medium">{docStats.completedDocs}/{docStats.totalDocs} documentos validados</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-premium/50 rounded-2xl bg-background/40 backdrop-blur-sm">
-          <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Pendências</p>
+        <Card className="group relative overflow-hidden border border-slate-200/60 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-[24px] bg-white/70 backdrop-blur-2xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-warning/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-5 relative z-10">
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Pendências</p>
             <p className="text-3xl font-extrabold font-heading mt-1 text-foreground">{taskStats.pendentes}</p>
             {taskStats.atrasadas > 0 && (
               <div className="flex items-center gap-1.5 mt-2 px-2 py-0.5 rounded-lg bg-destructive/10 w-fit">
@@ -936,16 +938,18 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-premium/50 rounded-2xl bg-background/40 backdrop-blur-sm">
-          <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Equipe Ativa</p>
+        <Card className="group relative overflow-hidden border border-slate-200/60 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-[24px] bg-white/70 backdrop-blur-2xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-5 relative z-10">
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Equipe Ativa</p>
             <p className="text-3xl font-extrabold font-heading mt-1 text-foreground">{members.length}</p>
-            <p className="text-[10px] text-muted-foreground mt-2 font-medium uppercase tracking-tighter">analistas disponíveis</p>
+            <p className="text-[10px] text-slate-700 mt-2 font-medium uppercase tracking-tighter">analistas disponíveis</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-premium/50 rounded-2xl bg-background/40 backdrop-blur-sm">
-          <CardContent className="p-5">
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Negadas</p>
+        <Card className="group relative overflow-hidden border border-slate-200/60 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-[24px] bg-white/70 backdrop-blur-2xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-5 relative z-10">
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Negadas</p>
             <p className="text-3xl font-extrabold font-heading mt-1 text-foreground">{stats.negadas}</p>
             {stats.total > 0 && (
               <div className="flex items-center gap-1.5 mt-2">
@@ -961,14 +965,14 @@ export default function Dashboard() {
 
       {/* Charts Row 1 */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        <Card className="border-0 shadow-md">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-heading flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4 text-primary" /> Distribuição por Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent ref={statusChartRef}>
-            <div className="h-64">
+        <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent ref={statusChartRef} className="p-6 relative z-10 flex-1 flex flex-col">
+            <div className="flex flex-col mb-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Distribuição por Status</h3>
+              <p className="text-[10px] text-slate-700 font-medium">Quantidade de propostas ativas</p>
+            </div>
+            <div className="h-64 flex-1">
               {pieData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
               ) : (
@@ -995,14 +999,14 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-heading flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" /> Evolução Acumulada de Volume Financeiro
-            </CardTitle>
-          </CardHeader>
-          <CardContent ref={evolutionChartRef}>
-            <div className="h-64">
+        <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent ref={evolutionChartRef} className="p-6 relative z-10 flex-1 flex flex-col">
+            <div className="flex flex-col mb-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Evolução Acumulada</h3>
+              <p className="text-[10px] text-slate-700 font-medium">Volume financeiro ao longo do tempo</p>
+            </div>
+            <div className="h-64 flex-1">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                   <defs>
@@ -1030,14 +1034,14 @@ export default function Dashboard() {
 
       {/* Charts Row 2 */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        <Card className="border-0 shadow-md">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-heading flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" /> Histórico de Volume Adquirido
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
+        <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-6 relative z-10 flex-1 flex flex-col">
+            <div className="flex flex-col mb-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Histórico de Volume</h3>
+              <p className="text-[10px] text-slate-700 font-medium">Volume financeiro adquirido mensal</p>
+            </div>
+            <div className="h-64 flex-1">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                   <defs>
@@ -1062,14 +1066,14 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-heading flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-primary" /> Valores por Programa de Crédito (R$ mil)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
+        <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-6 relative z-10 flex-1 flex flex-col">
+            <div className="flex flex-col mb-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Programas de Crédito</h3>
+              <p className="text-[10px] text-slate-700 font-medium">Valores processados por linha (R$ mil)</p>
+            </div>
+            <div className="h-64 flex-1">
               {lineData.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
               ) : (
@@ -1113,11 +1117,13 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Proposals */}
-      <Card className="border-0 shadow-md">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-heading">Últimas Propostas Cadastradas</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <CardContent className="p-6 relative z-10 flex-1 flex flex-col">
+          <div className="flex flex-col mb-4">
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Últimas Propostas Cadastradas</h3>
+            <p className="text-[10px] text-slate-700 font-medium">Histórico recente na esteira</p>
+          </div>
           <div className="space-y-3">
             {filteredProposals.slice(0, 5).map((p) => (
               <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
