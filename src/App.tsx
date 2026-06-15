@@ -56,6 +56,9 @@ function AuthRoute() {
   return <Auth />;
 }
 
+import { SplashScreen } from "@/components/SplashScreen";
+import { useState } from "react";
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<AuthRoute />} />
@@ -70,22 +73,30 @@ const AppRoutes = () => (
   </Routes>
 );
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <AgencyProvider>
-              <AppRoutes />
-            </AgencyProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(true);
+
+  if (showSplash) {
+    return <SplashScreen onFinished={() => setShowSplash(false)} />;
+  }
+
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <AgencyProvider>
+                <AppRoutes />
+              </AgencyProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+};
 
 export default App;

@@ -388,7 +388,7 @@ export default function Dashboard() {
     return Object.entries(counts)
       .filter(([_, count]) => count > 0)
       .map(([status, count]) => ({
-        name: STATUS_LABELS[status as ProposalStatus] || status,
+        name: STATUS_LABELS[status as ProposalStatus] || status || status,
         value: count,
         fill: STATUS_CHART_COLORS[status] || "hsl(215, 16%, 47%)"
       }))
@@ -650,7 +650,7 @@ export default function Dashboard() {
                         <div key={designer} className={`flex items-center space-x-2.5 group cursor-pointer p-2 rounded-xl transition-all duration-150 ${selectedDesigners.includes(designer) ? 'bg-violet-50/80 border border-violet-200' : 'hover:bg-gray-50 border border-transparent'}`} onClick={() => toggleSelection(selectedDesigners, setSelectedDesigners, designer)}>
                           <Checkbox checked={selectedDesigners.includes(designer)} className="rounded-md border-2 data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600" />
                           <Label className="text-sm font-semibold cursor-pointer group-hover:text-violet-700 transition-colors">
-                            {PROJECT_DESIGNER_LABELS[designer as ProjectDesigner]}
+                            {PROJECT_DESIGNER_LABELS[designer as ProjectDesigner] || designer}
                           </Label>
                         </div>
                       ))}

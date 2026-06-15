@@ -217,3 +217,237 @@
     color: hsl(var(--primary));
   }
 }
+
+/* Splash Screen Animation Styles */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #111827, #065f46);
+}
+
+.splash-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(251, 191, 36, 0.15) 0%, transparent 60%);
+  animation: pulse-bg 4s ease-in-out infinite;
+}
+
+@keyframes pulse-bg {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1.2; }
+}
+
+.splash-particle {
+  position: absolute;
+  background-color: #fbbf24;
+  border-radius: 50%;
+  opacity: 0;
+  animation: float-particle linear infinite;
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(100vh) scale(0.5);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-10vh) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.splash-scene {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  aspect-ratio: 16/10;
+  position: relative;
+  z-index: 10;
+}
+
+.splash-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.splash-sun-glow {
+  transform-origin: 400px 120px;
+  animation: pulse-sun 3s ease-in-out infinite;
+}
+
+.splash-sun-glow-outer {
+  transform-origin: 400px 120px;
+  animation: pulse-sun 3s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+@keyframes pulse-sun {
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  50% { transform: scale(1.1); opacity: 0.25; }
+}
+
+.splash-ray {
+  transform-origin: 400px 120px;
+  animation: rotate-rays 24s linear infinite;
+}
+
+@keyframes rotate-rays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.splash-wheat {
+  transform-origin: bottom center;
+  animation: sway 4s ease-in-out infinite alternate;
+}
+
+@keyframes sway {
+  0% { transform: rotate(-3deg); }
+  100% { transform: rotate(3deg); }
+}
+
+.splash-house {
+  opacity: 0;
+  animation: fade-in-up 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.splash-smoke {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: smoke-rise 4s linear infinite;
+}
+
+@keyframes smoke-rise {
+  0% {
+    stroke-dashoffset: 40;
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.5;
+  }
+  80% {
+    opacity: 0.2;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+    transform: translate(-10px, -20px) scale(1.5);
+  }
+}
+
+.splash-bird {
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
+  animation: bird-fly 6s ease-in-out infinite;
+}
+
+@keyframes bird-fly {
+  0% {
+    stroke-dashoffset: 20;
+    transform: translate(-50px, 10px) scale(0.8);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    transform: translate(100px, -20px) scale(1);
+    opacity: 0;
+  }
+}
+
+.splash-text {
+  margin-top: 1.5rem;
+  text-align: center;
+  z-index: 10;
+  color: white;
+}
+
+.splash-logo-icon {
+  margin: 0 auto 1rem;
+  color: #34d399;
+  animation: scale-bounce 2s infinite ease-in-out;
+}
+
+@keyframes scale-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.splash-title {
+  font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  background: linear-gradient(to right, #ffffff, #a7f3d0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.25rem;
+  animation: fade-in-up 1s ease-out;
+}
+
+.splash-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: #6ee7b7;
+  opacity: 0.9;
+  animation: fade-in-up 1s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.splash-loader {
+  width: 140px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  margin: 1.5rem auto 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.splash-loader-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  transform: translateX(-100%);
+  animation: load-progress 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes load-progress {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(-30%); }
+  100% { transform: translateX(0%); }
+}
