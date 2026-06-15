@@ -1629,8 +1629,20 @@ export default function StockProposals() {
                       <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#374151', fontWeight: 600 }} tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`} />
                       <Tooltip content={<ChartTooltip />} />
                       <Bar dataKey="valor" name="Volume" radius={[4, 4, 0, 0]} barSize={24}>
-                        {projetistaChartData.map((_, i) => (
-                          <Cell key={i} fill={STOCK_CHART_COLORS[i % STOCK_CHART_COLORS.length]} />
+                        {projetistaChartData.map((entry, i) => (
+                          <Cell 
+                            key={i} 
+                            fill={STOCK_CHART_COLORS[i % STOCK_CHART_COLORS.length]} 
+                            className="cursor-pointer transition-all duration-300 hover:opacity-80"
+                            onClick={() => {
+                              if (filterProjetista === entry.name) {
+                                setFilterProjetista("all");
+                              } else {
+                                setFilterProjetista(entry.name);
+                              }
+                            }}
+                            opacity={filterProjetista === "all" || filterProjetista === entry.name ? 1 : 0.3}
+                          />
                         ))}
                       </Bar>
                     </BarChart>
@@ -1675,7 +1687,21 @@ export default function StockProposals() {
                             dataKey="value"
                             stroke="none"
                           >
-                            {statusPieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                            {statusPieData.map((entry, i) => (
+                              <Cell 
+                                key={i} 
+                                fill={entry.fill} 
+                                className="cursor-pointer transition-all duration-300 hover:opacity-80 outline-none"
+                                onClick={() => {
+                                  if (filterStatus === entry.name) {
+                                    setFilterStatus("all");
+                                  } else {
+                                    setFilterStatus(entry.name);
+                                  }
+                                }}
+                                opacity={filterStatus === "all" || filterStatus === entry.name ? 1 : 0.3}
+                              />
+                            ))}
                           </Pie>
                           <Tooltip content={<ChartTooltip formatter={(v) => `${v} propostas`} />} />
                         </PieChart>
@@ -1686,7 +1712,17 @@ export default function StockProposals() {
                     <div className="flex-1 w-full space-y-1.5 self-center max-h-[160px] overflow-y-auto pr-1 scrollbar-thin">
                       {statusPieData.map((entry, index) => {
                         return (
-                          <div key={entry.name} className="flex items-start gap-2 text-[10px] leading-tight hover:bg-slate-50/50 p-1 rounded-lg transition-colors">
+                          <div 
+                            key={entry.name} 
+                            className={`flex items-start gap-2 text-[10px] leading-tight p-1.5 rounded-lg transition-colors cursor-pointer ${filterStatus === entry.name ? 'bg-emerald-500/10 border border-emerald-500/20' : 'hover:bg-slate-50/50 border border-transparent'}`}
+                            onClick={() => {
+                              if (filterStatus === entry.name) {
+                                setFilterStatus("all");
+                              } else {
+                                setFilterStatus(entry.name);
+                              }
+                            }}
+                          >
                             <span className="h-2 w-2 rounded-full mt-1 shrink-0" style={{ backgroundColor: entry.fill }} />
                             <div className="flex-1 min-w-0">
                               <p className="font-extrabold text-slate-900 truncate uppercase tracking-tight" title={entry.name}>
