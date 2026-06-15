@@ -1615,7 +1615,14 @@ export default function StockProposals() {
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-5 relative z-10 flex-1 flex flex-col">
               <div className="flex flex-col mb-3">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Volume por Projetista</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Volume por Projetista</h3>
+                  {filterProjetista !== "all" && (
+                    <Button variant="ghost" size="sm" onClick={() => setFilterProjetista("all")} className="h-6 px-2 text-[10px] text-primary bg-primary/5 hover:bg-primary/10">
+                      <RotateCcw className="h-3 w-3 mr-1" /> Voltar a visualizar todas
+                    </Button>
+                  )}
+                </div>
                 <p className="text-[10px] text-slate-700 font-medium">Total financeiro captado por cada profissional</p>
               </div>
               <div className="flex-1 w-full min-h-[140px]">
@@ -1659,7 +1666,14 @@ export default function StockProposals() {
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <CardContent className="p-5 relative z-10 flex-1 flex flex-col justify-between">
               <div className="flex flex-col mb-2">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Aderência por Status</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Aderência por Status</h3>
+                  {filterStatus !== "all" && (
+                    <Button variant="ghost" size="sm" onClick={() => setFilterStatus("all")} className="h-6 px-2 text-[10px] text-primary bg-primary/5 hover:bg-primary/10">
+                      <RotateCcw className="h-3 w-3 mr-1" /> Voltar a visualizar todas
+                    </Button>
+                  )}
+                </div>
                 <p className="text-[10px] text-slate-700 font-medium">Quantidade de propostas por status</p>
               </div>
               <div className="flex-grow flex flex-col sm:flex-row items-center gap-4 justify-between min-h-[160px]">
