@@ -122,8 +122,8 @@ export function useDocumentationReview() {
           files,
           approvedCount: approved,
           rejectedCount: rejected,
-          pendingCount: pending,
-          totalFiles: files.length,
+          pendingCount: pending + (DOCUMENTATION_REQUIRED.length - files.length),
+          totalFiles: DOCUMENTATION_REQUIRED.length,
         };
       });
 

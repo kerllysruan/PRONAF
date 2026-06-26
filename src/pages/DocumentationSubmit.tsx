@@ -117,7 +117,7 @@ export default function DocumentationSubmit() {
 
   // ── Submit documents ──────────────────────────────────────────
   async function handleSubmit() {
-    if (!tokenData || !token || selectedCount === 0) return;
+    if (!tokenData || !token || selectedCount < totalDocs) return;
     setIsSubmitting(true);
 
     const success = await submitDocuments(
@@ -663,9 +663,14 @@ export default function DocumentationSubmit() {
 
           {/* Submit button */}
           <div className="flex flex-col items-center gap-3 pt-4 pb-4">
+            {selectedCount < totalDocs && (
+              <p className="text-amber-400/90 text-xs font-bold tracking-wide animate-pulse bg-amber-500/10 border border-amber-500/25 px-4 py-2 rounded-xl mb-1">
+                Atenção: Selecione todos os {totalDocs} documentos obrigatórios ({totalDocs - selectedCount} restantes) para habilitar o envio.
+              </p>
+            )}
             <Button
               onClick={handleSubmit}
-              disabled={selectedCount === 0 || isSubmitting}
+              disabled={selectedCount < totalDocs || isSubmitting}
               className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
