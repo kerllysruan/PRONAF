@@ -24,6 +24,7 @@ import {
   Send,
   RotateCcw,
   ShieldCheck,
+  ExternalLink,
 } from "lucide-react";
 
 // List of document keys that can be dispensed
@@ -589,6 +590,21 @@ export default function DocumentationSubmit() {
                             <p className="text-white/25 text-[10px]">
                               Clique ou arraste PDF
                             </p>
+                          )}
+
+                          {/* Link de obtenção do documento */}
+                          {doc.obtencaoUrl && !selected && (
+                            <a
+                              href={doc.obtencaoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="mt-3 flex items-center justify-center gap-1.5 w-full min-h-[40px] px-3 py-2 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 text-[11px] font-bold hover:bg-cyan-500/25 active:scale-95 transition-all duration-200 touch-manipulation select-none"
+                              style={{ WebkitTapHighlightColor: 'transparent' }}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                              Obter Documento (INCRA)
+                            </a>
                           )}
                           {!selected && DISPENSABLE_DOCS.includes(doc.key) && (
                             <button

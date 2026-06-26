@@ -3,6 +3,8 @@
 export interface DocumentType {
   key: string;
   label: string;
+  /** URL where the document can be obtained (shown as a link in the upload card) */
+  obtencaoUrl?: string;
 }
 
 export const DOCUMENTATION_REQUIRED: DocumentType[] = [
@@ -29,6 +31,11 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
   { key: "contrato_assessoria", label: "Contrato de Assessoria" },
   { key: "declaracao_assistencia_tecnica", label: "Declaração Assistência Técnica" },
   { key: "declaracao_suporte_hidrico", label: "Declaração de Suporte Hídrico Animais" },
+  {
+    key: "carta_consulta",
+    label: "Carta Consulta",
+    obtencaoUrl: "https://saladacidadania.incra.gov.br/Beneficiario/ConsultaPublica?AspxAutoDetectCookieSupport=1",
+  },
 ];
 
 export type DocFileStatus = "pendente" | "aprovado" | "reprovado";
