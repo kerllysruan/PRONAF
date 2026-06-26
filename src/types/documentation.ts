@@ -5,6 +5,8 @@ export interface DocumentType {
   label: string;
   /** URL where the document can be obtained (shown as a link in the upload card) */
   obtencaoUrl?: string;
+  /** Name of the source institution (e.g. INCRA, CNJ, IBAMA) */
+  fonte?: string;
 }
 
 export const DOCUMENTATION_REQUIRED: DocumentType[] = [
@@ -23,8 +25,8 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
   { key: "dcaa", label: "DCAA" },
   { key: "declaracoes_unificadas", label: "Declarações Unificadas" },
   { key: "declaracoes_ambientais", label: "Declarações Ambientais" },
-  { key: "certidao_improbidade", label: "Certidão Improbidade", obtencaoUrl: "https://www.cnj.jus.br/improbidade_adm/consultar_requerido.php" },
-  { key: "certidao_embargo_ambiental", label: "Certidão Negativa de Embargo Ambiental", obtencaoUrl: "https://servicos.ibama.gov.br/ctf/publico/areasembargadas/ConsultaPublicaAreasEmbargadas.php" },
+  { key: "certidao_improbidade", label: "Certidão Improbidade", obtencaoUrl: "https://www.cnj.jus.br/improbidade_adm/consultar_requerido.php", fonte: "CNJ" },
+  { key: "certidao_embargo_ambiental", label: "Certidão Negativa de Embargo Ambiental", obtencaoUrl: "https://servicos.ibama.gov.br/ctf/publico/areasembargadas/ConsultaPublicaAreasEmbargadas.php", fonte: "IBAMA" },
   { key: "plano_assinado", label: "Plano Assinado" },
   { key: "plano_eletronico", label: "Plano Eletrônico" },
   { key: "orcamento", label: "Orçamento" },
@@ -35,6 +37,7 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
     key: "carta_consulta",
     label: "Carta Consulta",
     obtencaoUrl: "https://saladacidadania.incra.gov.br/Beneficiario/ConsultaPublica?AspxAutoDetectCookieSupport=1",
+    fonte: "INCRA",
   },
 ];
 

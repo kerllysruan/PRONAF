@@ -603,7 +603,7 @@ export default function DocumentationSubmit() {
                               style={{ WebkitTapHighlightColor: 'transparent' }}
                             >
                               <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
-                              🔗 Obter / Consultar Documento
+                              Obter{doc.fonte ? ` — ${doc.fonte}` : " Documento"}
                             </a>
                           )}
                           {!selected && DISPENSABLE_DOCS.includes(doc.key) && (
