@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStockProposals } from "@/hooks/useStockProposals";
+import { useDocumentationToken } from "@/hooks/useDocumentationToken";
 import { useProjetistas } from "@/hooks/useProjetistas";
 import { InsertStockProposal, StockProposal } from "@/types/stock";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -15,7 +16,7 @@ import {
   Loader2, Plus, Box, Calendar, FileText, Trash2, User, Landmark,
   Upload, Search, Filter, MapPin, AlertTriangle, CheckCircle2, XCircle, ShieldCheck,
   FileSpreadsheet, Download, Eye, ChevronDown, ChevronUp, Users, Hash, Send, RotateCcw,
-  Edit2, TrendingUp, DollarSign
+  Edit2, TrendingUp, DollarSign, Link2
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import jsPDF from "jspdf";
@@ -198,6 +199,7 @@ function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null
 export default function StockProposals() {
   const navigate = useNavigate();
   const { proposals, loading, addProposal, addProposalsBulk, updateProposal, deleteProposal, deleteAllProposals, refreshProposals } = useStockProposals();
+  const { generateToken, loading: tokenLoading } = useDocumentationToken();
   const { projetistas: PROJETISTAS } = useProjetistas();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(() => {
@@ -1993,6 +1995,24 @@ export default function StockProposals() {
                                   <RotateCcw className="h-3.5 w-3.5" />
                                 </Button>
                               )}
+                              {(p.status || '').toUpperCase().includes("AUTORIZADO") && (
+                                <Button
+                                  variant="outline" size="icon"
+                                  className="h-8 w-8 text-emerald-600 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 hover:text-emerald-700 transition-colors shadow-sm"
+                                  title="Link Documentação"
+                                  disabled={tokenLoading}
+                                  onClick={async () => {
+                                    const token = await generateToken(p.id);
+                                    if (token) {
+                                      const url = `${window.location.origin}/enviar-documentacao?token=${token}`;
+                                      await navigator.clipboard.writeText(url);
+                                      toast({ title: "Link copiado! 📋", description: "Envie este link para o projetista." });
+                                    }
+                                  }}
+                                >
+                                  <Link2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                               <Button
                                 variant="outline" size="icon"
                                 className="h-8 w-8 text-slate-400 border-slate-200 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm"
@@ -2137,6 +2157,24 @@ export default function StockProposals() {
                               >
                                 <RotateCcw className="mr-2 h-4 w-4" />
                                 REVERTER AUTORIZAÇÃO
+                              </Button>
+                            )}
+                            {(p.status || '').toUpperCase().includes("AUTORIZADO") && (
+                              <Button
+                                variant="outline" size="sm"
+                                className="w-full h-10 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 font-bold text-xs"
+                                disabled={tokenLoading}
+                                onClick={async () => {
+                                  const token = await generateToken(p.id);
+                                  if (token) {
+                                    const url = `${window.location.origin}/enviar-documentacao?token=${token}`;
+                                    await navigator.clipboard.writeText(url);
+                                    toast({ title: "Link copiado! 📋", description: "Envie este link para o projetista." });
+                                  }
+                                }}
+                              >
+                                <Link2 className="mr-2 h-4 w-4" />
+                                LINK DOCUMENTAÇÃO
                               </Button>
                             )}
                             <Button
