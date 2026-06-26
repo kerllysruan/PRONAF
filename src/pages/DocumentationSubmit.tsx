@@ -74,12 +74,44 @@ export default function DocumentationSubmit() {
   // ── Derived state ─────────────────────────────────────────────
   const selectedCount = Object.keys(selectedFiles).length;
   const totalDocs = DOCUMENTATION_REQUIRED.length;
-  const progressPercent = Math.round((selectedCount / totalDocs) * 100);
+
+  const dbFilesMap = useMemo(() => {
+    return files.reduce((acc, f) => {
+      acc[f.document_type] = f;
+      return acc;
+    }, {} as Record<string, DocumentationFile>);
+  }, [files]);
 
   const allApproved = useMemo(() => {
-    if (files.length === 0) return false;
-    return files.every((f) => f.status === "aprovado");
+    return DOCUMENTATION_REQUIRED.every((doc) => dbFilesMap[doc.key]?.status === "aprovado");
+  }, [dbFilesMap]);
+
+  const hasMissingFiles = useMemo(() => {
+    return DOCUMENTATION_REQUIRED.some((doc) => !dbFilesMap[doc.key]);
+  }, [dbFilesMap]);
+
+  const hasRejections = useMemo(() => {
+    return files.some((f) => f.status === "reprovado");
   }, [files]);
+
+  const isAwaitingAnalysis = useMemo(() => {
+    return tokenData?.documents_submitted && !hasRejections && !hasMissingFiles && !allApproved;
+  }, [tokenData, hasRejections, hasMissingFiles, allApproved]);
+
+  const missingOrRejectedCount = useMemo(() => {
+    return DOCUMENTATION_REQUIRED.filter((doc) => {
+      const dbFile = dbFilesMap[doc.key];
+      return !dbFile || dbFile.status === "reprovado";
+    }).length;
+  }, [dbFilesMap]);
+
+  const approvedOrPendingCount = useMemo(() => {
+    return files.filter((f) => f.status === "aprovado" || f.status === "pendente").length;
+  }, [files]);
+
+  const progressPercent = Math.round(
+    ((approvedOrPendingCount + selectedCount) / totalDocs) * 100
+  );
 
   const rejectedFiles = useMemo(
     () => files.filter((f) => f.status === "reprovado"),
@@ -115,9 +147,8 @@ export default function DocumentationSubmit() {
     }
   }
 
-  // ── Submit documents ──────────────────────────────────────────
   async function handleSubmit() {
-    if (!tokenData || !token || selectedCount < totalDocs) return;
+    if (!tokenData || !token || selectedCount < missingOrRejectedCount) return;
     setIsSubmitting(true);
 
     const success = await submitDocuments(
@@ -296,7 +327,7 @@ export default function DocumentationSubmit() {
   }
 
   // ── Documents submitted, awaiting analysis ────────────────────
-  if (tokenData.documents_submitted && !tokenData.has_rejections) {
+  if (isAwaitingAnalysis) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
         <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
@@ -365,201 +396,7 @@ export default function DocumentationSubmit() {
     );
   }
 
-  // ── Has rejections — resubmission flow ────────────────────────
-  if (tokenData.has_rejections) {
-    const rejectedCount = rejectedFiles.length;
-    const resubmitReady = Object.keys(selectedFiles).length;
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
-        <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
-          <BrandHeader />
-
-          <div className="animate-fade-in space-y-6">
-            {/* Warning header */}
-            <Card className="bg-amber-500/10 backdrop-blur-xl border border-amber-400/20 rounded-3xl shadow-2xl overflow-hidden">
-              <div className="h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500" />
-              <CardContent className="flex items-start gap-4 p-6">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="h-6 w-6 text-amber-400" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-extrabold text-white mb-1">
-                    Documentos reprovados
-                  </h2>
-                  <p className="text-white/50 text-sm leading-relaxed">
-                    Alguns documentos foram reprovados e precisam ser reenviados.
-                    Veja abaixo os motivos e anexe os novos arquivos.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <ProposalInfoCard proposal={proposal} />
-
-            {/* Document list */}
-            <Card className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden">
-              <CardHeader className="border-b border-white/10 px-6 py-4">
-                <CardTitle className="text-white text-base font-bold flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-indigo-400" />
-                  Status dos Documentos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
-                <div className="space-y-3">
-                  {files.map((f) => {
-                    const isRejected = f.status === "reprovado";
-                    const isApproved = f.status === "aprovado";
-                    const isPending = f.status === "pendente";
-                    const resubFile = selectedFiles[f.document_type];
-
-                    return (
-                      <div
-                        key={f.id}
-                        className={`rounded-2xl border p-4 transition-all duration-300 ${
-                          isRejected
-                            ? "bg-rose-500/10 border-rose-400/20"
-                            : isApproved
-                            ? "bg-emerald-500/10 border-emerald-400/20"
-                            : "bg-white/5 border-white/10"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5 flex-shrink-0">
-                            {isApproved && (
-                              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                            )}
-                            {isPending && (
-                              <Loader2 className="h-5 w-5 text-amber-400 animate-spin" />
-                            )}
-                            {isRejected && (
-                              <XCircle className="h-5 w-5 text-rose-400" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-white/90 text-sm font-semibold">
-                                {getDocLabel(f.document_type)}
-                              </span>
-                              <Badge
-                                variant="outline"
-                                className={`text-[10px] rounded-full ${
-                                  isApproved
-                                    ? "bg-emerald-500/10 text-emerald-300 border-emerald-400/20"
-                                    : isPending
-                                    ? "bg-amber-500/10 text-amber-300 border-amber-400/20"
-                                    : "bg-rose-500/10 text-rose-300 border-rose-400/20"
-                                }`}
-                              >
-                                {isApproved
-                                  ? "Aprovado"
-                                  : isPending
-                                  ? "Pendente"
-                                  : "Reprovado"}
-                              </Badge>
-                            </div>
-
-                            {isRejected && f.rejection_reason && (
-                              <p className="text-rose-300/80 text-xs mt-1.5 leading-relaxed">
-                                <span className="font-bold">Motivo:</span>{" "}
-                                {f.rejection_reason}
-                              </p>
-                            )}
-
-                            {/* Upload area for rejected docs */}
-                            {isRejected && (
-                              <div className="mt-3">
-                                {resubFile ? (
-                                  <div className="flex items-center gap-3 bg-indigo-500/15 border border-indigo-400/20 rounded-xl px-4 py-2.5">
-                                    <FileCheck className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                                    <span className="text-white/70 text-xs truncate flex-1">
-                                      {resubFile.name}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleFileSelect(f.document_type, null)
-                                      }
-                                      className="text-white/30 hover:text-rose-400 transition-colors"
-                                    >
-                                      <XCircle className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <label
-                                    className="flex items-center justify-center gap-2 border-2 border-dashed border-white/20 hover:border-indigo-400/50 rounded-xl px-4 py-3 cursor-pointer transition-all duration-300 hover:bg-white/5 group"
-                                    onDragOver={(e) => e.preventDefault()}
-                                    onDrop={(e) =>
-                                      handleDrop(f.document_type, e)
-                                    }
-                                  >
-                                    <Upload className="h-4 w-4 text-white/30 group-hover:text-indigo-400 transition-colors" />
-                                    <span className="text-white/40 text-xs group-hover:text-white/60 transition-colors">
-                                      Clique ou arraste o novo PDF
-                                    </span>
-                                    <input
-                                      type="file"
-                                      accept=".pdf,application/pdf"
-                                      className="hidden"
-                                      onChange={(e) =>
-                                        handleFileSelect(
-                                          f.document_type,
-                                          e.target.files?.[0] || null
-                                        )
-                                      }
-                                    />
-                                  </label>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Resubmit button */}
-            <div className="flex flex-col items-center gap-3 pt-2 pb-4">
-              <Button
-                onClick={handleResubmit}
-                disabled={resubmitReady === 0 || isSubmitting}
-                className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    Reenviando...
-                  </>
-                ) : (
-                  <>
-                    <RotateCcw className="h-5 w-5 mr-2" />
-                    Reenviar Documentação
-                    {resubmitReady > 0 && (
-                      <Badge className="ml-2 bg-white/20 text-white border-0 rounded-full text-xs">
-                        {resubmitReady}/{rejectedCount}
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </Button>
-              {resubmitReady === 0 && (
-                <p className="text-white/30 text-xs">
-                  Anexe pelo menos um documento reprovado para reenviar
-                </p>
-              )}
-            </div>
-          </div>
-
-          <Footer />
-        </div>
-      </div>
-    );
-  }
-
-  // ── Initial submission ────────────────────────────────────────
+  // ── Main/Unified submission layout (for first submission, missing files, or rejected files)
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
@@ -596,66 +433,112 @@ export default function DocumentationSubmit() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {DOCUMENTATION_REQUIRED.map((doc) => {
               const selected = selectedFiles[doc.key];
+              const dbFile = dbFilesMap[doc.key];
+              const isApproved = dbFile?.status === "aprovado";
+              const isPending = dbFile?.status === "pendente";
+              const isRejected = dbFile?.status === "reprovado";
 
               return (
                 <div
                   key={doc.key}
                   className={`group rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
-                    selected
+                    isApproved
+                      ? "border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl"
+                      : isPending
+                      ? "border-amber-500/20 bg-amber-500/5 backdrop-blur-xl"
+                      : isRejected
+                      ? "border-rose-500/20 bg-rose-500/5 backdrop-blur-xl"
+                      : selected
                       ? "border-indigo-400/40 bg-indigo-500/10 backdrop-blur-xl shadow-lg shadow-indigo-500/10"
                       : "border-dashed border-white/15 bg-white/5 backdrop-blur-xl hover:border-white/30 hover:bg-white/10"
                   }`}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => handleDrop(doc.key, e)}
+                  onDragOver={(!isApproved && !isPending) ? (e) => e.preventDefault() : undefined}
+                  onDrop={(!isApproved && !isPending) ? (e) => handleDrop(doc.key, e) : undefined}
                 >
-                  <label className="flex flex-col items-center justify-center p-5 cursor-pointer min-h-[140px]">
-                    <input
-                      type="file"
-                      accept=".pdf,application/pdf"
-                      className="hidden"
-                      onChange={(e) =>
-                        handleFileSelect(doc.key, e.target.files?.[0] || null)
-                      }
-                    />
+                  {isApproved ? (
+                    <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center mb-3 animate-pulse">
+                        <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+                      </div>
+                      <p className="text-white/90 text-xs font-bold leading-snug mb-1">
+                        {doc.label}
+                      </p>
+                      <p className="text-emerald-300/80 text-[10px] font-bold">
+                        Aprovado ✅
+                      </p>
+                    </div>
+                  ) : isPending ? (
+                    <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center mb-3">
+                        <Loader2 className="h-6 w-6 text-amber-400 animate-spin" />
+                      </div>
+                      <p className="text-white/90 text-xs font-bold leading-snug mb-1">
+                        {doc.label}
+                      </p>
+                      <p className="text-amber-300/80 text-[10px] font-bold">
+                        Aguardando Análise ⏳
+                      </p>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center p-5 cursor-pointer min-h-[140px]">
+                      <input
+                        type="file"
+                        accept=".pdf,application/pdf"
+                        className="hidden"
+                        onChange={(e) =>
+                          handleFileSelect(doc.key, e.target.files?.[0] || null)
+                        }
+                      />
 
-                    {selected ? (
-                      <>
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center mb-3">
-                          <FileCheck className="h-6 w-6 text-indigo-400" />
-                        </div>
-                        <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1.5">
-                          {doc.label}
-                        </p>
-                        <p className="text-indigo-300/70 text-[10px] truncate max-w-full px-2">
-                          {selected.name}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleFileSelect(doc.key, null);
-                          }}
-                          className="mt-2 text-[10px] text-white/30 hover:text-rose-400 transition-colors flex items-center gap-1"
-                        >
-                          <XCircle className="h-3 w-3" />
-                          Remover
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-300">
-                          <Upload className="h-5 w-5 text-white/25 group-hover:text-white/50 transition-colors" />
-                        </div>
-                        <p className="text-white/70 text-xs font-bold text-center leading-snug mb-1">
-                          {doc.label}
-                        </p>
-                        <p className="text-white/25 text-[10px]">
-                          Clique ou arraste PDF
-                        </p>
-                      </>
-                    )}
-                  </label>
+                      {selected ? (
+                        <>
+                          <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center mb-3">
+                            <FileCheck className="h-6 w-6 text-indigo-400" />
+                          </div>
+                          <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1.5">
+                            {doc.label}
+                          </p>
+                          <p className="text-indigo-300/70 text-[10px] truncate max-w-full px-2">
+                            {selected.name}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleFileSelect(doc.key, null);
+                            }}
+                            className="mt-2 text-[10px] text-white/30 hover:text-rose-400 transition-colors flex items-center gap-1"
+                          >
+                            <XCircle className="h-3 w-3" />
+                            Remover
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-300">
+                            {isRejected ? (
+                              <XCircle className="h-5 w-5 text-rose-400" />
+                            ) : (
+                              <Upload className="h-5 w-5 text-white/25 group-hover:text-white/50 transition-colors" />
+                            )}
+                          </div>
+                          <p className="text-white/70 text-xs font-bold text-center leading-snug mb-1">
+                            {doc.label}
+                          </p>
+                          {isRejected ? (
+                            <p className="text-rose-300/80 text-[10px] text-center px-2 truncate max-w-full font-semibold">
+                              Reprovado: {dbFile.rejection_reason || "Reenviar"}
+                            </p>
+                          ) : (
+                            <p className="text-white/25 text-[10px]">
+                              Clique ou arraste PDF
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </label>
+                  )}
                 </div>
               );
             })}
@@ -663,14 +546,14 @@ export default function DocumentationSubmit() {
 
           {/* Submit button */}
           <div className="flex flex-col items-center gap-3 pt-4 pb-4">
-            {selectedCount < totalDocs && (
+            {selectedCount < missingOrRejectedCount && (
               <p className="text-amber-400/90 text-xs font-bold tracking-wide animate-pulse bg-amber-500/10 border border-amber-500/25 px-4 py-2 rounded-xl mb-1">
-                Atenção: Selecione todos os {totalDocs} documentos obrigatórios ({totalDocs - selectedCount} restantes) para habilitar o envio.
+                Atenção: Selecione todos os {missingOrRejectedCount} documentos obrigatórios restantes ({missingOrRejectedCount - selectedCount} pendentes) para habilitar o envio.
               </p>
             )}
             <Button
               onClick={handleSubmit}
-              disabled={selectedCount < totalDocs || isSubmitting}
+              disabled={selectedCount < missingOrRejectedCount || isSubmitting}
               className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
@@ -690,9 +573,9 @@ export default function DocumentationSubmit() {
                 </>
               )}
             </Button>
-            {selectedCount === 0 && (
+            {selectedCount === 0 && missingOrRejectedCount > 0 && (
               <p className="text-white/30 text-xs">
-                Selecione pelo menos um documento para continuar
+                Selecione os documentos restantes para continuar
               </p>
             )}
           </div>
