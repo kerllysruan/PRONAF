@@ -56,6 +56,8 @@ export default function DocumentationSubmit() {
   const [isInvalid, setIsInvalid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+  // Track which doc is being re-enabled (for mobile loading feedback)
+  const [enablingDoc, setEnablingDoc] = useState<string | null>(null);
 
   // ── Load token data on mount ──────────────────────────────────
   useEffect(() => {
@@ -469,20 +471,37 @@ export default function DocumentationSubmit() {
                       {dbFile?.file_path === 'dispensado' && (
                         <button
                           type="button"
+                          disabled={enablingDoc === doc.key}
                           onClick={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            if (tokenData) {
-                              const ok = await dispenseDocument(tokenData.id, tokenData.stock_proposal_id, doc.key, false);
-                              if (ok) {
-                                const refreshedFiles = await getFilesForToken(tokenData.id);
-                                setFiles(refreshedFiles);
+                            if (tokenData && enablingDoc !== doc.key) {
+                              setEnablingDoc(doc.key);
+                              try {
+                                const ok = await dispenseDocument(tokenData.id, tokenData.stock_proposal_id, doc.key, false);
+                                if (ok) {
+                                  const refreshedFiles = await getFilesForToken(tokenData.id);
+                                  setFiles(refreshedFiles);
+                                }
+                              } finally {
+                                setEnablingDoc(null);
                               }
                             }
                           }}
-                          className="mt-2 text-[10px] text-indigo-400 hover:text-indigo-300 underline transition-colors"
+                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-xs font-bold hover:bg-indigo-500/30 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none"
+                          style={{ WebkitTapHighlightColor: 'transparent' }}
                         >
-                          Habilitar Envio
+                          {enablingDoc === doc.key ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              Habilitando...
+                            </>
+                          ) : (
+                            <>
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              Habilitar Envio
+                            </>
+                          )}
                         </button>
                       )}
                     </div>
