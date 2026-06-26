@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Loader2, Plus, Box, Calendar, FileText, Trash2, User, Landmark,
   Upload, Search, Filter, MapPin, AlertTriangle, CheckCircle2, XCircle, ShieldCheck,
@@ -234,6 +235,7 @@ export default function StockProposals() {
   const [filterProjetista, setFilterProjetista] = useState("all");
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [viewingDetailProposal, setViewingDetailProposal] = useState<StockProposal | null>(null);
+  const [selectedProposalIds, setSelectedProposalIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const DEFAULT_FORM_DATA = {
@@ -1866,11 +1868,84 @@ export default function StockProposals() {
             </div>
           ) : (
             <>
+              {/* Barra de Ações em Lote */}
+              {selectedProposalIds.length > 0 && (
+                <div className="bg-indigo-50/80 border-b border-indigo-100 px-4 py-3 flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={selectedProposalIds.length === filtered.length}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedProposalIds(filtered.map(p => p.id));
+                        } else {
+                          setSelectedProposalIds([]);
+                        }
+                      }}
+                    />
+                    <span className="text-xs font-semibold text-indigo-900">
+                      {selectedProposalIds.length} {selectedProposalIds.length === 1 ? 'proposta selecionada' : 'propostas selecionadas'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 font-bold shadow-sm"
+                      onClick={async () => {
+                        if (confirm(`Autorizar o envio de documentação para as ${selectedProposalIds.length} propostas selecionadas?`)) {
+                          let count = 0;
+                          for (const id of selectedProposalIds) {
+                            await updateProposal(id, { status: "AUTORIZADO ENVIO PARA CENTRAL" });
+                            count++;
+                          }
+                          setSelectedProposalIds([]);
+                          toast({ title: "Sucesso!", description: `${count} propostas foram autorizadas para envio.` });
+                        }
+                      }}
+                    >
+                      <Send className="mr-1.5 h-3.5 w-3.5" />
+                      Autorizar Envio
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-800 font-bold shadow-sm"
+                      onClick={async () => {
+                        if (confirm(`Reverter autorização de documentação para as ${selectedProposalIds.length} propostas selecionadas?`)) {
+                          let count = 0;
+                          for (const id of selectedProposalIds) {
+                            await updateProposal(id, { status: "CADASTRADA" });
+                            count++;
+                          }
+                          setSelectedProposalIds([]);
+                          toast({ title: "Sucesso!", description: `${count} propostas foram revertidas para Cadastrada.` });
+                        }
+                      }}
+                    >
+                      <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                      Reverter Autorização
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* ── Desktop Table ── */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-slate-50/80">
+                      <th className="p-3 w-10 text-center">
+                        <Checkbox
+                          checked={filtered.length > 0 && selectedProposalIds.length === filtered.length}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedProposalIds(filtered.map(p => p.id));
+                            } else {
+                              setSelectedProposalIds([]);
+                            }
+                          }}
+                        />
+                      </th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">#</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PRODUTOR / CPF</th>
                       <th className="text-left p-3 font-bold text-slate-600 text-xs tracking-wider">PROJETISTA</th>
@@ -1885,6 +1960,18 @@ export default function StockProposals() {
                       const restriction = hasSerasaRestriction(p.serasa);
                       return (
                         <tr key={p.id} className={`transition-colors group ${restriction ? 'bg-red-50/80 hover:bg-red-100/80' : 'hover:bg-indigo-50/30'}`}>
+                          <td className="p-3 text-center align-top w-10">
+                            <Checkbox
+                              checked={selectedProposalIds.includes(p.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedProposalIds(prev => [...prev, p.id]);
+                                } else {
+                                  setSelectedProposalIds(prev => prev.filter(id => id !== p.id));
+                                }
+                              }}
+                            />
+                          </td>
                           <td className={`p-3 text-slate-400 font-mono text-xs align-top ${restriction ? 'border-l-2 border-red-500' : ''}`}>{idx + 1}</td>
                           <td className="p-3 align-top min-w-[200px]">
                             <div className="flex flex-col gap-1.5">
@@ -2038,33 +2125,47 @@ export default function StockProposals() {
                   const restriction = hasSerasaRestriction(p.serasa);
                   return (
                     <div key={p.id} className={`p-4 ${restriction ? 'bg-red-50/80 border-l-4 border-l-red-500' : ''}`}>
-                      <div
-                        className="flex items-start justify-between cursor-pointer"
-                        onClick={() => setExpandedCard(expandedCard === p.id ? null : p.id)}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] text-slate-400 font-mono">{idx + 1}</span>
-                            <h4 className="font-bold text-slate-900 truncate text-sm">{p.producer_name}</h4>
-                          </div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {p.status && (
-                              <Badge variant="outline" className={`text-[9px] font-bold ${getStatusStyle(p.status)} border`}>
-                                {p.status}
-                              </Badge>
-                            )}
-                            {p.municipio && (
-                              <span className="text-[10px] text-slate-500 flex items-center gap-1">
-                                <MapPin className="h-3 w-3" /> {p.municipio}
-                              </span>
-                            )}
-                          </div>
+                      <div className="flex items-start gap-3">
+                        <div className="pt-0.5">
+                          <Checkbox
+                            checked={selectedProposalIds.includes(p.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedProposalIds(prev => [...prev, p.id]);
+                              } else {
+                                setSelectedProposalIds(prev => prev.filter(id => id !== p.id));
+                              }
+                            }}
+                          />
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                          <span className="font-black text-sm text-indigo-700 tabular-nums">
-                            {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : ''}
-                          </span>
-                          {expandedCard === p.id ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                        <div
+                          className="flex-1 min-w-0 flex items-start justify-between cursor-pointer"
+                          onClick={() => setExpandedCard(expandedCard === p.id ? null : p.id)}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[10px] text-slate-400 font-mono">{idx + 1}</span>
+                              <h4 className="font-bold text-slate-900 truncate text-sm">{p.producer_name}</h4>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {p.status && (
+                                <Badge variant="outline" className={`text-[9px] font-bold ${getStatusStyle(p.status)} border`}>
+                                  {p.status}
+                                </Badge>
+                              )}
+                              {p.municipio && (
+                                <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" /> {p.municipio}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                            <span className="font-black text-sm text-indigo-700 tabular-nums">
+                              {p.estimated_value ? formatCurrency(Number(p.estimated_value)) : ''}
+                            </span>
+                            {expandedCard === p.id ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                          </div>
                         </div>
                       </div>
 
