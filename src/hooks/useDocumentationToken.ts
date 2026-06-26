@@ -140,6 +140,23 @@ export function useDocumentationToken() {
         const fileExt = file.name.split(".").pop() || "pdf";
         const filePath = `documentation/${tokenStr}/${docType}.${fileExt}`;
 
+        // Check if file record already exists for this token and document type
+        const { data: existing } = await supabase
+          .from("documentation_files")
+          .select("id, file_path")
+          .eq("token_id", tokenId)
+          .eq("document_type", docType)
+          .maybeSingle();
+
+        if (existing) {
+          // If the path is different, delete the old file to save space
+          if (existing.file_path !== filePath) {
+            await supabase.storage
+              .from("proposals_documents")
+              .remove([existing.file_path]);
+          }
+        }
+
         // Upload to storage
         const { error: uploadError } = await supabase.storage
           .from("proposals_documents")
@@ -147,20 +164,38 @@ export function useDocumentationToken() {
 
         if (uploadError) throw uploadError;
 
-        // Insert file record
-        const { error: dbError } = await supabase
-          .from("documentation_files")
-          .insert({
-            token_id: tokenId,
-            stock_proposal_id: stockProposalId,
-            file_name: file.name,
-            file_path: filePath,
-            file_size: file.size,
-            document_type: docType,
-            status: "pendente",
-          });
+        if (existing) {
+          // Update file record
+          const { error: dbError } = await supabase
+            .from("documentation_files")
+            .update({
+              file_name: file.name,
+              file_path: filePath,
+              file_size: file.size,
+              status: "pendente",
+              rejection_reason: null,
+              reviewed_at: null,
+              reviewed_by: null,
+            })
+            .eq("id", existing.id);
 
-        if (dbError) throw dbError;
+          if (dbError) throw dbError;
+        } else {
+          // Insert file record
+          const { error: dbError } = await supabase
+            .from("documentation_files")
+            .insert({
+              token_id: tokenId,
+              stock_proposal_id: stockProposalId,
+              file_name: file.name,
+              file_path: filePath,
+              file_size: file.size,
+              document_type: docType,
+              status: "pendente",
+            });
+
+          if (dbError) throw dbError;
+        }
       }
 
       // Mark token as submitted
@@ -201,6 +236,23 @@ export function useDocumentationToken() {
         const fileExt = file.name.split(".").pop() || "pdf";
         const filePath = `documentation/${tokenStr}/${docType}.${fileExt}`;
 
+        // Check if file record already exists for this token and document type
+        const { data: existing } = await supabase
+          .from("documentation_files")
+          .select("id, file_path")
+          .eq("token_id", tokenId)
+          .eq("document_type", docType)
+          .maybeSingle();
+
+        if (existing) {
+          // If the path is different, delete the old file to save space
+          if (existing.file_path !== filePath) {
+            await supabase.storage
+              .from("proposals_documents")
+              .remove([existing.file_path]);
+          }
+        }
+
         // Upload new file (overwrite)
         const { error: uploadError } = await supabase.storage
           .from("proposals_documents")
@@ -208,10 +260,9 @@ export function useDocumentationToken() {
 
         if (uploadError) throw uploadError;
 
-        // Update existing file record
-        const existingId = existingFileIds[docType];
-        if (existingId) {
-          const { error: updateError } = await supabase
+        if (existing) {
+          // Update file record
+          const { error: dbError } = await supabase
             .from("documentation_files")
             .update({
               file_name: file.name,
@@ -222,9 +273,9 @@ export function useDocumentationToken() {
               reviewed_at: null,
               reviewed_by: null,
             })
-            .eq("id", existingId);
+            .eq("id", existing.id);
 
-          if (updateError) throw updateError;
+          if (dbError) throw dbError;
         } else {
           // Insert new record if no existing one
           const { error: dbError } = await supabase
