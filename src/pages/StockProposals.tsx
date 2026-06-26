@@ -411,6 +411,28 @@ export default function StockProposals() {
       .sort((a, b) => b.value - a.value);
   }, [filtered]);
 
+  const centralChartData = useMemo(() => {
+    const map = new Map<string, { count: number; value: number }>();
+    filtered.forEach(p => {
+      const central = p.central || "Sem Central";
+      if (!map.has(central)) {
+        map.set(central, { count: 0, value: 0 });
+      }
+      const data = map.get(central)!;
+      data.count += 1;
+      data.value += Number(p.estimated_value) || 0;
+    });
+    return Array.from(map.entries())
+      .map(([name, data], i) => ({
+        name,
+        value: data.count,
+        count: data.count,
+        totalValue: data.value,
+        fill: STOCK_CHART_COLORS[(i + 3) % STOCK_CHART_COLORS.length],
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [filtered]);
+
   // ── CSV Import ─────────────────────────────────
   const handleCSVImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -577,7 +599,9 @@ export default function StockProposals() {
       pendencias: proposal.pendencias,
       serasa: proposal.serasa,
       notes: proposal.notes,
-      projetista: proposal.projetista
+      projetista: proposal.projetista,
+      central: proposal.central,
+      central_date: proposal.central_date
     });
     setIsEditDialogOpen(true);
   };
@@ -948,6 +972,20 @@ export default function StockProposals() {
     doc.setFontSize(10);
     doc.text("DETALHAMENTO TÉCNICO DAS PROPOSTAS EM ESTOQUE", 15, 10);
 
+    const showCentralCols = filters.status === "all" || normalize(filters.status).includes("CENTRAL");
+
+    const tableHeaders = [
+      "#", 
+      "PRODUTOR", 
+      "CPF", 
+      "PROJETISTA", 
+      "MUNICÍPIO", 
+      "LINHA", 
+      ...(showCentralCols ? ["CENTRAL", "DATA CENTRAL"] : []),
+      "STATUS", 
+      "VALOR R$"
+    ];
+
     const tableData = reportData.map((p, idx) => [
       idx + 1,
       p.producer_name.toUpperCase(),
@@ -955,18 +993,22 @@ export default function StockProposals() {
       p.projetista || 'N/A',
       p.municipio || '---',
       p.linha_credito || '---',
+      ...(showCentralCols ? [p.central || '---', p.central_date || '---'] : []),
       p.status.toUpperCase(),
       formatCurrency(p.estimated_value || 0)
     ]);
 
     autoTable(doc, {
       startY: 18,
-      head: [["#", "PRODUTOR", "CPF", "PROJETISTA", "MUNICÍPIO", "LINHA", "STATUS", "VALOR R$"]],
+      head: [tableHeaders],
       body: tableData,
       theme: 'grid',
       headStyles: { fillColor: [79, 70, 229], color: 255, fontSize: 7.5, halign: 'center' },
       styles: { fontSize: 7, cellPadding: 2, valign: 'middle' },
-      columnStyles: { 0: { halign: 'center' }, 7: { halign: 'right', fontStyle: 'bold' } },
+      columnStyles: { 
+        0: { halign: 'center' }, 
+        [tableHeaders.length - 1]: { halign: 'right', fontStyle: 'bold' } 
+      },
       alternateRowStyles: { fillColor: [248, 250, 252] }
     });
 
@@ -1506,6 +1548,28 @@ export default function StockProposals() {
                 </Select>
               </div>
 
+              <div className="space-y-1">
+                <Label htmlFor="edit-central" className="text-[10px] font-bold uppercase text-slate-500">Central de Análise</Label>
+                <Input
+                  id="edit-central"
+                  className="h-9 text-sm"
+                  value={editFormData.central || ""}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, central: e.target.value }))}
+                  placeholder="Nome da Central"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="edit-central-date" className="text-[10px] font-bold uppercase text-slate-500">Data Entrada Central</Label>
+                <Input
+                  id="edit-central-date"
+                  className="h-9 text-sm"
+                  value={editFormData.central_date || ""}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, central_date: e.target.value }))}
+                  placeholder="Ex: DD/MM/AAAA"
+                />
+              </div>
+
               <div className="space-y-1 md:col-span-2">
                 <Label htmlFor="edit-status" className="text-[10px] font-bold uppercase text-slate-500">Status Atual</Label>
                 <Select
@@ -1760,6 +1824,97 @@ export default function StockProposals() {
                 )}
               </div>
             </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ─── Second Row: Central KPI & Distribution ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-5">
+        {/* LEFT — KPI Card for Centrals */}
+        <div className="lg:col-span-4 flex flex-col gap-3">
+          <Card className="border border-slate-200/60 shadow-premium rounded-[20px] overflow-hidden bg-white/80 backdrop-blur-xl group transition-transform hover:scale-[1.02] duration-500 relative flex-1 flex flex-col justify-center p-5">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="h-12 w-12 shrink-0 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shadow-sm">
+                <Landmark className="h-6 w-6 text-indigo-600" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5">Centrais Ativas</p>
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none">
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : centralChartData.filter(c => c.name !== "Sem Central").length}
+                </h3>
+              </div>
+            </div>
+            <div className="mt-4 border-t pt-4 border-slate-100 space-y-2">
+              <div className="flex justify-between text-xs font-semibold text-slate-600">
+                <span>Total em Centrais</span>
+                <span className="text-indigo-600 font-extrabold">
+                  {formatCurrency(centralChartData.filter(c => c.name !== "Sem Central").reduce((acc, c) => acc + c.totalValue, 0))}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs text-slate-500">
+                <span>Qtd. Propostas em Central</span>
+                <span>
+                  {centralChartData.filter(c => c.name !== "Sem Central").reduce((acc, c) => acc + c.count, 0)}
+                </span>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* RIGHT — Bar Chart: Distribuição por Central */}
+        <div className="lg:col-span-8">
+          <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group p-5 flex flex-col h-full min-h-[220px]">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="flex flex-col mb-3 relative z-10">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Distribuição por Central de Análise</h3>
+              <p className="text-[10px] text-slate-700 font-medium">Quantidade e volume financeiro direcionados para cada central</p>
+            </div>
+            <div className="flex-grow w-full min-h-[140px] relative z-10">
+              {centralChartData.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={centralChartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#374151', fontWeight: 600 }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#374151', fontWeight: 600 }} />
+                    <Tooltip 
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl border border-white/10 shadow-xl max-w-[240px]">
+                              <p className="text-xs font-black uppercase tracking-wide border-b border-white/10 pb-1.5 mb-1.5">{data.name}</p>
+                              <div className="space-y-1 text-[11px]">
+                                <div className="flex justify-between gap-4 text-white/80">
+                                  <span>Propostas:</span>
+                                  <span className="font-extrabold text-white">{data.count}</span>
+                                </div>
+                                <div className="flex justify-between gap-4 text-white/80">
+                                  <span>Volume Total:</span>
+                                  <span className="font-extrabold text-emerald-400">{formatCurrency(data.totalValue)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="value" name="Propostas" radius={[4, 4, 0, 0]} barSize={32}>
+                      {centralChartData.map((entry, i) => (
+                        <Cell 
+                          key={i} 
+                          fill={entry.fill} 
+                          className="cursor-pointer transition-all duration-300 hover:opacity-80"
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </Card>
         </div>
       </div>
@@ -2391,6 +2546,14 @@ export default function StockProposals() {
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
                       <span className="text-xs text-slate-500">Último Analista</span>
                       <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.last_analyst || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Central de Análise</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.central || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Data Entrada Central</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.central_date || '---'}</span>
                     </div>
                   </div>
                 </div>
