@@ -119,3 +119,27 @@ CREATE POLICY "documentation_files_auth_delete"
   ON documentation_files FOR DELETE
   TO authenticated
   USING (true);
+
+-- Authenticated: can delete tokens (for revert flow)
+CREATE POLICY "documentation_tokens_auth_delete"
+  ON documentation_tokens FOR DELETE
+  TO authenticated
+  USING (true);
+
+-- ============================================================
+-- previous_status column (tracks status before documentation)
+-- ============================================================
+ALTER TABLE documentation_tokens ADD COLUMN IF NOT EXISTS previous_status TEXT;
+
+-- ============================================================
+-- RLS: Allow anon SELECT on stock_proposals (only via token)
+-- ============================================================
+CREATE POLICY "stock_proposals_anon_select"
+  ON stock_proposals FOR SELECT
+  TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM documentation_tokens
+      WHERE documentation_tokens.stock_proposal_id = stock_proposals.id
+    )
+  );

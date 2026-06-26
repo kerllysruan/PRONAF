@@ -41,6 +41,7 @@ export interface DocumentationToken {
   documents_submitted: boolean;
   submitted_at: string | null;
   has_rejections: boolean;
+  previous_status: string | null;
 }
 
 export interface DocumentationFile {

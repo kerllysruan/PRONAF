@@ -2244,7 +2244,7 @@ export default function StockProposals() {
                                   title="Link Documentação"
                                   disabled={tokenLoading}
                                   onClick={async () => {
-                                    const token = await generateToken(p.id);
+                                    const token = await generateToken(p.id, p.status);
                                     if (token) {
                                       const url = `${window.location.origin}/enviar-documentacao?token=${token}`;
                                       await navigator.clipboard.writeText(url);
@@ -2421,7 +2421,7 @@ export default function StockProposals() {
                                 className="w-full h-10 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 font-bold text-xs"
                                 disabled={tokenLoading}
                                 onClick={async () => {
-                                  const token = await generateToken(p.id);
+                                  const token = await generateToken(p.id, p.status);
                                   if (token) {
                                     const url = `${window.location.origin}/enviar-documentacao?token=${token}`;
                                     await navigator.clipboard.writeText(url);

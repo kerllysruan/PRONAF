@@ -54,6 +54,7 @@ import {
   ThumbsDown,
   FileText,
   RefreshCw,
+  Undo2,
 } from "lucide-react";
 
 export default function Documentation() {
@@ -63,6 +64,7 @@ export default function Documentation() {
     approveDocument,
     rejectDocument,
     approveProposal,
+    revertProposal,
     downloadFile,
     getFileUrl,
     downloadAllAsZip,
@@ -78,6 +80,8 @@ export default function Documentation() {
   const [rejectingFileId, setRejectingFileId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [revertDialogOpen, setRevertDialogOpen] = useState(false);
+  const [isReverting, setIsReverting] = useState(false);
 
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
@@ -217,6 +221,15 @@ export default function Documentation() {
             >
               <Archive className="h-4 w-4" />
               Baixar Todos em ZIP
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-xl text-amber-700 border-amber-200 hover:bg-amber-50"
+              onClick={() => setRevertDialogOpen(true)}
+            >
+              <Undo2 className="h-4 w-4" />
+              Reverter Status
             </Button>
             <Button
               size="sm"
@@ -432,6 +445,58 @@ export default function Documentation() {
               >
                 <ThumbsDown className="h-4 w-4" />
                 Confirmar Reprovação
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ── Revert Confirmation Dialog ──────────────────────────── */}
+        <Dialog open={revertDialogOpen} onOpenChange={setRevertDialogOpen}>
+          <DialogContent className="max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="font-heading font-extrabold flex items-center gap-2">
+                <Undo2 className="h-5 w-5 text-amber-500" />
+                Reverter Proposta
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Isto irá restaurar o status da proposta para{" "}
+                <strong>{sub.token.previous_status || "CADASTRADA"}</strong>,
+                excluir todos os documentos enviados e remover o token de envio.
+                Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => setRevertDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="rounded-xl gap-2 bg-amber-600 hover:bg-amber-700 text-white"
+                disabled={isReverting}
+                onClick={async () => {
+                  setIsReverting(true);
+                  const success = await revertProposal(sub);
+                  setIsReverting(false);
+                  if (success) {
+                    setRevertDialogOpen(false);
+                    setSelectedSubmission(null);
+                  }
+                }}
+              >
+                {isReverting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Revertendo...
+                  </>
+                ) : (
+                  <>
+                    <Undo2 className="h-4 w-4" />
+                    Confirmar Reversão
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>

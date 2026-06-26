@@ -19,7 +19,7 @@ export function useDocumentationToken() {
   /**
    * Generate a new token for a stock proposal, or return existing one.
    */
-  const generateToken = useCallback(async (stockProposalId: string): Promise<string | null> => {
+  const generateToken = useCallback(async (stockProposalId: string, proposalStatus?: string): Promise<string | null> => {
     try {
       setLoading(true);
 
@@ -43,6 +43,7 @@ export function useDocumentationToken() {
         .insert({
           token: newToken,
           stock_proposal_id: stockProposalId,
+          previous_status: proposalStatus || null,
         });
 
       if (insertError) throw insertError;

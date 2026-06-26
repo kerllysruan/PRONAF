@@ -115,6 +115,7 @@ export function useDocumentationReview() {
             documents_submitted: t.documents_submitted,
             submitted_at: t.submitted_at,
             has_rejections: t.has_rejections,
+            previous_status: t.previous_status,
           },
           proposal: t.stock_proposals,
           files,
@@ -262,6 +263,64 @@ export function useDocumentationReview() {
   }, [user, toast, fetchSubmissions]);
 
   /**
+   * Revert the proposal to its previous status (before documentation flow).
+   * Deletes files, token, and restores original status.
+   */
+  const revertProposal = useCallback(async (submission: SubmittedProposal) => {
+    try {
+      const previousStatus = submission.token.previous_status || "CADASTRADA";
+
+      // Delete all documentation files from storage
+      for (const file of submission.files) {
+        await supabase.storage
+          .from("proposals_documents")
+          .remove([file.file_path]);
+      }
+
+      // Delete file records from database
+      const { error: filesDeleteError } = await supabase
+        .from("documentation_files")
+        .delete()
+        .eq("token_id", submission.token.id);
+
+      if (filesDeleteError) throw filesDeleteError;
+
+      // Delete the token
+      const { error: tokenDeleteError } = await supabase
+        .from("documentation_tokens")
+        .delete()
+        .eq("id", submission.token.id);
+
+      if (tokenDeleteError) throw tokenDeleteError;
+
+      // Revert the proposal status
+      const { error: proposalError } = await supabase
+        .from("stock_proposals")
+        .update({ status: previousStatus })
+        .eq("id", submission.proposal.id);
+
+      if (proposalError) throw proposalError;
+
+      toast({
+        title: "Proposta revertida ✅",
+        description: `Status restaurado para: ${previousStatus}`,
+      });
+
+      // Go back to list view
+      await fetchSubmissions(true);
+      return true;
+    } catch (err: any) {
+      console.error("Error reverting proposal:", err);
+      toast({
+        title: "Erro ao reverter",
+        description: err.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [user, toast, fetchSubmissions]);
+
+  /**
    * Download a single file from storage.
    */
   const downloadFile = useCallback(async (filePath: string, fileName: string) => {
@@ -350,6 +409,7 @@ export function useDocumentationReview() {
     approveDocument,
     rejectDocument,
     approveProposal,
+    revertProposal,
     downloadFile,
     getFileUrl,
     downloadAllAsZip,
