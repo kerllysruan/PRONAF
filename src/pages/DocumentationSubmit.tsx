@@ -602,10 +602,10 @@ export default function DocumentationSubmit() {
                                   }
                                 }
                               }}
-                              className="mt-3 text-[10px] text-white/40 hover:text-amber-400 font-bold bg-white/5 border border-white/10 hover:border-amber-500/30 hover:bg-amber-500/10 px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1 shadow-sm"
+                              className="mt-3 text-[11px] text-amber-300 font-extrabold bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 hover:border-amber-400/60 px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95"
                             >
-                              <AlertTriangle className="h-3 w-3" />
-                              Não possui
+                              <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                              NÃO POSSUI
                             </button>
                           )}
                         </>
