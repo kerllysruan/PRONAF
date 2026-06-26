@@ -96,16 +96,28 @@ export default function DocumentationSubmit() {
     }, {} as Record<string, DocumentationFile>);
   }, [files]);
 
+  // Helper: is this file a re-enabled (previously dispensed) record?
+  // file_path='habilitado' means "reset — needs upload" (UPDATE instead of DELETE for RLS safety)
+  function isReenabledFile(f: DocumentationFile | undefined) {
+    return f?.file_path === "habilitado";
+  }
+
   const allApproved = useMemo(() => {
-    return DOCUMENTATION_REQUIRED.every((doc) => dbFilesMap[doc.key]?.status === "aprovado");
+    return DOCUMENTATION_REQUIRED.every((doc) => {
+      const f = dbFilesMap[doc.key];
+      return f?.status === "aprovado" && f.file_path !== "habilitado";
+    });
   }, [dbFilesMap]);
 
   const hasMissingFiles = useMemo(() => {
-    return DOCUMENTATION_REQUIRED.some((doc) => !dbFilesMap[doc.key]);
+    return DOCUMENTATION_REQUIRED.some((doc) => {
+      const f = dbFilesMap[doc.key];
+      return !f || isReenabledFile(f);
+    });
   }, [dbFilesMap]);
 
   const hasRejections = useMemo(() => {
-    return files.some((f) => f.status === "reprovado");
+    return files.some((f) => f.status === "reprovado" && !isReenabledFile(f));
   }, [files]);
 
   const isAwaitingAnalysis = useMemo(() => {
@@ -121,12 +133,15 @@ export default function DocumentationSubmit() {
   const missingOrRejectedCount = useMemo(() => {
     return DOCUMENTATION_REQUIRED.filter((doc) => {
       const dbFile = dbFilesMap[doc.key];
-      return !dbFile || dbFile.status === "reprovado";
+      return !dbFile || isReenabledFile(dbFile) || dbFile.status === "reprovado";
     }).length;
   }, [dbFilesMap]);
 
   const approvedOrPendingCount = useMemo(() => {
-    return files.filter((f) => f.status === "aprovado" || f.status === "pendente").length;
+    return files.filter((f) => {
+      if (isReenabledFile(f)) return false; // treat as missing
+      return f.status === "aprovado" || f.status === "pendente";
+    }).length;
   }, [files]);
 
   const progressPercent = Math.round(
@@ -432,9 +447,11 @@ export default function DocumentationSubmit() {
             {DOCUMENTATION_REQUIRED.map((doc) => {
               const selected = selectedFiles[doc.key];
               const dbFile = dbFilesMap[doc.key];
-              const isApproved = dbFile?.status === "aprovado";
-              const isPending = dbFile?.status === "pendente";
-              const isRejected = dbFile?.status === "reprovado";
+              // A 're-enabled' record (file_path='habilitado') should be treated as needing upload
+              const needsUpload = !dbFile || dbFile.file_path === "habilitado";
+              const isApproved = !needsUpload && dbFile?.status === "aprovado";
+              const isPending  = !needsUpload && dbFile?.status === "pendente";
+              const isRejected = !needsUpload && dbFile?.status === "reprovado";
 
               return (
                 <div

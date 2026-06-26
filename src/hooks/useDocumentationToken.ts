@@ -396,11 +396,19 @@ export function useDocumentationToken() {
           if (error) throw error;
         }
       } else {
-        // Undispense: delete the DB record so it becomes missing again
+        // Undispense: reset file_path to 'habilitado' (marker = needs upload)
+        // We use UPDATE instead of DELETE because anonymous RLS policies may block DELETE.
         if (existing) {
           const { error } = await supabase
             .from("documentation_files")
-            .delete()
+            .update({
+              file_name: "",
+              file_path: "habilitado",
+              file_size: 0,
+              status: "pendente",
+              rejection_reason: null,
+              reviewed_at: null,
+            })
             .eq("id", existing.id);
           if (error) throw error;
         }
