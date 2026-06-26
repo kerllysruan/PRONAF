@@ -413,7 +413,7 @@ export default function StockProposals() {
 
   const centralChartData = useMemo(() => {
     const map = new Map<string, { count: number; value: number }>();
-    filtered.forEach(p => {
+    filtered.filter(p => (p.status || '').toUpperCase() === 'CENTRAL').forEach(p => {
       const central = p.central || "Sem Central";
       if (!map.has(central)) {
         map.set(central, { count: 0, value: 0 });
@@ -1849,13 +1849,13 @@ export default function StockProposals() {
               <div className="flex justify-between text-xs font-semibold text-slate-600">
                 <span>Total em Centrais</span>
                 <span className="text-indigo-600 font-extrabold">
-                  {formatCurrency(centralChartData.filter(c => c.name !== "Sem Central").reduce((acc, c) => acc + c.totalValue, 0))}
+                  {formatCurrency(centralChartData.reduce((acc, c) => acc + c.totalValue, 0))}
                 </span>
               </div>
               <div className="flex justify-between text-xs text-slate-500">
                 <span>Qtd. Propostas em Central</span>
                 <span>
-                  {centralChartData.filter(c => c.name !== "Sem Central").reduce((acc, c) => acc + c.count, 0)}
+                  {centralChartData.reduce((acc, c) => acc + c.count, 0)}
                 </span>
               </div>
             </div>
