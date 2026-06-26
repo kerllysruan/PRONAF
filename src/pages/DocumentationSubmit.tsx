@@ -107,8 +107,14 @@ export default function DocumentationSubmit() {
   }, [files]);
 
   const isAwaitingAnalysis = useMemo(() => {
-    return tokenData?.documents_submitted && !hasRejections && !hasMissingFiles && !allApproved;
+    // True when all submitted docs are pending review (no missing, no rejections, not yet all approved)
+    return !!(tokenData?.documents_submitted && !hasRejections && !hasMissingFiles && !allApproved);
   }, [tokenData, hasRejections, hasMissingFiles, allApproved]);
+
+  // Dispensed docs that are currently "approved" but marked as dispensed (file_path === 'dispensado')
+  const hasDispensedDocs = useMemo(() => {
+    return files.some((f) => f.file_path === "dispensado");
+  }, [files]);
 
   const missingOrRejectedCount = useMemo(() => {
     return DOCUMENTATION_REQUIRED.filter((doc) => {
@@ -338,100 +344,60 @@ export default function DocumentationSubmit() {
     );
   }
 
-  // ── Documents submitted, awaiting analysis ────────────────────
-  if (isAwaitingAnalysis) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
-        <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
-          <BrandHeader />
+  // NOTE: isAwaitingAnalysis is now used as a banner inside the main form
+  // (not an early return) so users can still interact with dispensed docs
 
-          <div className="animate-fade-in">
-            <Card className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-indigo-400 via-blue-500 to-cyan-500" />
-              <CardContent className="flex flex-col items-center py-16 px-8 text-center">
-                <div className="relative mb-8">
-                  <div className="absolute inset-0 rounded-full bg-indigo-500/20 blur-3xl scale-150" />
-                  <div className="relative z-10 w-24 h-24 rounded-full bg-indigo-500/20 border-2 border-indigo-400/40 flex items-center justify-center">
-                    <CheckCircle2 className="h-12 w-12 text-indigo-400" />
-                  </div>
-                </div>
-                <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-400/30 px-4 py-1.5 text-sm font-bold mb-4 rounded-full">
-                  ✅ DOCUMENTOS ENVIADOS — AGUARDE ANÁLISE
-                </Badge>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">
-                  Documentação recebida com sucesso
-                </h2>
-                <p className="text-white/50 text-sm max-w-md">
-                  Seus documentos foram enviados e estão sendo analisados pela equipe. Você será notificado em caso de aprovação ou necessidade de correção.
-                </p>
-
-                <ProposalInfoCard proposal={proposal} className="mt-10 w-full max-w-lg" />
-
-                {tokenData.submitted_at && (
-                  <div className="mt-6 flex items-center gap-2 text-white/40 text-xs">
-                    <FileCheck className="h-3.5 w-3.5" />
-                    <span>Enviado em {formatDate(tokenData.submitted_at)}</span>
-                  </div>
-                )}
-
-                <div className="mt-8 w-full max-w-lg">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3 text-left">
-                    Documentos enviados ({files.length})
-                  </p>
-                  <div className="space-y-2">
-                    {files.map((f) => (
-                      <div
-                        key={f.id}
-                        className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5"
-                      >
-                        <FileText className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                        <span className="text-white/70 text-sm truncate flex-1 text-left">
-                          {getDocLabel(f.document_type)}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] bg-amber-500/10 text-amber-300 border-amber-400/20 rounded-full"
-                        >
-                          Em análise
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Footer />
-        </div>
-      </div>
-    );
-  }
-
-  // ── Main/Unified submission layout (for first submission, missing files, or rejected files)
+  // ── Main/Unified submission layout (initial, awaiting analysis, missing files, or rejected)
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
         <BrandHeader />
 
         <div className="animate-fade-in space-y-6">
-          {/* Warning: Pending documents or review */}
-          <Card className="bg-amber-500/10 backdrop-blur-xl border border-amber-400/20 rounded-3xl shadow-2xl overflow-hidden">
-            <div className="h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500" />
-            <CardContent className="flex items-start gap-4 p-6">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="h-6 w-6 text-amber-400" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-lg font-extrabold text-white mb-1">
-                  Documentação Pendente
-                </h2>
-                <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
-                  A proposta ainda está **Pendente** porque restam documentos obrigatórios a serem enviados ou revisados/aprovados pela equipe de análise. Por favor, anexe os documentos necessários abaixo.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Banner: Awaiting Analysis */}
+          {isAwaitingAnalysis ? (
+            <Card className="bg-indigo-500/10 backdrop-blur-xl border border-indigo-400/20 rounded-3xl shadow-2xl overflow-hidden">
+              <div className="h-1.5 bg-gradient-to-r from-indigo-400 via-blue-500 to-cyan-500" />
+              <CardContent className="flex items-start gap-4 p-6">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="h-6 w-6 text-indigo-400" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-extrabold text-white mb-1">
+                    ✅ Documentos Enviados — Aguardando Análise
+                  </h2>
+                  <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+                    Seus documentos foram enviados e estão sendo analisados pela equipe.
+                    {hasDispensedDocs && " Caso precise reenviar um documento dispensado, clique em \"Habilitar Envio\" abaixo."}
+                  </p>
+                  {tokenData?.submitted_at && (
+                    <div className="mt-2 flex items-center gap-1.5 text-indigo-300/60 text-xs">
+                      <FileCheck className="h-3.5 w-3.5" />
+                      <span>Enviado em {formatDate(tokenData.submitted_at)}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            /* Banner: Pending documents or review */
+            <Card className="bg-amber-500/10 backdrop-blur-xl border border-amber-400/20 rounded-3xl shadow-2xl overflow-hidden">
+              <div className="h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500" />
+              <CardContent className="flex items-start gap-4 p-6">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="h-6 w-6 text-amber-400" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-extrabold text-white mb-1">
+                    Documentação Pendente
+                  </h2>
+                  <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+                    A proposta está <strong className="text-amber-300">Pendente</strong> porque restam documentos obrigatórios a serem enviados ou aprovados pela equipe. Por favor, anexe os documentos necessários abaixo.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Proposal info */}
           <ProposalInfoCard proposal={proposal} />
@@ -617,41 +583,43 @@ export default function DocumentationSubmit() {
             })}
           </div>
 
-          {/* Submit button */}
-          <div className="flex flex-col items-center gap-3 pt-4 pb-4">
-            {selectedCount < missingOrRejectedCount && (
-              <p className="text-amber-400/90 text-xs font-bold tracking-wide animate-pulse bg-amber-500/10 border border-amber-500/25 px-4 py-2 rounded-xl mb-1">
-                Atenção: Selecione todos os {missingOrRejectedCount} documentos obrigatórios restantes ({missingOrRejectedCount - selectedCount} pendentes) para habilitar o envio.
-              </p>
-            )}
-            <Button
-              onClick={handleSubmit}
-              disabled={selectedCount < missingOrRejectedCount || isSubmitting}
-              className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  Enviando documentos...
-                </>
-              ) : (
-                <>
-                  <Send className="h-5 w-5 mr-2" />
-                  Enviar Documentação
-                  {selectedCount > 0 && (
-                    <Badge className="ml-2 bg-white/20 text-white border-0 rounded-full text-xs">
-                      {selectedCount}
-                    </Badge>
-                  )}
-                </>
+          {/* Submit button — only shown when there are docs to upload */}
+          {(missingOrRejectedCount > 0 || selectedCount > 0) && (
+            <div className="flex flex-col items-center gap-3 pt-4 pb-4">
+              {selectedCount < missingOrRejectedCount && missingOrRejectedCount > 0 && (
+                <p className="text-amber-400/90 text-xs font-bold tracking-wide animate-pulse bg-amber-500/10 border border-amber-500/25 px-4 py-2 rounded-xl mb-1">
+                  ⚠️ Selecione todos os {missingOrRejectedCount} documentos obrigatórios ({missingOrRejectedCount - selectedCount} ainda pendentes) para habilitar o envio.
+                </p>
               )}
-            </Button>
-            {selectedCount === 0 && missingOrRejectedCount > 0 && (
-              <p className="text-white/30 text-xs">
-                Selecione os documentos restantes para continuar
-              </p>
-            )}
-          </div>
+              <Button
+                onClick={hasRejections ? handleResubmit : handleSubmit}
+                disabled={selectedCount < missingOrRejectedCount || selectedCount === 0 || isSubmitting}
+                className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    Enviando documentos...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-5 w-5 mr-2" />
+                    {hasRejections ? "Reenviar Documentos" : "Enviar Documentação"}
+                    {selectedCount > 0 && (
+                      <Badge className="ml-2 bg-white/20 text-white border-0 rounded-full text-xs">
+                        {selectedCount}
+                      </Badge>
+                    )}
+                  </>
+                )}
+              </Button>
+              {selectedCount === 0 && missingOrRejectedCount > 0 && (
+                <p className="text-white/30 text-xs">
+                  Selecione os documentos necessários para continuar
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <Footer />
