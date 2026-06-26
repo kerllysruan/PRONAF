@@ -26,6 +26,17 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+// List of document keys that can be dispensed
+const DISPENSABLE_DOCS = [
+  "ficha_cadastro_esposa",
+  "rg_esposa",
+  "certidao_casamento",
+  "procuracao",
+  "rg_procurador",
+  "titulo_dominio",
+  "car_individual",
+];
+
 // ─── Component ──────────────────────────────────────────────────
 export default function DocumentationSubmit() {
   const [searchParams] = useSearchParams();
@@ -36,6 +47,7 @@ export default function DocumentationSubmit() {
     getFilesForToken,
     submitDocuments,
     resubmitDocuments,
+    dispenseDocument,
   } = useDocumentationToken();
 
   const [tokenData, setTokenData] = useState<DocumentationTokenWithProposal | null>(null);
@@ -403,6 +415,24 @@ export default function DocumentationSubmit() {
         <BrandHeader />
 
         <div className="animate-fade-in space-y-6">
+          {/* Warning: Pending documents or review */}
+          <Card className="bg-amber-500/10 backdrop-blur-xl border border-amber-400/20 rounded-3xl shadow-2xl overflow-hidden">
+            <div className="h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500" />
+            <CardContent className="flex items-start gap-4 p-6">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-amber-400" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-extrabold text-white mb-1">
+                  Documentação Pendente
+                </h2>
+                <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+                  A proposta ainda está **Pendente** porque restam documentos obrigatórios a serem enviados ou revisados/aprovados pela equipe de análise. Por favor, anexe os documentos necessários abaixo.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Proposal info */}
           <ProposalInfoCard proposal={proposal} />
 
@@ -414,7 +444,7 @@ export default function DocumentationSubmit() {
                   Progresso do envio
                 </p>
                 <span className="text-white/70 text-sm font-bold">
-                  {selectedCount}/{totalDocs}
+                  {approvedOrPendingCount + selectedCount}/{totalDocs}
                 </span>
               </div>
               <Progress
@@ -457,15 +487,38 @@ export default function DocumentationSubmit() {
                 >
                   {isApproved ? (
                     <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center">
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center mb-3 animate-pulse">
-                        <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${dbFile?.file_path === 'dispensado' ? 'bg-slate-500/20 border border-slate-400/30' : 'bg-emerald-500/20 border border-emerald-400/30 animate-pulse'}`}>
+                        {dbFile?.file_path === 'dispensado' ? (
+                          <XCircle className="h-6 w-6 text-slate-400" />
+                        ) : (
+                          <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+                        )}
                       </div>
                       <p className="text-white/90 text-xs font-bold leading-snug mb-1">
                         {doc.label}
                       </p>
-                      <p className="text-emerald-300/80 text-[10px] font-bold">
-                        Aprovado ✅
+                      <p className={`${dbFile?.file_path === 'dispensado' ? 'text-slate-400' : 'text-emerald-300/80'} text-[10px] font-bold`}>
+                        {dbFile?.file_path === 'dispensado' ? "Dispensado / Não possui 🚫" : "Aprovado ✅"}
                       </p>
+                      {dbFile?.file_path === 'dispensado' && (
+                        <button
+                          type="button"
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (tokenData) {
+                              const ok = await dispenseDocument(tokenData.id, tokenData.stock_proposal_id, doc.key, false);
+                              if (ok) {
+                                const refreshedFiles = await getFilesForToken(tokenData.id);
+                                setFiles(refreshedFiles);
+                              }
+                            }
+                          }}
+                          className="mt-2 text-[10px] text-indigo-400 hover:text-indigo-300 underline transition-colors"
+                        >
+                          Habilitar Envio
+                        </button>
+                      )}
                     </div>
                   ) : isPending ? (
                     <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center">
@@ -534,6 +587,26 @@ export default function DocumentationSubmit() {
                             <p className="text-white/25 text-[10px]">
                               Clique ou arraste PDF
                             </p>
+                          )}
+                          {!selected && DISPENSABLE_DOCS.includes(doc.key) && (
+                            <button
+                              type="button"
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (tokenData) {
+                                  const ok = await dispenseDocument(tokenData.id, tokenData.stock_proposal_id, doc.key, true);
+                                  if (ok) {
+                                    const refreshedFiles = await getFilesForToken(tokenData.id);
+                                    setFiles(refreshedFiles);
+                                  }
+                                }
+                              }}
+                              className="mt-3 text-[10px] text-white/40 hover:text-amber-400 font-bold bg-white/5 border border-white/10 hover:border-amber-500/30 hover:bg-amber-500/10 px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1 shadow-sm"
+                            >
+                              <AlertTriangle className="h-3 w-3" />
+                              Não possui
+                            </button>
                           )}
                         </>
                       )}
