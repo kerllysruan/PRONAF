@@ -7,6 +7,7 @@ import {
   DocumentationToken,
   DocumentationFile,
   DocumentationTokenWithProposal,
+  DOCUMENTATION_REQUIRED,
 } from "@/types/documentation";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -199,6 +200,22 @@ export function useDocumentationReview() {
 
       if (tokenError) throw tokenError;
 
+      // Get stock_proposal_id from the token
+      const { data: tokenData } = await supabase
+        .from("documentation_tokens")
+        .select("stock_proposal_id")
+        .eq("id", tokenId)
+        .maybeSingle();
+
+      if (tokenData?.stock_proposal_id) {
+        const { error: proposalError } = await supabase
+          .from("stock_proposals")
+          .update({ status: "documentacao_pendente" })
+          .eq("id", tokenData.stock_proposal_id);
+
+        if (proposalError) throw proposalError;
+      }
+
       toast({ title: "Documento reprovado ❌", description: "O link foi reaberto para reenvio." });
       await fetchSubmissions(true);
     } catch (err: any) {
@@ -219,18 +236,34 @@ export function useDocumentationReview() {
       // Verify all docs are approved
       const { data: files, error: filesError } = await supabase
         .from("documentation_files")
-        .select("status")
+        .select("status, document_type")
         .eq("token_id", tokenId);
 
       if (filesError) throw filesError;
 
-      const allApproved = files && files.length > 0 && files.every((f: any) => f.status === "aprovado");
+      const filesMap = (files || []).reduce((acc, f: any) => {
+        acc[f.document_type] = f.status;
+        return acc;
+      }, {} as Record<string, string>);
+
+      // Check if ALL 21 required documents in DOCUMENTATION_REQUIRED are uploaded and approved
+      const allApproved = DOCUMENTATION_REQUIRED.every(
+        (doc) => filesMap[doc.key] === "aprovado"
+      );
+
       if (!allApproved) {
+        // Force the proposal status to documentacao_pendente if not all approved
+        await supabase
+          .from("stock_proposals")
+          .update({ status: "documentacao_pendente" })
+          .eq("id", stockProposalId);
+
         toast({
           title: "Não é possível aprovar",
-          description: "Todos os documentos precisam estar aprovados.",
+          description: "Todos os 21 documentos obrigatórios precisam estar aprovados.",
           variant: "destructive",
         });
+        await fetchSubmissions(true);
         return;
       }
 
