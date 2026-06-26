@@ -55,6 +55,7 @@ import {
   FileText,
   RefreshCw,
   Undo2,
+  Link2,
 } from "lucide-react";
 
 export default function Documentation() {
@@ -221,6 +222,22 @@ export default function Documentation() {
             >
               <Archive className="h-4 w-4" />
               Baixar Todos em ZIP
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-xl text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+              onClick={async () => {
+                const url = `${window.location.origin}/enviar-documentacao?token=${sub.token.token}`;
+                await navigator.clipboard.writeText(url);
+                toast({
+                  title: "Link copiado! 📋",
+                  description: "Link da página de envio copiado para a área de transferência.",
+                });
+              }}
+            >
+              <Link2 className="h-4 w-4" />
+              Copiar Link Envio
             </Button>
             <Button
               variant="outline"
@@ -724,17 +741,34 @@ export default function Documentation() {
                           </p>
                         </TableCell>
                         <TableCell className="text-right pr-6">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="rounded-xl h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedSubmission(sub);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                              title="Copiar Link de Envio"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const url = `${window.location.origin}/enviar-documentacao?token=${sub.token.token}`;
+                                await navigator.clipboard.writeText(url);
+                                toast({
+                                  title: "Link copiado! 📋",
+                                  description: "Link da página de envio copiado.",
+                                });
+                              }}
+                            >
+                              <Link2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl h-8 w-8 text-slate-500 hover:text-slate-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSubmission(sub);
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                         </TableCell>
                       </TableRow>
                     );
