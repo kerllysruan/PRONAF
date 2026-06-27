@@ -183,6 +183,23 @@ export default function DocumentationSubmit() {
     }
   }
 
+  function handlePaste(docKey: string, e: React.ClipboardEvent<HTMLDivElement>) {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.kind === "file") {
+        const file = item.getAsFile();
+        if (file && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"))) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleFileSelect(docKey, file);
+          break;
+        }
+      }
+    }
+  }
+
   async function handleSubmit() {
     if (!tokenData || !token || selectedCount < missingOrRejectedCount) return;
     setIsSubmitting(true);
@@ -457,7 +474,9 @@ export default function DocumentationSubmit() {
               return (
                 <div
                   key={doc.key}
-                  className={`group rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
+                  tabIndex={(!isApproved && !isPending) ? 0 : undefined}
+                  onPaste={(!isApproved && !isPending) ? (e) => handlePaste(doc.key, e) : undefined}
+                  className={`group rounded-2xl border-2 transition-all duration-300 overflow-hidden outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
                     isApproved
                       ? "border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl"
                       : isPending
@@ -588,7 +607,7 @@ export default function DocumentationSubmit() {
                             </p>
                           ) : (
                             <p className="text-white/25 text-[10px]">
-                              Clique ou arraste PDF
+                              Clique, arraste ou cole (Ctrl+V)
                             </p>
                           )}
 
