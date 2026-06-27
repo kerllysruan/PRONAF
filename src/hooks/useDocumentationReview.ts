@@ -409,7 +409,15 @@ export function useDocumentationReview() {
       const zip = new JSZip();
       const producerName = submission.proposal.producer_name.replace(/[^a-zA-Z0-9\s]/g, "").trim();
 
+      // Create a subfolder inside ZIP for environmental declarations
+      const ambientalFolder = zip.folder("Declarações Ambientais");
+
       for (const file of submission.files) {
+        // Skip dispensed records (they don't contain physical files in storage)
+        if (file.file_path === "dispensado" || file.file_path === "habilitado") {
+          continue;
+        }
+
         const { data, error } = await supabase.storage
           .from("proposals_documents")
           .download(file.file_path);
@@ -419,7 +427,15 @@ export function useDocumentationReview() {
           continue;
         }
 
-        zip.file(file.file_name, data);
+        // Check if this document belongs to the 'ambiental' group
+        const docDef = DOCUMENTATION_REQUIRED.find((d) => d.key === file.document_type);
+        const isAmbiental = docDef?.group === "ambiental";
+
+        if (isAmbiental && ambientalFolder) {
+          ambientalFolder.file(file.file_name, data);
+        } else {
+          zip.file(file.file_name, data);
+        }
       }
 
       const blob = await zip.generateAsync({ type: "blob" });
