@@ -7,6 +7,8 @@ export interface DocumentType {
   obtencaoUrl?: string;
   /** Name of the source institution (e.g. INCRA, CNJ, IBAMA) */
   fonte?: string;
+  /** Group identifier for section separation in the UI (e.g. 'ambiental') */
+  group?: string;
 }
 
 export const DOCUMENTATION_REQUIRED: DocumentType[] = [
@@ -32,12 +34,12 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
   { key: "orcamento", label: "Orçamento" },
   { key: "contrato_assessoria", label: "Contrato de Assessoria" },
   { key: "declaracao_assistencia_tecnica", label: "Declaração Assistência Técnica" },
-  { key: "declaracao_suporte_hidrico", label: "Declaração de Suporte Hídrico Animais" },
-  { key: "autorizacao_desmatamento_queima", label: "Autorização para Desmatamento e Queima Controlada" },
-  { key: "declaracao_regularidade_ambiental", label: "Declaração de Regularidade Ambiental" },
-  { key: "declaracao_recomposicao_reserva_car", label: "Declaração de Recomposição Reserva do CAR" },
-  { key: "declaracao_nao_desmatamento", label: "Declaração de Não Desmatamento após 22/07/2008 e Desmatamento Rural" },
-  { key: "declaracao_anexo_128", label: "Declaração Anexo 128" },
+  { key: "declaracao_suporte_hidrico", label: "Declaração de Suporte Hídrico Animais", group: "ambiental" },
+  { key: "autorizacao_desmatamento_queima", label: "Autorização para Desmatamento e Queima Controlada", group: "ambiental" },
+  { key: "declaracao_regularidade_ambiental", label: "Declaração de Regularidade Ambiental", group: "ambiental" },
+  { key: "declaracao_recomposicao_reserva_car", label: "Declaração de Recomposição Reserva do CAR", group: "ambiental" },
+  { key: "declaracao_nao_desmatamento", label: "Declaração de Não Desmatamento após 22/07/2008 e Desmatamento Rural", group: "ambiental" },
+  { key: "declaracao_anexo_128", label: "Declaração Anexo 128", group: "ambiental" },
   {
     key: "carta_consulta",
     label: "Carta Consulta",

@@ -443,9 +443,9 @@ export default function DocumentationSubmit() {
             </CardContent>
           </Card>
 
-          {/* Upload grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {DOCUMENTATION_REQUIRED.map((doc) => {
+          {/* ── Helper to render a single doc card ─────────────────── */}
+          {(() => {
+            const renderCard = (doc: (typeof DOCUMENTATION_REQUIRED)[0]) => {
               const selected = selectedFiles[doc.key];
               const dbFile = dbFilesMap[doc.key];
               // A 're-enabled' record (file_path='habilitado') should be treated as needing upload
@@ -628,12 +628,40 @@ export default function DocumentationSubmit() {
                           )}
                         </>
                       )}
-                    </label>
+                        </label>
                   )}
                 </div>
               );
-            })}
-          </div>
+            };
+
+            const mainDocs = DOCUMENTATION_REQUIRED.filter((d) => d.group !== "ambiental");
+            const ambientalDocs = DOCUMENTATION_REQUIRED.filter((d) => d.group === "ambiental");
+
+            return (
+              <>
+                {/* Main documents grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {mainDocs.map(renderCard)}
+                </div>
+
+                {/* ── Declarações Ambientais section ────────────────── */}
+                <div className="mt-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/25">
+                      <span className="text-emerald-400 text-base">🌿</span>
+                      <p className="text-emerald-300 text-xs font-black uppercase tracking-widest">
+                        Declarações Ambientais
+                      </p>
+                    </div>
+                    <div className="flex-1 h-px bg-emerald-500/15" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {ambientalDocs.map(renderCard)}
+                  </div>
+                </div>
+              </>
+            );
+          })()}
 
           {/* Submit button — only shown when there are docs to upload */}
           {(missingOrRejectedCount > 0 || selectedCount > 0) && (
