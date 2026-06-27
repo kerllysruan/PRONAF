@@ -59,6 +59,40 @@ export default function DocumentationSubmit() {
   const [pageLoading, setPageLoading] = useState(true);
   // Track which doc is being re-enabled (for mobile loading feedback)
   const [enablingDoc, setEnablingDoc] = useState<string | null>(null);
+  // Track hovered card for instant paste (Ctrl+V) without click
+  const [hoveredDocKey, setHoveredDocKey] = useState<string | null>(null);
+
+  // Global paste handler when mouse is hovering over a card
+  useEffect(() => {
+    function handleGlobalPaste(e: ClipboardEvent) {
+      if (!hoveredDocKey) return;
+
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA") && !activeEl.classList.contains("hidden")) {
+        return; // don't override input field pastes
+      }
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"))) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleFileSelect(hoveredDocKey, file);
+            break;
+          }
+        }
+      }
+    }
+
+    window.addEventListener("paste", handleGlobalPaste);
+    return () => {
+      window.removeEventListener("paste", handleGlobalPaste);
+    };
+  }, [hoveredDocKey]);
 
   // ── Load token data on mount ──────────────────────────────────
   useEffect(() => {
@@ -489,6 +523,8 @@ export default function DocumentationSubmit() {
                   }`}
                   onDragOver={(!isApproved && !isPending) ? (e) => e.preventDefault() : undefined}
                   onDrop={(!isApproved && !isPending) ? (e) => handleDrop(doc.key, e) : undefined}
+                  onMouseEnter={(!isApproved && !isPending) ? () => setHoveredDocKey(doc.key) : undefined}
+                  onMouseLeave={(!isApproved && !isPending) ? () => setHoveredDocKey(null) : undefined}
                 >
                   {isApproved ? (
                     <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center">
