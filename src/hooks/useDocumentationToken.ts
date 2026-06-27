@@ -136,74 +136,75 @@ export function useDocumentationToken() {
       const fileEntries = Object.entries(filesMap);
       if (fileEntries.length === 0) return false;
 
-      // Upload and database updates in parallel
-      await Promise.all(
-        fileEntries.map(async ([docType, file]) => {
-          const fileExt = file.name.split(".").pop() || "pdf";
-          const filePath = `documentation/${tokenStr}/${docType}.${fileExt}`;
+      // Upload sequentially to avoid concurrent blob-read issues when the
+      // same physical file is assigned to multiple document cards.
+      for (const [docType, file] of fileEntries) {
+        const fileExt = file.name.split(".").pop() || "pdf";
+        const filePath = `documentation/${tokenStr}/${docType}.${fileExt}`;
 
-          // Check if file record already exists for this token and document type
-          const { data: existing } = await supabase
+        // Check if file record already exists for this token and document type
+        const { data: existing } = await supabase
+          .from("documentation_files")
+          .select("id, file_path")
+          .eq("token_id", tokenId)
+          .eq("document_type", docType)
+          .maybeSingle();
+
+        if (existing) {
+          // If the path is different, delete the old file to save space
+          if (existing.file_path !== filePath && existing.file_path !== "dispensado") {
+            await supabase.storage
+              .from("proposals_documents")
+              .remove([existing.file_path]);
+          }
+        }
+
+        // Read the file content into an ArrayBuffer before uploading.
+        // This materialises the blob fully, preventing issues when the same
+        // File reference is reused across multiple cards.
+        const buffer = await file.arrayBuffer();
+        const blob = new Blob([buffer], { type: file.type || "application/pdf" });
+
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from("proposals_documents")
+          .upload(filePath, blob, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        if (existing) {
+          // Update file record
+          const { error: dbError } = await supabase
             .from("documentation_files")
-            .select("id, file_path")
-            .eq("token_id", tokenId)
-            .eq("document_type", docType)
-            .maybeSingle();
+            .update({
+              file_name: file.name,
+              file_path: filePath,
+              file_size: file.size,
+              status: "pendente",
+              rejection_reason: null,
+              reviewed_at: null,
+              reviewed_by: null,
+            })
+            .eq("id", existing.id);
 
-          if (existing) {
-            // If the path is different, delete the old file to save space
-            if (existing.file_path !== filePath && existing.file_path !== "dispensado") {
-              await supabase.storage
-                .from("proposals_documents")
-                .remove([existing.file_path]);
-            }
-          }
+          if (dbError) throw dbError;
+        } else {
+          // Insert file record
+          const { error: dbError } = await supabase
+            .from("documentation_files")
+            .insert({
+              token_id: tokenId,
+              stock_proposal_id: stockProposalId,
+              file_name: file.name,
+              file_path: filePath,
+              file_size: file.size,
+              document_type: docType,
+              status: "pendente",
+            });
 
-          // Clone the file reference to avoid stream cancellation or concurrent read errors
-          // when uploading the exact same physical file to multiple cards in parallel.
-          const fileClone = new File([file], file.name, { type: file.type });
-
-          // Upload to storage
-          const { error: uploadError } = await supabase.storage
-            .from("proposals_documents")
-            .upload(filePath, fileClone, { upsert: true });
-
-          if (uploadError) throw uploadError;
-
-          if (existing) {
-            // Update file record
-            const { error: dbError } = await supabase
-              .from("documentation_files")
-              .update({
-                file_name: file.name,
-                file_path: filePath,
-                file_size: file.size,
-                status: "pendente",
-                rejection_reason: null,
-                reviewed_at: null,
-                reviewed_by: null,
-              })
-              .eq("id", existing.id);
-
-            if (dbError) throw dbError;
-          } else {
-            // Insert file record
-            const { error: dbError } = await supabase
-              .from("documentation_files")
-              .insert({
-                token_id: tokenId,
-                stock_proposal_id: stockProposalId,
-                file_name: file.name,
-                file_path: filePath,
-                file_size: file.size,
-                document_type: docType,
-                status: "pendente",
-              });
-
-            if (dbError) throw dbError;
-          }
-        })
-      );
+          if (dbError) throw dbError;
+        }
+      }
 
       // Mark token as submitted
       const { error: updateError } = await supabase
@@ -250,74 +251,73 @@ export function useDocumentationToken() {
       const fileEntries = Object.entries(filesMap);
       if (fileEntries.length === 0) return false;
 
-      // Upload and database updates in parallel
-      await Promise.all(
-        fileEntries.map(async ([docType, file]) => {
-          const fileExt = file.name.split(".").pop() || "pdf";
-          const filePath = `documentation/${tokenStr}/${docType}.${fileExt}`;
+      // Upload sequentially to avoid concurrent blob-read issues when the
+      // same physical file is assigned to multiple document cards.
+      for (const [docType, file] of fileEntries) {
+        const fileExt = file.name.split(".").pop() || "pdf";
+        const filePath = `documentation/${tokenStr}/${docType}.${fileExt}`;
 
-          // Check if file record already exists for this token and document type
-          const { data: existing } = await supabase
+        // Check if file record already exists for this token and document type
+        const { data: existing } = await supabase
+          .from("documentation_files")
+          .select("id, file_path")
+          .eq("token_id", tokenId)
+          .eq("document_type", docType)
+          .maybeSingle();
+
+        if (existing) {
+          // If the path is different, delete the old file to save space
+          if (existing.file_path !== filePath && existing.file_path !== "dispensado") {
+            await supabase.storage
+              .from("proposals_documents")
+              .remove([existing.file_path]);
+          }
+        }
+
+        // Read the file content into an ArrayBuffer before uploading.
+        const buffer = await file.arrayBuffer();
+        const blob = new Blob([buffer], { type: file.type || "application/pdf" });
+
+        // Upload new file (overwrite)
+        const { error: uploadError } = await supabase.storage
+          .from("proposals_documents")
+          .upload(filePath, blob, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        if (existing) {
+          // Update file record
+          const { error: dbError } = await supabase
             .from("documentation_files")
-            .select("id, file_path")
-            .eq("token_id", tokenId)
-            .eq("document_type", docType)
-            .maybeSingle();
+            .update({
+              file_name: file.name,
+              file_path: filePath,
+              file_size: file.size,
+              status: "pendente",
+              rejection_reason: null,
+              reviewed_at: null,
+              reviewed_by: null,
+            })
+            .eq("id", existing.id);
 
-          if (existing) {
-            // If the path is different, delete the old file to save space
-            if (existing.file_path !== filePath && existing.file_path !== "dispensado") {
-              await supabase.storage
-                .from("proposals_documents")
-                .remove([existing.file_path]);
-            }
-          }
+          if (dbError) throw dbError;
+        } else {
+          // Insert new record if no existing one
+          const { error: dbError } = await supabase
+            .from("documentation_files")
+            .insert({
+              token_id: tokenId,
+              stock_proposal_id: stockProposalId,
+              file_name: file.name,
+              file_path: filePath,
+              file_size: file.size,
+              document_type: docType,
+              status: "pendente",
+            });
 
-          // Clone the file reference to avoid stream cancellation or concurrent read errors
-          // when uploading the exact same physical file to multiple cards in parallel.
-          const fileClone = new File([file], file.name, { type: file.type });
-
-          // Upload new file (overwrite)
-          const { error: uploadError } = await supabase.storage
-            .from("proposals_documents")
-            .upload(filePath, fileClone, { upsert: true });
-
-          if (uploadError) throw uploadError;
-
-          if (existing) {
-            // Update file record
-            const { error: dbError } = await supabase
-              .from("documentation_files")
-              .update({
-                file_name: file.name,
-                file_path: filePath,
-                file_size: file.size,
-                status: "pendente",
-                rejection_reason: null,
-                reviewed_at: null,
-                reviewed_by: null,
-              })
-              .eq("id", existing.id);
-
-            if (dbError) throw dbError;
-          } else {
-            // Insert new record if no existing one
-            const { error: dbError } = await supabase
-              .from("documentation_files")
-              .insert({
-                token_id: tokenId,
-                stock_proposal_id: stockProposalId,
-                file_name: file.name,
-                file_path: filePath,
-                file_size: file.size,
-                document_type: docType,
-                status: "pendente",
-              });
-
-            if (dbError) throw dbError;
-          }
-        })
-      );
+          if (dbError) throw dbError;
+        }
+      }
 
       // Clear rejections flag
       const { error: updateError } = await supabase

@@ -412,29 +412,49 @@ export function useDocumentationReview() {
       // Create a subfolder inside ZIP for environmental declarations
       const ambientalFolder = zip.folder("Declarações Ambientais");
 
-      for (const file of submission.files) {
-        // Skip dispensed records (they don't contain physical files in storage)
-        if (file.file_path === "dispensado" || file.file_path === "habilitado") {
-          continue;
-        }
+      // Filter downloadable files (skip dispensed/placeholder records)
+      const downloadableFiles = submission.files.filter(
+        (f) => f.file_path !== "dispensado" && f.file_path !== "habilitado"
+      );
 
-        const { data, error } = await supabase.storage
-          .from("proposals_documents")
-          .download(file.file_path);
+      // Download in parallel batches of 5 for speed
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < downloadableFiles.length; i += BATCH_SIZE) {
+        const batch = downloadableFiles.slice(i, i + BATCH_SIZE);
 
-        if (error) {
-          console.error(`Error downloading ${file.file_name}:`, error);
-          continue;
-        }
+        const results = await Promise.all(
+          batch.map(async (file) => {
+            const { data, error } = await supabase.storage
+              .from("proposals_documents")
+              .download(file.file_path);
 
-        // Check if this document belongs to the 'ambiental' group
-        const docDef = DOCUMENTATION_REQUIRED.find((d) => d.key === file.document_type);
-        const isAmbiental = docDef?.group === "ambiental";
+            if (error) {
+              console.error(`Error downloading ${file.file_name}:`, error);
+              return null;
+            }
 
-        if (isAmbiental && ambientalFolder) {
-          ambientalFolder.file(file.file_name, data);
-        } else {
-          zip.file(file.file_name, data);
+            return { file, data };
+          })
+        );
+
+        for (const result of results) {
+          if (!result) continue;
+
+          const { file, data } = result;
+
+          // Use the document label (e.g. "RG", "CAF - Extrato Completo") as the
+          // ZIP entry name instead of the original file_name. This prevents
+          // overwrites when the same physical file is uploaded to multiple cards.
+          const docDef = DOCUMENTATION_REQUIRED.find((d) => d.key === file.document_type);
+          const isAmbiental = docDef?.group === "ambiental";
+          const ext = file.file_name.split(".").pop() || "pdf";
+          const zipName = `${docDef?.label || file.document_type}.${ext}`;
+
+          if (isAmbiental && ambientalFolder) {
+            ambientalFolder.file(zipName, data);
+          } else {
+            zip.file(zipName, data);
+          }
         }
       }
 
