@@ -45,6 +45,7 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
     obtencaoUrl: "https://saladacidadania.incra.gov.br/Beneficiario/ConsultaPublica?AspxAutoDetectCookieSupport=1",
     fonte: "INCRA",
   },
+  { key: "autorizacao_modificacao_projeto", label: "Autorização Modificação Projeto" },
 ];
 
 export type DocFileStatus = "pendente" | "aprovado" | "reprovado";

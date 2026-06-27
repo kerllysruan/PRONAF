@@ -689,8 +689,12 @@ export default function DocumentationSubmit() {
               );
             };
 
-            const mainDocs = DOCUMENTATION_REQUIRED.filter((d) => d.group !== "ambiental");
-            const ambientalDocs = DOCUMENTATION_REQUIRED.filter((d) => d.group === "ambiental");
+            const mainDocs = DOCUMENTATION_REQUIRED
+              .filter((d) => d.group !== "ambiental")
+              .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+            const ambientalDocs = DOCUMENTATION_REQUIRED
+              .filter((d) => d.group === "ambiental")
+              .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
             return (
               <>
