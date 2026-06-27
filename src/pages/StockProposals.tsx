@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStockProposals } from "@/hooks/useStockProposals";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
@@ -203,6 +203,43 @@ export default function StockProposals() {
   const { generateToken, loading: tokenLoading } = useDocumentationToken();
   const { projetistas: PROJETISTAS } = useProjetistas();
   const { toast } = useToast();
+
+  const copyDocumentationLinkAndText = useCallback(async (p: StockProposal) => {
+    const token = await generateToken(p.id, p.original_csv_status || p.status);
+    if (token) {
+      const url = `${window.location.origin}/enviar-documentacao?token=${token}`;
+      const projetistaName = p.projetista || "Projetista";
+      const producerName = p.producer_name || "—";
+      const creditProgram = p.credit_program || "—";
+      const municipio = p.municipio || "—";
+
+      const message = `🌾 *SUPER GESTÃO — PORTAL DO PRODUTOR* 🌾
+
+Olá, *${projetistaName}*! Tudo bem?
+
+Foi liberado o link para o envio da documentação obrigatória do produtor abaixo. Por favor, acesse o link seguro para anexar os arquivos:
+
+*📋 DADOS DA PROPOSTA:*
+• *Produtor:* \`${producerName}\`
+• *Programa/Linha:* \`${creditProgram}\`
+• *Município:* \`${municipio}\`
+
+*🔗 LINK DE ACESSO SEGURO:*
+${url}
+
+---
+💡 *Dica:* Ao abrir o link, você pode anexar os arquivos arrastando-os para os cards ou simplesmente copiando e colando (**Ctrl+V**) no respectivo documento!
+
+Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. 🚀`;
+
+      await navigator.clipboard.writeText(message);
+      toast({ 
+        title: "Mensagem copiada com sucesso! 📋", 
+        description: "O texto formatado e o link de envio já estão na sua área de transferência. Agora é só colar no WhatsApp do projetista." 
+      });
+    }
+  }, [generateToken, toast]);
+
   const [isDialogOpen, setIsDialogOpen] = useState(() => {
     return localStorage.getItem('stock_proposal_new_open') === 'true';
   });
@@ -2243,14 +2280,7 @@ export default function StockProposals() {
                                   className="h-8 w-8 text-emerald-600 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 hover:text-emerald-700 transition-colors shadow-sm"
                                   title="Link Documentação"
                                   disabled={tokenLoading}
-                                  onClick={async () => {
-                                    const token = await generateToken(p.id, p.original_csv_status || p.status);
-                                    if (token) {
-                                      const url = `${window.location.origin}/enviar-documentacao?token=${token}`;
-                                      await navigator.clipboard.writeText(url);
-                                      toast({ title: "Link copiado! 📋", description: "Envie este link para o projetista." });
-                                    }
-                                  }}
+                                  onClick={() => copyDocumentationLinkAndText(p)}
                                 >
                                   <Link2 className="h-3.5 w-3.5" />
                                 </Button>
@@ -2420,14 +2450,7 @@ export default function StockProposals() {
                                 variant="outline" size="sm"
                                 className="w-full h-10 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 font-bold text-xs"
                                 disabled={tokenLoading}
-                                onClick={async () => {
-                                  const token = await generateToken(p.id, p.original_csv_status || p.status);
-                                  if (token) {
-                                    const url = `${window.location.origin}/enviar-documentacao?token=${token}`;
-                                    await navigator.clipboard.writeText(url);
-                                    toast({ title: "Link copiado! 📋", description: "Envie este link para o projetista." });
-                                  }
-                                }}
+                                onClick={() => copyDocumentationLinkAndText(p)}
                               >
                                 <Link2 className="mr-2 h-4 w-4" />
                                 LINK DOCUMENTAÇÃO
