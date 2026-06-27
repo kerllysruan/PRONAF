@@ -24,7 +24,7 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
   { key: "titulo_dominio", label: "Título de Domínio" },
   { key: "car_individual", label: "CAR Individual" },
   { key: "car_coletivo", label: "CAR Coletivo" },
-  { key: "dcaa", label: "DCAA" },
+  { key: "dcaa", label: "DCAA", group: "ambiental" },
   { key: "declaracoes_unificadas", label: "Declarações Unificadas" },
   { key: "declaracoes_ambientais", label: "Declarações Ambientais" },
   { key: "certidao_improbidade", label: "Certidão Improbidade", obtencaoUrl: "https://www.cnj.jus.br/improbidade_adm/consultar_requerido.php", fonte: "CNJ" },
