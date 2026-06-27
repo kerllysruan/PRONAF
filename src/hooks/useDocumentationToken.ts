@@ -159,10 +159,14 @@ export function useDocumentationToken() {
             }
           }
 
+          // Clone the file reference to avoid stream cancellation or concurrent read errors
+          // when uploading the exact same physical file to multiple cards in parallel.
+          const fileClone = new File([file], file.name, { type: file.type });
+
           // Upload to storage
           const { error: uploadError } = await supabase.storage
             .from("proposals_documents")
-            .upload(filePath, file, { upsert: true });
+            .upload(filePath, fileClone, { upsert: true });
 
           if (uploadError) throw uploadError;
 
@@ -269,10 +273,14 @@ export function useDocumentationToken() {
             }
           }
 
+          // Clone the file reference to avoid stream cancellation or concurrent read errors
+          // when uploading the exact same physical file to multiple cards in parallel.
+          const fileClone = new File([file], file.name, { type: file.type });
+
           // Upload new file (overwrite)
           const { error: uploadError } = await supabase.storage
             .from("proposals_documents")
-            .upload(filePath, file, { upsert: true });
+            .upload(filePath, fileClone, { upsert: true });
 
           if (uploadError) throw uploadError;
 
