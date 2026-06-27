@@ -26,7 +26,6 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
   { key: "car_coletivo", label: "CAR Coletivo" },
   { key: "dcaa", label: "DCAA", group: "ambiental" },
   { key: "declaracoes_unificadas", label: "Declarações Unificadas" },
-  { key: "declaracoes_ambientais", label: "Declarações Ambientais" },
   { key: "certidao_improbidade", label: "Certidão Improbidade", obtencaoUrl: "https://www.cnj.jus.br/improbidade_adm/consultar_requerido.php", fonte: "CNJ" },
   { key: "certidao_embargo_ambiental", label: "Certidão Negativa de Embargo Ambiental", obtencaoUrl: "https://servicos.ibama.gov.br/ctf/publico/areasembargadas/ConsultaPublicaAreasEmbargadas.php", fonte: "IBAMA" },
   { key: "plano_assinado", label: "Plano Assinado" },
