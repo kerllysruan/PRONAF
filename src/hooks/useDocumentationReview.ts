@@ -450,7 +450,10 @@ export function useDocumentationReview() {
           const docDef = DOCUMENTATION_REQUIRED.find((d) => d.key === file.document_type);
           const isAmbiental = docDef?.group === "ambiental";
           const ext = file.file_name.split(".").pop() || "pdf";
-          const zipName = `${docDef?.label || file.document_type}.${ext}`;
+          
+          // Replace slashes in document label to prevent JSZip from creating subfolders
+          const safeLabel = (docDef?.label || file.document_type).replace(/\//g, "-");
+          const zipName = `${safeLabel}.${ext}`;
 
           if (isAmbiental && ambientalFolder) {
             ambientalFolder.file(zipName, data);
@@ -465,7 +468,7 @@ export function useDocumentationReview() {
       // Generate and add the sub-zip inside the environmental declarations folder
       if (hasAmbientalFiles && ambientalFolder) {
         const subZipBlob = await ambientalSubZip.generateAsync({ type: "blob" });
-        ambientalFolder.file("Declarações Ambientais.zip", subZipBlob);
+        ambientalFolder.file("CERTIFICAÇÃO SOCIO AMBIENTAL.zip", subZipBlob);
       }
 
       const blob = await zip.generateAsync({ type: "blob" });
