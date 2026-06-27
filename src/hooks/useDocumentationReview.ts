@@ -452,6 +452,91 @@ export function useDocumentationReview() {
     }
   }, [toast]);
 
+  /**
+   * Approve all pending/rejected documents for this token.
+   */
+  const approveAllDocuments = useCallback(async (tokenId: string) => {
+    try {
+      const { error } = await supabase
+        .from("documentation_files")
+        .update({
+          status: "aprovado",
+          rejection_reason: null,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id,
+        })
+        .eq("token_id", tokenId)
+        .neq("status", "aprovado");
+
+      if (error) throw error;
+
+      toast({ title: "Todos os documentos foram aprovados! ✅" });
+      await fetchSubmissions(true);
+    } catch (err: any) {
+      console.error("Error approving all documents:", err);
+      toast({
+        title: "Erro ao aprovar todos",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  }, [user, toast, fetchSubmissions]);
+
+  /**
+   * Reject all documents for this token.
+   */
+  const rejectAllDocuments = useCallback(async (tokenId: string, reason: string) => {
+    try {
+      // 1. Update all files to rejected status
+      const { error: filesError } = await supabase
+        .from("documentation_files")
+        .update({
+          status: "reprovado",
+          rejection_reason: reason || "Documentos reprovados na análise geral",
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id,
+        })
+        .eq("token_id", tokenId)
+        .neq("status", "reprovado");
+
+      if (filesError) throw filesError;
+
+      // 2. Mark token as having rejections
+      const { error: tokenError } = await supabase
+        .from("documentation_tokens")
+        .update({ has_rejections: true })
+        .eq("id", tokenId);
+
+      if (tokenError) throw tokenError;
+
+      // 3. Update proposal status to documentacao_pendente
+      const { data: tokenData } = await supabase
+        .from("documentation_tokens")
+        .select("stock_proposal_id")
+        .eq("id", tokenId)
+        .maybeSingle();
+
+      if (tokenData?.stock_proposal_id) {
+        const { error: proposalError } = await supabase
+          .from("stock_proposals")
+          .update({ status: "documentacao_pendente" })
+          .eq("id", tokenData.stock_proposal_id);
+
+        if (proposalError) throw proposalError;
+      }
+
+      toast({ title: "Todos os documentos foram reprovados ❌", description: "O link foi reaberto para reenvio." });
+      await fetchSubmissions(true);
+    } catch (err: any) {
+      console.error("Error rejecting all documents:", err);
+      toast({
+        title: "Erro ao reprovar todos",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  }, [user, toast, fetchSubmissions]);
+
   return {
     submissions,
     loading,
@@ -462,6 +547,8 @@ export function useDocumentationReview() {
     downloadFile,
     getFileUrl,
     downloadAllAsZip,
+    approveAllDocuments,
+    rejectAllDocuments,
     refetch: fetchSubmissions,
   };
 }

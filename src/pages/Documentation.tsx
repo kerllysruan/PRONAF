@@ -69,6 +69,8 @@ export default function Documentation() {
     downloadFile,
     getFileUrl,
     downloadAllAsZip,
+    approveAllDocuments,
+    rejectAllDocuments,
     refetch,
   } = useDocumentationReview();
 
@@ -83,6 +85,8 @@ export default function Documentation() {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [revertDialogOpen, setRevertDialogOpen] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
+  const [bulkRejectDialogOpen, setBulkRejectDialogOpen] = useState(false);
+  const [bulkRejectReason, setBulkRejectReason] = useState("");
 
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
@@ -156,6 +160,18 @@ export default function Documentation() {
     await approveProposal(selectedSubmission.token.id, selectedSubmission.proposal.id);
   }, [selectedSubmission, approveProposal]);
 
+  const handleApproveAllDocs = useCallback(async () => {
+    if (!selectedSubmission) return;
+    await approveAllDocuments(selectedSubmission.token.id);
+  }, [selectedSubmission, approveAllDocuments]);
+
+  const handleConfirmBulkReject = useCallback(async () => {
+    if (!selectedSubmission) return;
+    await rejectAllDocuments(selectedSubmission.token.id, bulkRejectReason);
+    setBulkRejectDialogOpen(false);
+    setBulkRejectReason("");
+  }, [selectedSubmission, bulkRejectReason, rejectAllDocuments]);
+
   // ─── Loading state ────────────────────────────────────────────
   if (loading) {
     return (
@@ -214,6 +230,31 @@ export default function Documentation() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {sub.files.length > 0 && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 rounded-xl text-emerald-700 border-emerald-300 hover:bg-emerald-50 bg-emerald-50/30"
+                  onClick={handleApproveAllDocs}
+                >
+                  <ThumbsUp className="h-4 w-4" />
+                  Aprovar Todos
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 rounded-xl text-red-700 border-red-300 hover:bg-red-50 bg-red-50/30"
+                  onClick={() => {
+                    setBulkRejectReason("");
+                    setBulkRejectDialogOpen(true);
+                  }}
+                >
+                  <ThumbsDown className="h-4 w-4" />
+                  Reprovar Todos
+                </Button>
+              </>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -462,6 +503,44 @@ export default function Documentation() {
               >
                 <ThumbsDown className="h-4 w-4" />
                 Confirmar Reprovação
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {/* ── Bulk Reject Dialog ──────────────────────────────────── */}
+        <Dialog open={bulkRejectDialogOpen} onOpenChange={setBulkRejectDialogOpen}>
+          <DialogContent className="max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="font-heading font-extrabold flex items-center gap-2">
+                <XCircle className="h-5 w-5 text-red-500" />
+                Reprovar Todos os Documentos
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Informe o motivo da reprovação em lote de todos os documentos. O link será reaberto para reenvio.
+              </DialogDescription>
+            </DialogHeader>
+            <Textarea
+              placeholder="Motivo da reprovação geral..."
+              value={bulkRejectReason}
+              onChange={(e) => setBulkRejectReason(e.target.value)}
+              className="min-h-[100px] rounded-xl"
+            />
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => setBulkRejectDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                className="rounded-xl gap-2"
+                disabled={!bulkRejectReason.trim()}
+                onClick={handleConfirmBulkReject}
+              >
+                <ThumbsDown className="h-4 w-4" />
+                Reprovar Todos
               </Button>
             </DialogFooter>
           </DialogContent>
