@@ -411,6 +411,8 @@ export function useDocumentationReview() {
 
       // Create a subfolder inside ZIP for environmental declarations
       const ambientalFolder = zip.folder("Declarações Ambientais");
+      const ambientalSubZip = new JSZip();
+      let hasAmbientalFiles = false;
 
       // Filter downloadable files (skip dispensed/placeholder records)
       const downloadableFiles = submission.files.filter(
@@ -452,10 +454,18 @@ export function useDocumentationReview() {
 
           if (isAmbiental && ambientalFolder) {
             ambientalFolder.file(zipName, data);
+            ambientalSubZip.file(zipName, data);
+            hasAmbientalFiles = true;
           } else {
             zip.file(zipName, data);
           }
         }
+      }
+
+      // Generate and add the sub-zip inside the environmental declarations folder
+      if (hasAmbientalFiles && ambientalFolder) {
+        const subZipBlob = await ambientalSubZip.generateAsync({ type: "blob" });
+        ambientalFolder.file("Declarações Ambientais.zip", subZipBlob);
       }
 
       const blob = await zip.generateAsync({ type: "blob" });
