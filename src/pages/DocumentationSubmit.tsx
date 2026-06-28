@@ -325,13 +325,13 @@ export default function DocumentationSubmit() {
   // ── Loading state ─────────────────────────────────────────────
   if (pageLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-indigo-500/20 blur-xl animate-pulse" />
-            <Loader2 className="h-12 w-12 text-indigo-400 animate-spin relative z-10" />
+            <div className="absolute inset-0 rounded-full bg-indigo-500/10 blur-xl animate-pulse" />
+            <Loader2 className="h-12 w-12 text-indigo-600 animate-spin relative z-10" />
           </div>
-          <p className="text-white/60 text-sm font-medium tracking-wide">
+          <p className="text-slate-600 text-sm font-medium tracking-wide">
             Validando link...
           </p>
         </div>
@@ -342,26 +342,26 @@ export default function DocumentationSubmit() {
   // ── Invalid token ─────────────────────────────────────────────
   if (isInvalid || !tokenData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="animate-fade-in w-full max-w-md">
-          <Card className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl">
+          <Card className="bg-white border border-slate-200 rounded-3xl shadow-lg">
             <CardContent className="flex flex-col items-center py-16 px-8 text-center">
               <div className="relative mb-6">
-                <div className="absolute inset-0 rounded-full bg-rose-500/20 blur-2xl" />
-                <div className="relative z-10 w-20 h-20 rounded-full bg-rose-500/20 border border-rose-400/30 flex items-center justify-center">
-                  <XCircle className="h-10 w-10 text-rose-400" />
+                <div className="absolute inset-0 rounded-full bg-rose-500/10 blur-2xl" />
+                <div className="relative z-10 w-20 h-20 rounded-full bg-rose-500/10 border border-rose-200 flex items-center justify-center">
+                  <XCircle className="h-10 w-10 text-rose-500" />
                 </div>
               </div>
-              <h2 className="text-2xl font-extrabold text-white mb-3">
+              <h2 className="text-2xl font-extrabold text-slate-800 mb-3">
                 Link inválido ou expirado
               </h2>
-              <p className="text-white/50 text-sm leading-relaxed max-w-xs">
+              <p className="text-slate-500 text-sm leading-relaxed max-w-xs">
                 Este link de envio de documentação não é válido. Verifique se o
                 link está correto ou solicite um novo link ao seu consultor.
               </p>
             </CardContent>
           </Card>
-          <p className="text-center text-white/20 text-xs mt-6 tracking-wider uppercase font-semibold">
+          <p className="text-center text-slate-400 text-xs mt-6 tracking-wider uppercase font-semibold">
             Super Gestão © {new Date().getFullYear()}
           </p>
         </div>
@@ -374,44 +374,44 @@ export default function DocumentationSubmit() {
   // ── All documents approved ────────────────────────────────────
   if (tokenData.documents_submitted && allApproved && files.length > 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
+      <div className="min-h-screen bg-slate-50">
         <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
           <BrandHeader />
 
           <div className="animate-fade-in">
-            <Card className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden">
+            <Card className="bg-white border border-slate-200 rounded-3xl shadow-lg overflow-hidden">
               <div className="h-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
               <CardContent className="flex flex-col items-center py-16 px-8 text-center">
                 <div className="relative mb-8">
-                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-3xl scale-150" />
-                  <div className="relative z-10 w-24 h-24 rounded-full bg-emerald-500/20 border-2 border-emerald-400/40 flex items-center justify-center">
-                    <ShieldCheck className="h-12 w-12 text-emerald-400" />
+                  <div className="absolute inset-0 rounded-full bg-emerald-500/10 blur-3xl scale-150" />
+                  <div className="relative z-10 w-24 h-24 rounded-full bg-emerald-500/10 border-2 border-emerald-400/40 flex items-center justify-center">
+                    <ShieldCheck className="h-12 w-12 text-emerald-500" />
                   </div>
                 </div>
-                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/30 px-4 py-1.5 text-sm font-bold mb-4 rounded-full">
+                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-400/30 px-4 py-1.5 text-sm font-bold mb-4 rounded-full">
                   DOCUMENTAÇÃO APROVADA ✅
                 </Badge>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2">
                   Todos os documentos foram aprovados
                 </h2>
-                <p className="text-white/50 text-sm max-w-md">
+                <p className="text-slate-500 text-sm max-w-md">
                   A documentação do produtor foi analisada e aprovada com sucesso. Nenhuma ação adicional é necessária.
                 </p>
 
                 <ProposalInfoCard proposal={proposal} className="mt-10 w-full max-w-lg" />
 
                 <div className="mt-8 w-full max-w-lg">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3 text-left">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-left">
                     Documentos aprovados
                   </p>
                   <div className="space-y-2">
                     {files.map((f) => (
                       <div
                         key={f.id}
-                        className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-400/20 rounded-xl px-4 py-2.5"
+                        className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5"
                       >
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                        <span className="text-white/80 text-sm truncate">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                        <span className="text-slate-700 text-sm font-medium truncate">
                           {getDocLabel(f.document_type)}
                         </span>
                       </div>
@@ -433,29 +433,29 @@ export default function DocumentationSubmit() {
 
   // ── Main/Unified submission layout (initial, awaiting analysis, missing files, or rejected)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900">
+    <div className="min-h-screen bg-slate-50">
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
         <BrandHeader />
 
         <div className="animate-fade-in space-y-6">
           {/* Banner: Awaiting Analysis */}
           {isAwaitingAnalysis ? (
-            <Card className="bg-indigo-500/10 backdrop-blur-xl border border-indigo-400/20 rounded-3xl shadow-2xl overflow-hidden">
-              <div className="h-1.5 bg-gradient-to-r from-indigo-400 via-blue-500 to-cyan-500" />
+            <Card className="bg-emerald-50 border border-emerald-100 rounded-3xl shadow-md overflow-hidden">
+              <div className="h-1.5 bg-emerald-500" />
               <CardContent className="flex items-start gap-4 p-6">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 className="h-6 w-6 text-indigo-400" />
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-extrabold text-white mb-1">
+                  <h2 className="text-lg font-extrabold text-emerald-900 mb-1">
                     ✅ Documentos Enviados — Aguardando Análise
                   </h2>
-                  <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
+                  <p className="text-emerald-700/90 text-xs sm:text-sm leading-relaxed">
                     Seus documentos foram enviados e estão sendo analisados pela equipe.
                     {hasDispensedDocs && " Caso precise reenviar um documento dispensado, clique em \"Habilitar Envio\" abaixo."}
                   </p>
                   {tokenData?.submitted_at && (
-                    <div className="mt-2 flex items-center gap-1.5 text-indigo-300/60 text-xs">
+                    <div className="mt-2 flex items-center gap-1.5 text-emerald-600/80 text-xs font-semibold">
                       <FileCheck className="h-3.5 w-3.5" />
                       <span>Enviado em {formatDate(tokenData.submitted_at)}</span>
                     </div>
@@ -465,18 +465,18 @@ export default function DocumentationSubmit() {
             </Card>
           ) : (
             /* Banner: Pending documents or review */
-            <Card className="bg-amber-500/10 backdrop-blur-xl border border-amber-400/20 rounded-3xl shadow-2xl overflow-hidden">
-              <div className="h-1.5 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500" />
+            <Card className="bg-amber-50 border border-amber-100 rounded-3xl shadow-md overflow-hidden">
+              <div className="h-1.5 bg-amber-500" />
               <CardContent className="flex items-start gap-4 p-6">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="h-6 w-6 text-amber-400" />
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="h-6 w-6 text-amber-600" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-extrabold text-white mb-1">
+                  <h2 className="text-lg font-extrabold text-amber-900 mb-1">
                     Documentação Pendente
                   </h2>
-                  <p className="text-white/60 text-xs sm:text-sm leading-relaxed">
-                    A proposta está <strong className="text-amber-300">Pendente</strong> porque restam documentos obrigatórios a serem enviados ou aprovados pela equipe. Por favor, anexe os documentos necessários abaixo.
+                  <p className="text-amber-700/90 text-xs sm:text-sm leading-relaxed">
+                    A proposta está <strong className="text-amber-800">Pendente</strong> porque restam documentos obrigatórios a serem enviados ou aprovados pela equipe. Por favor, anexe os documentos necessários abaixo.
                   </p>
                 </div>
               </CardContent>
@@ -487,21 +487,21 @@ export default function DocumentationSubmit() {
           <ProposalInfoCard proposal={proposal} />
 
           {/* Progress */}
-          <Card className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden">
+          <Card className="bg-white border border-slate-200 rounded-3xl shadow-md overflow-hidden">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                   Progresso do envio
                 </p>
-                <span className="text-white/70 text-sm font-bold">
+                <span className="text-slate-700 text-sm font-bold">
                   {approvedOrPendingCount + selectedCount}/{totalDocs}
                 </span>
               </div>
               <Progress
                 value={progressPercent}
-                className="h-2.5 bg-white/10 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-indigo-500 [&>div]:to-blue-400 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
+                className="h-2.5 bg-slate-100 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-indigo-600 [&>div]:to-blue-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
               />
-              <p className="text-white/30 text-xs mt-2">
+              <p className="text-slate-400 text-xs mt-2">
                 {selectedCount === 0
                   ? "Selecione os documentos em PDF para enviar"
                   : `${selectedCount} documento${selectedCount !== 1 ? "s" : ""} selecionado${selectedCount !== 1 ? "s" : ""}`}
@@ -525,16 +525,16 @@ export default function DocumentationSubmit() {
                   key={doc.key}
                   tabIndex={(!isApproved && !isPending) ? 0 : undefined}
                   onPaste={(!isApproved && !isPending) ? (e) => handlePaste(doc.key, e) : undefined}
-                  className={`group rounded-2xl border-2 transition-all duration-300 overflow-hidden outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
+                  className={`group rounded-2xl border transition-all duration-300 overflow-hidden outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
                     isApproved
-                      ? "border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl"
+                      ? "border-emerald-200 bg-emerald-50/80"
                       : isPending
-                      ? "border-amber-500/20 bg-amber-500/5 backdrop-blur-xl"
+                      ? "border-amber-200 bg-amber-50/80"
                       : isRejected
-                      ? "border-rose-500/20 bg-rose-500/5 backdrop-blur-xl"
+                      ? "border-rose-200 bg-rose-50/80"
                       : selected
-                      ? "border-indigo-400/40 bg-indigo-500/10 backdrop-blur-xl shadow-lg shadow-indigo-500/10"
-                      : "border-dashed border-white/15 bg-white/5 backdrop-blur-xl hover:border-white/30 hover:bg-white/10"
+                      ? "border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-500/5"
+                      : "border-dashed border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/10"
                   }`}
                   onDragOver={(!isApproved && !isPending) ? (e) => e.preventDefault() : undefined}
                   onDrop={(!isApproved && !isPending) ? (e) => handleDrop(doc.key, e) : undefined}
@@ -543,17 +543,17 @@ export default function DocumentationSubmit() {
                 >
                   {isApproved ? (
                     <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${dbFile?.file_path === 'dispensado' ? 'bg-slate-500/20 border border-slate-400/30' : 'bg-emerald-500/20 border border-emerald-400/30 animate-pulse'}`}>
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${dbFile?.file_path === 'dispensado' ? 'bg-slate-200 border border-slate-300' : 'bg-emerald-100 border border-emerald-200'}`}>
                         {dbFile?.file_path === 'dispensado' ? (
-                          <XCircle className="h-6 w-6 text-slate-400" />
+                          <XCircle className="h-6 w-6 text-slate-500" />
                         ) : (
-                          <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+                          <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                         )}
                       </div>
-                      <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1">
+                      <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
                         {doc.label.toUpperCase()}
                       </p>
-                      <p className={`${dbFile?.file_path === 'dispensado' ? 'text-slate-400' : 'text-emerald-300/80'} text-[10px] font-bold`}>
+                      <p className={`${dbFile?.file_path === 'dispensado' ? 'text-slate-500' : 'text-emerald-600'} text-[10px] font-bold`}>
                         {dbFile?.file_path === 'dispensado' ? "Dispensado / Não possui 🚫" : "Aprovado ✅"}
                       </p>
                       {dbFile?.file_path === 'dispensado' && (
@@ -576,7 +576,7 @@ export default function DocumentationSubmit() {
                               }
                             }
                           }}
-                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-xs font-bold hover:bg-indigo-500/30 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none"
+                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 text-xs font-bold hover:bg-indigo-100 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none"
                           style={{ WebkitTapHighlightColor: 'transparent' }}
                         >
                           {enablingDoc === doc.key ? (
@@ -595,13 +595,13 @@ export default function DocumentationSubmit() {
                     </div>
                   ) : isPending ? (
                     <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center mb-3">
-                        <Loader2 className="h-6 w-6 text-amber-400 animate-spin" />
+                      <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center mb-3">
+                        <Loader2 className="h-6 w-6 text-amber-600 animate-spin" />
                       </div>
-                      <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1">
+                      <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
                         {doc.label.toUpperCase()}
                       </p>
-                      <p className="text-amber-300/80 text-[10px] font-bold">
+                      <p className="text-amber-600 text-[10px] font-bold">
                         Aguardando Análise ⏳
                       </p>
                     </div>
@@ -618,13 +618,13 @@ export default function DocumentationSubmit() {
 
                       {selected ? (
                         <>
-                          <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center mb-3">
-                            <FileCheck className="h-6 w-6 text-indigo-400" />
+                          <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-3">
+                            <FileCheck className="h-6 w-6 text-indigo-600" />
                           </div>
-                          <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1">
+                          <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
                             {doc.label.toUpperCase()}
                           </p>
-                          <p className="text-indigo-300/70 text-[10px] truncate max-w-full px-2">
+                          <p className="text-indigo-600 text-[10px] truncate max-w-full px-2">
                             {selected.name}
                           </p>
                           <button
@@ -634,7 +634,7 @@ export default function DocumentationSubmit() {
                               e.stopPropagation();
                               handleFileSelect(doc.key, null);
                             }}
-                            className="mt-2 text-[10px] text-white/30 hover:text-rose-400 transition-colors flex items-center gap-1"
+                            className="mt-2 text-[10px] text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1"
                           >
                             <XCircle className="h-3 w-3" />
                             Remover
@@ -642,22 +642,22 @@ export default function DocumentationSubmit() {
                         </>
                       ) : (
                         <>
-                          <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 group-hover:bg-white/10 group-hover:border-white/20 transition-all duration-300">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mb-3 group-hover:bg-indigo-50 group-hover:border-indigo-200 transition-all duration-300">
                             {isRejected ? (
-                              <XCircle className="h-5 w-5 text-rose-400" />
+                              <XCircle className="h-5 w-5 text-rose-500" />
                             ) : (
-                              <Upload className="h-5 w-5 text-white/25 group-hover:text-white/50 transition-colors" />
+                              <Upload className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                             )}
                           </div>
-                          <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1">
+                          <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
                             {doc.label.toUpperCase()}
                           </p>
                           {isRejected ? (
-                            <p className="text-rose-300/80 text-[10px] text-center px-2 truncate max-w-full font-semibold">
+                            <p className="text-rose-600 text-[10px] text-center px-2 truncate max-w-full font-semibold">
                               Reprovado: {dbFile.rejection_reason || "Reenviar"}
                             </p>
                           ) : (
-                            <p className="text-white/25 text-[10px]">
+                            <p className="text-slate-400 text-[10px]">
                               Clique, arraste ou cole (Ctrl+V)
                             </p>
                           )}
@@ -669,7 +669,7 @@ export default function DocumentationSubmit() {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="mt-3 flex items-center justify-center gap-1.5 w-full min-h-[40px] px-3 py-2 rounded-xl bg-cyan-500/15 border border-cyan-400/30 text-cyan-300 text-[11px] font-bold hover:bg-cyan-500/25 active:scale-95 transition-all duration-200 touch-manipulation select-none"
+                              className="mt-3 flex items-center justify-center gap-1.5 w-full min-h-[40px] px-3 py-2 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700 text-[11px] font-bold hover:bg-cyan-100 active:scale-95 transition-all duration-200 touch-manipulation select-none"
                               style={{ WebkitTapHighlightColor: 'transparent' }}
                             >
                               <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
@@ -690,9 +690,9 @@ export default function DocumentationSubmit() {
                                   }
                                 }
                               }}
-                              className="mt-3 text-[9px] md:text-[10px] text-center text-amber-300 font-extrabold bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 hover:border-amber-400/60 px-3 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.02] active:scale-95 w-full whitespace-normal leading-snug"
+                              className="mt-3 text-[9px] md:text-[10px] text-center text-amber-700 font-extrabold bg-amber-50 border border-amber-200 hover:bg-amber-100 px-3 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.02] active:scale-95 w-full whitespace-normal leading-snug"
                             >
-                              <AlertTriangle className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                              <AlertTriangle className="h-3.5 w-3.5 text-amber-600 flex-shrink-0" />
                               {getDispenseButtonLabel(doc.key)}
                             </button>
                           )}
@@ -721,13 +721,13 @@ export default function DocumentationSubmit() {
                 {/* ── Declarações Ambientais section ────────────────── */}
                 <div className="mt-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/25">
-                      <span className="text-emerald-400 text-base">🌿</span>
-                      <p className="text-emerald-300 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-sm">
+                      <span className="text-emerald-600 text-base">🌿</span>
+                      <p className="text-emerald-700 text-xs font-black uppercase tracking-widest">
                         Declarações Ambientais
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-emerald-500/15" />
+                    <div className="flex-1 h-px bg-emerald-200" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {ambientalDocs.map(renderCard)}
@@ -741,7 +741,7 @@ export default function DocumentationSubmit() {
           {(missingOrRejectedCount > 0 || selectedCount > 0) && (
             <div className="flex flex-col items-center gap-3 pt-4 pb-4">
               {selectedCount < missingOrRejectedCount && missingOrRejectedCount > 0 && (
-                <p className="text-amber-400/90 text-xs font-bold tracking-wide animate-pulse bg-amber-500/10 border border-amber-500/25 px-4 py-2 rounded-xl mb-1">
+                <p className="text-amber-800 text-xs font-bold tracking-wide animate-pulse bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl mb-1 shadow-sm">
                   ⚠️ Selecione todos os {missingOrRejectedCount} documentos obrigatórios ({missingOrRejectedCount - selectedCount} ainda pendentes) para habilitar o envio.
                 </p>
               )}
@@ -768,7 +768,7 @@ export default function DocumentationSubmit() {
                 )}
               </Button>
               {selectedCount === 0 && missingOrRejectedCount > 0 && (
-                <p className="text-white/30 text-xs">
+                <p className="text-slate-400 text-xs font-medium">
                   Selecione os documentos necessários para continuar
                 </p>
               )}
@@ -790,14 +790,14 @@ function BrandHeader() {
   return (
     <div className="text-center mb-10 animate-fade-in">
       <div className="inline-flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
           <ShieldCheck className="h-5 w-5 text-white" />
         </div>
         <div className="text-left">
-          <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight leading-none">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight leading-none">
             SUPER GESTÃO
           </h1>
-          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300/60">
+          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600/80">
             Portal de Documentação
           </p>
         </div>
@@ -835,20 +835,20 @@ function ProposalInfoCard({
 
   return (
     <Card
-      className={`bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl overflow-hidden ${className}`}
+      className={`bg-white border border-slate-200 rounded-3xl shadow-md overflow-hidden ${className}`}
     >
-      <div className="h-1 bg-gradient-to-r from-indigo-400 via-blue-500 to-cyan-500" />
+      <div className="h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500" />
       <CardContent className="p-6">
-        <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
           Dados da Proposta
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {infoFields.map((field) => (
             <div key={field.label}>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-white/30 mb-0.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
                 {field.label}
               </p>
-              <p className="text-white/90 text-sm font-semibold truncate">
+              <p className="text-slate-800 text-sm font-semibold truncate">
                 {field.value}
               </p>
             </div>
@@ -862,7 +862,7 @@ function ProposalInfoCard({
 function Footer() {
   return (
     <div className="text-center mt-10">
-      <p className="text-white/15 text-[10px] font-bold uppercase tracking-widest">
+      <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
         Super Gestão © {new Date().getFullYear()} — Todos os direitos reservados
       </p>
     </div>
