@@ -535,8 +535,8 @@ export default function DocumentationSubmit() {
                           <CheckCircle2 className="h-6 w-6 text-emerald-400" />
                         )}
                       </div>
-                      <p className="text-white/90 text-xs font-bold leading-snug mb-1">
-                        {doc.label}
+                      <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1">
+                        {doc.label.toUpperCase()}
                       </p>
                       <p className={`${dbFile?.file_path === 'dispensado' ? 'text-slate-400' : 'text-emerald-300/80'} text-[10px] font-bold`}>
                         {dbFile?.file_path === 'dispensado' ? "Dispensado / Não possui 🚫" : "Aprovado ✅"}
@@ -583,8 +583,8 @@ export default function DocumentationSubmit() {
                       <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center mb-3">
                         <Loader2 className="h-6 w-6 text-amber-400 animate-spin" />
                       </div>
-                      <p className="text-white/90 text-xs font-bold leading-snug mb-1">
-                        {doc.label}
+                      <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1">
+                        {doc.label.toUpperCase()}
                       </p>
                       <p className="text-amber-300/80 text-[10px] font-bold">
                         Aguardando Análise ⏳
@@ -606,8 +606,8 @@ export default function DocumentationSubmit() {
                           <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center mb-3">
                             <FileCheck className="h-6 w-6 text-indigo-400" />
                           </div>
-                          <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1.5">
-                            {doc.label}
+                          <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1">
+                            {doc.label.toUpperCase()}
                           </p>
                           <p className="text-indigo-300/70 text-[10px] truncate max-w-full px-2">
                             {selected.name}
@@ -634,8 +634,8 @@ export default function DocumentationSubmit() {
                               <Upload className="h-5 w-5 text-white/25 group-hover:text-white/50 transition-colors" />
                             )}
                           </div>
-                          <p className="text-white/70 text-xs font-bold text-center leading-snug mb-1">
-                            {doc.label}
+                          <p className="text-white/90 text-xs font-bold text-center leading-snug mb-1">
+                            {doc.label.toUpperCase()}
                           </p>
                           {isRejected ? (
                             <p className="text-rose-300/80 text-[10px] text-center px-2 truncate max-w-full font-semibold">
