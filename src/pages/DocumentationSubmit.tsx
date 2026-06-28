@@ -36,6 +36,7 @@ const DISPENSABLE_DOCS = [
   "rg_procurador",
   "titulo_dominio",
   "car_individual",
+  "certidao_obito",
 ];
 
 // ─── Component ──────────────────────────────────────────────────
@@ -675,10 +676,10 @@ export default function DocumentationSubmit() {
                                   }
                                 }
                               }}
-                              className="mt-3 text-[11px] text-amber-300 font-extrabold bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 hover:border-amber-400/60 px-4 py-2 rounded-xl transition-all duration-300 flex items-center gap-1.5 shadow-md hover:scale-105 active:scale-95"
+                              className="mt-3 text-[9px] md:text-[10px] text-center text-amber-300 font-extrabold bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 hover:border-amber-400/60 px-3 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.02] active:scale-95 w-full whitespace-normal leading-snug"
                             >
-                              <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
-                              NÃO POSSUI
+                              <AlertTriangle className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
+                              DISPENSAR - CLIENTE NÃO POSSUI OU NÃO NECESSÁRIO NA OPERAÇÃO
                             </button>
                           )}
                         </>

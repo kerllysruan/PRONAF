@@ -46,7 +46,7 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
     fonte: "INCRA",
   },
   { key: "autorizacao_modificacao_projeto", label: "AUTORIZAÇÃO MODIFICAÇÃO PROJETO" },
-  { key: "certidao_obito", label: "CERTIDÃO DE ÓBITO" },
+  { key: "certidao_obito", label: "CERTIDÃO DE ÓBITO CÔNJUGE" },
 ];
 
 export type DocFileStatus = "pendente" | "aprovado" | "reprovado";
