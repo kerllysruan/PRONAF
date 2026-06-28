@@ -39,6 +39,20 @@ const DISPENSABLE_DOCS = [
   "certidao_obito",
 ];
 
+function getDispenseButtonLabel(docKey: string): string {
+  switch (docKey) {
+    case "certidao_casamento":
+      return "DISPENSAR - CLIENTE SOLTEIRO/VIÚVO";
+    case "certidao_obito":
+      return "DISPENSAR - CLIENTE CASADO/SOLTEIRO";
+    case "ficha_cadastro_esposa":
+    case "rg_esposa":
+      return "DISPENSAR - CLIENTE SOLTEIRO";
+    default:
+      return "DISPENSAR - CLIENTE NÃO POSSUI OU NÃO NECESSÁRIO NA OPERAÇÃO";
+  }
+}
+
 // ─── Component ──────────────────────────────────────────────────
 export default function DocumentationSubmit() {
   const [searchParams] = useSearchParams();
@@ -679,7 +693,7 @@ export default function DocumentationSubmit() {
                               className="mt-3 text-[9px] md:text-[10px] text-center text-amber-300 font-extrabold bg-amber-500/20 border border-amber-400/40 hover:bg-amber-500/30 hover:border-amber-400/60 px-3 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.02] active:scale-95 w-full whitespace-normal leading-snug"
                             >
                               <AlertTriangle className="h-3.5 w-3.5 text-amber-400 flex-shrink-0" />
-                              DISPENSAR - CLIENTE NÃO POSSUI OU NÃO NECESSÁRIO NA OPERAÇÃO
+                              {getDispenseButtonLabel(doc.key)}
                             </button>
                           )}
                         </>
