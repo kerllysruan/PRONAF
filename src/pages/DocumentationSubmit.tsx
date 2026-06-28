@@ -820,11 +820,17 @@ function ProposalInfoCard({
     return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9)}`;
   }
 
+  const valueFormatted = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(Number(proposal.estimated_value) || 0);
+
   const infoFields = [
     { label: "Produtor", value: proposal.producer_name },
     { label: "CPF", value: formatCPF(proposal.producer_cpf) },
     { label: "Município", value: proposal.municipio || "—" },
     { label: "Programa", value: proposal.credit_program || "—" },
+    { label: "Valor da Proposta", value: valueFormatted },
   ];
 
   return (

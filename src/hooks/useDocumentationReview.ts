@@ -407,7 +407,7 @@ export function useDocumentationReview() {
       toast({ title: "Gerando ZIP...", description: "Aguarde enquanto os arquivos são compilados." });
 
       const zip = new JSZip();
-      const producerName = submission.proposal.producer_name.replace(/[^a-zA-Z0-9\s]/g, "").trim();
+      const producerName = submission.proposal.producer_name.replace(/[^a-zA-Z0-9\s]/g, "").trim().toUpperCase();
 
       // Create a subfolder inside ZIP for environmental declarations
       const ambientalFolder = zip.folder("Declarações Ambientais");
@@ -472,7 +472,7 @@ export function useDocumentationReview() {
       }
 
       const blob = await zip.generateAsync({ type: "blob" });
-      saveAs(blob, `Documentacao_${producerName}.zip`);
+      saveAs(blob, `${producerName}.zip`);
 
       toast({ title: "Download concluído! 📥" });
     } catch (err: any) {
