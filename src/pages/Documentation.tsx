@@ -111,13 +111,27 @@ export default function Documentation() {
     }
   }, [submissions]);
 
-  // ─── Stats ────────────────────────────────────────────────────
-  const totalSubmissions = submissions.length;
-  const fullyApproved = submissions.filter(
+  // ─── Stats (Reactivity to pageFilterProjetista) ───────────────
+  const filteredSubmissionsForStats = useMemo(() => {
+    if (pageFilterProjetista === "all") return submissions;
+    return submissions.filter(
+      (s) => s.proposal.projetista?.trim().toUpperCase() === pageFilterProjetista.toUpperCase()
+    );
+  }, [submissions, pageFilterProjetista]);
+
+  const filteredAuthorizedForStats = useMemo(() => {
+    if (pageFilterProjetista === "all") return authorizedProposals;
+    return authorizedProposals.filter(
+      (p) => p.projetista?.trim().toUpperCase() === pageFilterProjetista.toUpperCase()
+    );
+  }, [authorizedProposals, pageFilterProjetista]);
+
+  const totalSubmissions = filteredSubmissionsForStats.length;
+  const fullyApproved = filteredSubmissionsForStats.filter(
     (s) => s.totalFiles > 0 && s.approvedCount === s.totalFiles
   ).length;
-  const withPending = submissions.filter((s) => s.pendingCount > 0).length;
-  const withRejections = submissions.filter((s) => s.rejectedCount > 0).length;
+  const withPending = filteredSubmissionsForStats.filter((s) => s.pendingCount > 0).length;
+  const withRejections = filteredSubmissionsForStats.filter((s) => s.rejectedCount > 0).length;
 
   // ─── Filtered list ────────────────────────────────────────────
   const filteredSubmissions = useMemo(() => {
@@ -1280,7 +1294,7 @@ export default function Documentation() {
       </div>
 
       {/* ── Stats Cards - Authorized ─────────────────────────── */}
-      {authorizedProposals.length > 0 && (
+      {filteredAuthorizedForStats.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-2 gap-4">
           <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
             <CardContent className="pt-5 pb-4 px-5">
@@ -1293,7 +1307,7 @@ export default function Documentation() {
                     Autorizadas (Aguardando Docs)
                   </p>
                   <p className="font-heading font-extrabold text-2xl leading-tight text-blue-600">
-                    {authorizedProposals.length}
+                    {filteredAuthorizedForStats.length}
                   </p>
                 </div>
               </div>
@@ -1311,7 +1325,7 @@ export default function Documentation() {
                     Com Link Gerado
                   </p>
                   <p className="font-heading font-extrabold text-2xl leading-tight text-violet-600">
-                    {authorizedProposals.filter((p) => p.token).length}
+                    {filteredAuthorizedForStats.filter((p) => p.token).length}
                   </p>
                 </div>
               </div>
