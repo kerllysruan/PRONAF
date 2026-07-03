@@ -99,6 +99,7 @@ export default function Documentation() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [reportFilterProjetista, setReportFilterProjetista] = useState("all");
   const [reportFilterPrograma, setReportFilterPrograma] = useState("all");
+  const [pageFilterProjetista, setPageFilterProjetista] = useState("all");
 
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
@@ -120,25 +121,37 @@ export default function Documentation() {
 
   // ─── Filtered list ────────────────────────────────────────────
   const filteredSubmissions = useMemo(() => {
-    if (!searchTerm.trim()) return submissions;
+    let result = submissions;
+    if (pageFilterProjetista !== "all") {
+      result = result.filter(
+        (s) => s.proposal.projetista?.trim().toUpperCase() === pageFilterProjetista.toUpperCase()
+      );
+    }
+    if (!searchTerm.trim()) return result;
     const term = searchTerm.toLowerCase();
-    return submissions.filter(
+    return result.filter(
       (s) =>
         s.proposal.producer_name.toLowerCase().includes(term) ||
         (s.proposal.producer_cpf && s.proposal.producer_cpf.includes(term))
     );
-  }, [submissions, searchTerm]);
+  }, [submissions, searchTerm, pageFilterProjetista]);
 
   // ─── Filtered authorized proposals ────────────────────────────
   const filteredAuthorized = useMemo(() => {
-    if (!searchTerm.trim()) return authorizedProposals;
+    let result = authorizedProposals;
+    if (pageFilterProjetista !== "all") {
+      result = result.filter(
+        (p) => p.projetista?.trim().toUpperCase() === pageFilterProjetista.toUpperCase()
+      );
+    }
+    if (!searchTerm.trim()) return result;
     const term = searchTerm.toLowerCase();
-    return authorizedProposals.filter(
+    return result.filter(
       (p) =>
         p.producer_name.toLowerCase().includes(term) ||
         (p.producer_cpf && p.producer_cpf.includes(term))
     );
-  }, [authorizedProposals, searchTerm]);
+  }, [authorizedProposals, searchTerm, pageFilterProjetista]);
 
   // ─── Report data: merge both lists ─────────────────────────────
   const allProjetistas = useMemo(() => {
@@ -1307,17 +1320,34 @@ export default function Documentation() {
         </div>
       )}
 
-      {/* ── Search Bar ───────────────────────────────────────── */}
+      {/* ── Search Bar & Filter ─────────────────────────────────── */}
       <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
         <CardContent className="py-4 px-5">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome do produtor ou CPF..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 rounded-xl border-border/60 bg-background/60"
-            />
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome do produtor ou CPF..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 rounded-xl border-border/60 bg-background/60"
+              />
+            </div>
+            <div className="w-full sm:w-[250px]">
+              <Select value={pageFilterProjetista} onValueChange={setPageFilterProjetista}>
+                <SelectTrigger className="rounded-xl border-border/60 bg-background/60">
+                  <SelectValue placeholder="Filtrar por projetista" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Projetistas</SelectItem>
+                  {allProjetistas.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
