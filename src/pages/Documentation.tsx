@@ -143,8 +143,17 @@ export default function Documentation() {
   // ─── Report data: merge both lists ─────────────────────────────
   const allProjetistas = useMemo(() => {
     const set = new Set<string>();
-    submissions.forEach((s) => { if (s.proposal.projetista) set.add(s.proposal.projetista); });
-    authorizedProposals.forEach((p) => { if (p.projetista) set.add(p.projetista); });
+    const normalizeName = (name: string) => {
+      const trimmed = name.trim().toUpperCase();
+      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS";
+      return trimmed;
+    };
+    submissions.forEach((s) => {
+      if (s.proposal.projetista) set.add(normalizeName(s.proposal.projetista));
+    });
+    authorizedProposals.forEach((p) => {
+      if (p.projetista) set.add(normalizeName(p.projetista));
+    });
     return Array.from(set).sort();
   }, [submissions, authorizedProposals]);
 
@@ -172,11 +181,18 @@ export default function Documentation() {
       link: string | null;
     };
 
+    const normalizeProjetista = (name: string | null) => {
+      if (!name) return null;
+      const upper = name.trim().toUpperCase();
+      if (upper === "NEY MEDEIRO" || upper === "NEY MEDEIROS") return "NEY MEDEIROS";
+      return upper;
+    };
+
     const items: ReportItem[] = [
       ...submissions.map((s) => ({
         producer_name: s.proposal.producer_name,
         producer_cpf: s.proposal.producer_cpf,
-        projetista: s.proposal.projetista,
+        projetista: normalizeProjetista(s.proposal.projetista),
         credit_program: s.proposal.credit_program,
         municipio: s.proposal.municipio,
         estimated_value: s.proposal.estimated_value,
@@ -190,7 +206,7 @@ export default function Documentation() {
       ...authorizedProposals.map((p) => ({
         producer_name: p.producer_name,
         producer_cpf: p.producer_cpf,
-        projetista: p.projetista,
+        projetista: normalizeProjetista(p.projetista),
         credit_program: p.credit_program,
         municipio: p.municipio,
         estimated_value: p.estimated_value,
@@ -226,39 +242,52 @@ export default function Documentation() {
     // ═══════════════════════════════════════════════════
 
     // Background
-    doc.setFillColor(249, 250, 251);
+    doc.setFillColor(248, 250, 252);
     doc.rect(0, 0, pageW, pageH, "F");
 
-    // Header
+    // Header — gradient-style with accent stripe
     doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, pageW, 42, "F");
+    doc.rect(0, 0, pageW, 38, "F");
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, 32, pageW, 6, "F");
+    // Accent stripe
+    doc.setFillColor(99, 102, 241);
+    doc.rect(0, 38, pageW, 1.5, "F");
     doc.setFillColor(79, 70, 229);
-    doc.rect(0, 42, pageW, 2.5, "F");
+    doc.rect(0, 39.5, pageW, 1.5, "F");
 
+    // Title
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text("PRONAF DIGITAL", 15, 18);
-    doc.setFontSize(10);
+    doc.setFontSize(16);
+    doc.text("RELATÓRIO DE DOCUMENTAÇÃO", 15, 16);
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(148, 163, 184);
-    doc.text("RELATÓRIO DE DOCUMENTAÇÃO POR PROJETISTA", 15, 28);
+    doc.text(`Gerado em ${timestamp}`, 15, 23);
 
     // Filter badges in header
     doc.setFontSize(7);
     const drawBadge = (x: number, label: string, val: string) => {
       doc.setFillColor(30, 41, 59);
-      doc.roundedRect(x, 12, 55, 18, 2, 2, "F");
+      doc.roundedRect(x, 8, 58, 20, 3, 3, "F");
+      // Border
+      doc.setDrawColor(71, 85, 105);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(x, 8, 58, 20, 3, 3, "S");
+      doc.setLineWidth(0.2);
       doc.setTextColor(148, 163, 184);
-      doc.text(label, x + 4, 18);
+      doc.setFontSize(6);
+      doc.text(label, x + 5, 15);
       doc.setTextColor(255, 255, 255);
       doc.setFont("helvetica", "bold");
-      const truncVal = val.length > 25 ? val.substring(0, 22) + "..." : val;
-      doc.text(truncVal, x + 4, 25);
+      doc.setFontSize(8);
+      const truncVal = val.length > 22 ? val.substring(0, 20) + "..." : val;
+      doc.text(truncVal, x + 5, 23);
       doc.setFont("helvetica", "normal");
     };
-    drawBadge(pageW - 130, "PROJETISTA", reportFilterProjetista === "all" ? "TODOS" : reportFilterProjetista.toUpperCase());
-    drawBadge(pageW - 70, "PROGRAMA", reportFilterPrograma === "all" ? "TODOS" : reportFilterPrograma.toUpperCase());
+    drawBadge(pageW - 135, "PROJETISTA", reportFilterProjetista === "all" ? "TODOS" : reportFilterProjetista.toUpperCase());
+    drawBadge(pageW - 72, "PROGRAMA", reportFilterPrograma === "all" ? "TODOS" : reportFilterPrograma.toUpperCase());
 
     // ── KPI Calculations ──────────────────────────────────
     const totalItems = filtered.length;
@@ -271,35 +300,37 @@ export default function Documentation() {
     const pctAprovada = totalItems > 0 ? Math.round((countAprovada / totalItems) * 100) : 0;
 
     // ── ROW 1: Summary KPI Cards (3 large) ──────────────
-    const kpiY = 52;
+    const kpiY = 48;
     const kpiW = 88;
-    const kpiH = 28;
+    const kpiH = 26;
     const kpiGap = 5;
     const startX = 15;
 
     const drawBigKPI = (x: number, title: string, value: string, sub: string, color: [number, number, number]) => {
+      // Card shadow
+      doc.setFillColor(226, 232, 240);
+      doc.roundedRect(x + 0.5, kpiY + 0.5, kpiW, kpiH, 3, 3, "F");
+      // Card background
       doc.setFillColor(255, 255, 255);
       doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "F");
-      doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "S");
-      // Color accent bar
+      // Color accent left bar
       doc.setFillColor(...color);
-      doc.roundedRect(x, kpiY, 4, kpiH, 3, 0, "F");
-      doc.rect(x + 2, kpiY, 2, kpiH, "F");
+      doc.roundedRect(x, kpiY, 3.5, kpiH, 3, 0, "F");
+      doc.rect(x + 2, kpiY, 1.5, kpiH, "F");
       // Title
       doc.setTextColor(100, 116, 139);
-      doc.setFontSize(7);
+      doc.setFontSize(6.5);
       doc.setFont("helvetica", "bold");
-      doc.text(title.toUpperCase(), x + 10, kpiY + 9);
+      doc.text(title.toUpperCase(), x + 9, kpiY + 8);
       // Value
       doc.setTextColor(15, 23, 42);
-      doc.setFontSize(16);
-      doc.text(value, x + 10, kpiY + 19);
+      doc.setFontSize(15);
+      doc.text(value, x + 9, kpiY + 17);
       // Subtitle
       doc.setTextColor(148, 163, 184);
-      doc.setFontSize(6);
+      doc.setFontSize(5.5);
       doc.setFont("helvetica", "normal");
-      doc.text(sub, x + 10, kpiY + 24);
+      doc.text(sub, x + 9, kpiY + 22);
     };
 
     drawBigKPI(startX, "Total de Propostas", `${totalItems}`, "propostas no relatório", [79, 70, 229]);
@@ -307,44 +338,40 @@ export default function Documentation() {
     drawBigKPI(startX + (kpiW + kpiGap) * 2, "Ticket Médio", formatCurrency(avgValue), "valor médio por proposta", [245, 158, 11]);
 
     // ── ROW 2: Status KPI Cards (4 cards with big numbers) ──
-    const statusY = kpiY + kpiH + 6;
+    const statusY = kpiY + kpiH + 5;
     const sKpiW = 65;
-    const sKpiH = 30;
+    const sKpiH = 28;
     const sKpiGap = 5;
     const sStartX = 15;
 
     const drawStatusKPI = (x: number, title: string, count: number, pct: number, color: [number, number, number]) => {
+      // Card shadow
+      doc.setFillColor(226, 232, 240);
+      doc.roundedRect(x + 0.5, statusY + 0.5, sKpiW, sKpiH, 3, 3, "F");
+      // Card background
       doc.setFillColor(255, 255, 255);
       doc.roundedRect(x, statusY, sKpiW, sKpiH, 3, 3, "F");
-      doc.setDrawColor(...color);
-      doc.setLineWidth(0.8);
-      doc.roundedRect(x, statusY, sKpiW, sKpiH, 3, 3, "S");
-      doc.setLineWidth(0.2);
-      // Color dot
+      // Top color accent line
       doc.setFillColor(...color);
-      doc.circle(x + 8, statusY + 9, 3, "F");
-      // Count inside dot
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(5);
-      doc.setFont("helvetica", "bold");
+      doc.roundedRect(x, statusY, sKpiW, 3, 3, 0, "F");
       // Title
       doc.setTextColor(...color);
-      doc.setFontSize(7);
-      doc.text(title.toUpperCase(), x + 14, statusY + 10);
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "bold");
+      doc.text(title.toUpperCase(), x + 5, statusY + 10);
       // Big number
       doc.setTextColor(15, 23, 42);
       doc.setFontSize(18);
-      doc.setFont("helvetica", "bold");
-      doc.text(`${count}`, x + 8, statusY + 22);
+      doc.text(`${count}`, x + 5, statusY + 21);
       // Percentage
       doc.setTextColor(...color);
-      doc.setFontSize(10);
-      doc.text(`${pct}%`, x + sKpiW - 8, statusY + 22, { align: "right" });
+      doc.setFontSize(9);
+      doc.text(`${pct}%`, x + sKpiW - 5, statusY + 21, { align: "right" });
       // Label
       doc.setTextColor(148, 163, 184);
-      doc.setFontSize(5.5);
+      doc.setFontSize(5);
       doc.setFont("helvetica", "normal");
-      doc.text("propostas", x + 8, statusY + 27);
+      doc.text("propostas", x + 5, statusY + 25);
     };
 
     const pctReprovada = totalItems > 0 ? Math.round((countReprovada / totalItems) * 100) : 0;
@@ -471,12 +498,18 @@ export default function Documentation() {
     // PÁGINA 2 — DETALHAMENTO COM BOTÕES DE LINK
     // ═══════════════════════════════════════════════════
     doc.addPage();
+    // Subtle background
+    doc.setFillColor(248, 250, 252);
+    doc.rect(0, 0, pageW, pageH, "F");
+    // Header bar
     doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, pageW, 15, "F");
+    doc.rect(0, 0, pageW, 14, "F");
+    doc.setFillColor(79, 70, 229);
+    doc.rect(0, 14, pageW, 1, "F");
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text("DETALHAMENTO DAS PROPOSTAS — DOCUMENTAÇÃO", 15, 10);
+    doc.text("DETALHAMENTO DAS PROPOSTAS — DOCUMENTAÇÃO", 15, 9);
 
     const tableData = filtered.map((item, idx) => [
       idx + 1,
@@ -491,17 +524,17 @@ export default function Documentation() {
 
     autoTable(doc, {
       startY: 18,
-      head: [["#", "PRODUTOR", "CPF", "PROJETISTA", "MUNICÍPIO", "STATUS DOCS", "VALOR R$", "AÇÃO"]],
+      head: [["#", "PRODUTOR", "CPF", "PROJETISTA", "MUNICÍPIO", "STATUS DOCUMENTAÇÃO", "VALOR R$", "AÇÃO"]],
       body: tableData,
       theme: "grid",
-      headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 7.5, halign: "center" },
-      styles: { fontSize: 7, cellPadding: 2, valign: "middle" },
+      headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 7, halign: "center", fontStyle: "bold" },
+      styles: { fontSize: 6.5, cellPadding: 2.5, valign: "middle", lineColor: [226, 232, 240], lineWidth: 0.3 },
       columnStyles: {
-        0: { halign: "center", cellWidth: 8 },
-        1: { fontStyle: "bold", cellWidth: 50 },
-        5: { halign: "center" },
+        0: { halign: "center", cellWidth: 7 },
+        1: { fontStyle: "bold", cellWidth: 48 },
+        5: { halign: "center", cellWidth: 38 },
         6: { halign: "right", fontStyle: "bold" },
-        7: { halign: "center", cellWidth: 28 },
+        7: { halign: "center", cellWidth: 26 },
       },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       didDrawCell: (data: any) => {
