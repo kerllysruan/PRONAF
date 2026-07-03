@@ -184,7 +184,7 @@ export default function Documentation() {
           ? "APROVADA"
           : s.rejectedCount > 0
           ? "REPROVADA"
-          : `${s.approvedCount}/${s.totalFiles}`,
+          : "PENDENTE",
         link: `${window.location.origin}/enviar-documentacao?token=${s.token.token}`,
       })),
       ...authorizedProposals.map((p) => ({
@@ -467,64 +467,6 @@ export default function Documentation() {
       },
     });
 
-    // ── Page with individual link buttons ──
-    doc.addPage();
-    doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, pageW, 15, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("LINKS DE ENVIO DE DOCUMENTAÇÃO", 15, 10);
-
-    const linkItems = filtered.filter((i) => i.link);
-    const linkData = linkItems.map((item, idx) => [
-      idx + 1,
-      item.producer_name.toUpperCase(),
-      item.producer_cpf || "---",
-      item.status_docs,
-      "", // placeholder for the button
-    ]);
-
-    autoTable(doc, {
-      startY: 18,
-      head: [["#", "PRODUTOR", "CPF", "STATUS", "ABRIR PÁGINA DE ENVIO"]],
-      body: linkData,
-      theme: "grid",
-      headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 7.5, halign: "center" },
-      styles: { fontSize: 7, cellPadding: 3, valign: "middle" },
-      columnStyles: {
-        0: { halign: "center", cellWidth: 8 },
-        1: { fontStyle: "bold", cellWidth: 70 },
-        2: { cellWidth: 30 },
-        3: { halign: "center", cellWidth: 30 },
-        4: { halign: "center", cellWidth: 55 },
-      },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-      didDrawCell: (data: any) => {
-        if (data.section === "body" && data.column.index === 4) {
-          const item = linkItems[data.row.index];
-          if (item?.link) {
-            const btnW = 48;
-            const btnH = 7;
-            const btnX = data.cell.x + (data.cell.width - btnW) / 2;
-            const btnY = data.cell.y + (data.cell.height - btnH) / 2;
-
-            // Draw button background (green)
-            doc.setFillColor(16, 185, 129);
-            doc.roundedRect(btnX, btnY, btnW, btnH, 2, 2, "F");
-
-            // Draw button text
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(6);
-            doc.setFont("helvetica", "bold");
-            doc.text("📄 ABRIR PÁGINA DE ENVIO", btnX + btnW / 2, btnY + btnH / 2 + 1.8, { align: "center" });
-
-            // Make it clickable
-            doc.link(btnX, btnY, btnW, btnH, { url: item.link });
-          }
-        }
-      },
-    });
 
     // FOOTER (All Pages)
     const pages = (doc as any).internal.getNumberOfPages();
