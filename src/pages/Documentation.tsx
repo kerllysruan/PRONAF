@@ -417,10 +417,17 @@ export default function Documentation() {
       doc.setTextColor(51, 65, 85);
       doc.setFont("helvetica", "bold");
       doc.text(s.label, barX + 2, y - 1.5);
-      // Count + pct inside bar or to the right
-      doc.setTextColor(255, 255, 255);
+      // Count + pct - render in dark slate/black to be clearly visible
+      doc.setTextColor(15, 23, 42);
       doc.setFontSize(7.5);
-      doc.text(`${s.count}  (${Math.round((s.count / totalItems) * 100)}%)`, barX + 4, y + barH / 2 + 2.5);
+      // If the bar is long enough, we can render it inside (offset), otherwise to the right of the bar
+      const textX = fillW > 35 ? barX + 4 : barX + fillW + 4;
+      if (fillW > 35) {
+        doc.setTextColor(255, 255, 255); // Keep white if inside the colored bar
+      } else {
+        doc.setTextColor(15, 23, 42); // Black if outside
+      }
+      doc.text(`${s.count}  (${Math.round((s.count / totalItems) * 100)}%)`, textX, y + barH / 2 + 2.5);
     });
 
     // ── DONUT CHART (Approval Rate) ──────────────────────
