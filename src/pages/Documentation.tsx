@@ -113,16 +113,30 @@ export default function Documentation() {
 
   // ─── Stats (Reactivity to pageFilterProjetista) ───────────────
   const filteredSubmissionsForStats = useMemo(() => {
+    const normalizeName = (name: string | null | undefined) => {
+      if (!name) return "";
+      const trimmed = name.trim().toUpperCase();
+      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS";
+      return trimmed;
+    };
+
     if (pageFilterProjetista === "all") return submissions;
     return submissions.filter(
-      (s) => s.proposal.projetista?.trim().toUpperCase() === pageFilterProjetista.toUpperCase()
+      (s) => normalizeName(s.proposal.projetista) === pageFilterProjetista.toUpperCase()
     );
   }, [submissions, pageFilterProjetista]);
 
   const filteredAuthorizedForStats = useMemo(() => {
+    const normalizeName = (name: string | null | undefined) => {
+      if (!name) return "";
+      const trimmed = name.trim().toUpperCase();
+      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS";
+      return trimmed;
+    };
+
     if (pageFilterProjetista === "all") return authorizedProposals;
     return authorizedProposals.filter(
-      (p) => p.projetista?.trim().toUpperCase() === pageFilterProjetista.toUpperCase()
+      (p) => normalizeName(p.projetista) === pageFilterProjetista.toUpperCase()
     );
   }, [authorizedProposals, pageFilterProjetista]);
 
@@ -135,10 +149,17 @@ export default function Documentation() {
 
   // ─── Filtered list ────────────────────────────────────────────
   const filteredSubmissions = useMemo(() => {
+    const normalizeName = (name: string | null | undefined) => {
+      if (!name) return "";
+      const trimmed = name.trim().toUpperCase();
+      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS";
+      return trimmed;
+    };
+
     let result = submissions;
     if (pageFilterProjetista !== "all") {
       result = result.filter(
-        (s) => s.proposal.projetista?.trim().toUpperCase() === pageFilterProjetista.toUpperCase()
+        (s) => normalizeName(s.proposal.projetista) === pageFilterProjetista.toUpperCase()
       );
     }
     if (!searchTerm.trim()) return result;
@@ -152,10 +173,17 @@ export default function Documentation() {
 
   // ─── Filtered authorized proposals ────────────────────────────
   const filteredAuthorized = useMemo(() => {
+    const normalizeName = (name: string | null | undefined) => {
+      if (!name) return "";
+      const trimmed = name.trim().toUpperCase();
+      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS";
+      return trimmed;
+    };
+
     let result = authorizedProposals;
     if (pageFilterProjetista !== "all") {
       result = result.filter(
-        (p) => p.projetista?.trim().toUpperCase() === pageFilterProjetista.toUpperCase()
+        (p) => normalizeName(p.projetista) === pageFilterProjetista.toUpperCase()
       );
     }
     if (!searchTerm.trim()) return result;
