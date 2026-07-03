@@ -420,13 +420,8 @@ export default function Documentation() {
       // Count + pct - render in dark slate/black to be clearly visible
       doc.setTextColor(15, 23, 42);
       doc.setFontSize(7.5);
-      // If the bar is long enough, we can render it inside (offset), otherwise to the right of the bar
+      // Render text to the right of the bar if it is short, otherwise offset inside but in black
       const textX = fillW > 35 ? barX + 4 : barX + fillW + 4;
-      if (fillW > 35) {
-        doc.setTextColor(255, 255, 255); // Keep white if inside the colored bar
-      } else {
-        doc.setTextColor(15, 23, 42); // Black if outside
-      }
       doc.text(`${s.count}  (${Math.round((s.count / totalItems) * 100)}%)`, textX, y + barH / 2 + 2.5);
     });
 

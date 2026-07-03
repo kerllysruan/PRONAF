@@ -787,23 +787,7 @@ export default function DocumentationSubmit() {
 // ═══════════════════════════════════════════════════════════════
 
 function BrandHeader() {
-  return (
-    <div className="text-center mb-10 animate-fade-in">
-      <div className="inline-flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-          <ShieldCheck className="h-5 w-5 text-white" />
-        </div>
-        <div className="text-left">
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight leading-none">
-            SUPER GESTÃO
-          </h1>
-          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-600/80">
-            Portal de Documentação
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }
 
 function ProposalInfoCard({
