@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAgency } from "@/contexts/AgencyContext";
@@ -32,16 +32,39 @@ export interface SubmittedProposal {
   totalFiles: number;
 }
 
+/** Proposal with status AUTORIZADO that appears on the Documentação page awaiting docs. */
+export interface AuthorizedProposal {
+  id: string;
+  producer_name: string;
+  producer_cpf: string | null;
+  credit_program: string | null;
+  municipio: string | null;
+  estimated_value: number | null;
+  projetista: string | null;
+  linha_credito: string | null;
+  status: string;
+  token: string | null; // null = token being generated
+}
+
+// Statuses that trigger auto-appearance on the Documentação page
+const AUTORIZADO_STATUSES = [
+  "AUTORIZADO ENVIO PARA CENTRAL",
+  "AUTORIZADO ENVIO CENTRAL",
+];
+
 /**
  * Hook for the /documentacao management page (authenticated).
  * Handles fetching submitted proposals, reviewing files, and downloading.
+ * Also fetches proposals with AUTORIZADO ENVIO status and auto-generates tokens.
  */
 export function useDocumentationReview() {
   const { user } = useAuth();
   const { effectiveAgencyId } = useAgency();
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState<SubmittedProposal[]>([]);
+  const [authorizedProposals, setAuthorizedProposals] = useState<AuthorizedProposal[]>([]);
   const [loading, setLoading] = useState(true);
+  const autoGeneratingRef = useRef<Set<string>>(new Set());
 
   const fetchSubmissions = useCallback(async (silent = false) => {
     if (!user) return;
@@ -140,9 +163,115 @@ export function useDocumentationReview() {
     }
   }, [user, effectiveAgencyId, toast]);
 
+  /**
+   * Fetch stock_proposals with AUTORIZADO ENVIO status that don't have submitted docs yet.
+   * Auto-generates tokens for proposals that don't have one.
+   */
+  const fetchAuthorizedProposals = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      // 1. Fetch all stock_proposals with AUTORIZADO status
+      let query = supabase
+        .from("stock_proposals")
+        .select("id, producer_name, producer_cpf, credit_program, municipio, estimated_value, projetista, linha_credito, status, agency_id")
+        .in("status", AUTORIZADO_STATUSES);
+
+      if (effectiveAgencyId !== "all") {
+        query = query.eq("agency_id", effectiveAgencyId);
+      }
+
+      const { data: proposals, error: propError } = await query;
+      if (propError) throw propError;
+      if (!proposals || proposals.length === 0) {
+        setAuthorizedProposals([]);
+        return;
+      }
+
+      // 2. Check which already have tokens
+      const proposalIds = proposals.map((p: any) => p.id);
+      const { data: existingTokens, error: tokenError } = await supabase
+        .from("documentation_tokens")
+        .select("stock_proposal_id, token, documents_submitted")
+        .in("stock_proposal_id", proposalIds);
+
+      if (tokenError) throw tokenError;
+
+      const tokenMap = new Map<string, { token: string; submitted: boolean }>();
+      (existingTokens || []).forEach((t: any) => {
+        tokenMap.set(t.stock_proposal_id, {
+          token: t.token,
+          submitted: t.documents_submitted,
+        });
+      });
+
+      // 3. Filter out proposals that already submitted docs (they show in "Propostas Recebidas")
+      const pendingProposals = proposals.filter((p: any) => {
+        const tok = tokenMap.get(p.id);
+        return !tok?.submitted; // keep those without token or with token but no docs submitted
+      });
+
+      // 4. Build result with existing tokens
+      const result: AuthorizedProposal[] = pendingProposals.map((p: any) => ({
+        id: p.id,
+        producer_name: p.producer_name,
+        producer_cpf: p.producer_cpf,
+        credit_program: p.credit_program,
+        municipio: p.municipio,
+        estimated_value: p.estimated_value,
+        projetista: p.projetista,
+        linha_credito: p.linha_credito,
+        status: p.status,
+        token: tokenMap.get(p.id)?.token || null,
+      }));
+
+      setAuthorizedProposals(result);
+
+      // 5. Auto-generate tokens for proposals that don't have one (fire-and-forget)
+      const needsToken = result.filter(
+        (p) => !p.token && !autoGeneratingRef.current.has(p.id)
+      );
+
+      if (needsToken.length > 0) {
+        // Mark as generating to avoid duplicates
+        needsToken.forEach((p) => autoGeneratingRef.current.add(p.id));
+
+        // Generate tokens sequentially to avoid race conditions
+        for (const p of needsToken) {
+          try {
+            const newToken = crypto.randomUUID();
+            const { error: insertError } = await supabase
+              .from("documentation_tokens")
+              .insert({
+                token: newToken,
+                stock_proposal_id: p.id,
+                previous_status: p.status,
+              });
+
+            if (!insertError) {
+              // Update the item in state with the new token
+              setAuthorizedProposals((prev) =>
+                prev.map((ap) =>
+                  ap.id === p.id ? { ...ap, token: newToken } : ap
+                )
+              );
+            }
+          } catch (err) {
+            console.error(`Error auto-generating token for ${p.id}:`, err);
+          } finally {
+            autoGeneratingRef.current.delete(p.id);
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error("Error fetching authorized proposals:", err);
+    }
+  }, [user, effectiveAgencyId]);
+
   useEffect(() => {
     fetchSubmissions();
-  }, [fetchSubmissions]);
+    fetchAuthorizedProposals();
+  }, [fetchSubmissions, fetchAuthorizedProposals]);
 
   /**
    * Approve a single document file.
@@ -570,8 +699,14 @@ export function useDocumentationReview() {
     }
   }, [user, toast, fetchSubmissions]);
 
+  const refetchAll = useCallback(async () => {
+    await fetchSubmissions();
+    await fetchAuthorizedProposals();
+  }, [fetchSubmissions, fetchAuthorizedProposals]);
+
   return {
     submissions,
+    authorizedProposals,
     loading,
     approveDocument,
     rejectDocument,
@@ -582,6 +717,6 @@ export function useDocumentationReview() {
     downloadAllAsZip,
     approveAllDocuments,
     rejectAllDocuments,
-    refetch: fetchSubmissions,
+    refetch: refetchAll,
   };
 }
