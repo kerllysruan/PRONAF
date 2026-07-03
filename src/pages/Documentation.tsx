@@ -58,8 +58,11 @@ import {
   Link2,
   Send,
   Clock,
+  FileBarChart,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function Documentation() {
   const {
@@ -93,6 +96,9 @@ export default function Documentation() {
   const [isReverting, setIsReverting] = useState(false);
   const [bulkRejectDialogOpen, setBulkRejectDialogOpen] = useState(false);
   const [bulkRejectReason, setBulkRejectReason] = useState("");
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportFilterProjetista, setReportFilterProjetista] = useState("all");
+  const [reportFilterPrograma, setReportFilterPrograma] = useState("all");
 
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
@@ -133,6 +139,378 @@ export default function Documentation() {
         (p.producer_cpf && p.producer_cpf.includes(term))
     );
   }, [authorizedProposals, searchTerm]);
+
+  // ─── Report data: merge both lists ─────────────────────────────
+  const allProjetistas = useMemo(() => {
+    const set = new Set<string>();
+    submissions.forEach((s) => { if (s.proposal.projetista) set.add(s.proposal.projetista); });
+    authorizedProposals.forEach((p) => { if (p.projetista) set.add(p.projetista); });
+    return Array.from(set).sort();
+  }, [submissions, authorizedProposals]);
+
+  const allProgramas = useMemo(() => {
+    const set = new Set<string>();
+    submissions.forEach((s) => { if (s.proposal.credit_program) set.add(s.proposal.credit_program); });
+    authorizedProposals.forEach((p) => { if (p.credit_program) set.add(p.credit_program); });
+    return Array.from(set).sort();
+  }, [submissions, authorizedProposals]);
+
+  // ─── Generate PDF Report ───────────────────────────────────────
+  const generateReport = useCallback(() => {
+    const formatCurrency = (v: number) =>
+      v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+    // Build unified data
+    type ReportItem = {
+      producer_name: string;
+      producer_cpf: string | null;
+      projetista: string | null;
+      credit_program: string | null;
+      municipio: string | null;
+      estimated_value: number | null;
+      status_docs: string;
+      link: string | null;
+    };
+
+    const items: ReportItem[] = [
+      ...submissions.map((s) => ({
+        producer_name: s.proposal.producer_name,
+        producer_cpf: s.proposal.producer_cpf,
+        projetista: s.proposal.projetista,
+        credit_program: s.proposal.credit_program,
+        municipio: s.proposal.municipio,
+        estimated_value: s.proposal.estimated_value,
+        status_docs: s.approvedCount === s.totalFiles
+          ? "APROVADA"
+          : s.rejectedCount > 0
+          ? "REPROVADA"
+          : `${s.approvedCount}/${s.totalFiles}`,
+        link: `${window.location.origin}/enviar-documentacao?token=${s.token.token}`,
+      })),
+      ...authorizedProposals.map((p) => ({
+        producer_name: p.producer_name,
+        producer_cpf: p.producer_cpf,
+        projetista: p.projetista,
+        credit_program: p.credit_program,
+        municipio: p.municipio,
+        estimated_value: p.estimated_value,
+        status_docs: "AGUARDANDO ENVIO",
+        link: p.token
+          ? `${window.location.origin}/enviar-documentacao?token=${p.token}`
+          : null,
+      })),
+    ];
+
+    // Apply filters
+    let filtered = items;
+    if (reportFilterProjetista !== "all") {
+      filtered = filtered.filter((i) => i.projetista === reportFilterProjetista);
+    }
+    if (reportFilterPrograma !== "all") {
+      filtered = filtered.filter((i) => i.credit_program === reportFilterPrograma);
+    }
+
+    if (filtered.length === 0) {
+      toast({ title: "Nenhuma proposta encontrada", description: "Ajuste os filtros e tente novamente.", variant: "destructive" });
+      return;
+    }
+
+    const doc = new jsPDF({ orientation: "landscape" });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const now = new Date();
+    const timestamp = now.toLocaleString("pt-BR");
+
+    // ═══════════════════════════════════════════════════
+    // PÁGINA 1 — DASHBOARD KPI
+    // ═══════════════════════════════════════════════════
+
+    // Background
+    doc.setFillColor(249, 250, 251);
+    doc.rect(0, 0, pageW, pageH, "F");
+
+    // Header
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageW, 42, "F");
+    doc.setFillColor(79, 70, 229);
+    doc.rect(0, 42, pageW, 2.5, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("PRONAF DIGITAL", 15, 18);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(148, 163, 184);
+    doc.text("RELATÓRIO DE DOCUMENTAÇÃO POR PROJETISTA", 15, 28);
+
+    // Filter badges in header
+    doc.setFontSize(7);
+    const drawBadge = (x: number, label: string, val: string) => {
+      doc.setFillColor(30, 41, 59);
+      doc.roundedRect(x, 12, 55, 18, 2, 2, "F");
+      doc.setTextColor(148, 163, 184);
+      doc.text(label, x + 4, 18);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      const truncVal = val.length > 25 ? val.substring(0, 22) + "..." : val;
+      doc.text(truncVal, x + 4, 25);
+      doc.setFont("helvetica", "normal");
+    };
+    drawBadge(pageW - 130, "PROJETISTA", reportFilterProjetista === "all" ? "TODOS" : reportFilterProjetista.toUpperCase());
+    drawBadge(pageW - 70, "PROGRAMA", reportFilterPrograma === "all" ? "TODOS" : reportFilterPrograma.toUpperCase());
+
+    // ── KPI Cards ──────────────────────────────────
+    const totalItems = filtered.length;
+    const totalValue = filtered.reduce((acc, i) => acc + (Number(i.estimated_value) || 0), 0);
+    const avgValue = totalItems > 0 ? totalValue / totalItems : 0;
+    const countAprovada = filtered.filter((i) => i.status_docs === "APROVADA").length;
+    const countReprovada = filtered.filter((i) => i.status_docs === "REPROVADA").length;
+    const countAguardando = filtered.filter((i) => i.status_docs === "AGUARDANDO ENVIO").length;
+    const countEmAnalise = filtered.filter(
+      (i) => i.status_docs !== "APROVADA" && i.status_docs !== "REPROVADA" && i.status_docs !== "AGUARDANDO ENVIO"
+    ).length;
+    const pctAprovada = totalItems > 0 ? Math.round((countAprovada / totalItems) * 100) : 0;
+
+    const kpiY = 55;
+    const kpiW = 44;
+    const kpiH = 24;
+    const kpiGap = 3.5;
+    const startX = 15;
+
+    const drawKPI = (x: number, title: string, value: string, sub: string, color: [number, number, number]) => {
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "F");
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "S");
+      doc.setFillColor(...color);
+      doc.rect(x + 5, kpiY + 8, 2, 10, "F");
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "bold");
+      doc.text(title.toUpperCase(), x + 10, kpiY + 10);
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(11);
+      doc.text(value, x + 10, kpiY + 17);
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(5.5);
+      doc.setFont("helvetica", "normal");
+      doc.text(sub, x + 10, kpiY + 21);
+    };
+
+    drawKPI(startX, "Total Propostas", `${totalItems}`, "no relatório", [79, 70, 229]);
+    drawKPI(startX + (kpiW + kpiGap), "Volume Total", formatCurrency(totalValue), "valor estimado", [16, 185, 129]);
+    drawKPI(startX + (kpiW + kpiGap) * 2, "Ticket Médio", formatCurrency(avgValue), "por proposta", [245, 158, 11]);
+    drawKPI(startX + (kpiW + kpiGap) * 3, "Aprovadas", `${pctAprovada}%`, `${countAprovada} propostas`, [16, 185, 129]);
+    drawKPI(startX + (kpiW + kpiGap) * 4, "Em Análise", `${countEmAnalise}`, "docs enviados", [99, 102, 241]);
+    drawKPI(startX + (kpiW + kpiGap) * 5, "Aguardando", `${countAguardando}`, "sem envio ainda", [245, 158, 11]);
+
+    // ── STATUS DISTRIBUTION (Horizontal Bars) ──────
+    const mainY = 90;
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("DISTRIBUIÇÃO POR STATUS DA DOCUMENTAÇÃO", 15, mainY);
+
+    const statusData = [
+      { label: "APROVADA", count: countAprovada, color: [16, 185, 129] as [number, number, number] },
+      { label: "EM ANÁLISE", count: countEmAnalise, color: [99, 102, 241] as [number, number, number] },
+      { label: "REPROVADA", count: countReprovada, color: [239, 68, 68] as [number, number, number] },
+      { label: "AGUARDANDO ENVIO", count: countAguardando, color: [245, 158, 11] as [number, number, number] },
+    ].filter((s) => s.count > 0).sort((a, b) => b.count - a.count);
+
+    const barX = 15;
+    const barW = 100;
+    const barH = 8;
+    const barGap = 4;
+    const maxC = Math.max(...statusData.map((s) => s.count), 1);
+
+    statusData.forEach((s, i) => {
+      const y = mainY + 8 + i * (barH + barGap);
+      const fillW = (s.count / maxC) * barW;
+      doc.setFillColor(241, 245, 249);
+      doc.roundedRect(barX, y, barW, barH, 2, 2, "F");
+      doc.setFillColor(...s.color);
+      if (fillW > 3) doc.roundedRect(barX, y, fillW, barH, 2, 2, "F");
+      doc.setFontSize(7);
+      doc.setTextColor(51, 65, 85);
+      doc.setFont("helvetica", "bold");
+      doc.text(s.label, barX + 2, y - 1);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`${s.count} (${Math.round((s.count / totalItems) * 100)}%)`, barX + barW - 2, y + 6, { align: "right" });
+    });
+
+    // ── DONUT CHART (Health) ──────────────────────
+    const midX = 140;
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("TAXA DE APROVAÇÃO", midX, mainY);
+
+    const centerX = midX + 35;
+    const centerY = mainY + 30;
+    doc.setLineWidth(12);
+    doc.setDrawColor(241, 245, 249);
+    doc.circle(centerX, centerY, 18, "S");
+    doc.setDrawColor(16, 185, 129);
+    doc.circle(centerX, centerY, 18, "S");
+    if (countReprovada > 0) {
+      doc.setLineWidth(1);
+    }
+    doc.setTextColor(16, 185, 129);
+    doc.setFontSize(14);
+    doc.text(`${pctAprovada}%`, centerX, centerY + 2, { align: "center" });
+    doc.setFontSize(6);
+    doc.setTextColor(100, 116, 139);
+    doc.text("APROVAÇÃO", centerX, centerY + 8, { align: "center" });
+
+    // Legend
+    const legendY = mainY + 55;
+    doc.setFillColor(16, 185, 129); doc.circle(midX + 5, legendY, 2, "F");
+    doc.setTextColor(15, 23, 42); doc.setFontSize(7);
+    doc.text(`Aprovadas: ${countAprovada}`, midX + 10, legendY + 2);
+    doc.setFillColor(99, 102, 241); doc.circle(midX + 5, legendY + 6, 2, "F");
+    doc.text(`Em Análise: ${countEmAnalise}`, midX + 10, legendY + 8);
+    doc.setFillColor(239, 68, 68); doc.circle(midX + 5, legendY + 12, 2, "F");
+    doc.text(`Reprovadas: ${countReprovada}`, midX + 10, legendY + 14);
+    doc.setFillColor(245, 158, 11); doc.circle(midX + 5, legendY + 18, 2, "F");
+    doc.text(`Aguardando: ${countAguardando}`, midX + 10, legendY + 20);
+
+    // ── RANKING POR MUNICÍPIO ─────────────────────
+    const rightX = 210;
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("TOP MUNICÍPIOS", rightX, mainY);
+
+    const munRanking = [...new Set(filtered.map((i) => i.municipio).filter(Boolean))]
+      .map((m) => ({
+        name: m!,
+        count: filtered.filter((i) => i.municipio === m).length,
+        val: filtered.filter((i) => i.municipio === m).reduce((a, b) => a + (Number(b.estimated_value) || 0), 0),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    autoTable(doc, {
+      startY: mainY + 5,
+      head: [["#", "MUNICÍPIO", "QTD", "VOLUME R$"]],
+      body: munRanking.map((m, i) => [i + 1, m.name, m.count, formatCurrency(m.val)]),
+      theme: "grid",
+      headStyles: { fillColor: [15, 23, 42], fontSize: 7, halign: "center" },
+      styles: { fontSize: 7, cellPadding: 2 },
+      columnStyles: { 0: { halign: "center", cellWidth: 8 }, 2: { halign: "center" }, 3: { halign: "right", fontStyle: "bold" } },
+      margin: { left: rightX, right: 15 },
+    });
+
+    // ═══════════════════════════════════════════════════
+    // PÁGINA 2 — DETALHAMENTO COM LINKS
+    // ═══════════════════════════════════════════════════
+    doc.addPage();
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageW, 15, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("DETALHAMENTO DAS PROPOSTAS — LINKS DE DOCUMENTAÇÃO", 15, 10);
+
+    const tableData = filtered.map((item, idx) => [
+      idx + 1,
+      item.producer_name.toUpperCase(),
+      item.producer_cpf || "---",
+      item.projetista?.toUpperCase() || "N/A",
+      item.credit_program || "---",
+      item.municipio || "---",
+      item.status_docs,
+      formatCurrency(Number(item.estimated_value) || 0),
+    ]);
+
+    autoTable(doc, {
+      startY: 18,
+      head: [["#", "PRODUTOR", "CPF", "PROJETISTA", "PROGRAMA", "MUNICÍPIO", "STATUS DOCS", "VALOR R$"]],
+      body: tableData,
+      theme: "grid",
+      headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 7.5, halign: "center" },
+      styles: { fontSize: 7, cellPadding: 2, valign: "middle" },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 8 },
+        1: { fontStyle: "bold", cellWidth: 55 },
+        6: { halign: "center" },
+        7: { halign: "right", fontStyle: "bold" },
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      didDrawCell: (data: any) => {
+        // Add clickable link on the producer name column
+        if (data.section === "body" && data.column.index === 1) {
+          const item = filtered[data.row.index];
+          if (item?.link) {
+            doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: item.link });
+          }
+        }
+      },
+    });
+
+    // ── Page with individual links ──
+    doc.addPage();
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageW, 15, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("LINKS DE ENVIO DE DOCUMENTAÇÃO (CLICÁVEIS)", 15, 10);
+
+    const linkData = filtered
+      .filter((i) => i.link)
+      .map((item, idx) => [
+        idx + 1,
+        item.producer_name.toUpperCase(),
+        item.status_docs,
+        item.link || "",
+      ]);
+
+    autoTable(doc, {
+      startY: 18,
+      head: [["#", "PRODUTOR", "STATUS", "LINK DE ENVIO"]],
+      body: linkData,
+      theme: "grid",
+      headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 7.5, halign: "center" },
+      styles: { fontSize: 6.5, cellPadding: 2, valign: "middle" },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 8 },
+        1: { fontStyle: "bold", cellWidth: 70 },
+        2: { halign: "center", cellWidth: 30 },
+        3: { textColor: [79, 70, 229], cellWidth: 150 },
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      didDrawCell: (data: any) => {
+        if (data.section === "body" && data.column.index === 3) {
+          const item = filtered.filter((i) => i.link)[data.row.index];
+          if (item?.link) {
+            doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: item.link });
+          }
+        }
+      },
+    });
+
+    // FOOTER (All Pages)
+    const pages = (doc as any).internal.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(7);
+      doc.setTextColor(148, 163, 184);
+      doc.text(
+        `Gerado em ${timestamp}  |  PRONAF Digital  |  Página ${i} de ${pages}`,
+        pageW / 2,
+        pageH - 5,
+        { align: "center" }
+      );
+    }
+
+    const projetistaName = reportFilterProjetista === "all" ? "GERAL" : reportFilterProjetista.replace(/\s+/g, "_").toUpperCase();
+    doc.save(`Relatorio_Documentacao_${projetistaName}_${now.toISOString().slice(0, 10).replace(/-/g, "")}.pdf`);
+    setReportDialogOpen(false);
+    toast({ title: "Relatório gerado com sucesso! 📊", description: "O PDF foi baixado." });
+  }, [submissions, authorizedProposals, reportFilterProjetista, reportFilterPrograma, toast]);
 
   // ─── Handlers ─────────────────────────────────────────────────
   const handleViewPdf = useCallback(
@@ -636,16 +1014,103 @@ export default function Documentation() {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 rounded-xl mt-2 md:mt-0"
-          onClick={() => refetch()}
-        >
-          <RefreshCw className="h-4 w-4" />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2 mt-2 md:mt-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-xl bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
+            onClick={() => {
+              setReportFilterProjetista("all");
+              setReportFilterPrograma("all");
+              setReportDialogOpen(true);
+            }}
+          >
+            <FileBarChart className="h-4 w-4" />
+            Gerar Relatório
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-xl"
+            onClick={() => refetch()}
+          >
+            <RefreshCw className="h-4 w-4" />
+            Atualizar
+          </Button>
+        </div>
       </div>
+
+      {/* ── Report Dialog ─────────────────────────────────── */}
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <DialogContent className="max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-heading font-extrabold flex items-center gap-2">
+              <FileBarChart className="h-5 w-5 text-indigo-500" />
+              Gerar Relatório PDF
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Selecione os filtros para gerar o relatório de documentação com KPIs e links.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Projetista
+              </label>
+              <Select value={reportFilterProjetista} onValueChange={setReportFilterProjetista}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue placeholder="Todos os projetistas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os projetistas</SelectItem>
+                  {allProjetistas.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Programa de Crédito
+              </label>
+              <Select value={reportFilterPrograma} onValueChange={setReportFilterPrograma}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue placeholder="Todos os programas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os programas</SelectItem>
+                  {allProgramas.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 mt-4">
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setReportDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="rounded-xl gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+              onClick={generateReport}
+            >
+              <FileBarChart className="h-4 w-4" />
+              Gerar PDF
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Stats Cards ──────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
