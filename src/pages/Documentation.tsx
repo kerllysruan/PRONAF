@@ -453,7 +453,7 @@ export default function Documentation() {
         val: filtered.filter((i) => i.municipio === m).reduce((a, b) => a + (Number(b.estimated_value) || 0), 0),
       }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
+      .slice(0, 7);
 
     autoTable(doc, {
       startY: mainY + 5,
@@ -464,6 +464,7 @@ export default function Documentation() {
       styles: { fontSize: 7, cellPadding: 2 },
       columnStyles: { 0: { halign: "center", cellWidth: 8 }, 2: { halign: "center" }, 3: { halign: "right", fontStyle: "bold" } },
       margin: { left: rightX, right: 15 },
+      pageBreak: "avoid" as any,
     });
 
     // ═══════════════════════════════════════════════════
@@ -485,7 +486,7 @@ export default function Documentation() {
       item.municipio || "---",
       item.status_docs,
       formatCurrency(Number(item.estimated_value) || 0),
-      item.link ? "📄 ENVIAR DOCS" : "—",
+      item.link ? "" : "—",
     ]);
 
     autoTable(doc, {
