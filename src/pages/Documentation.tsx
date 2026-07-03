@@ -404,7 +404,7 @@ export default function Documentation() {
     });
 
     // ═══════════════════════════════════════════════════
-    // PÁGINA 2 — DETALHAMENTO COM LINKS
+    // PÁGINA 2 — DETALHAMENTO COM BOTÕES DE LINK
     // ═══════════════════════════════════════════════════
     doc.addPage();
     doc.setFillColor(15, 23, 42);
@@ -412,81 +412,115 @@ export default function Documentation() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("DETALHAMENTO DAS PROPOSTAS — LINKS DE DOCUMENTAÇÃO", 15, 10);
+    doc.text("DETALHAMENTO DAS PROPOSTAS — DOCUMENTAÇÃO", 15, 10);
 
     const tableData = filtered.map((item, idx) => [
       idx + 1,
       item.producer_name.toUpperCase(),
       item.producer_cpf || "---",
       item.projetista?.toUpperCase() || "N/A",
-      item.credit_program || "---",
       item.municipio || "---",
       item.status_docs,
       formatCurrency(Number(item.estimated_value) || 0),
+      item.link ? "📄 ENVIAR DOCS" : "—",
     ]);
 
     autoTable(doc, {
       startY: 18,
-      head: [["#", "PRODUTOR", "CPF", "PROJETISTA", "PROGRAMA", "MUNICÍPIO", "STATUS DOCS", "VALOR R$"]],
+      head: [["#", "PRODUTOR", "CPF", "PROJETISTA", "MUNICÍPIO", "STATUS DOCS", "VALOR R$", "AÇÃO"]],
       body: tableData,
       theme: "grid",
       headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 7.5, halign: "center" },
       styles: { fontSize: 7, cellPadding: 2, valign: "middle" },
       columnStyles: {
         0: { halign: "center", cellWidth: 8 },
-        1: { fontStyle: "bold", cellWidth: 55 },
-        6: { halign: "center" },
-        7: { halign: "right", fontStyle: "bold" },
+        1: { fontStyle: "bold", cellWidth: 50 },
+        5: { halign: "center" },
+        6: { halign: "right", fontStyle: "bold" },
+        7: { halign: "center", cellWidth: 28 },
       },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       didDrawCell: (data: any) => {
-        // Add clickable link on the producer name column
-        if (data.section === "body" && data.column.index === 1) {
+        // Draw a visible button in the AÇÃO column
+        if (data.section === "body" && data.column.index === 7) {
           const item = filtered[data.row.index];
           if (item?.link) {
-            doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: item.link });
+            const btnW = 24;
+            const btnH = 6;
+            const btnX = data.cell.x + (data.cell.width - btnW) / 2;
+            const btnY = data.cell.y + (data.cell.height - btnH) / 2;
+
+            // Draw button background
+            doc.setFillColor(79, 70, 229);
+            doc.roundedRect(btnX, btnY, btnW, btnH, 1.5, 1.5, "F");
+
+            // Draw button text
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(5.5);
+            doc.setFont("helvetica", "bold");
+            doc.text("ENVIAR DOCS", btnX + btnW / 2, btnY + btnH / 2 + 1.5, { align: "center" });
+
+            // Make it clickable
+            doc.link(btnX, btnY, btnW, btnH, { url: item.link });
           }
         }
       },
     });
 
-    // ── Page with individual links ──
+    // ── Page with individual link buttons ──
     doc.addPage();
     doc.setFillColor(15, 23, 42);
     doc.rect(0, 0, pageW, 15, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("LINKS DE ENVIO DE DOCUMENTAÇÃO (CLICÁVEIS)", 15, 10);
+    doc.text("LINKS DE ENVIO DE DOCUMENTAÇÃO", 15, 10);
 
-    const linkData = filtered
-      .filter((i) => i.link)
-      .map((item, idx) => [
-        idx + 1,
-        item.producer_name.toUpperCase(),
-        item.status_docs,
-        item.link || "",
-      ]);
+    const linkItems = filtered.filter((i) => i.link);
+    const linkData = linkItems.map((item, idx) => [
+      idx + 1,
+      item.producer_name.toUpperCase(),
+      item.producer_cpf || "---",
+      item.status_docs,
+      "", // placeholder for the button
+    ]);
 
     autoTable(doc, {
       startY: 18,
-      head: [["#", "PRODUTOR", "STATUS", "LINK DE ENVIO"]],
+      head: [["#", "PRODUTOR", "CPF", "STATUS", "ABRIR PÁGINA DE ENVIO"]],
       body: linkData,
       theme: "grid",
       headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 7.5, halign: "center" },
-      styles: { fontSize: 6.5, cellPadding: 2, valign: "middle" },
+      styles: { fontSize: 7, cellPadding: 3, valign: "middle" },
       columnStyles: {
         0: { halign: "center", cellWidth: 8 },
         1: { fontStyle: "bold", cellWidth: 70 },
-        2: { halign: "center", cellWidth: 30 },
-        3: { textColor: [79, 70, 229], cellWidth: 150 },
+        2: { cellWidth: 30 },
+        3: { halign: "center", cellWidth: 30 },
+        4: { halign: "center", cellWidth: 55 },
       },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       didDrawCell: (data: any) => {
-        if (data.section === "body" && data.column.index === 3) {
-          const item = filtered.filter((i) => i.link)[data.row.index];
+        if (data.section === "body" && data.column.index === 4) {
+          const item = linkItems[data.row.index];
           if (item?.link) {
-            doc.link(data.cell.x, data.cell.y, data.cell.width, data.cell.height, { url: item.link });
+            const btnW = 48;
+            const btnH = 7;
+            const btnX = data.cell.x + (data.cell.width - btnW) / 2;
+            const btnY = data.cell.y + (data.cell.height - btnH) / 2;
+
+            // Draw button background (green)
+            doc.setFillColor(16, 185, 129);
+            doc.roundedRect(btnX, btnY, btnW, btnH, 2, 2, "F");
+
+            // Draw button text
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(6);
+            doc.setFont("helvetica", "bold");
+            doc.text("📄 ABRIR PÁGINA DE ENVIO", btnX + btnW / 2, btnY + btnH / 2 + 1.8, { align: "center" });
+
+            // Make it clickable
+            doc.link(btnX, btnY, btnW, btnH, { url: item.link });
           }
         }
       },
