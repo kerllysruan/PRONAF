@@ -533,10 +533,10 @@ export default function Documentation() {
       styles: { fontSize: 6.5, cellPadding: 2.5, valign: "middle", lineColor: [226, 232, 240], lineWidth: 0.3 },
       columnStyles: {
         0: { halign: "center", cellWidth: 7 },
-        1: { fontStyle: "bold", cellWidth: 48 },
+        1: { fontStyle: "bold", cellWidth: 46 },
         5: { halign: "center", cellWidth: 38 },
         6: { halign: "right", fontStyle: "bold" },
-        7: { halign: "center", cellWidth: 26 },
+        7: { halign: "center", cellWidth: 30 },
       },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       didDrawCell: (data: any) => {
@@ -544,7 +544,7 @@ export default function Documentation() {
         if (data.section === "body" && data.column.index === 7) {
           const item = filtered[data.row.index];
           if (item?.link) {
-            const btnW = 24;
+            const btnW = 28;
             const btnH = 6;
             const btnX = data.cell.x + (data.cell.width - btnW) / 2;
             const btnY = data.cell.y + (data.cell.height - btnH) / 2;
@@ -555,9 +555,9 @@ export default function Documentation() {
 
             // Draw button text
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(5.5);
+            doc.setFontSize(4.8);
             doc.setFont("helvetica", "bold");
-            doc.text("ENVIAR DOCS", btnX + btnW / 2, btnY + btnH / 2 + 1.5, { align: "center" });
+            doc.text("ENVIAR DOCUMENTAÇÃO", btnX + btnW / 2, btnY + btnH / 2 + 1.6, { align: "center" });
 
             // Make it clickable
             doc.link(btnX, btnY, btnW, btnH, { url: item.link });
