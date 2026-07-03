@@ -194,7 +194,7 @@ export default function Documentation() {
         credit_program: p.credit_program,
         municipio: p.municipio,
         estimated_value: p.estimated_value,
-        status_docs: "AGUARDANDO ENVIO",
+        status_docs: "AGUARDANDO ENVIO DOCUMENTAÇÃO",
         link: p.token
           ? `${window.location.origin}/enviar-documentacao?token=${p.token}`
           : null,
@@ -260,88 +260,144 @@ export default function Documentation() {
     drawBadge(pageW - 130, "PROJETISTA", reportFilterProjetista === "all" ? "TODOS" : reportFilterProjetista.toUpperCase());
     drawBadge(pageW - 70, "PROGRAMA", reportFilterPrograma === "all" ? "TODOS" : reportFilterPrograma.toUpperCase());
 
-    // ── KPI Cards ──────────────────────────────────
+    // ── KPI Calculations ──────────────────────────────────
     const totalItems = filtered.length;
     const totalValue = filtered.reduce((acc, i) => acc + (Number(i.estimated_value) || 0), 0);
     const avgValue = totalItems > 0 ? totalValue / totalItems : 0;
     const countAprovada = filtered.filter((i) => i.status_docs === "APROVADA").length;
     const countReprovada = filtered.filter((i) => i.status_docs === "REPROVADA").length;
-    const countAguardando = filtered.filter((i) => i.status_docs === "AGUARDANDO ENVIO").length;
-    const countEmAnalise = filtered.filter(
-      (i) => i.status_docs !== "APROVADA" && i.status_docs !== "REPROVADA" && i.status_docs !== "AGUARDANDO ENVIO"
-    ).length;
+    const countAguardando = filtered.filter((i) => i.status_docs === "AGUARDANDO ENVIO DOCUMENTAÇÃO").length;
+    const countPendente = filtered.filter((i) => i.status_docs === "PENDENTE").length;
     const pctAprovada = totalItems > 0 ? Math.round((countAprovada / totalItems) * 100) : 0;
 
-    const kpiY = 55;
-    const kpiW = 44;
-    const kpiH = 24;
-    const kpiGap = 3.5;
+    // ── ROW 1: Summary KPI Cards (3 large) ──────────────
+    const kpiY = 52;
+    const kpiW = 88;
+    const kpiH = 28;
+    const kpiGap = 5;
     const startX = 15;
 
-    const drawKPI = (x: number, title: string, value: string, sub: string, color: [number, number, number]) => {
+    const drawBigKPI = (x: number, title: string, value: string, sub: string, color: [number, number, number]) => {
       doc.setFillColor(255, 255, 255);
       doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "F");
       doc.setDrawColor(226, 232, 240);
       doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "S");
+      // Color accent bar
       doc.setFillColor(...color);
-      doc.rect(x + 5, kpiY + 8, 2, 10, "F");
+      doc.roundedRect(x, kpiY, 4, kpiH, 3, 0, "F");
+      doc.rect(x + 2, kpiY, 2, kpiH, "F");
+      // Title
       doc.setTextColor(100, 116, 139);
-      doc.setFontSize(6.5);
+      doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
-      doc.text(title.toUpperCase(), x + 10, kpiY + 10);
+      doc.text(title.toUpperCase(), x + 10, kpiY + 9);
+      // Value
       doc.setTextColor(15, 23, 42);
-      doc.setFontSize(11);
-      doc.text(value, x + 10, kpiY + 17);
+      doc.setFontSize(16);
+      doc.text(value, x + 10, kpiY + 19);
+      // Subtitle
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(6);
+      doc.setFont("helvetica", "normal");
+      doc.text(sub, x + 10, kpiY + 24);
+    };
+
+    drawBigKPI(startX, "Total de Propostas", `${totalItems}`, "propostas no relatório", [79, 70, 229]);
+    drawBigKPI(startX + kpiW + kpiGap, "Volume Total Estimado", formatCurrency(totalValue), "valor total bruto", [16, 185, 129]);
+    drawBigKPI(startX + (kpiW + kpiGap) * 2, "Ticket Médio", formatCurrency(avgValue), "valor médio por proposta", [245, 158, 11]);
+
+    // ── ROW 2: Status KPI Cards (4 cards with big numbers) ──
+    const statusY = kpiY + kpiH + 6;
+    const sKpiW = 65;
+    const sKpiH = 30;
+    const sKpiGap = 5;
+    const sStartX = 15;
+
+    const drawStatusKPI = (x: number, title: string, count: number, pct: number, color: [number, number, number]) => {
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(x, statusY, sKpiW, sKpiH, 3, 3, "F");
+      doc.setDrawColor(...color);
+      doc.setLineWidth(0.8);
+      doc.roundedRect(x, statusY, sKpiW, sKpiH, 3, 3, "S");
+      doc.setLineWidth(0.2);
+      // Color dot
+      doc.setFillColor(...color);
+      doc.circle(x + 8, statusY + 9, 3, "F");
+      // Count inside dot
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(5);
+      doc.setFont("helvetica", "bold");
+      // Title
+      doc.setTextColor(...color);
+      doc.setFontSize(7);
+      doc.text(title.toUpperCase(), x + 14, statusY + 10);
+      // Big number
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${count}`, x + 8, statusY + 22);
+      // Percentage
+      doc.setTextColor(...color);
+      doc.setFontSize(10);
+      doc.text(`${pct}%`, x + sKpiW - 8, statusY + 22, { align: "right" });
+      // Label
       doc.setTextColor(148, 163, 184);
       doc.setFontSize(5.5);
       doc.setFont("helvetica", "normal");
-      doc.text(sub, x + 10, kpiY + 21);
+      doc.text("propostas", x + 8, statusY + 27);
     };
 
-    drawKPI(startX, "Total Propostas", `${totalItems}`, "no relatório", [79, 70, 229]);
-    drawKPI(startX + (kpiW + kpiGap), "Volume Total", formatCurrency(totalValue), "valor estimado", [16, 185, 129]);
-    drawKPI(startX + (kpiW + kpiGap) * 2, "Ticket Médio", formatCurrency(avgValue), "por proposta", [245, 158, 11]);
-    drawKPI(startX + (kpiW + kpiGap) * 3, "Aprovadas", `${pctAprovada}%`, `${countAprovada} propostas`, [16, 185, 129]);
-    drawKPI(startX + (kpiW + kpiGap) * 4, "Em Análise", `${countEmAnalise}`, "docs enviados", [99, 102, 241]);
-    drawKPI(startX + (kpiW + kpiGap) * 5, "Aguardando", `${countAguardando}`, "sem envio ainda", [245, 158, 11]);
+    const pctReprovada = totalItems > 0 ? Math.round((countReprovada / totalItems) * 100) : 0;
+    const pctPendente = totalItems > 0 ? Math.round((countPendente / totalItems) * 100) : 0;
+    const pctAguardando = totalItems > 0 ? Math.round((countAguardando / totalItems) * 100) : 0;
 
-    // ── STATUS DISTRIBUTION (Horizontal Bars) ──────
-    const mainY = 90;
+    drawStatusKPI(sStartX, "Aprovadas", countAprovada, pctAprovada, [16, 185, 129]);
+    drawStatusKPI(sStartX + sKpiW + sKpiGap, "Pendentes", countPendente, pctPendente, [99, 102, 241]);
+    drawStatusKPI(sStartX + (sKpiW + sKpiGap) * 2, "Reprovadas", countReprovada, pctReprovada, [239, 68, 68]);
+    drawStatusKPI(sStartX + (sKpiW + sKpiGap) * 3, "Aguardando Envio", countAguardando, pctAguardando, [245, 158, 11]);
+
+    // ── STATUS DISTRIBUTION (Large Horizontal Bars) ──────
+    const mainY = statusY + sKpiH + 10;
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("DISTRIBUIÇÃO POR STATUS DA DOCUMENTAÇÃO", 15, mainY);
+    doc.text("DISTRIBUIÇÃO POR STATUS", 15, mainY);
 
     const statusData = [
       { label: "APROVADA", count: countAprovada, color: [16, 185, 129] as [number, number, number] },
-      { label: "EM ANÁLISE", count: countEmAnalise, color: [99, 102, 241] as [number, number, number] },
+      { label: "PENDENTE", count: countPendente, color: [99, 102, 241] as [number, number, number] },
       { label: "REPROVADA", count: countReprovada, color: [239, 68, 68] as [number, number, number] },
-      { label: "AGUARDANDO ENVIO", count: countAguardando, color: [245, 158, 11] as [number, number, number] },
+      { label: "AGUARDANDO ENVIO DOC.", count: countAguardando, color: [245, 158, 11] as [number, number, number] },
     ].filter((s) => s.count > 0).sort((a, b) => b.count - a.count);
 
     const barX = 15;
-    const barW = 100;
-    const barH = 8;
-    const barGap = 4;
+    const barW = 115;
+    const barH = 10;
+    const barGap = 5;
     const maxC = Math.max(...statusData.map((s) => s.count), 1);
 
     statusData.forEach((s, i) => {
       const y = mainY + 8 + i * (barH + barGap);
-      const fillW = (s.count / maxC) * barW;
+      const fillW = Math.max((s.count / maxC) * barW, 15);
+      // Background bar
       doc.setFillColor(241, 245, 249);
-      doc.roundedRect(barX, y, barW, barH, 2, 2, "F");
+      doc.roundedRect(barX, y, barW, barH, 2.5, 2.5, "F");
+      // Filled bar
       doc.setFillColor(...s.color);
-      if (fillW > 3) doc.roundedRect(barX, y, fillW, barH, 2, 2, "F");
-      doc.setFontSize(7);
+      doc.roundedRect(barX, y, fillW, barH, 2.5, 2.5, "F");
+      // Label above
+      doc.setFontSize(8);
       doc.setTextColor(51, 65, 85);
       doc.setFont("helvetica", "bold");
-      doc.text(s.label, barX + 2, y - 1);
-      doc.setTextColor(15, 23, 42);
-      doc.text(`${s.count} (${Math.round((s.count / totalItems) * 100)}%)`, barX + barW - 2, y + 6, { align: "right" });
+      doc.text(s.label, barX + 2, y - 1.5);
+      // Count + pct inside bar or to the right
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(7.5);
+      doc.text(`${s.count}  (${Math.round((s.count / totalItems) * 100)}%)`, barX + 4, y + barH / 2 + 2.5);
     });
 
-    // ── DONUT CHART (Health) ──────────────────────
-    const midX = 140;
+    // ── DONUT CHART (Approval Rate) ──────────────────────
+    const midX = 155;
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
@@ -349,32 +405,39 @@ export default function Documentation() {
 
     const centerX = midX + 35;
     const centerY = mainY + 30;
-    doc.setLineWidth(12);
+    doc.setLineWidth(14);
     doc.setDrawColor(241, 245, 249);
-    doc.circle(centerX, centerY, 18, "S");
+    doc.circle(centerX, centerY, 20, "S");
     doc.setDrawColor(16, 185, 129);
-    doc.circle(centerX, centerY, 18, "S");
+    doc.circle(centerX, centerY, 20, "S");
     if (countReprovada > 0) {
       doc.setLineWidth(1);
     }
     doc.setTextColor(16, 185, 129);
-    doc.setFontSize(14);
-    doc.text(`${pctAprovada}%`, centerX, centerY + 2, { align: "center" });
-    doc.setFontSize(6);
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text(`${pctAprovada}%`, centerX, centerY + 3, { align: "center" });
+    doc.setFontSize(7);
     doc.setTextColor(100, 116, 139);
-    doc.text("APROVAÇÃO", centerX, centerY + 8, { align: "center" });
+    doc.text("APROVAÇÃO", centerX, centerY + 10, { align: "center" });
 
-    // Legend
-    const legendY = mainY + 55;
-    doc.setFillColor(16, 185, 129); doc.circle(midX + 5, legendY, 2, "F");
-    doc.setTextColor(15, 23, 42); doc.setFontSize(7);
-    doc.text(`Aprovadas: ${countAprovada}`, midX + 10, legendY + 2);
-    doc.setFillColor(99, 102, 241); doc.circle(midX + 5, legendY + 6, 2, "F");
-    doc.text(`Em Análise: ${countEmAnalise}`, midX + 10, legendY + 8);
-    doc.setFillColor(239, 68, 68); doc.circle(midX + 5, legendY + 12, 2, "F");
-    doc.text(`Reprovadas: ${countReprovada}`, midX + 10, legendY + 14);
-    doc.setFillColor(245, 158, 11); doc.circle(midX + 5, legendY + 18, 2, "F");
-    doc.text(`Aguardando: ${countAguardando}`, midX + 10, legendY + 20);
+    // Legend with big numbers
+    const legendY = mainY + 58;
+    const drawLegend = (y: number, label: string, count: number, color: [number, number, number]) => {
+      doc.setFillColor(...color);
+      doc.roundedRect(midX + 2, y - 2, 4, 4, 1, 1, "F");
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${count}`, midX + 10, y + 1.5);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.text(label, midX + 20, y + 1.5);
+    };
+    drawLegend(legendY, "Aprovadas", countAprovada, [16, 185, 129]);
+    drawLegend(legendY + 8, "Pendentes", countPendente, [99, 102, 241]);
+    drawLegend(legendY + 16, "Reprovadas", countReprovada, [239, 68, 68]);
+    drawLegend(legendY + 24, "Aguardando Envio Doc.", countAguardando, [245, 158, 11]);
 
     // ── RANKING POR MUNICÍPIO ─────────────────────
     const rightX = 210;
