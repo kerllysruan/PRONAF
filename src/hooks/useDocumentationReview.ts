@@ -378,6 +378,38 @@ export function useDocumentationReview() {
   }, [user, toast, fetchSubmissions]);
 
   /**
+   * Save a GED identifier for a specific documentation file.
+   * The GED ID is assigned by the authenticated reviewer (not auto-generated).
+   */
+  const updateGedId = useCallback(async (fileId: string, gedId: string) => {
+    try {
+      const { error } = await supabase
+        .from("documentation_files")
+        .update({ ged_id: gedId || null })
+        .eq("id", fileId);
+
+      if (error) throw error;
+
+      // Optimistically update local state so UI reflects immediately
+      setSubmissions((prev) =>
+        prev.map((sub) => ({
+          ...sub,
+          files: sub.files.map((f) =>
+            f.id === fileId ? { ...f, ged_id: gedId || null } : f
+          ),
+        }))
+      );
+    } catch (err: any) {
+      console.error("Error saving GED ID:", err);
+      toast({
+        title: "Erro ao salvar ID-GED",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  /**
    * Approve the entire proposal (all docs must be approved first).
    */
   const approveProposal = useCallback(async (tokenId: string, stockProposalId: string) => {
@@ -730,6 +762,7 @@ export function useDocumentationReview() {
     loading,
     approveDocument,
     rejectDocument,
+    updateGedId,
     approveProposal,
     revertProposal,
     downloadFile,

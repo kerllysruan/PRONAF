@@ -78,6 +78,8 @@ export interface DocumentationFile {
   reviewed_at: string | null;
   reviewed_by: string | null;
   created_at: string;
+  /** GED document identifier assigned by the logged-in reviewer */
+  ged_id: string | null;
 }
 
 export interface DocumentationTokenWithProposal extends DocumentationToken {

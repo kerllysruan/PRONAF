@@ -72,6 +72,7 @@ export default function Documentation() {
     loading,
     approveDocument,
     rejectDocument,
+    updateGedId,
     approveProposal,
     revertProposal,
     downloadFile,
@@ -812,89 +813,190 @@ export default function Documentation() {
               className="gap-2 rounded-xl text-violet-600 border-violet-200 hover:bg-violet-50 hover:text-violet-700"
               onClick={() => {
                 const now = new Date();
-                const timestamp = now.toLocaleDateString("pt-BR");
-                const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-                const pageW = doc.internal.pageSize.getWidth();
+                const dateStr = now.toLocaleDateString("pt-BR");
+                const d = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+                const W = d.internal.pageSize.getWidth();
+                const H = d.internal.pageSize.getHeight();
 
-                // Header
-                doc.setFillColor(15, 23, 42);
-                doc.rect(0, 0, pageW, 30, "F");
-                doc.setFillColor(99, 102, 241);
-                doc.rect(0, 30, pageW, 1.5, "F");
+                // ── HEADER BAND ────────────────────────────────────
+                // Dark navy background
+                d.setFillColor(15, 23, 42);
+                d.rect(0, 0, W, 38, "F");
+                // Violet accent stripe
+                d.setFillColor(99, 102, 241);
+                d.rect(0, 38, W, 2, "F");
+                // Light gray page body
+                d.setFillColor(248, 250, 252);
+                d.rect(0, 40, W, H - 40, "F");
 
-                doc.setTextColor(255, 255, 255);
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(14);
-                doc.text("CHECKLIST DE DOCUMENTAÇÃO", 15, 13);
-                doc.setFontSize(8);
-                doc.setFont("helvetica", "normal");
-                doc.setTextColor(148, 163, 184);
-                doc.text(`Produtor: ${sub.proposal.producer_name}   CPF: ${sub.proposal.producer_cpf || "---"}`, 15, 21);
-                doc.text(`Projetista: ${sub.proposal.projetista || "---"}   Município: ${sub.proposal.municipio || "---"}`, 15, 26);
+                // Title
+                d.setTextColor(255, 255, 255);
+                d.setFont("helvetica", "bold");
+                d.setFontSize(16);
+                d.text("CHECKLIST DE DOCUMENTAÇÃO", 14, 14);
 
-                // Build status per document type
-                const typeMap = new Map<string, string>();
-                sub.files.forEach((f) => {
-                  const ex = typeMap.get(f.document_type);
-                  if (!ex) { typeMap.set(f.document_type, f.status); }
-                  else if (f.status === "aprovado") { typeMap.set(f.document_type, "aprovado"); }
-                  else if (f.status === "pendente" && ex !== "aprovado") { typeMap.set(f.document_type, "pendente"); }
+                // Subtitle tag
+                d.setFillColor(99, 102, 241);
+                d.roundedRect(14, 18, 42, 5.5, 1.5, 1.5, "F");
+                d.setTextColor(255, 255, 255);
+                d.setFont("helvetica", "bold");
+                d.setFontSize(7);
+                d.text("PRONAF — DOCUMENTAÇÃO", 35, 21.9, { align: "center" });
+
+                // Info grid (right side)
+                const infoItems = [
+                  ["PRODUTOR", sub.proposal.producer_name || "—"],
+                  ["CPF", sub.proposal.producer_cpf || "—"],
+                  ["MUNICÍPIO", sub.proposal.municipio || "—"],
+                  ["LINHA DE CRÉDITO", sub.proposal.linha_credito || sub.proposal.credit_program || "—"],
+                ];
+                const col1X = 14;
+                const col2X = W / 2 + 4;
+                infoItems.forEach((item, idx) => {
+                  const col = idx % 2 === 0 ? col1X : col2X;
+                  const row = Math.floor(idx / 2);
+                  const baseY = 26 + row * 7;
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(6.5);
+                  d.setTextColor(148, 163, 184);
+                  d.text(item[0], col, baseY);
+                  d.setFont("helvetica", "normal");
+                  d.setFontSize(8);
+                  d.setTextColor(255, 255, 255);
+                  const maxW = W / 2 - 20;
+                  d.text(item[1], col, baseY + 4, { maxWidth: maxW });
                 });
 
-                const tableData = DOCUMENTATION_REQUIRED.map((d, i) => {
-                  const st = typeMap.get(d.key);
+                // ── BUILD GED MAP from files (user-assigned) ──────
+                // Per document_type: pick latest file with a ged_id (prefer approved)
+                const gedMap = new Map<string, string>(); // document_type -> ged_id
+                const statusMap = new Map<string, string>(); // document_type -> best status
+
+                sub.files.forEach((f) => {
+                  const ex = statusMap.get(f.document_type);
+                  // Track best status
+                  if (!ex) {
+                    statusMap.set(f.document_type, f.status);
+                    if (f.ged_id) gedMap.set(f.document_type, f.ged_id);
+                  } else if (f.status === "aprovado") {
+                    statusMap.set(f.document_type, "aprovado");
+                    if (f.ged_id) gedMap.set(f.document_type, f.ged_id);
+                  } else if (f.status === "pendente" && ex !== "aprovado") {
+                    statusMap.set(f.document_type, "pendente");
+                    if (f.ged_id) gedMap.set(f.document_type, f.ged_id);
+                  } else if (!gedMap.has(f.document_type) && f.ged_id) {
+                    gedMap.set(f.document_type, f.ged_id);
+                  }
+                });
+
+                // Counts
+                let cEntregue = 0, cAguardando = 0, cReprovado = 0, cPendente = 0;
+                DOCUMENTATION_REQUIRED.forEach((doc) => {
+                  const st = statusMap.get(doc.key);
+                  if (st === "aprovado") cEntregue++;
+                  else if (st === "pendente") cAguardando++;
+                  else if (st === "reprovado") cReprovado++;
+                  else cPendente++;
+                });
+
+                // ── KPI SUMMARY ROW ───────────────────────────────
+                const kpiY = 44;
+                const kpiH = 14;
+                const kpiW = (W - 28 - 9) / 4;
+                const kpis = [
+                  { label: "ENTREGUE", val: cEntregue, fill: [16, 185, 129] as [number, number, number] },
+                  { label: "AGUARD. APROV.", val: cAguardando, fill: [245, 158, 11] as [number, number, number] },
+                  { label: "REPROVADO", val: cReprovado, fill: [239, 68, 68] as [number, number, number] },
+                  { label: "PENDENTE", val: cPendente, fill: [100, 116, 139] as [number, number, number] },
+                ];
+                kpis.forEach((k, i) => {
+                  const x = 14 + i * (kpiW + 3);
+                  d.setFillColor(255, 255, 255);
+                  d.roundedRect(x, kpiY, kpiW, kpiH, 2, 2, "F");
+                  d.setFillColor(...k.fill);
+                  d.roundedRect(x, kpiY, 2.5, kpiH, 1, 1, "F");
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(12);
+                  d.setTextColor(...k.fill);
+                  d.text(String(k.val), x + 6, kpiY + 8.5);
+                  d.setFont("helvetica", "normal");
+                  d.setFontSize(6);
+                  d.setTextColor(71, 85, 105);
+                  d.text(k.label, x + 6, kpiY + 12.5);
+                });
+
+                // ── TABLE ─────────────────────────────────────────
+                const tableBody = DOCUMENTATION_REQUIRED.map((doc, i) => {
+                  const st = statusMap.get(doc.key);
+                  const gedId = gedMap.get(doc.key) || "—";
                   let statusLabel = "PENDENTE";
                   if (st === "aprovado") statusLabel = "ENTREGUE";
-                  else if (st === "pendente") statusLabel = "AGUARDANDO APROV.";
+                  else if (st === "pendente") statusLabel = "AGUARD. APROV.";
                   else if (st === "reprovado") statusLabel = "REPROVADO";
-                  return [i + 1, d.ged_id, d.label, statusLabel];
+                  return [i + 1, gedId, doc.label, statusLabel];
                 });
 
-                autoTable(doc, {
-                  startY: 36,
+                // Status color map
+                const STATUS_COLORS: Record<string, [number, number, number]> = {
+                  "ENTREGUE": [16, 185, 129],
+                  "AGUARD. APROV.": [245, 158, 11],
+                  "REPROVADO": [239, 68, 68],
+                  "PENDENTE": [100, 116, 139],
+                };
+
+                autoTable(d, {
+                  startY: kpiY + kpiH + 4,
                   head: [["#", "ID-GED", "DOCUMENTO", "STATUS"]],
-                  body: tableData,
-                  theme: "grid",
-                  headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 8, halign: "center", fontStyle: "bold" },
-                  styles: { fontSize: 7.5, cellPadding: 2.5, valign: "middle", lineColor: [226, 232, 240], lineWidth: 0.3 },
-                  columnStyles: {
-                    0: { halign: "center", cellWidth: 8 },
-                    1: { halign: "center", cellWidth: 22, fontStyle: "bold" },
-                    2: { cellWidth: 120 },
-                    3: { halign: "center", cellWidth: 36 },
+                  body: tableBody,
+                  theme: "plain",
+                  headStyles: {
+                    fillColor: [30, 41, 59],
+                    textColor: [255, 255, 255],
+                    fontSize: 7.5,
+                    fontStyle: "bold",
+                    halign: "center",
+                    cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
                   },
-                  alternateRowStyles: { fillColor: [248, 250, 252] },
-                  didDrawCell: (data: any) => {
+                  styles: {
+                    fontSize: 7.5,
+                    cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+                    valign: "middle",
+                    textColor: [30, 41, 59],
+                    lineColor: [226, 232, 240],
+                    lineWidth: 0.3,
+                  },
+                  columnStyles: {
+                    0: { halign: "center", cellWidth: 9 },
+                    1: { halign: "center", cellWidth: 26, fontStyle: "bold", textColor: [99, 102, 241] },
+                    2: { cellWidth: 115 },
+                    3: { halign: "center", cellWidth: 38, fontStyle: "bold" },
+                  },
+                  alternateRowStyles: { fillColor: [241, 245, 249] },
+                  willDrawCell: (data: any) => {
                     if (data.section === "body" && data.column.index === 3) {
-                      const row = tableData[data.row.index];
-                      const status = row[3] as string;
-                      let color: [number, number, number] = [100, 116, 139];
-                      if (status === "ENTREGUE") color = [16, 185, 129];
-                      else if (status === "AGUARDANDO APROV.") color = [245, 158, 11];
-                      else if (status === "REPROVADO") color = [239, 68, 68];
-                      else color = [100, 116, 139]; // PENDENTE
-                      doc.setTextColor(...color);
-                      doc.setFontSize(7.5);
-                      doc.setFont("helvetica", "bold");
-                      doc.text(status, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2 + 2.5, { align: "center" });
+                      const status = tableBody[data.row.index]?.[3] as string;
+                      const color = STATUS_COLORS[status] || [100, 116, 139];
+                      data.cell.styles.textColor = color;
                     }
                   },
+                  didDrawPage: (hookData: any) => {
+                    // Footer on each page
+                    const pageNum = (d as any).internal.getCurrentPageInfo().pageNumber;
+                    const total = (d as any).internal.getNumberOfPages();
+                    d.setFillColor(30, 41, 59);
+                    d.rect(0, H - 9, W, 9, "F");
+                    d.setFont("helvetica", "normal");
+                    d.setFontSize(6.5);
+                    d.setTextColor(148, 163, 184);
+                    d.text(`Gerado em ${dateStr}  ·  Proposta: ${sub.proposal.producer_name}`, 14, H - 3.5);
+                    d.text(`Página ${pageNum} de ${total}`, W - 14, H - 3.5, { align: "right" });
+                  },
                 });
 
-                // Footer
-                const pages = (doc as any).internal.getNumberOfPages();
-                for (let i = 1; i <= pages; i++) {
-                  doc.setPage(i);
-                  doc.setFontSize(6.5);
-                  doc.setTextColor(148, 163, 184);
-                  doc.setFont("helvetica", "normal");
-                  const w = doc.internal.pageSize.getWidth();
-                  const h = doc.internal.pageSize.getHeight();
-                  doc.text(`Gerado em ${timestamp}  |  Página ${i} de ${pages}`, w / 2, h - 5, { align: "center" });
-                }
-
-                const safeName = (sub.proposal.producer_name || "Produtor").replace(/\s+/g, "_").toUpperCase();
-                doc.save(`Checklist_${safeName}_${now.toISOString().slice(0, 10)}.pdf`);
+                const safeName = (sub.proposal.producer_name || "Produtor")
+                  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                  .replace(/\s+/g, "_").toUpperCase();
+                d.save(`Checklist_${safeName}_${now.toISOString().slice(0, 10)}.pdf`);
               }}
             >
               <ClipboardCheck className="h-4 w-4" />
@@ -997,6 +1099,29 @@ export default function Documentation() {
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground truncate">
                     {file.file_name}
                   </p>
+
+                  {/* ── GED ID field ──────────────────────────── */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                      ID-GED:
+                    </span>
+                    <input
+                      type="text"
+                      defaultValue={file.ged_id ?? ""}
+                      placeholder="Ex: GED-001"
+                      maxLength={20}
+                      className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-all"
+                      onBlur={(e) => {
+                        const val = e.target.value.trim();
+                        if (val !== (file.ged_id ?? "")) {
+                          updateGedId(file.id, val);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      }}
+                    />
+                  </div>
 
                   <Separator className="opacity-50" />
 
