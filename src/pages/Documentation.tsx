@@ -776,6 +776,14 @@ export default function Documentation() {
                       ? "Com Reprovações"
                       : "Em Análise"}
                   </Badge>
+                  {sub.proposal.status === "ENVIADO PARA CENTRAL" && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-blue-50 text-blue-700 border-blue-200"
+                    >
+                      Enviado para Central
+                    </Badge>
+                  )}
                 </div>
                 
                 {/* Meta Grid clean & highly readable */}
