@@ -102,6 +102,12 @@ export default function Documentation() {
   const [reportFilterProjetista, setReportFilterProjetista] = useState("all");
   const [reportFilterPrograma, setReportFilterPrograma] = useState("all");
   const [pageFilterProjetista, setPageFilterProjetista] = useState("all");
+  
+  // Manager Opinion State
+  const [parecerDialogOpen, setParecerDialogOpen] = useState(false);
+  const [parecerTexto, setParecerTexto] = useState("");
+  const [parecerAnalista, setParecerAnalista] = useState("");
+  const [parecerResultado, setParecerResultado] = useState("Aprovado");
 
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
@@ -1126,6 +1132,21 @@ export default function Documentation() {
               </Button>
 
               <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 rounded-xl text-indigo-700 border-indigo-200 hover:bg-indigo-50 font-bold px-4"
+                onClick={() => {
+                  setParecerTexto("");
+                  setParecerAnalista(sub.proposal.projetista || "");
+                  setParecerResultado("Aprovado");
+                  setParecerDialogOpen(true);
+                }}
+              >
+                <FileText className="h-4 w-4" />
+                Parecer Gerencial
+              </Button>
+
+              <Button
                 size="sm"
                 className="gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4"
                 disabled={!allApproved}
@@ -1638,6 +1659,219 @@ export default function Documentation() {
                     Confirmar Reversão
                   </>
                 )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ── Parecer Gerencial Dialog ────────────────────────────── */}
+        <Dialog open={parecerDialogOpen} onOpenChange={setParecerDialogOpen}>
+          <DialogContent className="max-w-2xl rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="font-heading font-extrabold flex items-center gap-2">
+                <FileText className="h-5 w-5 text-indigo-600" />
+                Gerar Parecer Gerencial
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Preencha as informações abaixo para emitir o documento formal de parecer técnico sobre esta proposta.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 my-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Resultado do Parecer
+                  </label>
+                  <Select value={parecerResultado} onValueChange={setParecerResultado}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Selecione o resultado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Aprovado">Aprovado para Contratação</SelectItem>
+                      <SelectItem value="Aprovado com Ressalvas">Aprovado com Ressalvas</SelectItem>
+                      <SelectItem value="Reprovado">Indeferido / Reprovado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Analista Responsável
+                  </label>
+                  <Input
+                    className="rounded-xl"
+                    placeholder="Nome do analista técnico"
+                    value={parecerAnalista}
+                    onChange={(e) => setParecerAnalista(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Parecer e Considerações Técnicas
+                </label>
+                <Textarea
+                  className="rounded-xl min-h-[160px] resize-none"
+                  placeholder="Escreva aqui a fundamentação detalhada do parecer gerencial, observações técnicas, garantias analisadas e/ou ressalvas necessárias para a liberação..."
+                  value={parecerTexto}
+                  onChange={(e) => setParecerTexto(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => setParecerDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="rounded-xl gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                disabled={!parecerTexto.trim() || !parecerAnalista.trim()}
+                onClick={() => {
+                  const now = new Date();
+                  const dateStr = now.toLocaleDateString("pt-BR");
+                  const d = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+                  const W = d.internal.pageSize.getWidth();
+                  const H = d.internal.pageSize.getHeight();
+
+                  // ── HEADER BAND ────────────────────────────────────
+                  d.setFillColor(15, 23, 42);
+                  d.rect(0, 0, W, 38, "F");
+                  d.setFillColor(79, 70, 229);
+                  d.rect(0, 38, W, 2, "F");
+
+                  d.setTextColor(255, 255, 255);
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(16);
+                  d.text("PARECER GERENCIAL DE ANÁLISE", 14, 15);
+
+                  d.setFillColor(79, 70, 229);
+                  d.roundedRect(14, 19, 45, 5.5, 1.5, 1.5, "F");
+                  d.setTextColor(255, 255, 255);
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(7);
+                  d.text("PRONAF — CRÉDITO RURAL", 36.5, 22.9, { align: "center" });
+
+                  const infoItems = [
+                    ["PRODUTOR", sub.proposal.producer_name || "—"],
+                    ["CPF", sub.proposal.producer_cpf || "—"],
+                    ["MUNICÍPIO", sub.proposal.municipio || "—"],
+                    ["LINHA DE CRÉDITO", sub.proposal.credit_program || sub.proposal.linha_credito || "—"],
+                  ];
+                  const col1X = 14;
+                  const col2X = W / 2 + 4;
+                  infoItems.forEach((item, idx) => {
+                    const col = idx % 2 === 0 ? col1X : col2X;
+                    const row = Math.floor(idx / 2);
+                    const baseY = 27 + row * 7;
+                    d.setFont("helvetica", "bold");
+                    d.setFontSize(6.5);
+                    d.setTextColor(148, 163, 184);
+                    d.text(item[0], col, baseY);
+                    d.setFont("helvetica", "normal");
+                    d.setFontSize(8);
+                    d.setTextColor(255, 255, 255);
+                    const maxW = W / 2 - 20;
+                    d.text(item[1], col, baseY + 4, { maxWidth: maxW });
+                  });
+
+                  // ── BODY BLOCK ────────────────────────────────────
+                  d.setFillColor(248, 250, 252);
+                  d.roundedRect(14, 46, W - 28, 22, 2, 2, "F");
+                  
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(8);
+                  d.setTextColor(71, 85, 105);
+                  d.text("RESULTADO DO PARECER:", 18, 54);
+                  
+                  let resColor = [16, 185, 129];
+                  if (parecerResultado === "Aprovado com Ressalvas") resColor = [245, 158, 11];
+                  else if (parecerResultado === "Reprovado") resColor = [239, 68, 68];
+
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(10);
+                  d.setTextColor(resColor[0], resColor[1], resColor[2]);
+                  d.text(parecerResultado.toUpperCase(), 18, 60);
+
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(8);
+                  d.setTextColor(71, 85, 105);
+                  d.text("DATA DE EMISSÃO:", W / 2 - 15, 54);
+                  d.setFont("helvetica", "normal");
+                  d.setFontSize(9);
+                  d.setTextColor(15, 23, 42);
+                  d.text(dateStr, W / 2 - 15, 60);
+
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(8);
+                  d.setTextColor(71, 85, 105);
+                  d.text("VALOR DO CRÉDITO:", W - 70, 54);
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(10);
+                  d.setTextColor(79, 70, 229);
+                  const valFmt = sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
+                  d.text(valFmt, W - 70, 60);
+
+                  // Divider
+                  d.setDrawColor(226, 232, 240);
+                  d.setLineWidth(0.4);
+                  d.line(14, 74, W - 14, 74);
+
+                  // Opinion Text Area
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(9.5);
+                  d.setTextColor(15, 23, 42);
+                  d.text("DESCRITIVO DA ANÁLISE E FUNDAMENTAÇÃO TÉCNICA", 14, 82);
+
+                  d.setFont("helvetica", "normal");
+                  d.setFontSize(9);
+                  d.setTextColor(51, 65, 85);
+                  const splitText = d.splitTextToSize(parecerTexto, W - 28);
+                  d.text(splitText, 14, 88, { leading: 5 });
+
+                  // Signature line
+                  const sigY = H - 35;
+                  d.setDrawColor(148, 163, 184);
+                  d.setLineWidth(0.3);
+                  d.line(W / 2 - 45, sigY, W / 2 + 45, sigY);
+                  
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(8.5);
+                  d.setTextColor(15, 23, 42);
+                  d.text(parecerAnalista, W / 2, sigY + 5.5, { align: "center" });
+                  
+                  d.setFont("helvetica", "normal");
+                  d.setFontSize(7.5);
+                  d.setTextColor(100, 116, 139);
+                  d.text("Analista Responsável / Projetista", W / 2, sigY + 9.5, { align: "center" });
+
+                  // Footer
+                  d.setFillColor(15, 23, 42);
+                  d.rect(0, H - 9, W, 9, "F");
+                  d.setFont("helvetica", "normal");
+                  d.setFontSize(6.5);
+                  d.setTextColor(148, 163, 184);
+                  d.text(`Emissão digital gerada via PRONAF Sistema de Documentação`, 14, H - 3.5);
+                  d.text(`Página 1 de 1`, W - 14, H - 3.5, { align: "right" });
+
+                  const safeName = (sub.proposal.producer_name || "Produtor")
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    .replace(/\s+/g, "_").toUpperCase();
+                  d.save(`Parecer_${safeName}_${now.toISOString().slice(0, 10)}.pdf`);
+                  setParecerDialogOpen(false);
+                  
+                  toast({
+                    title: "Parecer Gerencial gerado! 📄",
+                    description: "O arquivo PDF foi exportado com sucesso.",
+                  });
+                }}
+              >
+                Gerar PDF do Parecer
               </Button>
             </DialogFooter>
           </DialogContent>
