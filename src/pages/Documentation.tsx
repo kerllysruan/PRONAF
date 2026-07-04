@@ -765,6 +765,14 @@ export default function Documentation() {
                   <span className="flex items-center gap-1">
                     <strong>Projetista:</strong> {sub.proposal.projetista || "—"}
                   </span>
+                  <span className="text-muted-foreground/40">•</span>
+                  <span className="flex items-center gap-1">
+                    <strong>Programa:</strong> {sub.proposal.credit_program || sub.proposal.linha_credito || "—"}
+                  </span>
+                  <span className="text-muted-foreground/40">•</span>
+                  <span className="flex items-center gap-1 text-slate-900 dark:text-slate-200">
+                    <strong>Valor:</strong> {sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+                  </span>
                 </div>
               </div>
             </div>
