@@ -1065,7 +1065,25 @@ export default function Documentation() {
 
         {/* ── Documents Grid ─────────────────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {sub.files.map((file) => {
+          {(() => {
+            // Deduplicate: show only 1 file per document_type
+            // Priority: aprovado > pendente > reprovado, then most recent
+            const statusPriority: Record<string, number> = { aprovado: 3, pendente: 2, reprovado: 1 };
+            const bestByType = new Map<string, typeof sub.files[0]>();
+            sub.files.forEach((file) => {
+              const existing = bestByType.get(file.document_type);
+              if (!existing) {
+                bestByType.set(file.document_type, file);
+              } else {
+                const newPrio = statusPriority[file.status] || 0;
+                const oldPrio = statusPriority[existing.status] || 0;
+                if (newPrio > oldPrio || (newPrio === oldPrio && file.created_at > existing.created_at)) {
+                  bestByType.set(file.document_type, file);
+                }
+              }
+            });
+            const uniqueFiles = [...bestByType.values()];
+            return uniqueFiles.map((file) => {
             const status = file.status as DocFileStatus;
             return (
               <Card
@@ -1175,6 +1193,7 @@ export default function Documentation() {
               </Card>
             );
           })}
+          )()}
         </div>
 
         {sub.files.length === 0 && (
