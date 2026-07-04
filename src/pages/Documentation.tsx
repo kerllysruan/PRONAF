@@ -1175,150 +1175,233 @@ export default function Documentation() {
           </CardContent>
         </Card>
 
-        {/* ── Documents Grid ─────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {(() => {
-            // Deduplicate: show only 1 file per document_type
-            // Priority: aprovado > pendente > reprovado, then most recent
-            const statusPriority: Record<string, number> = { aprovado: 3, pendente: 2, reprovado: 1 };
-            const bestByType = new Map<string, typeof sub.files[0]>();
-            sub.files.forEach((file) => {
-              const existing = bestByType.get(file.document_type);
-              if (!existing) {
+        {/* ── Documents Grids by Category ───────────────────────── */}
+        {(() => {
+          // Deduplicate: show only 1 file per document_type
+          const statusPriority: Record<string, number> = { aprovado: 3, pendente: 2, reprovado: 1 };
+          const bestByType = new Map<string, typeof sub.files[0]>();
+          sub.files.forEach((file) => {
+            const existing = bestByType.get(file.document_type);
+            if (!existing) {
+              bestByType.set(file.document_type, file);
+            } else {
+              const newPrio = statusPriority[file.status] || 0;
+              const oldPrio = statusPriority[existing.status] || 0;
+              if (newPrio > oldPrio || (newPrio === oldPrio && file.created_at > existing.created_at)) {
                 bestByType.set(file.document_type, file);
-              } else {
-                const newPrio = statusPriority[file.status] || 0;
-                const oldPrio = statusPriority[existing.status] || 0;
-                if (newPrio > oldPrio || (newPrio === oldPrio && file.created_at > existing.created_at)) {
-                  bestByType.set(file.document_type, file);
-                }
               }
-            });
-            const uniqueFiles = [...bestByType.values()];
-            return uniqueFiles.map((file) => {
-            const status = file.status as DocFileStatus;
+            }
+          });
+          const uniqueFiles = [...bestByType.values()];
+
+          const socioAmbientalKeys = [
+            "declaracao_suporte_hidrico",
+            "autorizacao_desmatamento_queima",
+            "declaracao_regularidade_ambiental",
+            "declaracao_recomposicao_reserva_car",
+            "declaracao_nao_desmatamento",
+            "declaracao_anexo_128"
+          ];
+
+          // Category definitions
+          const IDENTIFICACAO_KEYS = [
+            "rg",
+            "ficha_cadastro_cliente",
+            "ficha_cadastro_esposa",
+            "rg_esposa",
+            "certidao_casamento",
+            "procuracao",
+            "rg_procurador",
+            "caf_extrato",
+            "certidao_obito",
+            "autorizacao_modificacao_projeto"
+          ];
+
+          const OPERACAO_KEYS = [
+            "declaracoes_unificadas",
+            "dcaa",
+            "espelho_beneficiario",
+            "titulo_dominio",
+            "carta_consulta",
+            "certidao_embargo_ambiental",
+            "certidao_improbidade",
+            "car_individual",
+            "car_coletivo"
+          ];
+
+          const AMBIENTAIS_KEYS = [
+            "declaracao_suporte_hidrico",
+            "autorizacao_desmatamento_queima",
+            "declaracao_regularidade_ambiental",
+            "declaracao_recomposicao_reserva_car",
+            "declaracao_nao_desmatamento",
+            "declaracao_anexo_128"
+          ];
+
+          const PLANO_KEYS = [
+            "plano_assinado",
+            "plano_eletronico",
+            "declaracao_assistencia_tecnica",
+            "orcamento",
+            "contrato_assessoria"
+          ];
+
+          const renderGrid = (title: string, keys: string[], icon: React.ReactNode) => {
+            const filtered = uniqueFiles.filter((f) => keys.includes(f.document_type));
+            if (filtered.length === 0) return null;
+
             return (
-              <Card
-                key={file.id}
-                className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg group"
-              >
-                <CardContent className="p-5 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <FileText className="h-5 w-5 text-primary shrink-0" />
-                      <p className="font-heading font-bold text-sm truncate">
-                        {getDocLabel(file.document_type)}
-                      </p>
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] shrink-0 ${DOC_STATUS_COLORS[status]}`}
-                    >
-                      {DOC_STATUS_LABELS[status]}
-                    </Badge>
-                  </div>
-
-                  {status === "reprovado" && file.rejection_reason && (
-                    <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-3">
-                      <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">
-                        <span className="font-bold">Motivo:</span> {file.rejection_reason}
-                      </p>
-                    </div>
-                  )}
-
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground truncate">
-                    {file.file_name}
-                  </p>
-
-                  {/* ── GED ID field or Dispensation Message ──────────────────────────── */}
-                  {file.file_path === "dispensado" ? (
-                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5">
-                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-                        DOC. DISPENSADO NÃO POSSUI / NÃO NECESSÁRIO
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
-                        ID-GED:
-                      </span>
-                      <input
-                        type="text"
-                        defaultValue={file.ged_id ?? ""}
-                        placeholder={
-                          ["declaracao_suporte_hidrico", "autorizacao_desmatamento_queima", "declaracao_regularidade_ambiental", "declaracao_recomposicao_reserva_car", "declaracao_nao_desmatamento", "declaracao_anexo_128"].includes(file.document_type)
-                            ? "INSERIR ID - CERT. SOCIO AMBIENTAL ZIP"
-                            : "Ex: GED-001"
-                        }
-                        maxLength={40}
-                        className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-all"
-                        onBlur={(e) => {
-                          const val = e.target.value.trim();
-                          if (val !== (file.ged_id ?? "")) {
-                            updateGedId(file.id, val);
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  <Separator className="opacity-50" />
-
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 rounded-xl text-xs h-8"
-                      disabled={pdfLoading}
-                      onClick={() => handleViewPdf(file.file_path, file.file_name)}
-                    >
-                      {pdfLoading ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Eye className="h-3.5 w-3.5" />
-                      )}
-                      Ver
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 rounded-xl text-xs h-8"
-                      onClick={() => downloadFile(file.file_path, file.file_name)}
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      Baixar
-                    </Button>
-                    {status !== "aprovado" && (
-                      <Button
-                        size="sm"
-                        className="gap-1.5 rounded-xl text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => approveDocument(file.id)}
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center gap-2 border-b border-border/40 pb-2.5">
+                  {icon}
+                  <h3 className="font-heading font-extrabold text-sm tracking-wider text-slate-800 dark:text-slate-200 uppercase">
+                    {title} ({filtered.length})
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filtered.map((file) => {
+                    const status = file.status as DocFileStatus;
+                    return (
+                      <Card
+                        key={file.id}
+                        className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg group"
                       >
-                        <ThumbsUp className="h-3.5 w-3.5" />
-                        Aprovar
-                      </Button>
-                    )}
-                    {status !== "reprovado" && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="gap-1.5 rounded-xl text-xs h-8"
-                        onClick={() => handleOpenRejectDialog(file.id)}
-                      >
-                        <ThumbsDown className="h-3.5 w-3.5" />
-                        Reprovar
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                        <CardContent className="p-5 space-y-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText className="h-5 w-5 text-primary shrink-0" />
+                              <p className="font-heading font-bold text-sm truncate">
+                                {getDocLabel(file.document_type)}
+                              </p>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] shrink-0 ${DOC_STATUS_COLORS[status]}`}
+                            >
+                              {DOC_STATUS_LABELS[status]}
+                            </Badge>
+                          </div>
+
+                          {status === "reprovado" && file.rejection_reason && (
+                            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-3">
+                              <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">
+                                <span className="font-bold">Motivo:</span> {file.rejection_reason}
+                              </p>
+                            </div>
+                          )}
+
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground truncate">
+                            {file.file_name}
+                          </p>
+
+                          {/* ── GED ID field or Dispensation Message ──────────────────────────── */}
+                          {file.file_path === "dispensado" ? (
+                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5">
+                              <span className="text-[9.5px] font-bold text-slate-600 dark:text-slate-400">
+                                DOC. DISPENSADO NÃO POSSUI / NÃO NECESSÁRIO
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                                ID-GED:
+                              </span>
+                              <input
+                                type="text"
+                                defaultValue={file.ged_id ?? ""}
+                                placeholder={
+                                  socioAmbientalKeys.includes(file.document_type)
+                                    ? "INSERIR ID - CERT. SOCIO AMBIENTAL ZIP"
+                                    : "Ex: GED-001"
+                                }
+                                maxLength={40}
+                                className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-all"
+                                onBlur={(e) => {
+                                  const val = e.target.value.trim();
+                                  if (val !== (file.ged_id ?? "")) {
+                                    updateGedId(file.id, val);
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          <Separator className="opacity-50" />
+
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 rounded-xl text-xs h-8"
+                              disabled={pdfLoading}
+                              onClick={() => handleViewPdf(file.file_path, file.file_name)}
+                            >
+                              {pdfLoading ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Eye className="h-3.5 w-3.5" />
+                              )}
+                              Ver
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 rounded-xl text-xs h-8"
+                              onClick={() => downloadFile(file.file_path, file.file_name)}
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              Baixar
+                            </Button>
+                            {status !== "aprovado" && (
+                              <Button
+                                size="sm"
+                                className="gap-1.5 rounded-xl text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                onClick={() => approveDocument(file.id)}
+                              >
+                                <ThumbsUp className="h-3.5 w-3.5" />
+                                Aprovar
+                              </Button>
+                            )}
+                            {status !== "reprovado" && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="gap-1.5 rounded-xl text-xs h-8"
+                                onClick={() => handleOpenRejectDialog(file.id)}
+                              >
+                                <ThumbsDown className="h-3.5 w-3.5" />
+                                Reprovar
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
             );
-          })}
-          )()}
-        </div>
+          };
+
+          // Render grids
+          const allKnownKeys = [...IDENTIFICACAO_KEYS, ...OPERACAO_KEYS, ...AMBIENTAIS_KEYS, ...PLANO_KEYS];
+          const unknownKeys = uniqueFiles
+            .filter((f) => !allKnownKeys.includes(f.document_type))
+            .map((f) => f.document_type);
+
+          return (
+            <div className="space-y-8">
+              {renderGrid("Documentos de Identificação", IDENTIFICACAO_KEYS, <ShieldCheck className="h-5 w-5 text-sky-500" />)}
+              {renderGrid("Documentos da Operação / Declarações Unificadas", OPERACAO_KEYS, <ClipboardList className="h-5 w-5 text-violet-500" />)}
+              {renderGrid("Declarações Ambientais", AMBIENTAIS_KEYS, <FileCheck className="h-5 w-5 text-emerald-500" />)}
+              {renderGrid("Documentos do Plano", PLANO_KEYS, <FileBarChart className="h-5 w-5 text-amber-500" />)}
+              {renderGrid("Outros Documentos", unknownKeys, <FileText className="h-5 w-5 text-slate-500" />)}
+            </div>
+          );
+        })()}
 
         {sub.files.length === 0 && (
           <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
