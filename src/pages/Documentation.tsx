@@ -719,69 +719,72 @@ export default function Documentation() {
 
     return (
       <div className="animate-fade-in max-w-[1600px] mx-auto space-y-6 p-4 md:p-6">
-        {/* ── Header ─────────────────────────────────────────── */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-xl"
-              onClick={() => setSelectedSubmission(null)}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="font-heading font-extrabold text-xl md:text-2xl leading-tight">
-                {sub.proposal.producer_name}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                CPF: {sub.proposal.producer_cpf || "—"} · {sub.proposal.municipio || "—"}
-              </p>
+        {/* ── Header Premium Panel ─────────────────────────────────── */}
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-indigo-950/40 space-y-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-2xl bg-white/10 hover:bg-white/20 border-white/10 text-white hover:text-white"
+                onClick={() => setSelectedSubmission(null)}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="font-heading font-extrabold text-xl md:text-2xl leading-tight">
+                    {sub.proposal.producer_name}
+                  </h1>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs px-2.5 py-0.5 rounded-full ${
+                      allApproved
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                        : sub.rejectedCount > 0
+                        ? "bg-red-500/20 text-red-300 border-red-500/30"
+                        : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                    }`}
+                  >
+                    {allApproved
+                      ? "Totalmente Aprovada"
+                      : sub.rejectedCount > 0
+                      ? "Com Reprovações"
+                      : "Em Análise"}
+                  </Badge>
+                </div>
+                <p className="text-xs md:text-sm text-slate-300 mt-1 font-medium">
+                  CPF: {sub.proposal.producer_cpf || "—"} · Município: {sub.proposal.municipio || "—"} · Projetista: {sub.proposal.projetista || "—"}
+                </p>
+              </div>
             </div>
-            <Badge
-              variant="outline"
-              className={`ml-2 text-xs ${
-                allApproved
-                  ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                  : sub.rejectedCount > 0
-                  ? "bg-red-100 text-red-700 border-red-200"
-                  : "bg-amber-100 text-amber-700 border-amber-200"
-              }`}
-            >
-              {allApproved
-                ? "Totalmente Aprovada"
-                : sub.rejectedCount > 0
-                ? "Com Reprovações"
-                : "Em Análise"}
-            </Badge>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {sub.files.length > 0 && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 rounded-xl text-emerald-700 border-emerald-300 hover:bg-emerald-50 bg-emerald-50/30"
-                  onClick={handleApproveAllDocs}
-                >
-                  <ThumbsUp className="h-4 w-4" />
-                  Aprovar Todos
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 rounded-xl text-red-700 border-red-300 hover:bg-red-50 bg-red-50/30"
-                  onClick={() => {
-                    setBulkRejectReason("");
-                    setBulkRejectDialogOpen(true);
-                  }}
-                >
-                  <ThumbsDown className="h-4 w-4" />
-                  Reprovar Todos
-                </Button>
-              </>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {sub.files.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 rounded-xl text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/10 bg-emerald-500/5 hover:text-emerald-200"
+                    onClick={handleApproveAllDocs}
+                  >
+                    <ThumbsUp className="h-4 w-4" />
+                    Aprovar Todos
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 rounded-xl text-red-300 border-red-500/40 hover:bg-red-500/10 bg-red-500/5 hover:text-red-200"
+                    onClick={() => {
+                      setBulkRejectReason("");
+                      setBulkRejectDialogOpen(true);
+                    }}
+                  >
+                    <ThumbsDown className="h-4 w-4" />
+                    Reprovar Todos
+                  </Button>
+                </>
+              )}
             <Button
               variant="outline"
               size="sm"
@@ -1133,7 +1136,7 @@ export default function Documentation() {
               Aprovar Proposta
             </Button>
           </div>
-        </div>
+        </div></div>
 
         {/* ── Progress Card ──────────────────────────────────── */}
         <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
@@ -1296,8 +1299,8 @@ export default function Documentation() {
 
                           {/* ── GED ID field or Dispensation Message ──────────────────────────── */}
                           {file.file_path === "dispensado" ? (
-                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5">
-                              <span className="text-[9.5px] font-bold text-slate-600 dark:text-slate-400">
+                            <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/40 rounded-xl p-2.5">
+                              <span className="text-[10px] font-extrabold text-orange-600 dark:text-orange-400 uppercase tracking-wide">
                                 DOC. DISPENSADO NÃO POSSUI / NÃO NECESSÁRIO
                               </span>
                             </div>
