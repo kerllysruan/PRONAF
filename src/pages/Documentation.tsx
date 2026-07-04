@@ -108,6 +108,18 @@ export default function Documentation() {
   const [parecerTexto, setParecerTexto] = useState("");
   const [parecerAnalista, setParecerAnalista] = useState("");
   const [parecerResultado, setParecerResultado] = useState("Aprovado");
+  const [parecerCaf, setParecerCaf] = useState("");
+  const [parecerNomeImovel, setParecerNomeImovel] = useState("");
+  const [parecerMunicipioImovel, setParecerMunicipioImovel] = useState("");
+  const [parecerNomePA, setParecerNomePA] = useState("");
+  const [parecerCarColetivo, setParecerCarColetivo] = useState("");
+  const [parecerMunicipioPA, setParecerMunicipioPA] = useState("");
+  const [parecerAtividadePlano, setParecerAtividadePlano] = useState("");
+  const [parecerCarenciaMeses, setParecerCarenciaMeses] = useState("");
+  const [parecerTotalMeses, setParecerTotalMeses] = useState("");
+  const [parecerGerenteGeral, setParecerGerenteGeral] = useState("");
+  const [parecerGerenteRelacionamento, setParecerGerenteRelacionamento] = useState("");
+  const [parecerInversoes, setParecerInversoes] = useState<string[]>([""]);
 
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
@@ -1139,6 +1151,18 @@ export default function Documentation() {
                   setParecerTexto("");
                   setParecerAnalista(sub.proposal.projetista || "");
                   setParecerResultado("Aprovado");
+                  setParecerCaf("");
+                  setParecerNomeImovel("");
+                  setParecerMunicipioImovel(sub.proposal.municipio || "");
+                  setParecerNomePA("");
+                  setParecerCarColetivo("");
+                  setParecerMunicipioPA(sub.proposal.municipio || "");
+                  setParecerAtividadePlano("");
+                  setParecerCarenciaMeses("");
+                  setParecerTotalMeses("");
+                  setParecerGerenteGeral("");
+                  setParecerGerenteRelacionamento("");
+                  setParecerInversoes([""]);
                   setParecerDialogOpen(true);
                 }}
               >
@@ -1666,58 +1690,240 @@ export default function Documentation() {
 
         {/* ── Parecer Gerencial Dialog ────────────────────────────── */}
         <Dialog open={parecerDialogOpen} onOpenChange={setParecerDialogOpen}>
-          <DialogContent className="max-w-2xl rounded-2xl">
+          <DialogContent className="max-w-2xl rounded-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-heading font-extrabold flex items-center gap-2">
                 <FileText className="h-5 w-5 text-indigo-600" />
-                Gerar Parecer Gerencial
+                Parecer da Agência — Operação PRONAF A
               </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground">
-                Preencha as informações abaixo para emitir o documento formal de parecer técnico sobre esta proposta.
+              <DialogDescription className="text-xs text-muted-foreground">
+                Preencha os campos abaixo para gerar o parecer técnico com base no modelo oficial do MCR/PRONAF.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 my-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Resultado do Parecer
-                  </label>
-                  <Select value={parecerResultado} onValueChange={setParecerResultado}>
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue placeholder="Selecione o resultado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Aprovado">Aprovado para Contratação</SelectItem>
-                      <SelectItem value="Aprovado com Ressalvas">Aprovado com Ressalvas</SelectItem>
-                      <SelectItem value="Reprovado">Indeferido / Reprovado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Analista Responsável
-                  </label>
-                  <Input
-                    className="rounded-xl"
-                    placeholder="Nome do analista técnico"
-                    value={parecerAnalista}
-                    onChange={(e) => setParecerAnalista(e.target.value)}
-                  />
+            <div className="space-y-4 my-2 text-sm">
+              {/* Seção 1: Enquadramento e CAF */}
+              <div className="bg-muted/40 p-3.5 rounded-xl border border-border/40 space-y-3">
+                <h3 className="font-semibold text-xs uppercase tracking-wider text-slate-500">
+                  Enquadramento e CAF
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Número do CAF (Cadastro da Agric. Familiar)
+                    </label>
+                    <Input
+                      className="rounded-xl"
+                      placeholder="Ex: CAF1234567890"
+                      value={parecerCaf}
+                      onChange={(e) => setParecerCaf(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Atividade Principal do Plano (Aptidão)
+                    </label>
+                    <Input
+                      className="rounded-xl"
+                      placeholder="Ex: Bovinocultura de Leite"
+                      value={parecerAtividadePlano}
+                      onChange={(e) => setParecerAtividadePlano(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Parecer e Considerações Técnicas
-                </label>
-                <Textarea
-                  className="rounded-xl min-h-[160px] resize-none"
-                  placeholder="Escreva aqui a fundamentação detalhada do parecer gerencial, observações técnicas, garantias analisadas e/ou ressalvas necessárias para a liberação..."
-                  value={parecerTexto}
-                  onChange={(e) => setParecerTexto(e.target.value)}
-                />
+              {/* Seção 2: Identificação do Imóvel Rural / CAR */}
+              <div className="bg-muted/40 p-3.5 rounded-xl border border-border/40 space-y-3">
+                <h3 className="font-semibold text-xs uppercase tracking-wider text-slate-500">
+                  Identificação do Imóvel & CAR
+                </h3>
+
+                {/* Exibido apenas se o CAR Individual NÃO for dispensado */}
+                {!sub.files.some(f => f.document_type === "car_individual" && f.file_path === "dispensado") ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-white/50 dark:bg-black/20 rounded-xl border border-indigo-100 dark:border-indigo-950/20">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-indigo-900 dark:text-indigo-200">
+                        Nome do Imóvel Rural (CAR Individual)
+                      </label>
+                      <Input
+                        className="rounded-xl border-indigo-200 focus-visible:ring-indigo-500"
+                        placeholder="Ex: Sítio São José"
+                        value={parecerNomeImovel}
+                        onChange={(e) => setParecerNomeImovel(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-indigo-900 dark:text-indigo-200">
+                        Município (Cidade - Estado do Imóvel)
+                      </label>
+                      <Input
+                        className="rounded-xl border-indigo-200 focus-visible:ring-indigo-500"
+                        placeholder="Ex: Maracaçumé - MA"
+                        value={parecerMunicipioImovel}
+                        onChange={(e) => setParecerMunicipioImovel(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-xs font-semibold text-amber-600 bg-amber-50 dark:bg-amber-950/20 p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/40">
+                    ⚠️ CAR Individual dispensado para este proponente. Os dados do imóvel rural não serão solicitados nem impressos individualmente.
+                  </div>
+                )}
+
+                {/* Dados do PA e CAR Coletivo */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Nome do PA (Assentamento)
+                    </label>
+                    <Input
+                      className="rounded-xl"
+                      placeholder="Ex: PA Nova Esperança"
+                      value={parecerNomePA}
+                      onChange={(e) => setParecerNomePA(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      CAR (Número/Coletivo)
+                    </label>
+                    <Input
+                      className="rounded-xl"
+                      placeholder="Ex: MA-2106201-..."
+                      value={parecerCarColetivo}
+                      onChange={(e) => setParecerCarColetivo(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Cidade - Estado do PA
+                    </label>
+                    <Input
+                      className="rounded-xl"
+                      placeholder="Ex: Maracaçumé - MA"
+                      value={parecerMunicipioPA}
+                      onChange={(e) => setParecerMunicipioPA(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Seção 3: Inversões (Investimentos) */}
+              <div className="bg-muted/40 p-3.5 rounded-xl border border-border/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-xs uppercase tracking-wider text-slate-500">
+                    Investimentos / Inversões
+                  </h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs rounded-lg border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                    onClick={() => setParecerInversoes([...parecerInversoes, ""])}
+                  >
+                    + Adicionar Inversão
+                  </Button>
+                </div>
+
+                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                  {parecerInversoes.map((inv, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Input
+                        className="rounded-xl text-xs h-8 flex-1"
+                        placeholder={`Inversão ${idx + 1} (Ex: Aquisição de 10 bovinos leiteiros)`}
+                        value={inv}
+                        onChange={(e) => {
+                          const updated = [...parecerInversoes];
+                          updated[idx] = e.target.value;
+                          setParecerInversoes(updated);
+                        }}
+                      />
+                      {parecerInversoes.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 rounded-lg text-red-500 hover:bg-red-50"
+                          onClick={() => {
+                            const updated = parecerInversoes.filter((_, i) => i !== idx);
+                            setParecerInversoes(updated);
+                          }}
+                        >
+                          ✕
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Seção 4: Prazos e Responsáveis */}
+              <div className="bg-muted/40 p-3.5 rounded-xl border border-border/40 space-y-3">
+                <h3 className="font-semibold text-xs uppercase tracking-wider text-slate-500">
+                  Prazos e Responsáveis da Operação
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Meses de Carência
+                    </label>
+                    <Input
+                      type="number"
+                      className="rounded-xl"
+                      placeholder="Ex: 36"
+                      value={parecerCarenciaMeses}
+                      onChange={(e) => setParecerCarenciaMeses(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Total Meses da Operação
+                    </label>
+                    <Input
+                      type="number"
+                      className="rounded-xl"
+                      placeholder="Ex: 120"
+                      value={parecerTotalMeses}
+                      onChange={(e) => setParecerTotalMeses(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Analista Técnico
+                    </label>
+                    <Input
+                      className="rounded-xl text-xs"
+                      placeholder="Nome do Analista"
+                      value={parecerAnalista}
+                      onChange={(e) => setParecerAnalista(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Gerente Geral
+                    </label>
+                    <Input
+                      className="rounded-xl text-xs"
+                      placeholder="Nome do Gerente Geral"
+                      value={parecerGerenteGeral}
+                      onChange={(e) => setParecerGerenteGeral(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Gerente de Relacionamento
+                    </label>
+                    <Input
+                      className="rounded-xl text-xs"
+                      placeholder="Nome do Gerente Relac."
+                      value={parecerGerenteRelacionamento}
+                      onChange={(e) => setParecerGerenteRelacionamento(e.target.value)}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1731,7 +1937,19 @@ export default function Documentation() {
               </Button>
               <Button
                 className="rounded-xl gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
-                disabled={!parecerTexto.trim() || !parecerAnalista.trim()}
+                disabled={
+                  !parecerCaf.trim() ||
+                  !parecerAtividadePlano.trim() ||
+                  !parecerNomePA.trim() ||
+                  !parecerCarColetivo.trim() ||
+                  !parecerMunicipioPA.trim() ||
+                  !parecerCarenciaMeses.trim() ||
+                  !parecerTotalMeses.trim() ||
+                  !parecerAnalista.trim() ||
+                  !parecerGerenteGeral.trim() ||
+                  !parecerGerenteRelacionamento.trim() ||
+                  (!sub.files.some(f => f.document_type === "car_individual" && f.file_path === "dispensado") && (!parecerNomeImovel.trim() || !parecerMunicipioImovel.trim()))
+                }
                 onClick={() => {
                   const now = new Date();
                   const dateStr = now.toLocaleDateString("pt-BR");
@@ -1747,127 +1965,148 @@ export default function Documentation() {
 
                   d.setTextColor(255, 255, 255);
                   d.setFont("helvetica", "bold");
-                  d.setFontSize(16);
-                  d.text("PARECER GERENCIAL DE ANÁLISE", 14, 15);
+                  d.setFontSize(14);
+                  d.text("PARECER DA AGÊNCIA", 14, 15);
+                  d.setFontSize(10);
+                  d.text("OPERAÇÃO PRONAF A", 14, 21);
 
-                  d.setFillColor(79, 70, 229);
-                  d.roundedRect(14, 19, 45, 5.5, 1.5, 1.5, "F");
+                  // Metadata right aligned
+                  d.setFontSize(7.5);
+                  d.setTextColor(148, 163, 184);
+                  d.text("PROPOSTA DE CRÉDITO RURAL", W - 14, 15, { align: "right" });
                   d.setTextColor(255, 255, 255);
-                  d.setFont("helvetica", "bold");
-                  d.setFontSize(7);
-                  d.text("PRONAF — CRÉDITO RURAL", 36.5, 22.9, { align: "center" });
+                  d.setFont("helvetica", "normal");
+                  d.text(`Produtor: ${sub.proposal.producer_name}`, W - 14, 21, { align: "right" });
+                  d.text(`CPF: ${sub.proposal.producer_cpf || "—"}`, W - 14, 26, { align: "right" });
 
-                  const infoItems = [
-                    ["PRODUTOR", sub.proposal.producer_name || "—"],
-                    ["CPF", sub.proposal.producer_cpf || "—"],
-                    ["MUNICÍPIO", sub.proposal.municipio || "—"],
-                    ["LINHA DE CRÉDITO", sub.proposal.credit_program || sub.proposal.linha_credito || "—"],
+                  // ── TEXT CONTENT GENERATION ─────────────────────────
+                  const programName = sub.proposal.credit_program || sub.proposal.linha_credito || "PRONAF A";
+                  
+                  // Rule for Objective
+                  let objectiveText = "";
+                  const progUpper = programName.toUpperCase();
+                  if (progUpper.includes("368")) {
+                    objectiveText = "IMPLANTAÇÃO";
+                  } else if (progUpper.includes("699")) {
+                    objectiveText = `AMPLIAÇÃO DA ATIVIDADE ${parecerAtividadePlano.toUpperCase()} DESENVOLVIDA NO IMOVEL DESCRITO ACIMA`;
+                  } else {
+                    objectiveText = `FINANCIAMENTO DA ATIVIDADE ${parecerAtividadePlano.toUpperCase()}`;
+                  }
+
+                  // Rule for CAR Individual Condicional
+                  const isCarIndividualDispensado = sub.files.some(f => f.document_type === "car_individual" && f.file_path === "dispensado");
+                  let imovelText = "";
+                  if (!isCarIndividualDispensado) {
+                    imovelText = `${parecerNomeImovel.toUpperCase()} LOCALIZADO NO MUNICIPIO ${parecerMunicipioImovel.toUpperCase()}`;
+                  } else {
+                    imovelText = ""; // Omitida a solicitação e o texto individual
+                  }
+
+                  const paText = `${parecerNomePA.toUpperCase()} INSERIR CAR (${parecerCarColetivo.toUpperCase()}) LOCALIZADO NO MUNICIPIO ${parecerMunicipioPA.toUpperCase()}`;
+
+                  // Formação do parágrafo de localização
+                  let localizacaoImovelParagrafo = "O IMOVEL RURAL ONDE SERÃO APLICADOS OS RECURSOS SÃO IDENTIFICADOS DA SEGUINTE FORMA:\n";
+                  if (imovelText) {
+                    localizacaoImovelParagrafo += `- ${imovelText}\n`;
+                  }
+                  localizacaoImovelParagrafo += `- ${paText}`;
+
+                  const totalValFmt = sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
+
+                  // Inversões list formation
+                  const inversoesTextLines = parecerInversoes
+                    .filter(inv => inv.trim().length > 0)
+                    .map(inv => `• ${inv}`)
+                    .join("\n");
+
+                  // Full opinion structured text as requested
+                  const paragraphs = [
+                    `Após análise da documentação apresentada pelo(a) proponente, do projeto técnico elaborado por profissional habilitado e das informações cadastrais e econômico-financeiras, esta agência conclui que a proposta atende aos requisitos para enquadramento na linha de crédito ${programName.toUpperCase()}.`,
+                    
+                    `Constatou-se que o beneficiário possui Cadastro Nacional da Agricultura Familiar (CAF) nº ${parecerCaf.toUpperCase()} válido, enquadrando-se como público beneficiário do programa, bem como apresentou projeto tecnicamente viável e compatível com a capacidade produtiva do imóvel e da unidade familiar.`,
+                    
+                    localizacaoImovelParagrafo,
+                    
+                    `POSSUINDO CAPACIDADE DE EXECUÇÃO E APTIDÃO A ATIVIDADE ${parecerAtividadePlano.toUpperCase()} DESENVOLVIDA NO IMÓVEL RURAL ACIMA.`,
+                    
+                    `A PROPOSTA TEM POR OBJETIVO A ${objectiveText}, TENDO AS SEGUINTES INVERSÕES:\n${inversoesTextLines}`,
+                    
+                    `TOTALIZANDO UM INVESTIMENTO NO VALOR DE ${totalValFmt}, SENDO O PROGRAMA DE CRÉDITO ${programName.toUpperCase()} A FONTE DE RECURSOS.`,
+                    
+                    `QUANTO AO PRAZO A OPERAÇÃO TEM O SEGUINTE:\n  CARÊNCIA: ${parecerCarenciaMeses} MESES\n  TOTAL: ${parecerTotalMeses} MESES`,
+                    
+                    `QUANTO À análise da capacidade de pagamento demonstra condições suficientes para honrar os compromissos financeiros decorrentes da operação, considerando a atividade financiada, a expectativa de geração de renda, os custos de produção e as demais informações constantes no projeto.`,
+                    
+                    `QUANTO AO VÍNCULO DO PROPONENTE A FUNCIONÁRIO DA AGÊNCIA, NÃO FOI IDENTIFICADO.`,
+                    
+                    `Dessa forma, esta agência manifesta-se favoravelmente à contratação da operação de crédito, recomendando sua aprovação, por atender às normas do Manual de Crédito Rural (MCR) e às condições estabelecidas para o Programa Nacional de Fortalecimento da Agricultura Familiar – PRONAF A.`
                   ];
-                  const col1X = 14;
-                  const col2X = W / 2 + 4;
-                  infoItems.forEach((item, idx) => {
-                    const col = idx % 2 === 0 ? col1X : col2X;
-                    const row = Math.floor(idx / 2);
-                    const baseY = 27 + row * 7;
-                    d.setFont("helvetica", "bold");
-                    d.setFontSize(6.5);
-                    d.setTextColor(148, 163, 184);
-                    d.text(item[0], col, baseY);
-                    d.setFont("helvetica", "normal");
-                    d.setFontSize(8);
-                    d.setTextColor(255, 255, 255);
-                    const maxW = W / 2 - 20;
-                    d.text(item[1], col, baseY + 4, { maxWidth: maxW });
+
+                  // Render PDF Content
+                  let curY = 48;
+                  d.setFont("helvetica", "normal");
+                  d.setFontSize(9);
+                  d.setTextColor(30, 41, 59);
+
+                  paragraphs.forEach((pText) => {
+                    const lines = d.splitTextToSize(pText, W - 28);
+                    const blockH = lines.length * 4.5 + 4;
+                    
+                    // Check page overflow
+                    if (curY + blockH > H - 55) {
+                      d.addPage();
+                      curY = 20;
+                    }
+                    
+                    d.text(lines, 14, curY, { leading: 4.5 });
+                    curY += blockH;
                   });
 
-                  // ── BODY BLOCK ────────────────────────────────────
-                  d.setFillColor(248, 250, 252);
-                  d.roundedRect(14, 46, W - 28, 22, 2, 2, "F");
-                  
-                  d.setFont("helvetica", "bold");
-                  d.setFontSize(8);
-                  d.setTextColor(71, 85, 105);
-                  d.text("RESULTADO DO PARECER:", 18, 54);
-                  
-                  let resColor = [16, 185, 129];
-                  if (parecerResultado === "Aprovado com Ressalvas") resColor = [245, 158, 11];
-                  else if (parecerResultado === "Reprovado") resColor = [239, 68, 68];
+                  // Signatures area
+                  const footerBlockH = 30;
+                  if (curY + footerBlockH > H - 15) {
+                    d.addPage();
+                    curY = 20;
+                  }
 
-                  d.setFont("helvetica", "bold");
-                  d.setFontSize(10);
-                  d.setTextColor(resColor[0], resColor[1], resColor[2]);
-                  d.text(parecerResultado.toUpperCase(), 18, 60);
-
-                  d.setFont("helvetica", "bold");
-                  d.setFontSize(8);
-                  d.setTextColor(71, 85, 105);
-                  d.text("DATA DE EMISSÃO:", W / 2 - 15, 54);
-                  d.setFont("helvetica", "normal");
-                  d.setFontSize(9);
-                  d.setTextColor(15, 23, 42);
-                  d.text(dateStr, W / 2 - 15, 60);
-
-                  d.setFont("helvetica", "bold");
-                  d.setFontSize(8);
-                  d.setTextColor(71, 85, 105);
-                  d.text("VALOR DO CRÉDITO:", W - 70, 54);
-                  d.setFont("helvetica", "bold");
-                  d.setFontSize(10);
-                  d.setTextColor(79, 70, 229);
-                  const valFmt = sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—";
-                  d.text(valFmt, W - 70, 60);
-
-                  // Divider
-                  d.setDrawColor(226, 232, 240);
-                  d.setLineWidth(0.4);
-                  d.line(14, 74, W - 14, 74);
-
-                  // Opinion Text Area
-                  d.setFont("helvetica", "bold");
-                  d.setFontSize(9.5);
-                  d.setTextColor(15, 23, 42);
-                  d.text("DESCRITIVO DA ANÁLISE E FUNDAMENTAÇÃO TÉCNICA", 14, 82);
-
-                  d.setFont("helvetica", "normal");
-                  d.setFontSize(9);
-                  d.setTextColor(51, 65, 85);
-                  const splitText = d.splitTextToSize(parecerTexto, W - 28);
-                  d.text(splitText, 14, 88, { leading: 5 });
-
-                  // Signature line
-                  const sigY = H - 35;
-                  d.setDrawColor(148, 163, 184);
+                  const sigLineY = curY + 12;
+                  d.setDrawColor(203, 213, 225);
                   d.setLineWidth(0.3);
-                  d.line(W / 2 - 45, sigY, W / 2 + 45, sigY);
                   
+                  // Gerente Geral (left)
+                  d.line(14, sigLineY, W / 2 - 10, sigLineY);
                   d.setFont("helvetica", "bold");
-                  d.setFontSize(8.5);
-                  d.setTextColor(15, 23, 42);
-                  d.text(parecerAnalista, W / 2, sigY + 5.5, { align: "center" });
-                  
-                  d.setFont("helvetica", "normal");
                   d.setFontSize(7.5);
-                  d.setTextColor(100, 116, 139);
-                  d.text("Analista Responsável / Projetista", W / 2, sigY + 9.5, { align: "center" });
+                  d.setTextColor(15, 23, 42);
+                  d.text(`GERENTE GERAL: ${parecerGerenteGeral.toUpperCase()}`, 14, sigLineY + 4);
+                  d.setFont("helvetica", "normal");
+                  d.text("Assinatura / Carimbo", 14, sigLineY + 8);
 
-                  // Footer
+                  // Gerente de Relacionamento (right)
+                  d.line(W / 2 + 10, sigLineY, W - 14, sigLineY);
+                  d.setFont("helvetica", "bold");
+                  d.text(`GERENTE RELACIONAMENTO: ${parecerGerenteRelacionamento.toUpperCase()}`, W / 2 + 10, sigLineY + 4);
+                  d.setFont("helvetica", "normal");
+                  d.text("Assinatura / Carimbo", W / 2 + 10, sigLineY + 8);
+
+                  // Page Footer
                   d.setFillColor(15, 23, 42);
                   d.rect(0, H - 9, W, 9, "F");
                   d.setFont("helvetica", "normal");
                   d.setFontSize(6.5);
                   d.setTextColor(148, 163, 184);
-                  d.text(`Emissão digital gerada via PRONAF Sistema de Documentação`, 14, H - 3.5);
-                  d.text(`Página 1 de 1`, W - 14, H - 3.5, { align: "right" });
+                  d.text(`Gerado em ${dateStr}  ·  Proponente: ${sub.proposal.producer_name}`, 14, H - 3.5);
+                  d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
 
                   const safeName = (sub.proposal.producer_name || "Produtor")
                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                     .replace(/\s+/g, "_").toUpperCase();
                   d.save(`Parecer_${safeName}_${now.toISOString().slice(0, 10)}.pdf`);
                   setParecerDialogOpen(false);
-                  
+
                   toast({
-                    title: "Parecer Gerencial gerado! 📄",
-                    description: "O arquivo PDF foi exportado com sucesso.",
+                    title: "Parecer da Agência gerado! 📄",
+                    description: "O arquivo PDF foi exportado com sucesso no formato oficial.",
                   });
                 }}
               >
