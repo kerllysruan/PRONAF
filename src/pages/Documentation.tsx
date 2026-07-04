@@ -49,6 +49,7 @@ import {
   Archive,
   ArrowLeft,
   ClipboardList,
+  ClipboardCheck,
   ShieldCheck,
   ThumbsUp,
   ThumbsDown,
@@ -804,6 +805,100 @@ export default function Documentation() {
             >
               <Link2 className="h-4 w-4" />
               Copiar Link Envio
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 rounded-xl text-violet-600 border-violet-200 hover:bg-violet-50 hover:text-violet-700"
+              onClick={() => {
+                const now = new Date();
+                const timestamp = now.toLocaleDateString("pt-BR");
+                const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+                const pageW = doc.internal.pageSize.getWidth();
+
+                // Header
+                doc.setFillColor(15, 23, 42);
+                doc.rect(0, 0, pageW, 30, "F");
+                doc.setFillColor(99, 102, 241);
+                doc.rect(0, 30, pageW, 1.5, "F");
+
+                doc.setTextColor(255, 255, 255);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.text("CHECKLIST DE DOCUMENTAÇÃO", 15, 13);
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(148, 163, 184);
+                doc.text(`Produtor: ${sub.proposal.producer_name}   CPF: ${sub.proposal.producer_cpf || "---"}`, 15, 21);
+                doc.text(`Projetista: ${sub.proposal.projetista || "---"}   Município: ${sub.proposal.municipio || "---"}`, 15, 26);
+
+                // Build status per document type
+                const typeMap = new Map<string, string>();
+                sub.files.forEach((f) => {
+                  const ex = typeMap.get(f.document_type);
+                  if (!ex) { typeMap.set(f.document_type, f.status); }
+                  else if (f.status === "aprovado") { typeMap.set(f.document_type, "aprovado"); }
+                  else if (f.status === "pendente" && ex !== "aprovado") { typeMap.set(f.document_type, "pendente"); }
+                });
+
+                const tableData = DOCUMENTATION_REQUIRED.map((d, i) => {
+                  const st = typeMap.get(d.key);
+                  let statusLabel = "PENDENTE";
+                  if (st === "aprovado") statusLabel = "ENTREGUE";
+                  else if (st === "pendente") statusLabel = "AGUARDANDO APROV.";
+                  else if (st === "reprovado") statusLabel = "REPROVADO";
+                  return [i + 1, d.ged_id, d.label, statusLabel];
+                });
+
+                autoTable(doc, {
+                  startY: 36,
+                  head: [["#", "ID-GED", "DOCUMENTO", "STATUS"]],
+                  body: tableData,
+                  theme: "grid",
+                  headStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 8, halign: "center", fontStyle: "bold" },
+                  styles: { fontSize: 7.5, cellPadding: 2.5, valign: "middle", lineColor: [226, 232, 240], lineWidth: 0.3 },
+                  columnStyles: {
+                    0: { halign: "center", cellWidth: 8 },
+                    1: { halign: "center", cellWidth: 22, fontStyle: "bold" },
+                    2: { cellWidth: 120 },
+                    3: { halign: "center", cellWidth: 36 },
+                  },
+                  alternateRowStyles: { fillColor: [248, 250, 252] },
+                  didDrawCell: (data: any) => {
+                    if (data.section === "body" && data.column.index === 3) {
+                      const row = tableData[data.row.index];
+                      const status = row[3] as string;
+                      let color: [number, number, number] = [100, 116, 139];
+                      if (status === "ENTREGUE") color = [16, 185, 129];
+                      else if (status === "AGUARDANDO APROV.") color = [245, 158, 11];
+                      else if (status === "REPROVADO") color = [239, 68, 68];
+                      else color = [100, 116, 139]; // PENDENTE
+                      doc.setTextColor(...color);
+                      doc.setFontSize(7.5);
+                      doc.setFont("helvetica", "bold");
+                      doc.text(status, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2 + 2.5, { align: "center" });
+                    }
+                  },
+                });
+
+                // Footer
+                const pages = (doc as any).internal.getNumberOfPages();
+                for (let i = 1; i <= pages; i++) {
+                  doc.setPage(i);
+                  doc.setFontSize(6.5);
+                  doc.setTextColor(148, 163, 184);
+                  doc.setFont("helvetica", "normal");
+                  const w = doc.internal.pageSize.getWidth();
+                  const h = doc.internal.pageSize.getHeight();
+                  doc.text(`Gerado em ${timestamp}  |  Página ${i} de ${pages}`, w / 2, h - 5, { align: "center" });
+                }
+
+                const safeName = (sub.proposal.producer_name || "Produtor").replace(/\s+/g, "_").toUpperCase();
+                doc.save(`Checklist_${safeName}_${now.toISOString().slice(0, 10)}.pdf`);
+              }}
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              Gerar Checklist
             </Button>
             <Button
               variant="outline"

@@ -126,9 +126,29 @@ export function useDocumentationReview() {
 
       const result: SubmittedProposal[] = filteredTokens.map((t: any) => {
         const files = filesByToken.get(t.id) || [];
-        const approved = files.filter((f) => f.status === "aprovado").length;
-        const rejected = files.filter((f) => f.status === "reprovado").length;
-        const pending = files.filter((f) => f.status === "pendente").length;
+
+        // Group files by document_type and pick the latest/most-favorable status per type
+        // This prevents double-counting when multiple files exist for the same doc type
+        const typeMap = new Map<string, string>(); // key -> best status
+        files.forEach((f) => {
+          const existing = typeMap.get(f.document_type);
+          // Priority: aprovado > pendente > reprovado
+          if (!existing) {
+            typeMap.set(f.document_type, f.status);
+          } else if (f.status === "aprovado") {
+            typeMap.set(f.document_type, "aprovado");
+          } else if (f.status === "pendente" && existing !== "aprovado") {
+            typeMap.set(f.document_type, "pendente");
+          }
+        });
+
+        const approved = [...typeMap.values()].filter((s) => s === "aprovado").length;
+        const rejected = [...typeMap.values()].filter((s) => s === "reprovado").length;
+        const submittedTypes = typeMap.size;
+        // Pending = types in pending state + types not yet submitted at all
+        const pendingInTypes = [...typeMap.values()].filter((s) => s === "pendente").length;
+        const notSubmitted = Math.max(0, DOCUMENTATION_REQUIRED.length - submittedTypes);
+        const pending = pendingInTypes + notSubmitted;
 
         return {
           token: {
@@ -145,7 +165,7 @@ export function useDocumentationReview() {
           files,
           approvedCount: approved,
           rejectedCount: rejected,
-          pendingCount: pending + (DOCUMENTATION_REQUIRED.length - files.length),
+          pendingCount: pending,
           totalFiles: DOCUMENTATION_REQUIRED.length,
         };
       });
