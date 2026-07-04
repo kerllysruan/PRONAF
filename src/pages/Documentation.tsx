@@ -756,33 +756,37 @@ export default function Documentation() {
                 <ArrowLeft className="h-4.5 w-4.5" />
               </Button>
               <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="font-sans font-bold text-base md:text-lg text-slate-900 dark:text-slate-50 leading-tight">
-                    {sub.proposal.producer_name}
-                  </h1>
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] px-2 py-0.5 font-semibold rounded-md ${
-                      allApproved
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : sub.rejectedCount > 0
-                        ? "bg-red-50 text-red-700 border-red-200"
-                        : "bg-amber-50 text-amber-700 border-amber-200"
-                    }`}
-                  >
-                    {allApproved
-                      ? "Totalmente Aprovada"
-                      : sub.rejectedCount > 0
-                      ? "Com Reprovações"
-                      : "Em Análise"}
-                  </Badge>
-                  {sub.proposal.status === "ENVIADO PARA CENTRAL" && (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="font-sans font-bold text-base md:text-lg text-slate-900 dark:text-slate-50 leading-tight">
+                      {sub.proposal.producer_name}
+                    </h1>
                     <Badge
                       variant="outline"
-                      className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-blue-50 text-blue-700 border-blue-200"
+                      className={`text-[10px] px-2 py-0.5 font-semibold rounded-md ${
+                        allApproved
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : sub.rejectedCount > 0
+                          ? "bg-red-50 text-red-700 border-red-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"
+                      }`}
                     >
-                      Enviado para Central
+                      {allApproved
+                        ? "Totalmente Aprovada"
+                        : sub.rejectedCount > 0
+                        ? "Com Reprovações"
+                        : "Em Análise"}
                     </Badge>
+                  </div>
+                  {sub.proposal.status === "ENVIADO PARA CENTRAL" && (
+                    <div className="flex">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-blue-50 text-blue-700 border-blue-200"
+                      >
+                        Enviado para Central
+                      </Badge>
+                    </div>
                   )}
                 </div>
                 
@@ -2411,110 +2415,7 @@ export default function Documentation() {
         </CardContent>
       </Card>
 
-      {/* ── Aguardando Documentação Table ─────────────────────── */}
-      {filteredAuthorized.length > 0 && (
-        <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm border-l-4 border-l-blue-500">
-          <CardHeader className="pb-3 px-6 pt-5">
-            <CardTitle className="font-heading font-extrabold text-lg flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-500" />
-              Aguardando Documentação
-              <Badge variant="secondary" className="ml-2 font-mono text-xs bg-blue-100 text-blue-700 border-blue-200">
-                {filteredAuthorized.length}
-              </Badge>
-            </CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">
-              Propostas com status "Autorizado Envio para Central" — link de envio gerado automaticamente
-            </p>
-          </CardHeader>
-          <CardContent className="px-0 pb-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-border/40">
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pl-6">
-                      Produtor
-                    </TableHead>
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      Projetista
-                    </TableHead>
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      Status
-                    </TableHead>
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      Município
-                    </TableHead>
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">
-                      Ações
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAuthorized.map((p) => (
-                    <TableRow
-                      key={p.id}
-                      className="transition-all duration-300 hover:bg-accent/50 border-border/30"
-                    >
-                      <TableCell className="pl-6 py-4">
-                        <div>
-                          <p className="font-semibold text-sm leading-tight">
-                            {p.producer_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {p.producer_cpf || "CPF não informado"}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <p className="text-sm text-muted-foreground">
-                          {p.projetista || "—"}
-                        </p>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] bg-blue-100 text-blue-700 border-blue-200"
-                        >
-                          {p.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <p className="text-sm text-muted-foreground">
-                          {p.municipio || "—"}
-                        </p>
-                      </TableCell>
-                      <TableCell className="text-right pr-6">
-                        {p.token ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="rounded-xl h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                            title="Copiar Link de Envio"
-                            onClick={async () => {
-                              const url = `${window.location.origin}/enviar-documentacao?token=${p.token}`;
-                              await navigator.clipboard.writeText(url);
-                              toast({
-                                title: "Link copiado! 📋",
-                                description: "Link da página de envio copiado.",
-                              });
-                            }}
-                          >
-                            <Link2 className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground inline-block" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-
-      {/* ── Table ────────────────────────────────────────────── */}
+      {/* ── Table: Propostas Recebidas ────────────────────────────── */}
       <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
         <CardHeader className="pb-3 px-6 pt-5">
           <CardTitle className="font-heading font-extrabold text-lg flex items-center gap-2">
@@ -2648,6 +2549,108 @@ export default function Documentation() {
           )}
         </CardContent>
       </Card>
+
+      {/* ── Aguardando Documentação Table ─────────────────────── */}
+      {filteredAuthorized.length > 0 && (
+        <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm border-l-4 border-l-blue-500">
+          <CardHeader className="pb-3 px-6 pt-5">
+            <CardTitle className="font-heading font-extrabold text-lg flex items-center gap-2">
+              <Clock className="h-5 w-5 text-blue-500" />
+              Aguardando Documentação
+              <Badge variant="secondary" className="ml-2 font-mono text-xs bg-blue-100 text-blue-700 border-blue-200">
+                {filteredAuthorized.length}
+              </Badge>
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Propostas com status "Autorizado Envio para Central" — link de envio gerado automaticamente
+            </p>
+          </CardHeader>
+          <CardContent className="px-0 pb-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-border/40">
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pl-6">
+                      Produtor
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Projetista
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Status
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Município
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">
+                      Ações
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAuthorized.map((p) => (
+                    <TableRow
+                      key={p.id}
+                      className="transition-all duration-300 hover:bg-accent/50 border-border/30"
+                    >
+                      <TableCell className="pl-6 py-4">
+                        <div>
+                          <p className="font-semibold text-sm leading-tight">
+                            {p.producer_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {p.producer_cpf || "CPF não informado"}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-muted-foreground">
+                          {p.projetista || "—"}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] bg-blue-100 text-blue-700 border-blue-200"
+                        >
+                          {p.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-muted-foreground">
+                          {p.municipio || "—"}
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        {p.token ? (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-xl h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                            title="Copiar Link de Envio"
+                            onClick={async () => {
+                              const url = `${window.location.origin}/enviar-documentacao?token=${p.token}`;
+                              await navigator.clipboard.writeText(url);
+                              toast({
+                                title: "Link copiado! 📋",
+                                description: "Link da página de envio copiado.",
+                              });
+                            }}
+                          >
+                            <Link2 className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground inline-block" />
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
