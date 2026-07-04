@@ -719,31 +719,31 @@ export default function Documentation() {
 
     return (
       <div className="animate-fade-in max-w-[1600px] mx-auto space-y-6 p-4 md:p-6">
-        {/* ── Header Premium Panel ─────────────────────────────────── */}
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-indigo-950/40 space-y-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        {/* ── Header Premium Clean Panel ─────────────────────────────────── */}
+        <div className="bg-card border border-border/60 rounded-3xl p-6 shadow-sm space-y-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-center gap-4">
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-2xl bg-white/10 hover:bg-white/20 border-white/10 text-white hover:text-white"
+                className="rounded-2xl border border-border/80 text-foreground hover:bg-muted shrink-0"
                 onClick={() => setSelectedSubmission(null)}
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="font-heading font-extrabold text-xl md:text-2xl leading-tight">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="font-heading font-extrabold text-xl md:text-2xl text-slate-900 dark:text-slate-50 leading-tight">
                     {sub.proposal.producer_name}
                   </h1>
                   <Badge
                     variant="outline"
                     className={`text-xs px-2.5 py-0.5 rounded-full ${
                       allApproved
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                         : sub.rejectedCount > 0
-                        ? "bg-red-500/20 text-red-300 border-red-500/30"
-                        : "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                        ? "bg-red-50 text-red-700 border-red-200"
+                        : "bg-amber-50 text-amber-700 border-amber-200"
                     }`}
                   >
                     {allApproved
@@ -753,390 +753,393 @@ export default function Documentation() {
                       : "Em Análise"}
                   </Badge>
                 </div>
-                <p className="text-xs md:text-sm text-slate-300 mt-1 font-medium">
-                  CPF: {sub.proposal.producer_cpf || "—"} · Município: {sub.proposal.municipio || "—"} · Projetista: {sub.proposal.projetista || "—"}
-                </p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1.5 font-medium">
+                  <span className="flex items-center gap-1">
+                    <strong>CPF:</strong> {sub.proposal.producer_cpf || "—"}
+                  </span>
+                  <span className="text-muted-foreground/40">•</span>
+                  <span className="flex items-center gap-1">
+                    <strong>Município:</strong> {sub.proposal.municipio || "—"}
+                  </span>
+                  <span className="text-muted-foreground/40">•</span>
+                  <span className="flex items-center gap-1">
+                    <strong>Projetista:</strong> {sub.proposal.projetista || "—"}
+                  </span>
+                </div>
               </div>
             </div>
 
+            {/* Primary & Structured Actions */}
             <div className="flex flex-wrap items-center gap-2">
-              {sub.files.length > 0 && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 rounded-xl text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/10 bg-emerald-500/5 hover:text-emerald-200"
-                    onClick={handleApproveAllDocs}
-                  >
-                    <ThumbsUp className="h-4 w-4" />
-                    Aprovar Todos
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 rounded-xl text-red-300 border-red-500/40 hover:bg-red-500/10 bg-red-500/5 hover:text-red-200"
-                    onClick={() => {
-                      setBulkRejectReason("");
-                      setBulkRejectDialogOpen(true);
-                    }}
-                  >
-                    <ThumbsDown className="h-4 w-4" />
-                    Reprovar Todos
-                  </Button>
-                </>
-              )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 rounded-xl"
-              onClick={() => downloadAllAsZip(sub)}
-            >
-              <Archive className="h-4 w-4" />
-              Baixar Todos em ZIP
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 rounded-xl text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-              onClick={async () => {
-                const url = `${window.location.origin}/enviar-documentacao?token=${sub.token.token}`;
-                await navigator.clipboard.writeText(url);
-                toast({
-                  title: "Link copiado! 📋",
-                  description: "Link da página de envio copiado para a área de transferência.",
-                });
-              }}
-            >
-              <Link2 className="h-4 w-4" />
-              Copiar Link Envio
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 rounded-xl text-violet-600 border-violet-200 hover:bg-violet-50 hover:text-violet-700"
-              onClick={() => {
-                const now = new Date();
-                const dateStr = now.toLocaleDateString("pt-BR");
-                const d = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-                const W = d.internal.pageSize.getWidth();
-                const H = d.internal.pageSize.getHeight();
+              <Button
+                size="sm"
+                className="gap-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold px-4"
+                onClick={() => {
+                  const now = new Date();
+                  const dateStr = now.toLocaleDateString("pt-BR");
+                  const d = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+                  const W = d.internal.pageSize.getWidth();
+                  const H = d.internal.pageSize.getHeight();
 
-                // ── HEADER BAND ────────────────────────────────────
-                // Dark navy background
-                d.setFillColor(15, 23, 42);
-                d.rect(0, 0, W, 38, "F");
-                // Violet accent stripe
-                d.setFillColor(99, 102, 241);
-                d.rect(0, 38, W, 2, "F");
-                // Light gray page body
-                d.setFillColor(248, 250, 252);
-                d.rect(0, 40, W, H - 40, "F");
+                  // ── HEADER BAND ────────────────────────────────────
+                  d.setFillColor(15, 23, 42);
+                  d.rect(0, 0, W, 38, "F");
+                  d.setFillColor(99, 102, 241);
+                  d.rect(0, 38, W, 2, "F");
+                  d.setFillColor(248, 250, 252);
+                  d.rect(0, 40, W, H - 40, "F");
 
-                // Title
-                d.setTextColor(255, 255, 255);
-                d.setFont("helvetica", "bold");
-                d.setFontSize(16);
-                d.text("CHECKLIST DE DOCUMENTAÇÃO", 14, 14);
-
-                // Subtitle tag
-                d.setFillColor(99, 102, 241);
-                d.roundedRect(14, 18, 42, 5.5, 1.5, 1.5, "F");
-                d.setTextColor(255, 255, 255);
-                d.setFont("helvetica", "bold");
-                d.setFontSize(7);
-                d.text("PRONAF — DOCUMENTAÇÃO", 35, 21.9, { align: "center" });
-
-                // Info grid (right side)
-                const infoItems = [
-                  ["PRODUTOR", sub.proposal.producer_name || "—"],
-                  ["CPF", sub.proposal.producer_cpf || "—"],
-                  ["MUNICÍPIO", sub.proposal.municipio || "—"],
-                  ["LINHA DE CRÉDITO", sub.proposal.linha_credito || sub.proposal.credit_program || "—"],
-                ];
-                const col1X = 14;
-                const col2X = W / 2 + 4;
-                infoItems.forEach((item, idx) => {
-                  const col = idx % 2 === 0 ? col1X : col2X;
-                  const row = Math.floor(idx / 2);
-                  const baseY = 26 + row * 7;
-                  d.setFont("helvetica", "bold");
-                  d.setFontSize(6.5);
-                  d.setTextColor(148, 163, 184);
-                  d.text(item[0], col, baseY);
-                  d.setFont("helvetica", "normal");
-                  d.setFontSize(8);
                   d.setTextColor(255, 255, 255);
-                  const maxW = W / 2 - 20;
-                  d.text(item[1], col, baseY + 4, { maxWidth: maxW });
-                });
-
-                // ── BUILD GED MAP from files (user-assigned) ──────
-                // Per document_type: pick latest file with a ged_id (prefer approved)
-                const gedMap = new Map<string, string>(); // document_type -> ged_id
-                const statusMap = new Map<string, string>(); // document_type -> best status
-                const dispensadosSet = new Set<string>(); // document_type -> is dispensado
-
-                sub.files.forEach((f) => {
-                  const ex = statusMap.get(f.document_type);
-                  if (f.file_path === "dispensado") {
-                    dispensadosSet.add(f.document_type);
-                  }
-                  
-                  // Track best status
-                  if (!ex) {
-                    statusMap.set(f.document_type, f.status);
-                    if (f.ged_id) gedMap.set(f.document_type, f.ged_id);
-                  } else if (f.status === "aprovado") {
-                    statusMap.set(f.document_type, "aprovado");
-                    if (f.ged_id) gedMap.set(f.document_type, f.ged_id);
-                  } else if (f.status === "pendente" && ex !== "aprovado") {
-                    statusMap.set(f.document_type, "pendente");
-                    if (f.ged_id) gedMap.set(f.document_type, f.ged_id);
-                  } else if (!gedMap.has(f.document_type) && f.ged_id) {
-                    gedMap.set(f.document_type, f.ged_id);
-                  }
-                });
-
-                // Socio-environmental consolidation configuration
-                const socioAmbientalKeys = [
-                  "declaracao_suporte_hidrico",
-                  "autorizacao_desmatamento_queima",
-                  "declaracao_regularidade_ambiental",
-                  "declaracao_recomposicao_reserva_car",
-                  "declaracao_nao_desmatamento",
-                  "declaracao_anexo_128"
-                ];
-
-                // Determine consolidated Socio-Environmental values
-                let consolidatedStatus: string | null = null;
-                let consolidatedGedId = "—";
-                let allSocioAmbientalDispensados = true;
-                let hasSocioAmbientalFiles = false;
-
-                // Find any GED ID assigned to these files
-                for (const key of socioAmbientalKeys) {
-                  const filesForKey = sub.files.filter(f => f.document_type === key);
-                  if (filesForKey.length > 0) {
-                    hasSocioAmbientalFiles = true;
-                    // Check if any is not dispensado
-                    const nonDispensado = filesForKey.find(f => f.file_path !== "dispensado");
-                    if (nonDispensado) {
-                      allSocioAmbientalDispensados = false;
-                    }
-                    // Extract ged_id if exists
-                    const withGed = filesForKey.find(f => f.ged_id);
-                    if (withGed && withGed.ged_id) {
-                      consolidatedGedId = withGed.ged_id;
-                    }
-                  }
-                }
-
-                // Compute consolidated status
-                if (hasSocioAmbientalFiles) {
-                  if (allSocioAmbientalDispensados) {
-                    consolidatedStatus = "dispensado";
-                  } else {
-                    const socioStatuses = sub.files
-                      .filter(f => socioAmbientalKeys.includes(f.document_type) && f.file_path !== "dispensado")
-                      .map(f => f.status);
-                    
-                    if (socioStatuses.includes("aprovado")) {
-                      consolidatedStatus = "aprovado";
-                    } else if (socioStatuses.includes("pendente")) {
-                      consolidatedStatus = "pendente";
-                    } else if (socioStatuses.includes("reprovado")) {
-                      consolidatedStatus = "reprovado";
-                    } else {
-                      consolidatedStatus = "pendente";
-                    }
-                  }
-                } else {
-                  consolidatedStatus = null;
-                }
-
-                // Filter DOCUMENTATION_REQUIRED to omit socio-environmental but inject "CERT. SOCIO AMBIENTAL .ZIP"
-                const pdfDocs: { key: string; label: string; isConsolidated?: boolean }[] = [];
-                let addedConsolidated = false;
-
-                DOCUMENTATION_REQUIRED.forEach((doc) => {
-                  if (socioAmbientalKeys.includes(doc.key)) {
-                    if (!addedConsolidated) {
-                      pdfDocs.push({
-                        key: "cert_socio_ambiental_zip",
-                        label: "CERT. SOCIO AMBIENTAL .ZIP",
-                        isConsolidated: true
-                      });
-                      addedConsolidated = true;
-                    }
-                  } else {
-                    pdfDocs.push(doc);
-                  }
-                });
-
-                // Counts based on pdfDocs (out of 25 items total)
-                let cEntregue = 0, cAguardando = 0, cReprovado = 0, cPendente = 0, cDispensado = 0;
-                pdfDocs.forEach((doc) => {
-                  if (doc.isConsolidated) {
-                    if (consolidatedStatus === "dispensado") cDispensado++;
-                    else if (consolidatedStatus === "aprovado") cEntregue++;
-                    else if (consolidatedStatus === "pendente") cAguardando++;
-                    else if (consolidatedStatus === "reprovado") cReprovado++;
-                    else cPendente++;
-                  } else {
-                    if (dispensadosSet.has(doc.key)) {
-                      cDispensado++;
-                    } else {
-                      const st = statusMap.get(doc.key);
-                      if (st === "aprovado") cEntregue++;
-                      else if (st === "pendente") cAguardando++;
-                      else if (st === "reprovado") cReprovado++;
-                      else cPendente++;
-                    }
-                  }
-                });
-
-                // ── KPI SUMMARY ROW ───────────────────────────────
-                const kpiY = 44;
-                const kpiH = 14;
-                const kpiW = (W - 28 - 12) / 5; // Updated for 5 states
-                const kpis = [
-                  { label: "ENTREGUE", val: cEntregue, fill: [16, 185, 129] as [number, number, number] },
-                  { label: "DISPENSADO", val: cDispensado, fill: [148, 163, 184] as [number, number, number] },
-                  { label: "AGUARD. APROV.", val: cAguardando, fill: [245, 158, 11] as [number, number, number] },
-                  { label: "REPROVADO", val: cReprovado, fill: [239, 68, 68] as [number, number, number] },
-                  { label: "PENDENTE", val: cPendente, fill: [100, 116, 139] as [number, number, number] },
-                ];
-                kpis.forEach((k, i) => {
-                  const x = 14 + i * (kpiW + 3);
-                  d.setFillColor(255, 255, 255);
-                  d.roundedRect(x, kpiY, kpiW, kpiH, 2, 2, "F");
-                  d.setFillColor(...k.fill);
-                  d.roundedRect(x, kpiY, 2.5, kpiH, 1, 1, "F");
                   d.setFont("helvetica", "bold");
-                  d.setFontSize(11);
-                  d.setTextColor(...k.fill);
-                  d.text(String(k.val), x + 5, kpiY + 8.5);
-                  d.setFont("helvetica", "normal");
-                  d.setFontSize(5.5);
-                  d.setTextColor(71, 85, 105);
-                  d.text(k.label, x + 5, kpiY + 12.5);
-                });
+                  d.setFontSize(16);
+                  d.text("CHECKLIST DE DOCUMENTAÇÃO", 14, 14);
 
-                // ── TABLE ─────────────────────────────────────────
-                const tableBody = pdfDocs.map((doc, i) => {
-                  let gedId = "—";
-                  let statusLabel = "PENDENTE";
+                  d.setFillColor(99, 102, 241);
+                  d.roundedRect(14, 18, 42, 5.5, 1.5, 1.5, "F");
+                  d.setTextColor(255, 255, 255);
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(7);
+                  d.text("PRONAF — DOCUMENTAÇÃO", 35, 21.9, { align: "center" });
 
-                  if (doc.isConsolidated) {
-                    gedId = consolidatedGedId;
-                    if (consolidatedStatus === "dispensado") statusLabel = "DISPENSADO";
-                    else if (consolidatedStatus === "aprovado") statusLabel = "ENTREGUE";
-                    else if (consolidatedStatus === "pendente") statusLabel = "AGUARD. APROV.";
-                    else if (consolidatedStatus === "reprovado") statusLabel = "REPROVADO";
-                  } else {
-                    const isDispensado = dispensadosSet.has(doc.key);
-                    const st = statusMap.get(doc.key);
-
-                    if (isDispensado) {
-                      statusLabel = "DISPENSADO";
-                    } else {
-                      gedId = gedMap.get(doc.key) || "—";
-                      if (st === "aprovado") statusLabel = "ENTREGUE";
-                      else if (st === "pendente") statusLabel = "AGUARD. APROV.";
-                      else if (st === "reprovado") statusLabel = "REPROVADO";
-                    }
-                  }
-
-                  return [i + 1, gedId, doc.label, statusLabel];
-                });
-
-                // Status color map
-                const STATUS_COLORS: Record<string, [number, number, number]> = {
-                  "ENTREGUE": [16, 185, 129],
-                  "DISPENSADO": [100, 116, 139],
-                  "AGUARD. APROV.": [245, 158, 11],
-                  "REPROVADO": [239, 68, 68],
-                  "PENDENTE": [100, 116, 139],
-                };
-
-                autoTable(d, {
-                  startY: kpiY + kpiH + 4,
-                  head: [["#", "ID-GED", "DOCUMENTO", "STATUS"]],
-                  body: tableBody,
-                  theme: "plain",
-                  headStyles: {
-                    fillColor: [30, 41, 59],
-                    textColor: [255, 255, 255],
-                    fontSize: 7.5,
-                    fontStyle: "bold",
-                    halign: "center",
-                    cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
-                  },
-                  styles: {
-                    fontSize: 7.5,
-                    cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
-                    valign: "middle",
-                    textColor: [30, 41, 59],
-                    lineColor: [226, 232, 240],
-                    lineWidth: 0.3,
-                  },
-                  columnStyles: {
-                    0: { halign: "center", cellWidth: 9 },
-                    1: { halign: "center", cellWidth: 26, fontStyle: "bold", textColor: [99, 102, 241] },
-                    2: { cellWidth: 115 },
-                    3: { halign: "center", cellWidth: 38, fontStyle: "bold" },
-                  },
-                  alternateRowStyles: { fillColor: [241, 245, 249] },
-                  willDrawCell: (data: any) => {
-                    if (data.section === "body" && data.column.index === 3) {
-                      const status = tableBody[data.row.index]?.[3] as string;
-                      const color = STATUS_COLORS[status] || [100, 116, 139];
-                      data.cell.styles.textColor = color;
-                    }
-                  },
-                  didDrawPage: (hookData: any) => {
-                    // Footer on each page
-                    const pageNum = (d as any).internal.getCurrentPageInfo().pageNumber;
-                    const total = (d as any).internal.getNumberOfPages();
-                    d.setFillColor(30, 41, 59);
-                    d.rect(0, H - 9, W, 9, "F");
-                    d.setFont("helvetica", "normal");
+                  const infoItems = [
+                    ["PRODUTOR", sub.proposal.producer_name || "—"],
+                    ["CPF", sub.proposal.producer_cpf || "—"],
+                    ["MUNICÍPIO", sub.proposal.municipio || "—"],
+                    ["LINHA DE CRÉDITO", sub.proposal.linha_credito || sub.proposal.credit_program || "—"],
+                  ];
+                  const col1X = 14;
+                  const col2X = W / 2 + 4;
+                  infoItems.forEach((item, idx) => {
+                    const col = idx % 2 === 0 ? col1X : col2X;
+                    const row = Math.floor(idx / 2);
+                    const baseY = 26 + row * 7;
+                    d.setFont("helvetica", "bold");
                     d.setFontSize(6.5);
                     d.setTextColor(148, 163, 184);
-                    d.text(`Gerado em ${dateStr}  ·  Proposta: ${sub.proposal.producer_name}`, 14, H - 3.5);
-                    d.text(`Página ${pageNum} de ${total}`, W - 14, H - 3.5, { align: "right" });
-                  },
-                });
+                    d.text(item[0], col, baseY);
+                    d.setFont("helvetica", "normal");
+                    d.setFontSize(8);
+                    d.setTextColor(255, 255, 255);
+                    const maxW = W / 2 - 20;
+                    d.text(item[1], col, baseY + 4, { maxWidth: maxW });
+                  });
 
-                const safeName = (sub.proposal.producer_name || "Produtor")
-                  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                  .replace(/\s+/g, "_").toUpperCase();
-                d.save(`Checklist_${safeName}_${now.toISOString().slice(0, 10)}.pdf`);
-              }}
-            >
-              <ClipboardCheck className="h-4 w-4" />
-              Gerar Checklist
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 rounded-xl text-amber-700 border-amber-200 hover:bg-amber-50"
-              onClick={() => setRevertDialogOpen(true)}
-            >
-              <Undo2 className="h-4 w-4" />
-              Reverter Status
-            </Button>
-            <Button
-              size="sm"
-              className="gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
-              disabled={!allApproved}
-              onClick={handleApproveProposal}
-            >
-              <ShieldCheck className="h-4 w-4" />
-              Aprovar Proposta
-            </Button>
+                  const gedMap = new Map<string, string>();
+                  const statusMap = new Map<string, string>();
+                  const dispensadosSet = new Set<string>();
+
+                  sub.files.forEach((f) => {
+                    const ex = statusMap.get(f.document_type);
+                    if (f.file_path === "dispensado") {
+                      dispensadosSet.add(f.document_type);
+                    }
+                    
+                    if (!ex) {
+                      statusMap.set(f.document_type, f.status);
+                      if (f.ged_id) gedMap.set(f.document_type, f.ged_id);
+                    } else if (f.status === "aprovado") {
+                      statusMap.set(f.document_type, "aprovado");
+                      if (f.ged_id) gedMap.set(f.document_type, f.ged_id);
+                    } else if (f.status === "pendente" && ex !== "aprovado") {
+                      statusMap.set(f.document_type, "pendente");
+                      if (f.ged_id) gedMap.set(f.document_type, f.ged_id);
+                    } else if (!gedMap.has(f.document_type) && f.ged_id) {
+                      gedMap.set(f.document_type, f.ged_id);
+                    }
+                  });
+
+                  const socioAmbientalKeys = [
+                    "declaracao_suporte_hidrico",
+                    "autorizacao_desmatamento_queima",
+                    "declaracao_regularidade_ambiental",
+                    "declaracao_recomposicao_reserva_car",
+                    "declaracao_nao_desmatamento",
+                    "declaracao_anexo_128"
+                  ];
+
+                  let consolidatedStatus: string | null = null;
+                  let consolidatedGedId = "—";
+                  let allSocioAmbientalDispensados = true;
+                  let hasSocioAmbientalFiles = false;
+
+                  for (const key of socioAmbientalKeys) {
+                    const filesForKey = sub.files.filter(f => f.document_type === key);
+                    if (filesForKey.length > 0) {
+                      hasSocioAmbientalFiles = true;
+                      const nonDispensado = filesForKey.find(f => f.file_path !== "dispensado");
+                      if (nonDispensado) {
+                        allSocioAmbientalDispensados = false;
+                      }
+                      const withGed = filesForKey.find(f => f.ged_id);
+                      if (withGed && withGed.ged_id) {
+                        consolidatedGedId = withGed.ged_id;
+                      }
+                    }
+                  }
+
+                  if (hasSocioAmbientalFiles) {
+                    if (allSocioAmbientalDispensados) {
+                      consolidatedStatus = "dispensado";
+                    } else {
+                      const socioStatuses = sub.files
+                        .filter(f => socioAmbientalKeys.includes(f.document_type) && f.file_path !== "dispensado")
+                        .map(f => f.status);
+                      
+                      if (socioStatuses.includes("aprovado")) {
+                        consolidatedStatus = "aprovado";
+                      } else if (socioStatuses.includes("pendente")) {
+                        consolidatedStatus = "pendente";
+                      } else if (socioStatuses.includes("reprovado")) {
+                        consolidatedStatus = "reprovado";
+                      } else {
+                        consolidatedStatus = "pendente";
+                      }
+                    }
+                  } else {
+                    consolidatedStatus = null;
+                  }
+
+                  const pdfDocs: { key: string; label: string; isConsolidated?: boolean }[] = [];
+                  let addedConsolidated = false;
+
+                  DOCUMENTATION_REQUIRED.forEach((doc) => {
+                    if (socioAmbientalKeys.includes(doc.key)) {
+                      if (!addedConsolidated) {
+                        pdfDocs.push({
+                          key: "cert_socio_ambiental_zip",
+                          label: "CERT. SOCIO AMBIENTAL .ZIP",
+                          isConsolidated: true
+                        });
+                        addedConsolidated = true;
+                      }
+                    } else {
+                      pdfDocs.push(doc);
+                    }
+                  });
+
+                  let cEntregue = 0, cAguardando = 0, cReprovado = 0, cPendente = 0, cDispensado = 0;
+                  pdfDocs.forEach((doc) => {
+                    if (doc.isConsolidated) {
+                      if (consolidatedStatus === "dispensado") cDispensado++;
+                      else if (consolidatedStatus === "aprovado") cEntregue++;
+                      else if (consolidatedStatus === "pendente") cAguardando++;
+                      else if (consolidatedStatus === "reprovado") cReprovado++;
+                      else cPendente++;
+                    } else {
+                      if (dispensadosSet.has(doc.key)) {
+                        cDispensado++;
+                      } else {
+                        const st = statusMap.get(doc.key);
+                        if (st === "aprovado") cEntregue++;
+                        else if (st === "pendente") cAguardando++;
+                        else if (st === "reprovado") cReprovado++;
+                        else cPendente++;
+                      }
+                    }
+                  });
+
+                  const kpiY = 44;
+                  const kpiH = 14;
+                  const kpiW = (W - 28 - 12) / 5;
+                  const kpis = [
+                    { label: "ENTREGUE", val: cEntregue, fill: [16, 185, 129] as [number, number, number] },
+                    { label: "DISPENSADO", val: cDispensado, fill: [148, 163, 184] as [number, number, number] },
+                    { label: "AGUARD. APROV.", val: cAguardando, fill: [245, 158, 11] as [number, number, number] },
+                    { label: "REPROVADO", val: cReprovado, fill: [239, 68, 68] as [number, number, number] },
+                    { label: "PENDENTE", val: cPendente, fill: [100, 116, 139] as [number, number, number] },
+                  ];
+                  kpis.forEach((k, i) => {
+                    const x = 14 + i * (kpiW + 3);
+                    d.setFillColor(255, 255, 255);
+                    d.roundedRect(x, kpiY, kpiW, kpiH, 2, 2, "F");
+                    d.setFillColor(...k.fill);
+                    d.roundedRect(x, kpiY, 2.5, kpiH, 1, 1, "F");
+                    d.setFont("helvetica", "bold");
+                    d.setFontSize(11);
+                    d.setTextColor(...k.fill);
+                    d.text(String(k.val), x + 5, kpiY + 8.5);
+                    d.setFont("helvetica", "normal");
+                    d.setFontSize(5.5);
+                    d.setTextColor(71, 85, 105);
+                    d.text(k.label, x + 5, kpiY + 12.5);
+                  });
+
+                  const tableBody = pdfDocs.map((doc, i) => {
+                    let gedId = "—";
+                    let statusLabel = "PENDENTE";
+
+                    if (doc.isConsolidated) {
+                      gedId = consolidatedGedId;
+                      if (consolidatedStatus === "dispensado") statusLabel = "DISPENSADO";
+                      else if (consolidatedStatus === "aprovado") statusLabel = "ENTREGUE";
+                      else if (consolidatedStatus === "pendente") statusLabel = "AGUARD. APROV.";
+                      else if (consolidatedStatus === "reprovado") statusLabel = "REPROVADO";
+                    } else {
+                      const isDispensado = dispensadosSet.has(doc.key);
+                      const st = statusMap.get(doc.key);
+
+                      if (isDispensado) {
+                        statusLabel = "DISPENSADO";
+                      } else {
+                        gedId = gedMap.get(doc.key) || "—";
+                        if (st === "aprovado") statusLabel = "ENTREGUE";
+                        else if (st === "pendente") statusLabel = "AGUARD. APROV.";
+                        else if (st === "reprovado") statusLabel = "REPROVADO";
+                      }
+                    }
+
+                    return [i + 1, gedId, doc.label, statusLabel];
+                  });
+
+                  const STATUS_COLORS: Record<string, [number, number, number]> = {
+                    "ENTREGUE": [16, 185, 129],
+                    "DISPENSADO": [100, 116, 139],
+                    "AGUARD. APROV.": [245, 158, 11],
+                    "REPROVADO": [239, 68, 68],
+                    "PENDENTE": [100, 116, 139],
+                  };
+
+                  autoTable(d, {
+                    startY: kpiY + kpiH + 4,
+                    head: [["#", "ID-GED", "DOCUMENTO", "STATUS"]],
+                    body: tableBody,
+                    theme: "plain",
+                    headStyles: {
+                      fillColor: [30, 41, 59],
+                      textColor: [255, 255, 255],
+                      fontSize: 7.5,
+                      fontStyle: "bold",
+                      halign: "center",
+                      cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+                    },
+                    styles: {
+                      fontSize: 7.5,
+                      cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+                      valign: "middle",
+                      textColor: [30, 41, 59],
+                      lineColor: [226, 232, 240],
+                      lineWidth: 0.3,
+                    },
+                    columnStyles: {
+                      0: { halign: "center", cellWidth: 9 },
+                      1: { halign: "center", cellWidth: 26, fontStyle: "bold", textColor: [99, 102, 241] },
+                      2: { cellWidth: 115 },
+                      3: { halign: "center", cellWidth: 38, fontStyle: "bold" },
+                    },
+                    alternateRowStyles: { fillColor: [241, 245, 249] },
+                    willDrawCell: (data: any) => {
+                      if (data.section === "body" && data.column.index === 3) {
+                        const status = tableBody[data.row.index]?.[3] as string;
+                        const color = STATUS_COLORS[status] || [100, 116, 139];
+                        data.cell.styles.textColor = color;
+                      }
+                    },
+                    didDrawPage: (hookData: any) => {
+                      const pageNum = (d as any).internal.getCurrentPageInfo().pageNumber;
+                      const total = (d as any).internal.getNumberOfPages();
+                      d.setFillColor(30, 41, 59);
+                      d.rect(0, H - 9, W, 9, "F");
+                      d.setFont("helvetica", "normal");
+                      d.setFontSize(6.5);
+                      d.setTextColor(148, 163, 184);
+                      d.text(`Gerado em ${dateStr}  ·  Proposta: ${sub.proposal.producer_name}`, 14, H - 3.5);
+                      d.text(`Página ${pageNum} de ${total}`, W - 14, H - 3.5, { align: "right" });
+                    },
+                  });
+
+                  const safeName = (sub.proposal.producer_name || "Produtor")
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    .replace(/\s+/g, "_").toUpperCase();
+                  d.save(`Checklist_${safeName}_${now.toISOString().slice(0, 10)}.pdf`);
+                }}
+              >
+                <ClipboardCheck className="h-4 w-4" />
+                Gerar Checklist
+              </Button>
+
+              <Button
+                size="sm"
+                className="gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4"
+                disabled={!allApproved}
+                onClick={handleApproveProposal}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Aprovar Proposta
+              </Button>
+
+              <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-xl border-border text-foreground"
+                onClick={async () => {
+                  const url = `${window.location.origin}/enviar-documentacao?token=${sub.token.token}`;
+                  await navigator.clipboard.writeText(url);
+                  toast({
+                    title: "Link copiado! 📋",
+                    description: "Link da página de envio copiado para a área de transferência.",
+                  });
+                }}
+              >
+                <Link2 className="h-4 w-4" />
+                Link Envio
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-xl border-border text-foreground"
+                onClick={() => downloadAllAsZip(sub)}
+              >
+                <Archive className="h-4 w-4" />
+                ZIP
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-xl text-amber-700 border-amber-200 hover:bg-amber-50"
+                onClick={() => setRevertDialogOpen(true)}
+              >
+                <Undo2 className="h-4 w-4" />
+                Reverter
+              </Button>
+            </div>
           </div>
-        </div></div>
+
+          {/* Sub-bar for batch decisions - closer to documents grid */}
+          {sub.files.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-muted/40 rounded-2xl p-3 border border-border/40 text-xs gap-2">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">
+                Decisões em Massa:
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 h-7 text-xs"
+                  onClick={handleApproveAllDocs}
+                >
+                  <ThumbsUp className="h-3.5 w-3.5" />
+                  Aprovar Todos os Documentos
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 rounded-lg text-red-600 hover:bg-red-50 h-7 text-xs"
+                  onClick={() => {
+                    setBulkRejectReason("");
+                    setBulkRejectDialogOpen(true);
+                  }}
+                >
+                  <ThumbsDown className="h-3.5 w-3.5" />
+                  Reprovar Todos os Documentos
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* ── Progress Card ──────────────────────────────────── */}
         <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm">
@@ -1299,8 +1302,8 @@ export default function Documentation() {
 
                           {/* ── GED ID field or Dispensation Message ──────────────────────────── */}
                           {file.file_path === "dispensado" ? (
-                            <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/40 rounded-xl p-2.5">
-                              <span className="text-[10px] font-extrabold text-orange-600 dark:text-orange-400 uppercase tracking-wide">
+                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5">
+                              <span className="text-[9.5px] font-bold text-slate-600 dark:text-slate-400">
                                 DOC. DISPENSADO NÃO POSSUI / NÃO NECESSÁRIO
                               </span>
                             </div>
