@@ -169,6 +169,21 @@ function parseFlexibleDate(dateStr: string | null | undefined): number {
   return isNaN(fallback) ? 0 : fallback;
 }
 
+function formatToBRDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "";
+  const clean = dateStr.trim();
+  if (clean.includes('-')) {
+    const parts = clean.split(' ')[0].split('-');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const month = parts[1];
+      const day = parts[2];
+      return `${day}/${month}/${year}`;
+    }
+  }
+  return clean;
+}
+
 function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null {
   const name = cleanCSV(getField(row, ["CLIENTES", "CLIENTE", "NOME", "producer_name"]));
   if (!name || /^CLIENTES?$/i.test(name)) return null;
@@ -680,7 +695,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
       notes: proposal.notes,
       projetista: proposal.projetista,
       central: proposal.central,
-      central_date: proposal.central_date
+      central_date: formatToBRDate(proposal.central_date)
     });
     setIsEditDialogOpen(true);
   };
@@ -2643,7 +2658,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
                       <span className="text-xs text-slate-500">Data Entrada Central</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.central_date || '---'}</span>
+                      <span className="text-xs font-bold text-slate-700">{formatToBRDate(viewingDetailProposal?.central_date) || '---'}</span>
                     </div>
                   </div>
                 </div>

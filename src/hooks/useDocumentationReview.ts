@@ -753,7 +753,7 @@ export function useDocumentationReview() {
 
   const sendToCentral = useCallback(async (stockProposalId: string) => {
     try {
-      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+      const today = new Date().toLocaleDateString('pt-BR'); // DD/MM/YYYY
       const { error } = await supabase
         .from("stock_proposals")
         .update({
