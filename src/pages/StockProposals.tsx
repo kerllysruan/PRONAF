@@ -110,7 +110,7 @@ const PROGRAMAS_CREDITO = [
 
 const STATUS_OPTIONS = [
   "AUTORIZADO ENVIO CENTRAL",
-  "CENTRAL",
+  "ENVIADO PARA CENTRAL",
   "PENDÊNCIA CENTRAL",
   "CONTRATADO",
   "CONCLUÍDO",
@@ -166,7 +166,7 @@ function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null
   let derivedStatus = rawStatus ? rawStatus.trim().toUpperCase() : "";
 
   // Normalização Estrita (Evitar duplicidade no Dashboard)
-  if (derivedStatus === 'ENVIADO CENTRAL') derivedStatus = 'CENTRAL';
+  if (derivedStatus === 'ENVIADO CENTRAL' || derivedStatus === 'CENTRAL' || derivedStatus === 'ENVIADO PARA CENTRAL') derivedStatus = 'ENVIADO PARA CENTRAL';
   if (derivedStatus === 'AUTORIZADO ENVIO PARA CENTRAL') derivedStatus = 'AUTORIZADO ENVIO CENTRAL';
 
   const normSerasa = rawSerasa ? rawSerasa.trim().toUpperCase() : "";
@@ -452,7 +452,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
 
   const centralChartData = useMemo(() => {
     const map = new Map<string, { count: number; value: number }>();
-    filtered.filter(p => (p.status || '').toUpperCase() === 'CENTRAL').forEach(p => {
+    filtered.filter(p => (p.status || '').toUpperCase() === 'ENVIADO PARA CENTRAL').forEach(p => {
       const central = p.central || "Sem Central";
       if (!map.has(central)) {
         map.set(central, { count: 0, value: 0 });
@@ -668,7 +668,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
   const getStatusStyle = (status: string) => {
     const s = (status || '').toLowerCase().trim();
     if (s.includes('autorizado')) return "bg-blue-100 text-blue-700 border-blue-200";
-    if (s === 'central') return "bg-indigo-100 text-indigo-700 border-indigo-200";
+    if (s === 'central' || s === 'enviado para central') return "bg-indigo-100 text-indigo-700 border-indigo-200";
     if (s.includes('pendência')) return "bg-amber-100 text-amber-700 border-amber-200";
     if (s.includes('contratado')) return "bg-purple-100 text-purple-700 border-purple-200";
     if (s === 'concluído') return "bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm";
