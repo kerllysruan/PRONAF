@@ -720,25 +720,25 @@ export default function Documentation() {
     return (
       <div className="animate-fade-in max-w-[1600px] mx-auto space-y-6 p-4 md:p-6">
         {/* ── Header Premium Clean Panel ─────────────────────────────────── */}
-        <div className="bg-card border border-border/60 rounded-3xl p-6 shadow-sm space-y-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex items-center gap-4">
+        <div className="bg-card border border-border/60 rounded-2xl p-4 shadow-sm space-y-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="icon"
-                className="rounded-2xl border border-border/80 text-foreground hover:bg-muted shrink-0"
+                className="rounded-xl border border-border/80 text-foreground hover:bg-muted shrink-0 h-9 w-9"
                 onClick={() => setSelectedSubmission(null)}
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-4.5 w-4.5" />
               </Button>
-              <div>
+              <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="font-heading font-extrabold text-xl md:text-2xl text-slate-900 dark:text-slate-50 leading-tight">
+                  <h1 className="font-sans font-bold text-base md:text-lg text-slate-900 dark:text-slate-50 leading-tight">
                     {sub.proposal.producer_name}
                   </h1>
                   <Badge
                     variant="outline"
-                    className={`text-xs px-2.5 py-0.5 rounded-full ${
+                    className={`text-[10px] px-2 py-0.5 font-semibold rounded-md ${
                       allApproved
                         ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                         : sub.rejectedCount > 0
@@ -753,26 +753,31 @@ export default function Documentation() {
                       : "Em Análise"}
                   </Badge>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1.5 font-medium">
-                  <span className="flex items-center gap-1">
-                    <strong>CPF:</strong> {sub.proposal.producer_cpf || "—"}
-                  </span>
-                  <span className="text-muted-foreground/40">•</span>
-                  <span className="flex items-center gap-1">
-                    <strong>Município:</strong> {sub.proposal.municipio || "—"}
-                  </span>
-                  <span className="text-muted-foreground/40">•</span>
-                  <span className="flex items-center gap-1">
-                    <strong>Projetista:</strong> {sub.proposal.projetista || "—"}
-                  </span>
-                  <span className="text-muted-foreground/40">•</span>
-                  <span className="flex items-center gap-1">
-                    <strong>Programa:</strong> {sub.proposal.credit_program || sub.proposal.linha_credito || "—"}
-                  </span>
-                  <span className="text-muted-foreground/40">•</span>
-                  <span className="flex items-center gap-1 text-slate-900 dark:text-slate-200">
-                    <strong>Valor:</strong> {sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
-                  </span>
+                
+                {/* Meta Grid clean & highly readable */}
+                <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground font-sans">
+                  <div>
+                    <span className="text-muted-foreground/70">CPF:</span>{" "}
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{sub.proposal.producer_cpf || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground/70">Município:</span>{" "}
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{sub.proposal.municipio || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground/70">Projetista:</span>{" "}
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{sub.proposal.projetista || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground/70">Programa:</span>{" "}
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{sub.proposal.credit_program || sub.proposal.linha_credito || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground/70">Valor:</span>{" "}
+                    <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                      {sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
