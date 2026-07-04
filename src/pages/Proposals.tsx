@@ -1045,23 +1045,20 @@ export default function Proposals() {
 
       {/* Dialog de Detalhes da Proposta Ativa (Configuração Gráfica Premium) */}
       <Dialog open={!!viewingProposal} onOpenChange={() => setViewingProposal(null)}>
-        <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border-0 shadow-2xl">
-          <div className="bg-primary p-6 text-primary-foreground relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-              <Plus className="h-32 w-32 -mr-8 -mt-8" />
-            </div>
+        <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border border-border/50 shadow-2xl">
+          <div className="bg-card p-5 border-b border-border/40 text-foreground relative overflow-hidden">
             <div className="flex items-center gap-4 relative z-10">
-              <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
-                <ClipboardList className="h-7 w-7 text-white" />
+              <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/20">
+                <ClipboardList className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <h2 className="text-xl font-black">{viewingProposal?.producer_name}</h2>
-                <div className="flex items-center gap-3 mt-1">
-                  <span className="text-xs font-medium text-primary-foreground/80 flex items-center gap-1">
-                    <User className="h-3 w-3" /> {viewingProposal?.producer_cpf || '---'}
+                <h2 className="text-base md:text-lg font-bold leading-tight">{viewingProposal?.producer_name}</h2>
+                <div className="flex flex-wrap items-center gap-2.5 mt-1 text-xs text-muted-foreground font-medium">
+                  <span className="flex items-center gap-1">
+                    <User className="h-3.5 w-3.5 text-muted-foreground/75" /> {viewingProposal?.producer_cpf || '---'}
                   </span>
-                  <span className="h-1 w-1 rounded-full bg-primary-foreground/30"></span>
-                  <Badge className={`rounded-full px-2 py-0.5 text-[9px] font-black border-0 shadow-sm ${STATUS_COLORS[viewingProposal?.status as ProposalStatus]}`}>
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
+                  <Badge variant="outline" className={`text-[10px] px-2 py-0.5 rounded-md font-semibold border-0 shadow-sm ${STATUS_COLORS[viewingProposal?.status as ProposalStatus]}`}>
                     {STATUS_LABELS[viewingProposal?.status as ProposalStatus]?.toUpperCase()}
                   </Badge>
                 </div>
@@ -1069,17 +1066,17 @@ export default function Proposals() {
             </div>
           </div>
 
-          <div className="p-8 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-5">
                 <div>
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
                     <Landmark className="h-3.5 w-3.5" /> Informações Financeiras
                   </h4>
                   <div className="space-y-4">
-                    <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10">
-                      <p className="text-[10px] font-bold text-primary uppercase mb-1">Valor Solicitado</p>
-                      <p className="text-xl font-black text-primary">
+                    <div className="bg-muted/40 p-4 rounded-xl border border-border/40">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Valor Solicitado</p>
+                      <p className="text-xl font-bold text-slate-900 dark:text-slate-50">
                         {viewingProposal?.requested_value ? formatCurrency(Number(viewingProposal.requested_value)) : '---'}
                       </p>
                     </div>
