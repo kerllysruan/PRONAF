@@ -2327,18 +2327,20 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                                   <Link2 className="h-3.5 w-3.5" />
                                 </Button>
                               )}
-                              <Button
-                                variant="outline" size="icon"
-                                className="h-8 w-8 text-emerald-600 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 hover:text-emerald-700 transition-colors shadow-sm"
-                                title="Marcar como Concluída"
-                                onClick={() => {
-                                  if (confirm('Marcar esta proposta como concluída?')) {
-                                    updateProposal(p.id, { status: "CONCLUÍDO" });
-                                  }
-                                }}
-                              >
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                              </Button>
+                              {(p.status || '').toUpperCase() === "ENVIADO PARA CENTRAL" && (
+                                <Button
+                                  variant="outline" size="icon"
+                                  className="h-8 w-8 text-emerald-600 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 hover:text-emerald-700 transition-colors shadow-sm"
+                                  title="Marcar como Concluída"
+                                  onClick={() => {
+                                    if (confirm('Marcar esta proposta como concluída?')) {
+                                      updateProposal(p.id, { status: "CONCLUÍDO" });
+                                    }
+                                  }}
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                               <Button
                                 variant="outline" size="icon"
                                 className="h-8 w-8 text-slate-400 border-slate-200 hover:text-red-600 hover:bg-red-50 transition-colors shadow-sm"
@@ -2510,18 +2512,20 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                                 LINK DOCUMENTAÇÃO
                               </Button>
                             )}
-                            <Button
-                              variant="outline" size="sm"
-                              className="w-full h-10 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 font-bold text-xs"
-                              onClick={() => {
-                                if (confirm('Marcar esta proposta como concluída?')) {
-                                  updateProposal(p.id, { status: "CONCLUÍDO" });
-                                }
-                              }}
-                            >
-                              <CheckCircle2 className="mr-2 h-4 w-4" />
-                              MARCAR COMO CONCLUÍDA
-                            </Button>
+                            {(p.status || '').toUpperCase() === "ENVIADO PARA CENTRAL" && (
+                              <Button
+                                variant="outline" size="sm"
+                                className="w-full h-10 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 font-bold text-xs"
+                                onClick={() => {
+                                  if (confirm('Marcar esta proposta como concluída?')) {
+                                    updateProposal(p.id, { status: "CONCLUÍDO" });
+                                  }
+                                }}
+                              >
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                MARCAR COMO CONCLUÍDA
+                              </Button>
+                            )}
                             <Button
                               variant="outline" size="sm"
                               className="w-full h-10 text-red-600 border-red-200 hover:bg-red-50 text-xs font-bold"
