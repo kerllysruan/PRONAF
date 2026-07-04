@@ -2451,6 +2451,9 @@ export default function Documentation() {
                       Status Docs
                     </TableHead>
                     <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      Status Proposta
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                       Município
                     </TableHead>
                     <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">
@@ -2504,6 +2507,34 @@ export default function Documentation() {
                             </Badge>
                             <Progress value={pct} className="h-1.5 rounded-full" />
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-blue-50 text-blue-700 border-blue-200"
+                            >
+                              Enviado para Central
+                            </Badge>
+                          ) : !allOk || hasRejects ? (
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] px-2 py-0.5 font-semibold rounded-md ${
+                                hasRejects
+                                  ? "bg-red-50 text-red-700 border-red-200"
+                                  : "bg-amber-50 text-amber-700 border-amber-200"
+                              }`}
+                            >
+                              Aguardando Doc Envio Central
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-emerald-50 text-emerald-700 border-emerald-200"
+                            >
+                              Aguardando Envio Central
+                            </Badge>
+                          )}
                         </TableCell>
                         <TableCell>
                           <p className="text-sm text-muted-foreground">
