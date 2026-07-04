@@ -894,17 +894,101 @@ export default function Documentation() {
                   }
                 });
 
-                // Counts
-                let cEntregue = 0, cAguardando = 0, cReprovado = 0, cPendente = 0, cDispensado = 0;
-                DOCUMENTATION_REQUIRED.forEach((doc) => {
-                  if (dispensadosSet.has(doc.key)) {
-                    cDispensado++;
+                // Socio-environmental consolidation configuration
+                const socioAmbientalKeys = [
+                  "declaracao_suporte_hidrico",
+                  "autorizacao_desmatamento_queima",
+                  "declaracao_regularidade_ambiental",
+                  "declaracao_recomposicao_reserva_car",
+                  "declaracao_nao_desmatamento",
+                  "declaracao_anexo_128"
+                ];
+
+                // Determine consolidated Socio-Environmental values
+                let consolidatedStatus: string | null = null;
+                let consolidatedGedId = "—";
+                let allSocioAmbientalDispensados = true;
+                let hasSocioAmbientalFiles = false;
+
+                // Find any GED ID assigned to these files
+                for (const key of socioAmbientalKeys) {
+                  const filesForKey = sub.files.filter(f => f.document_type === key);
+                  if (filesForKey.length > 0) {
+                    hasSocioAmbientalFiles = true;
+                    // Check if any is not dispensado
+                    const nonDispensado = filesForKey.find(f => f.file_path !== "dispensado");
+                    if (nonDispensado) {
+                      allSocioAmbientalDispensados = false;
+                    }
+                    // Extract ged_id if exists
+                    const withGed = filesForKey.find(f => f.ged_id);
+                    if (withGed && withGed.ged_id) {
+                      consolidatedGedId = withGed.ged_id;
+                    }
+                  }
+                }
+
+                // Compute consolidated status
+                if (hasSocioAmbientalFiles) {
+                  if (allSocioAmbientalDispensados) {
+                    consolidatedStatus = "dispensado";
                   } else {
-                    const st = statusMap.get(doc.key);
-                    if (st === "aprovado") cEntregue++;
-                    else if (st === "pendente") cAguardando++;
-                    else if (st === "reprovado") cReprovado++;
+                    const socioStatuses = sub.files
+                      .filter(f => socioAmbientalKeys.includes(f.document_type) && f.file_path !== "dispensado")
+                      .map(f => f.status);
+                    
+                    if (socioStatuses.includes("aprovado")) {
+                      consolidatedStatus = "aprovado";
+                    } else if (socioStatuses.includes("pendente")) {
+                      consolidatedStatus = "pendente";
+                    } else if (socioStatuses.includes("reprovado")) {
+                      consolidatedStatus = "reprovado";
+                    } else {
+                      consolidatedStatus = "pendente";
+                    }
+                  }
+                } else {
+                  consolidatedStatus = null;
+                }
+
+                // Filter DOCUMENTATION_REQUIRED to omit socio-environmental but inject "CERT. SOCIO AMBIENTAL .ZIP"
+                const pdfDocs: { key: string; label: string; isConsolidated?: boolean }[] = [];
+                let addedConsolidated = false;
+
+                DOCUMENTATION_REQUIRED.forEach((doc) => {
+                  if (socioAmbientalKeys.includes(doc.key)) {
+                    if (!addedConsolidated) {
+                      pdfDocs.push({
+                        key: "cert_socio_ambiental_zip",
+                        label: "CERT. SOCIO AMBIENTAL .ZIP",
+                        isConsolidated: true
+                      });
+                      addedConsolidated = true;
+                    }
+                  } else {
+                    pdfDocs.push(doc);
+                  }
+                });
+
+                // Counts based on pdfDocs (out of 25 items total)
+                let cEntregue = 0, cAguardando = 0, cReprovado = 0, cPendente = 0, cDispensado = 0;
+                pdfDocs.forEach((doc) => {
+                  if (doc.isConsolidated) {
+                    if (consolidatedStatus === "dispensado") cDispensado++;
+                    else if (consolidatedStatus === "aprovado") cEntregue++;
+                    else if (consolidatedStatus === "pendente") cAguardando++;
+                    else if (consolidatedStatus === "reprovado") cReprovado++;
                     else cPendente++;
+                  } else {
+                    if (dispensadosSet.has(doc.key)) {
+                      cDispensado++;
+                    } else {
+                      const st = statusMap.get(doc.key);
+                      if (st === "aprovado") cEntregue++;
+                      else if (st === "pendente") cAguardando++;
+                      else if (st === "reprovado") cReprovado++;
+                      else cPendente++;
+                    }
                   }
                 });
 
@@ -936,22 +1020,30 @@ export default function Documentation() {
                 });
 
                 // ── TABLE ─────────────────────────────────────────
-                const tableBody = DOCUMENTATION_REQUIRED.map((doc, i) => {
-                  const isDispensado = dispensadosSet.has(doc.key);
-                  const st = statusMap.get(doc.key);
-                  
+                const tableBody = pdfDocs.map((doc, i) => {
                   let gedId = "—";
                   let statusLabel = "PENDENTE";
-                  
-                  if (isDispensado) {
-                    statusLabel = "DISPENSADO";
+
+                  if (doc.isConsolidated) {
+                    gedId = consolidatedGedId;
+                    if (consolidatedStatus === "dispensado") statusLabel = "DISPENSADO";
+                    else if (consolidatedStatus === "aprovado") statusLabel = "ENTREGUE";
+                    else if (consolidatedStatus === "pendente") statusLabel = "AGUARD. APROV.";
+                    else if (consolidatedStatus === "reprovado") statusLabel = "REPROVADO";
                   } else {
-                    gedId = gedMap.get(doc.key) || "—";
-                    if (st === "aprovado") statusLabel = "ENTREGUE";
-                    else if (st === "pendente") statusLabel = "AGUARD. APROV.";
-                    else if (st === "reprovado") statusLabel = "REPROVADO";
+                    const isDispensado = dispensadosSet.has(doc.key);
+                    const st = statusMap.get(doc.key);
+
+                    if (isDispensado) {
+                      statusLabel = "DISPENSADO";
+                    } else {
+                      gedId = gedMap.get(doc.key) || "—";
+                      if (st === "aprovado") statusLabel = "ENTREGUE";
+                      else if (st === "pendente") statusLabel = "AGUARD. APROV.";
+                      else if (st === "reprovado") statusLabel = "REPROVADO";
+                    }
                   }
-                  
+
                   return [i + 1, gedId, doc.label, statusLabel];
                 });
 
@@ -1153,8 +1245,12 @@ export default function Documentation() {
                       <input
                         type="text"
                         defaultValue={file.ged_id ?? ""}
-                        placeholder="Ex: GED-001"
-                        maxLength={20}
+                        placeholder={
+                          ["declaracao_suporte_hidrico", "autorizacao_desmatamento_queima", "declaracao_regularidade_ambiental", "declaracao_recomposicao_reserva_car", "declaracao_nao_desmatamento", "declaracao_anexo_128"].includes(file.document_type)
+                            ? "INSERIR ID - CERT. SOCIO AMBIENTAL ZIP"
+                            : "Ex: GED-001"
+                        }
+                        maxLength={40}
                         className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-all"
                         onBlur={(e) => {
                           const val = e.target.value.trim();
