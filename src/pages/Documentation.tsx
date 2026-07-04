@@ -871,9 +871,14 @@ export default function Documentation() {
                 // Per document_type: pick latest file with a ged_id (prefer approved)
                 const gedMap = new Map<string, string>(); // document_type -> ged_id
                 const statusMap = new Map<string, string>(); // document_type -> best status
+                const dispensadosSet = new Set<string>(); // document_type -> is dispensado
 
                 sub.files.forEach((f) => {
                   const ex = statusMap.get(f.document_type);
+                  if (f.file_path === "dispensado") {
+                    dispensadosSet.add(f.document_type);
+                  }
+                  
                   // Track best status
                   if (!ex) {
                     statusMap.set(f.document_type, f.status);
@@ -890,21 +895,26 @@ export default function Documentation() {
                 });
 
                 // Counts
-                let cEntregue = 0, cAguardando = 0, cReprovado = 0, cPendente = 0;
+                let cEntregue = 0, cAguardando = 0, cReprovado = 0, cPendente = 0, cDispensado = 0;
                 DOCUMENTATION_REQUIRED.forEach((doc) => {
-                  const st = statusMap.get(doc.key);
-                  if (st === "aprovado") cEntregue++;
-                  else if (st === "pendente") cAguardando++;
-                  else if (st === "reprovado") cReprovado++;
-                  else cPendente++;
+                  if (dispensadosSet.has(doc.key)) {
+                    cDispensado++;
+                  } else {
+                    const st = statusMap.get(doc.key);
+                    if (st === "aprovado") cEntregue++;
+                    else if (st === "pendente") cAguardando++;
+                    else if (st === "reprovado") cReprovado++;
+                    else cPendente++;
+                  }
                 });
 
                 // ── KPI SUMMARY ROW ───────────────────────────────
                 const kpiY = 44;
                 const kpiH = 14;
-                const kpiW = (W - 28 - 9) / 4;
+                const kpiW = (W - 28 - 12) / 5; // Updated for 5 states
                 const kpis = [
                   { label: "ENTREGUE", val: cEntregue, fill: [16, 185, 129] as [number, number, number] },
+                  { label: "DISPENSADO", val: cDispensado, fill: [148, 163, 184] as [number, number, number] },
                   { label: "AGUARD. APROV.", val: cAguardando, fill: [245, 158, 11] as [number, number, number] },
                   { label: "REPROVADO", val: cReprovado, fill: [239, 68, 68] as [number, number, number] },
                   { label: "PENDENTE", val: cPendente, fill: [100, 116, 139] as [number, number, number] },
@@ -916,29 +926,39 @@ export default function Documentation() {
                   d.setFillColor(...k.fill);
                   d.roundedRect(x, kpiY, 2.5, kpiH, 1, 1, "F");
                   d.setFont("helvetica", "bold");
-                  d.setFontSize(12);
+                  d.setFontSize(11);
                   d.setTextColor(...k.fill);
-                  d.text(String(k.val), x + 6, kpiY + 8.5);
+                  d.text(String(k.val), x + 5, kpiY + 8.5);
                   d.setFont("helvetica", "normal");
-                  d.setFontSize(6);
+                  d.setFontSize(5.5);
                   d.setTextColor(71, 85, 105);
-                  d.text(k.label, x + 6, kpiY + 12.5);
+                  d.text(k.label, x + 5, kpiY + 12.5);
                 });
 
                 // ── TABLE ─────────────────────────────────────────
                 const tableBody = DOCUMENTATION_REQUIRED.map((doc, i) => {
+                  const isDispensado = dispensadosSet.has(doc.key);
                   const st = statusMap.get(doc.key);
-                  const gedId = gedMap.get(doc.key) || "—";
+                  
+                  let gedId = "—";
                   let statusLabel = "PENDENTE";
-                  if (st === "aprovado") statusLabel = "ENTREGUE";
-                  else if (st === "pendente") statusLabel = "AGUARD. APROV.";
-                  else if (st === "reprovado") statusLabel = "REPROVADO";
+                  
+                  if (isDispensado) {
+                    statusLabel = "DISPENSADO";
+                  } else {
+                    gedId = gedMap.get(doc.key) || "—";
+                    if (st === "aprovado") statusLabel = "ENTREGUE";
+                    else if (st === "pendente") statusLabel = "AGUARD. APROV.";
+                    else if (st === "reprovado") statusLabel = "REPROVADO";
+                  }
+                  
                   return [i + 1, gedId, doc.label, statusLabel];
                 });
 
                 // Status color map
                 const STATUS_COLORS: Record<string, [number, number, number]> = {
                   "ENTREGUE": [16, 185, 129],
+                  "DISPENSADO": [100, 116, 139],
                   "AGUARD. APROV.": [245, 158, 11],
                   "REPROVADO": [239, 68, 68],
                   "PENDENTE": [100, 116, 139],
@@ -1118,28 +1138,36 @@ export default function Documentation() {
                     {file.file_name}
                   </p>
 
-                  {/* ── GED ID field ──────────────────────────── */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
-                      ID-GED:
-                    </span>
-                    <input
-                      type="text"
-                      defaultValue={file.ged_id ?? ""}
-                      placeholder="Ex: GED-001"
-                      maxLength={20}
-                      className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-all"
-                      onBlur={(e) => {
-                        const val = e.target.value.trim();
-                        if (val !== (file.ged_id ?? "")) {
-                          updateGedId(file.id, val);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                      }}
-                    />
-                  </div>
+                  {/* ── GED ID field or Dispensation Message ──────────────────────────── */}
+                  {file.file_path === "dispensado" ? (
+                    <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5">
+                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                        DOC. DISPENSADO NÃO POSSUI / NÃO NECESSÁRIO
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                        ID-GED:
+                      </span>
+                      <input
+                        type="text"
+                        defaultValue={file.ged_id ?? ""}
+                        placeholder="Ex: GED-001"
+                        maxLength={20}
+                        className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-all"
+                        onBlur={(e) => {
+                          const val = e.target.value.trim();
+                          if (val !== (file.ged_id ?? "")) {
+                            updateGedId(file.id, val);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                        }}
+                      />
+                    </div>
+                  )}
 
                   <Separator className="opacity-50" />
 
