@@ -74,6 +74,7 @@ export default function Documentation() {
     rejectDocument,
     updateGedId,
     approveProposal,
+    sendToCentral,
     revertProposal,
     downloadFile,
     getFileUrl,
@@ -705,6 +706,11 @@ export default function Documentation() {
     await approveProposal(selectedSubmission.token.id, selectedSubmission.proposal.id);
   }, [selectedSubmission, approveProposal]);
 
+  const handleSendToCentral = useCallback(async () => {
+    if (!selectedSubmission) return;
+    await sendToCentral(selectedSubmission.proposal.id);
+  }, [selectedSubmission, sendToCentral]);
+
   const handleApproveAllDocs = useCallback(async () => {
     if (!selectedSubmission) return;
     await approveAllDocuments(selectedSubmission.token.id);
@@ -1178,6 +1184,16 @@ export default function Documentation() {
               >
                 <ShieldCheck className="h-4 w-4" />
                 Aprovar Proposta
+              </Button>
+
+              <Button
+                size="sm"
+                className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-4"
+                disabled={sub.proposal.status === "ENVIADO PARA CENTRAL"}
+                onClick={handleSendToCentral}
+              >
+                <Send className="h-4 w-4" />
+                Confirmar Envio Central
               </Button>
 
               <div className="h-6 w-px bg-border mx-1 hidden sm:block" />

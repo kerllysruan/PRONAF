@@ -751,6 +751,35 @@ export function useDocumentationReview() {
     }
   }, [user, toast, fetchSubmissions]);
 
+  const sendToCentral = useCallback(async (stockProposalId: string) => {
+    try {
+      const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+      const { error } = await supabase
+        .from("stock_proposals")
+        .update({
+          status: "ENVIADO PARA CENTRAL",
+          central_date: today
+        })
+        .eq("id", stockProposalId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Enviado para a Central! 🚀",
+        description: "A proposta foi marcada como enviada para a central nesta data.",
+      });
+
+      await fetchSubmissions(true);
+    } catch (err: any) {
+      console.error("Error sending to central:", err);
+      toast({
+        title: "Erro ao enviar para central",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  }, [toast, fetchSubmissions]);
+
   const refetchAll = useCallback(async () => {
     await fetchSubmissions();
     await fetchAuthorizedProposals();
@@ -764,6 +793,7 @@ export function useDocumentationReview() {
     rejectDocument,
     updateGedId,
     approveProposal,
+    sendToCentral,
     revertProposal,
     downloadFile,
     getFileUrl,
