@@ -410,13 +410,17 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
     // Ordenar da mais nova para a mais antiga (Decrescente)
     result.sort((a, b) => {
       if (filterStatus === "ENVIADO PARA CENTRAL") {
-        const dateA = parseFlexibleDate(a.central_date) || parseFlexibleDate(a.created_at);
-        const dateB = parseFlexibleDate(b.central_date) || parseFlexibleDate(b.created_at);
+        const dateA = parseFlexibleDate(a.central_date);
+        const dateB = parseFlexibleDate(b.central_date);
         if (dateB !== dateA) return dateB - dateA;
       }
-      const dateA = parseFlexibleDate(a.entry_date) || parseFlexibleDate(a.created_at);
-      const dateB = parseFlexibleDate(b.entry_date) || parseFlexibleDate(b.created_at);
-      return dateB - dateA;
+      const updateA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+      const updateB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+      if (updateB !== updateA) return updateB - updateA;
+      
+      const fallbackA = parseFlexibleDate(a.entry_date) || parseFlexibleDate(a.created_at);
+      const fallbackB = parseFlexibleDate(b.entry_date) || parseFlexibleDate(b.created_at);
+      return fallbackB - fallbackA;
     });
 
     return result;
