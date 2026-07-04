@@ -31,7 +31,6 @@ export function useStockProposals() {
       let query = supabase
         .from("stock_proposals")
         .select("*")
-        .order("order_index", { ascending: true })
         .order("created_at", { ascending: false });
 
       if (effectiveAgencyId !== "all") {
@@ -126,13 +125,7 @@ export function useStockProposals() {
       setProposals((prev) => {
         // Append all new and sort them exactly as the database query does
         const updated = [...prev, ...(data || [])];
-        return updated.sort((a, b) => {
-          if ((a.order_index ?? 0) !== (b.order_index ?? 0)) {
-            return (a.order_index ?? 0) - (b.order_index ?? 0);
-          }
-          // fallback to created_at desc
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        });
+        return updated.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       });
       
       return data;
