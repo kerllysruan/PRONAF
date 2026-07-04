@@ -912,20 +912,75 @@ export default function Documentation() {
                     consolidatedStatus = null;
                   }
 
-                  const pdfDocs: { key: string; label: string; isConsolidated?: boolean }[] = [];
-                  let addedConsolidated = false;
+                  const IDENTIFICACAO_KEYS = [
+                    "rg",
+                    "ficha_cadastro_cliente",
+                    "ficha_cadastro_esposa",
+                    "rg_esposa",
+                    "certidao_casamento",
+                    "procuracao",
+                    "rg_procurador",
+                    "caf_extrato",
+                    "certidao_obito",
+                    "autorizacao_modificacao_projeto"
+                  ];
 
+                  const OPERACAO_KEYS = [
+                    "declaracoes_unificadas",
+                    "dcaa",
+                    "espelho_beneficiario",
+                    "titulo_dominio",
+                    "carta_consulta",
+                    "certidao_embargo_ambiental",
+                    "certidao_improbidade",
+                    "car_individual",
+                    "car_coletivo"
+                  ];
+
+                  const PLANO_KEYS = [
+                    "plano_assinado",
+                    "plano_eletronico",
+                    "declaracao_assistencia_tecnica",
+                    "orcamento",
+                    "contrato_assessoria"
+                  ];
+
+                  const pdfDocs: { key: string; label: string; isConsolidated?: boolean }[] = [];
+
+                  // 1. Identificação
+                  IDENTIFICACAO_KEYS.forEach((key) => {
+                    const found = DOCUMENTATION_REQUIRED.find((d) => d.key === key);
+                    if (found) pdfDocs.push(found);
+                  });
+
+                  // 2. Operação
+                  OPERACAO_KEYS.forEach((key) => {
+                    const found = DOCUMENTATION_REQUIRED.find((d) => d.key === key);
+                    if (found) pdfDocs.push(found);
+                  });
+
+                  // 3. Ambientais (Consolidated)
+                  pdfDocs.push({
+                    key: "cert_socio_ambiental_zip",
+                    label: "CERT. SOCIO AMBIENTAL .ZIP",
+                    isConsolidated: true
+                  });
+
+                  // 4. Plano
+                  PLANO_KEYS.forEach((key) => {
+                    const found = DOCUMENTATION_REQUIRED.find((d) => d.key === key);
+                    if (found) pdfDocs.push(found);
+                  });
+
+                  // 5. Outros (safety fallback for any unmapped keys)
+                  const handledKeys = [
+                    ...IDENTIFICACAO_KEYS,
+                    ...OPERACAO_KEYS,
+                    ...socioAmbientalKeys,
+                    ...PLANO_KEYS
+                  ];
                   DOCUMENTATION_REQUIRED.forEach((doc) => {
-                    if (socioAmbientalKeys.includes(doc.key)) {
-                      if (!addedConsolidated) {
-                        pdfDocs.push({
-                          key: "cert_socio_ambiental_zip",
-                          label: "CERT. SOCIO AMBIENTAL .ZIP",
-                          isConsolidated: true
-                        });
-                        addedConsolidated = true;
-                      }
-                    } else {
+                    if (!handledKeys.includes(doc.key)) {
                       pdfDocs.push(doc);
                     }
                   });
