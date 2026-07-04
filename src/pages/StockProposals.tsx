@@ -145,6 +145,30 @@ function getField(row: any, keys: string[]) {
   return "";
 }
 
+function parseFlexibleDate(dateStr: string | null | undefined): number {
+  if (!dateStr) return 0;
+  const clean = dateStr.trim();
+  if (clean.includes('-')) {
+    // Treat as ISO or YYYY-MM-DD
+    const t = Date.parse(clean);
+    return isNaN(t) ? 0 : t;
+  }
+  if (clean.includes('/')) {
+    // Treat as DD/MM/YYYY
+    const parts = clean.split(' ')[0].split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      return isNaN(d.getTime()) ? 0 : d.getTime();
+    }
+  }
+  // Try fallback parsing
+  const fallback = Date.parse(clean);
+  return isNaN(fallback) ? 0 : fallback;
+}
+
 function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null {
   const name = cleanCSV(getField(row, ["CLIENTES", "CLIENTE", "NOME", "producer_name"]));
   if (!name || /^CLIENTES?$/i.test(name)) return null;
@@ -383,6 +407,18 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
     if (filterProjetista !== "all") {
       result = result.filter(p => p.projetista === filterProjetista);
     }
+    // Ordenar da mais nova para a mais antiga (Decrescente)
+    result.sort((a, b) => {
+      if (filterStatus === "ENVIADO PARA CENTRAL") {
+        const dateA = parseFlexibleDate(a.central_date) || parseFlexibleDate(a.created_at);
+        const dateB = parseFlexibleDate(b.central_date) || parseFlexibleDate(b.created_at);
+        if (dateB !== dateA) return dateB - dateA;
+      }
+      const dateA = parseFlexibleDate(a.entry_date) || parseFlexibleDate(a.created_at);
+      const dateB = parseFlexibleDate(b.entry_date) || parseFlexibleDate(b.created_at);
+      return dateB - dateA;
+    });
+
     return result;
   }, [proposals, searchTerm, filterMunicipio, filterStatus, filterProjetista]);
 
