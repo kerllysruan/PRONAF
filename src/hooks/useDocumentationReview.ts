@@ -170,6 +170,41 @@ export function useDocumentationReview() {
         };
       });
 
+      // Automate status syncing retroactively and lazily
+      for (const res of result) {
+        if (!res.proposal) continue;
+        const allOk = res.totalFiles > 0 && res.approvedCount === res.totalFiles;
+        const currentStatus = res.proposal.status;
+
+        if (allOk) {
+          if (currentStatus !== "DOCUMENTAÇÃO APROVADA" && currentStatus !== "ENVIADO PARA CENTRAL" && currentStatus !== "CONCLUÍDO") {
+            const today = new Date().toLocaleDateString('pt-BR');
+            supabase
+              .from("stock_proposals")
+              .update({
+                status: "DOCUMENTAÇÃO APROVADA",
+                documentation_approved_date: today
+              })
+              .eq("id", res.proposal.id)
+              .then(({ error }) => {
+                if (error) console.error("Error updating status to approved:", error);
+              });
+            res.proposal.status = "DOCUMENTAÇÃO APROVADA";
+          }
+        } else {
+          if (currentStatus === "DOCUMENTAÇÃO APROVADA") {
+            supabase
+              .from("stock_proposals")
+              .update({ status: "documentacao_pendente" })
+              .eq("id", res.proposal.id)
+              .then(({ error }) => {
+                if (error) console.error("Error reverting status to pending:", error);
+              });
+            res.proposal.status = "documentacao_pendente";
+          }
+        }
+      }
+
       setSubmissions(result);
     } catch (err: any) {
       console.error("Error fetching submissions:", err);
