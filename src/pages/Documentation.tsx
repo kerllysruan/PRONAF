@@ -2525,14 +2525,14 @@ export default function Documentation() {
                                   : "bg-amber-50 text-amber-700 border-amber-200"
                               }`}
                             >
-                              Aguardando Doc Envio Central
+                              Aguardando a documentação para envio à Central
                             </Badge>
                           ) : (
                             <Badge
                               variant="outline"
                               className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-emerald-50 text-emerald-700 border-emerald-200"
                             >
-                              Todos os Documentos Aprovados Aguardando Envio Central
+                              Todos os Documentos Aprovados - Aguardando à Central
                             </Badge>
                           )}
                         </TableCell>
