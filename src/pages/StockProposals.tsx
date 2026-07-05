@@ -111,6 +111,7 @@ const PROGRAMAS_CREDITO = [
 const STATUS_OPTIONS = [
   "AUTORIZADO ENVIO CENTRAL",
   "ENVIADO PARA CENTRAL",
+  "DOCUMENTAÇÃO PENDENTE",
   "PENDÊNCIA CENTRAL",
   "CONTRATADO",
   "CONCLUÍDO",
@@ -182,6 +183,13 @@ function formatToBRDate(dateStr: string | null | undefined): string {
     }
   }
   return clean;
+}
+
+function formatStatus(status: string | null | undefined): string {
+  if (!status) return "";
+  const s = status.trim().toUpperCase();
+  if (s === "DOCUMENTACAO_PENDENTE" || s === "DOCUMENTAÇÃO_PENDENTE") return "DOCUMENTAÇÃO PENDENTE";
+  return s;
 }
 
 function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null {
@@ -417,7 +425,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
       result = result.filter(p => p.municipio === filterMunicipio);
     }
     if (filterStatus !== "all") {
-      result = result.filter(p => p.status === filterStatus);
+      result = result.filter(p => formatStatus(p.status) === formatStatus(filterStatus));
     }
     if (filterProjetista !== "all") {
       result = result.filter(p => p.projetista === filterProjetista);
@@ -2282,7 +2290,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                             <div className="flex flex-col gap-1">
                               <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Status</span>
                               <Badge variant="outline" className={`text-[10px] font-bold ${getStatusStyle(p.status)} border w-fit`}>
-                                {p.status}
+                                {formatStatus(p.status)}
                               </Badge>
                             </div>
                           </td>
@@ -2406,7 +2414,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                             <div className="flex items-center gap-2 flex-wrap">
                               {p.status && (
                                 <Badge variant="outline" className={`text-[9px] font-bold ${getStatusStyle(p.status)} border`}>
-                                  {p.status}
+                                  {formatStatus(p.status)}
                                 </Badge>
                               )}
                               {p.municipio && (
@@ -2579,7 +2587,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                   </span>
                   <span className="text-slate-300 dark:text-slate-700">•</span>
                   <Badge variant="outline" className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${getStatusStyle(viewingDetailProposal?.status || '')}`}>
-                    {viewingDetailProposal?.status || 'ESTOQUE'}
+                    {formatStatus(viewingDetailProposal?.status) || 'ESTOQUE'}
                   </Badge>
                 </div>
               </div>
