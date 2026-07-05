@@ -310,6 +310,40 @@ export function useDocumentationReview() {
 
       if (error) throw error;
 
+      // Check if all files for this token are now approved
+      const { data: fileData } = await supabase
+        .from("documentation_files")
+        .select("token_id")
+        .eq("id", fileId)
+        .single();
+
+      if (fileData?.token_id) {
+        const { data: files } = await supabase
+          .from("documentation_files")
+          .select("status")
+          .eq("token_id", fileData.token_id);
+
+        const allApproved = (files || []).every(f => f.status === "aprovado");
+        if (allApproved) {
+          const { data: tokenData } = await supabase
+            .from("documentation_tokens")
+            .select("stock_proposal_id")
+            .eq("id", fileData.token_id)
+            .maybeSingle();
+
+          if (tokenData?.stock_proposal_id) {
+            const today = new Date().toLocaleDateString('pt-BR');
+            await supabase
+              .from("stock_proposals")
+              .update({
+                status: "DOCUMENTAÇÃO APROVADA",
+                documentation_approved_date: today
+              })
+              .eq("id", tokenData.stock_proposal_id);
+          }
+        }
+      }
+
       toast({ title: "Documento aprovado ✅" });
       await fetchSubmissions(true);
     } catch (err: any) {
@@ -683,6 +717,24 @@ export function useDocumentationReview() {
         .neq("status", "aprovado");
 
       if (error) throw error;
+
+      // Update proposal status to DOCUMENTAÇÃO APROVADA since all are approved
+      const { data: tokenData } = await supabase
+        .from("documentation_tokens")
+        .select("stock_proposal_id")
+        .eq("id", tokenId)
+        .maybeSingle();
+
+      if (tokenData?.stock_proposal_id) {
+        const today = new Date().toLocaleDateString('pt-BR');
+        await supabase
+          .from("stock_proposals")
+          .update({
+            status: "DOCUMENTAÇÃO APROVADA",
+            documentation_approved_date: today
+          })
+          .eq("id", tokenData.stock_proposal_id);
+      }
 
       toast({ title: "Todos os documentos foram aprovados! ✅" });
       await fetchSubmissions(true);

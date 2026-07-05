@@ -112,6 +112,7 @@ const STATUS_OPTIONS = [
   "AUTORIZADO ENVIO CENTRAL",
   "ENVIADO PARA CENTRAL",
   "DOCUMENTAÇÃO PENDENTE",
+  "DOCUMENTAÇÃO APROVADA",
   "PENDÊNCIA CENTRAL",
   "CONTRATADO",
   "CONCLUÍDO",
@@ -189,6 +190,7 @@ function formatStatus(status: string | null | undefined): string {
   if (!status) return "";
   const s = status.trim().toUpperCase();
   if (s === "DOCUMENTACAO_PENDENTE" || s === "DOCUMENTAÇÃO_PENDENTE") return "DOCUMENTAÇÃO PENDENTE";
+  if (s === "DOCUMENTACAO_APROVADA" || s === "DOCUMENTAÇÃO APROVADA") return "DOCUMENTAÇÃO APROVADA";
   return s;
 }
 
@@ -703,7 +705,8 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
       notes: proposal.notes,
       projetista: proposal.projetista,
       central: proposal.central,
-      central_date: formatToBRDate(proposal.central_date)
+      central_date: formatToBRDate(proposal.central_date),
+      documentation_approved_date: formatToBRDate(proposal.documentation_approved_date)
     });
     setIsEditDialogOpen(true);
   };
@@ -732,7 +735,8 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
     const s = (status || '').toLowerCase().trim();
     if (s.includes('autorizado')) return "bg-blue-100 text-blue-700 border-blue-200";
     if (s === 'central' || s === 'enviado para central') return "bg-indigo-100 text-indigo-700 border-indigo-200";
-    if (s.includes('pendência')) return "bg-amber-100 text-amber-700 border-amber-200";
+    if (s.includes('pendência') || s.includes('pendente')) return "bg-amber-100 text-amber-700 border-amber-200";
+    if (s.includes('aprovada')) return "bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm";
     if (s.includes('contratado')) return "bg-purple-100 text-purple-700 border-purple-200";
     if (s === 'concluído') return "bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm";
     if (s === 'restrição') return "bg-red-100 text-red-700 border-red-200 shadow-sm";
@@ -1672,7 +1676,18 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                 />
               </div>
 
-              <div className="space-y-1 md:col-span-2">
+              <div className="space-y-1">
+                <Label htmlFor="edit-doc-approved-date" className="text-[10px] font-bold uppercase text-slate-500">Data Aprovação Documentos</Label>
+                <Input
+                  id="edit-doc-approved-date"
+                  className="h-9 text-sm"
+                  value={editFormData.documentation_approved_date || ""}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, documentation_approved_date: e.target.value }))}
+                  placeholder="Ex: DD/MM/AAAA"
+                />
+              </div>
+
+              <div className="space-y-1">
                 <Label htmlFor="edit-status" className="text-[10px] font-bold uppercase text-slate-500">Status Atual</Label>
                 <Select
                   value={editFormData.status || ""}
@@ -2667,6 +2682,10 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
                       <span className="text-xs text-slate-500">Data Entrada Central</span>
                       <span className="text-xs font-bold text-slate-700">{formatToBRDate(viewingDetailProposal?.central_date) || '---'}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Data Aprovação Documentos</span>
+                      <span className="text-xs font-bold text-slate-700">{formatToBRDate(viewingDetailProposal?.documentation_approved_date) || '---'}</span>
                     </div>
                   </div>
                 </div>

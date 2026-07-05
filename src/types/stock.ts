@@ -60,6 +60,7 @@ export interface StockProposal {
   poa_prd_subject?: string | null;
   activity_id?: string | null;
   technical_summary?: string | null;
+  documentation_approved_date?: string | null;
 }
 
 export type InsertStockProposal = Omit<StockProposal, 'id' | 'created_at' | 'updated_at' | 'agency_id' | 'created_by'>;
