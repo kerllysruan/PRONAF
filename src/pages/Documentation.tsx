@@ -2353,7 +2353,7 @@ export default function Documentation() {
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                    Autorizadas (Aguardando Docs)
+                    Autorizadas (Aguardando Documentação)
                   </p>
                   <p className="font-heading font-extrabold text-2xl leading-tight text-blue-600">
                     {filteredAuthorizedForStats.length}
@@ -2532,7 +2532,7 @@ export default function Documentation() {
                               variant="outline"
                               className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-emerald-50 text-emerald-700 border-emerald-200"
                             >
-                              Aguardando Envio Central
+                              Todos os Documentos Aprovados Aguardando Envio Central
                             </Badge>
                           )}
                         </TableCell>
