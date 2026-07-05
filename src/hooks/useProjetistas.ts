@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 // Projetistas originais (sempre mantidos como fallback)
-const PROJETISTAS_FIXOS = ["NEY MEDEIRO", "JAIRO SANTANA", "CLEDSON CLOVIS", "JAILSON", "OLIVEIRA"];
+const PROJETISTAS_FIXOS = ["NEY MEDEIROS", "JAIRO SANTANA", "CLEDSON CLOVIS", "JAILSON", "OLIVEIRA"];
 
 /**
  * Hook que retorna a lista de projetistas:
