@@ -2532,7 +2532,7 @@ export default function Documentation() {
                               variant="outline"
                               className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-emerald-50 text-emerald-700 border-emerald-200"
                             >
-                              Todos os Documentos Aprovados - Aguardando à Central
+                              Todos os Documentos Aprovados - Aguardando Envio à Central
                             </Badge>
                           )}
                         </TableCell>
