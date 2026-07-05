@@ -80,32 +80,7 @@ export default function Proposals() {
   const [reportFilterYear, setReportFilterYear] = useState("all");
   const [reportFilterDesigner, setReportFilterDesigner] = useState("all");
 
-  const concludedStats = useMemo(() => {
-    const totalCount = allConcludedProposalsCount;
-    const totalValue = [...concludedStockProposals, ...concludedMainProposals].reduce(
-      (acc, p) => acc + Number(p.estimated_value || p.requested_value || 0), 
-      0
-    );
-    
-    const now = new Date();
-    const currentMonth = getMonth(now);
-    const currentYear = getYear(now);
-    
-    const thisMonthProposals = [...concludedStockProposals, ...concludedMainProposals].filter(p => {
-      const dateStr = p.created_at || p.entry_date;
-      if (!dateStr) return false;
-      const date = parseISO(dateStr);
-      return getMonth(date) === currentMonth && getYear(date) === currentYear;
-    });
-    
-    const monthCount = thisMonthProposals.length;
-    const monthValue = thisMonthProposals.reduce(
-      (acc, p) => acc + Number(p.estimated_value || p.requested_value || 0), 
-      0
-    );
 
-    return { totalCount, totalValue, monthCount, monthValue };
-  }, [concludedStockProposals, concludedMainProposals, allConcludedProposalsCount]);
 
   const handleRevertToStock = async (id: string) => {
     setRevertingId(id);
@@ -468,6 +443,33 @@ export default function Proposals() {
     setPage(0);
   }, [searchTerm, filterMonth, filterYear, sortBy, designerFilter, programFilter]);
 
+  const concludedStats = useMemo(() => {
+    const totalCount = filtered.length;
+    const totalValue = filtered.reduce(
+      (acc, p) => acc + Number(p.displayValue || 0), 
+      0
+    );
+    
+    const now = new Date();
+    const currentMonth = getMonth(now);
+    const currentYear = getYear(now);
+    
+    const thisMonthProposals = filtered.filter(p => {
+      const dateStr = p.displayDate || p.created_at || p.entry_date;
+      if (!dateStr) return false;
+      const date = parseISO(dateStr);
+      return getMonth(date) === currentMonth && getYear(date) === currentYear;
+    });
+    
+    const monthCount = thisMonthProposals.length;
+    const monthValue = thisMonthProposals.reduce(
+      (acc, p) => acc + Number(p.displayValue || 0), 
+      0
+    );
+
+    return { totalCount, totalValue, monthCount, monthValue };
+  }, [filtered]);
+
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
@@ -569,7 +571,7 @@ export default function Proposals() {
 
   const designerChartData = useMemo(() => {
     const dataMap: Record<string, number> = {};
-    allConcluded.forEach((p) => {
+    filtered.forEach((p) => {
       const designer = p.displayDesigner || "Sem Projetista";
       if (!dataMap[designer]) dataMap[designer] = 0;
       dataMap[designer] += Number(p.displayValue) || 0;
@@ -577,11 +579,11 @@ export default function Proposals() {
     return Object.entries(dataMap)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
-  }, [allConcluded]);
+  }, [filtered]);
 
   const programChartData = useMemo(() => {
     const dataMap: Record<string, { count: number; value: number }> = {};
-    allConcluded.forEach((p) => {
+    filtered.forEach((p) => {
       let program = p.credit_program || "Sem Linha";
       if (program.includes("699")) program = "PRONAF A (699)";
       else if (program.includes("368")) program = "PRONAF A (368)";
@@ -596,7 +598,7 @@ export default function Proposals() {
     return Object.entries(dataMap)
       .map(([name, data]) => ({ name, count: data.count, value: data.value }))
       .sort((a, b) => b.count - a.count);
-  }, [allConcluded]);
+  }, [filtered]);
   
   const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#f97316", "#84cc16", "#6366f1"];
 
