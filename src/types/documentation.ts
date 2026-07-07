@@ -99,7 +99,6 @@ export interface DocumentationTokenWithProposal extends DocumentationToken {
 export const AGENCY_DOCUMENTATION: { key: string; label: string }[] = [
   { key: "consulta_extrator_sicor", label: "CONSULTA EXTRATOR SICOR" },
   { key: "parecer_gerencial", label: "PARECER GERENCIAL" },
-  { key: "select_confirmacao_atividades", label: "SELECT PARA CONFIRMAÇÃO ATIVIDADES REALIZADAS" },
   { key: "consulta_s400", label: "CONSULTA S400" },
   { key: "consulta_historico_operacao_pronaf", label: "CONSULTA HISTÓRICO DE OPERAÇÃO PRONAF" },
   { key: "cadastro_atividade_plano", label: "CADASTRO ATIVIDADE PLANO" },

@@ -1250,6 +1250,8 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                   const carIndividualFile = sub.files.find(f => f.document_type === "car_individual");
                   const carColetivoFile = sub.files.find(f => f.document_type === "car_coletivo");
                   const cafFile = sub.files.find(f => f.document_type === "caf_extrato");
+                  const historicoFile = sub.files.find(f => f.document_type === "consulta_historico_operacao_pronaf");
+                  const historicoAgencia = (historicoFile?.ged_id && historicoFile.ged_id !== "NAO" && historicoFile.ged_id !== "SIM") ? historicoFile.ged_id : "";
 
                   setParecerTexto("");
                   setParecerAnalista(sub.proposal.projetista || "");
@@ -1267,7 +1269,7 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                   setParecerGerenteRelacionamento("JAIRO Ferreira dos Santos F154768");
                   setParecerNumProjetoPA("");
                   setParecerCarIndividual(carIndividualFile?.ged_id || "");
-                  setParecerAgenciaHistorico("");
+                  setParecerAgenciaHistorico(historicoAgencia);
                   setParecerInversoes([""]);
                   setParecerDialogOpen(true);
                 }}
@@ -1663,7 +1665,61 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                             </Badge>
                           </div>
 
-                          {CONFIRMATION_ACTIVITY_KEYS.includes(doc.key) ? (
+                          {doc.key === "consulta_historico_operacao_pronaf" ? (
+                            <div className="pt-1">
+                              <div className="space-y-2.5">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                                    Histórico PRONAF A?
+                                  </span>
+                                  <Select
+                                    value={existingFile?.ged_id === "NAO" ? "nao" : (existingFile?.ged_id && existingFile.ged_id !== "") ? "sim" : ""}
+                                    onValueChange={(val) => {
+                                      if (val === "nao") {
+                                        saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "NAO", existingFile?.id);
+                                      } else {
+                                        saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "SIM", existingFile?.id);
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger className="h-8 w-28 rounded-xl text-xs font-semibold focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 bg-background border-border/60">
+                                      <SelectValue placeholder="Selecione..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl">
+                                      <SelectItem value="sim">SIM</SelectItem>
+                                      <SelectItem value="nao">NÃO</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                {existingFile?.ged_id && existingFile.ged_id !== "NAO" && (
+                                  <div className="flex flex-col gap-1.5 pt-1 animate-fade-in">
+                                    <span className="text-[9.5px] font-black uppercase tracking-wider text-muted-foreground leading-tight">
+                                      INSERIR AGÊNCIA DE HISTÓRICO PRONAF A:
+                                    </span>
+                                    <input
+                                      type="text"
+                                      defaultValue={existingFile.ged_id === "SIM" ? "" : existingFile.ged_id}
+                                      placeholder="Ex: Agência Maracaçumé (MA)"
+                                      maxLength={80}
+                                      className="w-full h-8 rounded-lg border border-border/60 bg-background px-3 text-xs font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all font-sans"
+                                      onBlur={(e) => {
+                                        const val = e.target.value.trim();
+                                        if (val) {
+                                          saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, val, existingFile?.id);
+                                        } else {
+                                          saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "SIM", existingFile?.id);
+                                        }
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ) : CONFIRMATION_ACTIVITY_KEYS.includes(doc.key) ? (
                             <div className="pt-1">
                               {existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") ? (
                                 <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900/50 rounded-xl p-2.5">
@@ -1749,6 +1805,8 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                                     const carIndividualFile = sub.files.find(f => f.document_type === "car_individual");
                                     const carColetivoFile = sub.files.find(f => f.document_type === "car_coletivo");
                                     const cafFile = sub.files.find(f => f.document_type === "caf_extrato");
+                                    const historicoFile = sub.files.find(f => f.document_type === "consulta_historico_operacao_pronaf");
+                                    const historicoAgencia = (historicoFile?.ged_id && historicoFile.ged_id !== "NAO" && historicoFile.ged_id !== "SIM") ? historicoFile.ged_id : "";
 
                                     setParecerTexto("");
                                     setParecerAnalista(sub.proposal.projetista || "");
@@ -1766,7 +1824,7 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                                     setParecerGerenteRelacionamento("JAIRO Ferreira dos Santos F154768");
                                     setParecerNumProjetoPA("");
                                     setParecerCarIndividual(carIndividualFile?.ged_id || "");
-                                    setParecerAgenciaHistorico("");
+                                    setParecerAgenciaHistorico(historicoAgencia);
                                     setParecerInversoes([""]);
                                     setParecerDialogOpen(true);
                                   }}
