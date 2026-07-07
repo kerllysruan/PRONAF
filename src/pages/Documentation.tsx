@@ -235,11 +235,7 @@ QUANTO AO PRAZO, A OPERAÇÃO ESTRUTURA-SE DA SEGUINTE FORMA:
 CARÊNCIA: ${carencia.toUpperCase()}
 PRAZO TOTAL: ${prazoTotal.toUpperCase()}
 
-A análise econômico-financeira evidencia capacidade de pagamento compatível com o cronograma do financiamento, com crescimento projetado das receitas provenientes da atividade pecuária e percentuais de comprometimento dentro dos limites aceitáveis. Diante do exposto, conclui-se que a operação encontra-se devidamente instruída, atende integralmente às exigências da IN 3102-03-09 e demais normativos vigentes, apresenta viabilidade técnica, econômica e financeira, manifestando-se esta Unidade de Relacionamento favoravelmente ao prosseguimento da proposta de crédito. Alçada de Decisão: Comag, na forma do MB-OC-1101-12-03.
-
-Representantes Banco:
-JAIRO Ferreira dos Santos F154768/Gerente de Relacionamento
-MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
+A análise econômico-financeira evidencia capacidade de pagamento compatível com o cronograma do financiamento, com crescimento projetado das receitas provenientes da atividade pecuária e percentuais de comprometimento dentro dos limites aceitáveis. Diante do exposto, conclui-se que a operação encontra-se devidamente instruída, atende integralmente às exigências da IN 3102-03-09 e demais normativos vigentes, apresenta viabilidade técnica, econômica e financeira, manifestando-se esta Unidade de Relacionamento favoravelmente ao prosseguimento da proposta de crédito. Alçada de Decisão: Comag, na forma do MB-OC-1101-12-03.`;
   }, [
     selectedSubmission,
     parecerAtividadePlano,
@@ -2379,10 +2375,10 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                   d.setTextColor(255, 255, 255);
                   d.setFont("helvetica", "bold");
                   d.setFontSize(14);
-                  d.text("PARECER GERENCIAL DA UR", 14, 15);
+                   d.text("PARECER GERENCIAL DA AGÊNCIA", 14, 15);
                   d.setFontSize(10);
                   d.text("OPERAÇÃO PRONAF GRUPO A", 14, 21);
-
+ 
                   // Metadata right aligned
                   d.setFontSize(7.5);
                   d.setTextColor(148, 163, 184);
@@ -2391,54 +2387,27 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                   d.setFont("helvetica", "normal");
                   d.text(`Proponente: ${sub.proposal.producer_name.toUpperCase()}`, W - 14, 21, { align: "right" });
                   d.text(`CPF: ${sub.proposal.producer_cpf || "—"}`, W - 14, 26, { align: "right" });
-
+ 
                   // Content
                   let curY = 48;
                   d.setFont("helvetica", "normal");
                   d.setFontSize(9);
                   d.setTextColor(30, 41, 59);
-
+ 
                   // Split generatedParecerText by double newline to treat as paragraphs
                   const paragraphs = generatedParecerText.split("\n\n");
                   paragraphs.forEach((pText) => {
                     const lines = d.splitTextToSize(pText, W - 28);
                     const blockH = lines.length * 4.5 + 4;
-
-                    if (curY + blockH > H - 45) {
+ 
+                    if (curY + blockH > H - 15) {
                       d.addPage();
                       curY = 20;
                     }
-
+ 
                     d.text(lines, 14, curY, { leading: 4.5 });
                     curY += blockH;
                   });
-
-                  // Signatures area
-                  const footerBlockH = 35;
-                  if (curY + footerBlockH > H - 15) {
-                    d.addPage();
-                    curY = 20;
-                  }
-
-                  const sigLineY = curY + 12;
-                  d.setDrawColor(203, 213, 225);
-                  d.setLineWidth(0.3);
-
-                   // Gerente Geral / Gerente de Agência (left)
-                   d.line(14, sigLineY, W / 2 - 10, sigLineY);
-                   d.setFont("helvetica", "bold");
-                   d.setFontSize(7.5);
-                   d.setTextColor(15, 23, 42);
-                   d.text("MIERCIO BRUNO MIRANDA FRANCO F126870", 14, sigLineY + 4);
-                   d.setFont("helvetica", "normal");
-                   d.text("GERENTE DE AGENCIA", 14, sigLineY + 8);
- 
-                   // Gerente de Relacionamento (right)
-                   d.line(W / 2 + 10, sigLineY, W - 14, sigLineY);
-                   d.setFont("helvetica", "bold");
-                   d.text("JAIRO FERREIRA DOS SANTOS F154768", W / 2 + 10, sigLineY + 4);
-                   d.setFont("helvetica", "normal");
-                   d.text("GERENTE DE RELACIONAMENTO", W / 2 + 10, sigLineY + 8);
 
                   // Page Footer
                   d.setFillColor(15, 23, 42);
