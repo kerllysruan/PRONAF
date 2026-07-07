@@ -132,6 +132,7 @@ export default function Documentation() {
   const [parecerNumProjetoPA, setParecerNumProjetoPA] = useState("");
   const [parecerCarIndividual, setParecerCarIndividual] = useState("");
   const [parecerAgenciaHistorico, setParecerAgenciaHistorico] = useState("");
+  const [parecerUtilizaCarIndividual, setParecerUtilizaCarIndividual] = useState("SIM");
 
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
@@ -213,8 +214,16 @@ export default function Documentation() {
       prazoTotal = `${prazoTotal.trim()} MESES`;
     }
 
-    return `Trata-se de proposta de crédito rural apresentad${g.artigo.toLowerCase()} por ${nome.toUpperCase()}, CPF ${cpf}, ${g.agricultor} familiar ${g.enquadrado} no PRONAF Grupo A, ${g.produtor}, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no imóvel rural denominado:
-${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, inserido no Projeto de assentamento ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}
+    const localStr = parecerUtilizaCarIndividual === "SIM"
+      ? `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, INSERIDO NO PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`
+      : `PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+
+    const invLocalStr = parecerUtilizaCarIndividual === "SIM"
+      ? "NO IMÓVEL ACIMA IDENTIFICADO"
+      : `NO PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+
+    return `Trata-se de proposta de crédito rural apresentad${g.artigo.toLowerCase()} por ${nome.toUpperCase()}, CPF ${cpf}, ${g.agricultor} familiar ${g.enquadrado} no PRONAF Grupo A, ${g.produtor}, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no:
+${localStr}
 Possuindo aptidão agropecuária e infraestrutura compatível com a atividade financiada.
 
 No que se refere à relação entre ${g.artigo.toLowerCase() === "o" ? "o proponente" : "a proponente"} e funcionário do Banco, informa-se que não há vínculo de parentesco com funcionário que atue na análise, deliberação ou decisão da presente operação de crédito.
@@ -227,7 +236,7 @@ ${inversoesStr}
 totalizando investimento no valor de ${valorTotal}.
 A operação será financiada com recursos do FNE/PRONAF Grupo A ${codPrograma}${complemento699}.
 
-Em relação aos recursos próprios, não haverá contrapartida financeira por parte d${g.artigo} proponente, sendo o investimento integralmente financiado. Não se aplica à presente operação a utilização de imóveis de terceiros beneficiados com o crédito, visto que todas as inversões ocorrerão no imóvel acima identificado.
+Em relação aos recursos próprios, não haverá contrapartida financeira por parte d${g.artigo} proponente, sendo o investimento integralmente financiado. Não se aplica à presente operação a utilização de imóveis de terceiros beneficiados com o crédito, visto que todas as inversões ocorrerão ${invLocalStr}.
 
 A operação não contempla aquisição de veículo, inexistindo necessidade de justificativa de uso por, no mínimo, 120 dias ao ano.
 
@@ -235,7 +244,11 @@ QUANTO AO PRAZO, A OPERAÇÃO ESTRUTURA-SE DA SEGUINTE FORMA:
 CARÊNCIA: ${carencia.toUpperCase()}
 PRAZO TOTAL: ${prazoTotal.toUpperCase()}
 
-A análise econômico-financeira evidencia capacidade de pagamento compatível com o cronograma do financiamento, com crescimento projetado das receitas provenientes da atividade pecuária e percentuais de comprometimento dentro dos limites aceitáveis. Diante do exposto, conclui-se que a operação encontra-se devidamente instruída, atende integralmente às exigências da IN 3102-03-09 e demais normativos vigentes, apresenta viabilidade técnica, econômica e financeira, manifestando-se esta Unidade de Relacionamento favoravelmente ao prosseguimento da proposta de crédito. Alçada de Decisão: Comag, na forma do MB-OC-1101-12-03.`;
+A análise econômico-financeira evidencia capacidade de pagamento compatível com o cronograma do financiamento, com crescimento projetado das receitas provenientes da atividade pecuária e percentuais de comprometimento dentro dos limites aceitáveis. Diante do exposto, conclui-se que a operação encontra-se devidamente instruída, atende integralmente às exigências da IN 3102-03-09 e demais normativos vigentes, apresenta viabilidade técnica, econômica e financeira, manifestando-se esta Unidade de Relacionamento favoravelmente ao prosseguimento da proposta de crédito. Alçada de Decisão: Comag, na forma do MB-OC-1101-12-03.
+
+REPRESENTANTES BANCO:
+JAIRO FERREIRA DOS SANTOS F154768/GERENTE DE RELACIONAMENTO
+MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
   }, [
     selectedSubmission,
     parecerAtividadePlano,
@@ -249,6 +262,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
     parecerCarenciaMeses,
     parecerTotalMeses,
     is699Selected,
+    parecerUtilizaCarIndividual,
   ]);
 
   // ─── Stats (Reactivity to pageFilterProjetista) ───────────────
@@ -1297,11 +1311,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     ? ""
                     : sourceAct;
 
+                   const hasCarInd = !!carIndividualFile?.ged_id;
+                  setParecerUtilizaCarIndividual(hasCarInd ? "SIM" : "NÃO");
+
                   setParecerTexto("");
                   setParecerAnalista(sub.proposal.projetista || "");
                   setParecerResultado("Aprovado");
                   setParecerCaf(cafFile?.ged_id || "");
-                  setParecerNomeImovel(sub.proposal.localizacao || "");
+                  setParecerNomeImovel(hasCarInd ? (sub.proposal.localizacao || "") : "");
                   setParecerMunicipioImovel(sub.proposal.municipio || "");
                   setParecerNomePA("");
                   setParecerCarColetivo(carColetivoFile?.ged_id || "");
@@ -1858,11 +1875,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                       ? ""
                                       : sourceAct;
 
+                                    const hasCarInd = !!carIndividualFile?.ged_id;
+                                    setParecerUtilizaCarIndividual(hasCarInd ? "SIM" : "NÃO");
+
                                     setParecerTexto("");
                                     setParecerAnalista(sub.proposal.projetista || "");
                                     setParecerResultado("Aprovado");
                                     setParecerCaf(cafFile?.ged_id || "");
-                                    setParecerNomeImovel(sub.proposal.localizacao || "");
+                                    setParecerNomeImovel(hasCarInd ? (sub.proposal.localizacao || "") : "");
                                     setParecerMunicipioImovel(sub.proposal.municipio || "");
                                     setParecerNomePA("");
                                     setParecerCarColetivo(carColetivoFile?.ged_id || "");
@@ -2151,32 +2171,62 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
                 {/* Seção 2: Imóvel Rural e CAR */}
                 <div className="bg-muted/40 p-4 rounded-xl border border-border/40 space-y-3">
-                  <h3 className="font-semibold text-xs uppercase tracking-wider text-indigo-600">
-                    Imóvel Rural & CAR Individual
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-xs uppercase tracking-wider text-indigo-600">
+                      Imóvel Rural & CAR Individual
+                    </h3>
+                  </div>
                   <div className="grid grid-cols-1 gap-3">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Nome do Imóvel Rural
+                        Utilizará CAR Individual?
                       </label>
-                      <Input
-                        className="rounded-xl"
-                        placeholder="Ex: Fazenda Santa Maria"
-                        value={parecerNomeImovel}
-                        onChange={(e) => setParecerNomeImovel(e.target.value)}
-                      />
+                      <Select
+                        value={parecerUtilizaCarIndividual}
+                        onValueChange={(val) => {
+                          setParecerUtilizaCarIndividual(val);
+                          if (val === "NÃO") {
+                            setParecerNomeImovel("");
+                            setParecerCarIndividual("");
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="rounded-xl bg-background border-border/60">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          <SelectItem value="SIM">SIM</SelectItem>
+                          <SelectItem value="NÃO">NÃO (Somente Assentamento/CAR Coletivo)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Registro CAR Individual
-                      </label>
-                      <Input
-                        className="rounded-xl"
-                        placeholder="Ex: MA-2106201-..."
-                        value={parecerCarIndividual}
-                        onChange={(e) => setParecerCarIndividual(e.target.value)}
-                      />
-                    </div>
+
+                    {parecerUtilizaCarIndividual === "SIM" && (
+                      <>
+                        <div className="space-y-1.5 animate-fade-in">
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                            Nome do Imóvel Rural
+                          </label>
+                          <Input
+                            className="rounded-xl"
+                            placeholder="Ex: Fazenda Santa Maria"
+                            value={parecerNomeImovel}
+                            onChange={(e) => setParecerNomeImovel(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1.5 animate-fade-in">
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                            Registro CAR Individual
+                          </label>
+                          <Input
+                            className="rounded-xl"
+                            placeholder="Ex: MA-2106201-..."
+                            value={parecerCarIndividual}
+                            onChange={(e) => setParecerCarIndividual(e.target.value)}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
