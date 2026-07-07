@@ -91,6 +91,11 @@ export default function Documentation() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubmission, setSelectedSubmission] = useState<SubmittedProposal | null>(null);
+  const is699Selected = useMemo(() => {
+    if (!selectedSubmission) return false;
+    const progStr = `${selectedSubmission.proposal.credit_program || ""} ${selectedSubmission.proposal.linha_credito || ""}`;
+    return progStr.includes("699");
+  }, [selectedSubmission]);
   const [viewingPdfUrl, setViewingPdfUrl] = useState<string | null>(null);
   const [viewingPdfName, setViewingPdfName] = useState("");
   const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
@@ -143,8 +148,7 @@ export default function Documentation() {
     const sub = selectedSubmission;
     const nome = sub.proposal.producer_name || "";
     const cpf = sub.proposal.producer_cpf || "";
-    const progStr = `${sub.proposal.credit_program || ""} ${sub.proposal.linha_credito || ""}`;
-    const is699 = progStr.includes("699");
+    const is699 = is699Selected;
     const programAcao = is699 ? "AMPLIAÇÃO" : "IMPLANTAÇÃO";
     const atividade = parecerAtividadePlano || "";
     const imovel = parecerNomeImovel || "";
@@ -248,6 +252,7 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
     parecerAgenciaHistorico,
     parecerCarenciaMeses,
     parecerTotalMeses,
+    is699Selected,
   ]);
 
   // ─── Stats (Reactivity to pageFilterProjetista) ───────────────
@@ -2300,7 +2305,7 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                     </div>
                   </div>
 
-                  {(sub.proposal.credit_program || "").includes("699") && (
+                  {is699Selected && (
                     <div className="space-y-1.5 pt-1">
                       <label className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
                         Agência de Histórico PRONAF A
