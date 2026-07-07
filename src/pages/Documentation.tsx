@@ -2179,7 +2179,7 @@ MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
                   <div className="grid grid-cols-1 gap-3">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Utilizará CAR Individual?
+                        Possui/Utilizará CAR Individual?
                       </label>
                       <Select
                         value={parecerUtilizaCarIndividual}
