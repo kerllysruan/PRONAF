@@ -2395,21 +2395,22 @@ MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
                   // Content
                   let curY = 48;
                   d.setFont("helvetica", "normal");
-                  d.setFontSize(9);
+                  d.setFontSize(9.5);
                   d.setTextColor(30, 41, 59);
  
                   // Split generatedParecerText by double newline to treat as paragraphs
-                  const paragraphs = generatedParecerText.split("\n\n");
+                  const paragraphs = generatedParecerText.toUpperCase().split("\n\n");
                   paragraphs.forEach((pText) => {
                     const lines = d.splitTextToSize(pText, W - 28);
-                    const blockH = lines.length * 4.5 + 4;
+                    const blockH = lines.length * 4.8 + 4;
  
-                    if (curY + blockH > H - 15) {
+                    if (curY + blockH > H - 25) {
                       d.addPage();
                       curY = 20;
                     }
  
-                    d.text(lines, 14, curY, { leading: 4.5 });
+                    // Render text justified with exact margin-to-margin alignment
+                    d.text(pText, 14, curY, { align: "justify", maxWidth: W - 28, leading: 4.8 });
                     curY += blockH;
                   });
 
