@@ -191,7 +191,7 @@ Em relação aos recursos próprios, não haverá contrapartida financeira por p
 
 A operação não contempla aquisição de veículo, inexistindo necessidade de justificativa de uso por, no mínimo, 120 dias ao ano.
 
-QUANTO AO PRAZO A OPERAÇÃO ESTRUTURA -SE DA SEGUINTE FORMA:
+QUANTO AO PRAZO, A OPERAÇÃO ESTRUTURA-SE DA SEGUINTE FORMA:
 CARÊNCIA: ${carencia.toUpperCase()}
 PRAZO TOTAL: ${prazoTotal.toUpperCase()}
 
@@ -2359,21 +2359,21 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                   d.setDrawColor(203, 213, 225);
                   d.setLineWidth(0.3);
 
-                  // Gerente Geral / Gerente de Agência (left)
-                  d.line(14, sigLineY, W / 2 - 10, sigLineY);
-                  d.setFont("helvetica", "bold");
-                  d.setFontSize(7.5);
-                  d.setTextColor(15, 23, 42);
-                  d.text("MIERCIO Bruno Miranda Franco F126870", 14, sigLineY + 4);
-                  d.setFont("helvetica", "normal");
-                  d.text("Gerente de Agência", 14, sigLineY + 8);
-
-                  // Gerente de Relacionamento (right)
-                  d.line(W / 2 + 10, sigLineY, W - 14, sigLineY);
-                  d.setFont("helvetica", "bold");
-                  d.text("JAIRO Ferreira dos Santos F154768", W / 2 + 10, sigLineY + 4);
-                  d.setFont("helvetica", "normal");
-                  d.text("Gerente de Relacionamento", W / 2 + 10, sigLineY + 8);
+                   // Gerente Geral / Gerente de Agência (left)
+                   d.line(14, sigLineY, W / 2 - 10, sigLineY);
+                   d.setFont("helvetica", "bold");
+                   d.setFontSize(7.5);
+                   d.setTextColor(15, 23, 42);
+                   d.text("MIERCIO BRUNO MIRANDA FRANCO F126870", 14, sigLineY + 4);
+                   d.setFont("helvetica", "normal");
+                   d.text("GERENTE DE AGENCIA", 14, sigLineY + 8);
+ 
+                   // Gerente de Relacionamento (right)
+                   d.line(W / 2 + 10, sigLineY, W - 14, sigLineY);
+                   d.setFont("helvetica", "bold");
+                   d.text("JAIRO FERREIRA DOS SANTOS F154768", W / 2 + 10, sigLineY + 4);
+                   d.setFont("helvetica", "normal");
+                   d.text("GERENTE DE RELACIONAMENTO", W / 2 + 10, sigLineY + 8);
 
                   // Page Footer
                   d.setFillColor(15, 23, 42);
