@@ -2378,19 +2378,20 @@ MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
 
                   d.setTextColor(255, 255, 255);
                   d.setFont("helvetica", "bold");
-                  d.setFontSize(14);
-                   d.text("PARECER GERENCIAL DA AGÊNCIA", 14, 15);
-                  d.setFontSize(10);
+                  d.setFontSize(11);
+                  d.text("PARECER GERENCIAL DA AGÊNCIA", 14, 15);
+                  d.setFontSize(9);
                   d.text("OPERAÇÃO PRONAF GRUPO A", 14, 21);
  
                   // Metadata right aligned
-                  d.setFontSize(7.5);
+                  d.setFontSize(6.8);
                   d.setTextColor(148, 163, 184);
-                  d.text("PROGRAMA NACIONAL DE FORTALECIMENTO DA AGRICULTURA FAMILIAR", W - 14, 15, { align: "right" });
+                  d.text("PROGRAMA NACIONAL DE FORTALECIMENTO DA AGRICULTURA FAMILIAR", W - 14, 14, { align: "right" });
                   d.setTextColor(255, 255, 255);
                   d.setFont("helvetica", "normal");
-                  d.text(`Proponente: ${sub.proposal.producer_name.toUpperCase()}`, W - 14, 21, { align: "right" });
-                  d.text(`CPF: ${sub.proposal.producer_cpf || "—"}`, W - 14, 26, { align: "right" });
+                  d.setFontSize(8);
+                  d.text(`Proponente: ${sub.proposal.producer_name.toUpperCase()}`, W - 14, 20, { align: "right" });
+                  d.text(`CPF: ${sub.proposal.producer_cpf || "—"}`, W - 14, 25, { align: "right" });
  
                   // Content
                   let curY = 48;
@@ -2399,7 +2400,7 @@ MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
                   d.setTextColor(30, 41, 59);
  
                   // Split generatedParecerText by double newline to treat as paragraphs
-                  const paragraphs = generatedParecerText.toUpperCase().split("\n\n");
+                  const paragraphs = generatedParecerText.split("\n\n");
                   paragraphs.forEach((pText) => {
                     const lines = d.splitTextToSize(pText, W - 28);
                     const blockH = lines.length * 4.8 + 4;
@@ -2409,8 +2410,8 @@ MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
                       curY = 20;
                     }
  
-                    // Render text justified with exact margin-to-margin alignment
-                    d.text(pText, 14, curY, { align: "justify", maxWidth: W - 28, leading: 4.8 });
+                    // Render clean left-aligned text with smart wraps to avoid huge gaps
+                    d.text(lines, 14, curY, { leading: 4.8 });
                     curY += blockH;
                   });
 
