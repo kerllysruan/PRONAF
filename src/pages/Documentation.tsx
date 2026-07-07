@@ -143,7 +143,8 @@ export default function Documentation() {
     const sub = selectedSubmission;
     const nome = sub.proposal.producer_name || "";
     const cpf = sub.proposal.producer_cpf || "";
-    const is699 = (sub.proposal.credit_program || "").includes("699");
+    const progStr = `${sub.proposal.credit_program || ""} ${sub.proposal.linha_credito || ""}`;
+    const is699 = progStr.includes("699");
     const programAcao = is699 ? "AMPLIAÇÃO" : "IMPLANTAÇÃO";
     const atividade = parecerAtividadePlano || "";
     const imovel = parecerNomeImovel || "";
@@ -159,12 +160,12 @@ export default function Documentation() {
       .join(";\n");
     const inversoesStr = invLines ? `${invLines};` : "";
     
-    const valorTotal = sub.proposal.estimated_value
-      ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+    const rawValue = Number(sub.proposal.estimated_value) || 0;
+    const valorTotal = rawValue > 0
+      ? rawValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
       : "R$ 0,00";
       
-    const progCredito = sub.proposal.credit_program || "368";
-    const codPrograma = progCredito.includes("699") ? "699" : "368";
+    const codPrograma = is699 ? "699" : "368";
     const complemento699 = codPrograma === "699"
       ? `, visto que o cliente tem histórico de operação PRONAF A realizada na agência ${parecerAgenciaHistorico || "—"}`
       : "";
@@ -1253,6 +1254,12 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                   const historicoFile = sub.files.find(f => f.document_type === "consulta_historico_operacao_pronaf");
                   const historicoAgencia = (historicoFile?.ged_id && historicoFile.ged_id !== "NAO" && historicoFile.ged_id !== "SIM") ? historicoFile.ged_id : "";
 
+                  const sourceAct = sub.proposal.linha_credito || sub.proposal.credit_purpose || "";
+                  const upperAct = sourceAct.toUpperCase();
+                  const initialAct = (upperAct.includes("PRONAF") || upperAct.includes("368") || upperAct.includes("699") || upperAct.includes("GRUPO"))
+                    ? ""
+                    : sourceAct;
+
                   setParecerTexto("");
                   setParecerAnalista(sub.proposal.projetista || "");
                   setParecerResultado("Aprovado");
@@ -1262,7 +1269,7 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                   setParecerNomePA("");
                   setParecerCarColetivo(carColetivoFile?.ged_id || "");
                   setParecerMunicipioPA(sub.proposal.municipio || "");
-                  setParecerAtividadePlano(sub.proposal.linha_credito || sub.proposal.credit_purpose || "");
+                  setParecerAtividadePlano(initialAct);
                   setParecerCarenciaMeses("3 anos");
                   setParecerTotalMeses("10 anos");
                   setParecerGerenteGeral("MIERCIO Bruno Miranda Franco F126870");
@@ -1808,6 +1815,12 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                                     const historicoFile = sub.files.find(f => f.document_type === "consulta_historico_operacao_pronaf");
                                     const historicoAgencia = (historicoFile?.ged_id && historicoFile.ged_id !== "NAO" && historicoFile.ged_id !== "SIM") ? historicoFile.ged_id : "";
 
+                                    const sourceAct = sub.proposal.linha_credito || sub.proposal.credit_purpose || "";
+                                    const upperAct = sourceAct.toUpperCase();
+                                    const initialAct = (upperAct.includes("PRONAF") || upperAct.includes("368") || upperAct.includes("699") || upperAct.includes("GRUPO"))
+                                      ? ""
+                                      : sourceAct;
+
                                     setParecerTexto("");
                                     setParecerAnalista(sub.proposal.projetista || "");
                                     setParecerResultado("Aprovado");
@@ -1817,7 +1830,7 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                                     setParecerNomePA("");
                                     setParecerCarColetivo(carColetivoFile?.ged_id || "");
                                     setParecerMunicipioPA(sub.proposal.municipio || "");
-                                    setParecerAtividadePlano(sub.proposal.linha_credito || sub.proposal.credit_purpose || "");
+                                    setParecerAtividadePlano(initialAct);
                                     setParecerCarenciaMeses("3 anos");
                                     setParecerTotalMeses("10 anos");
                                     setParecerGerenteGeral("MIERCIO Bruno Miranda Franco F126870");
