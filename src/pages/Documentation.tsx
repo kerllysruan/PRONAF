@@ -235,7 +235,11 @@ QUANTO AO PRAZO, A OPERAÇÃO ESTRUTURA-SE DA SEGUINTE FORMA:
 CARÊNCIA: ${carencia.toUpperCase()}
 PRAZO TOTAL: ${prazoTotal.toUpperCase()}
 
-A análise econômico-financeira evidencia capacidade de pagamento compatível com o cronograma do financiamento, com crescimento projetado das receitas provenientes da atividade pecuária e percentuais de comprometimento dentro dos limites aceitáveis. Diante do exposto, conclui-se que a operação encontra-se devidamente instruída, atende integralmente às exigências da IN 3102-03-09 e demais normativos vigentes, apresenta viabilidade técnica, econômica e financeira, manifestando-se esta Unidade de Relacionamento favoravelmente ao prosseguimento da proposta de crédito. Alçada de Decisão: Comag, na forma do MB-OC-1101-12-03.`;
+A análise econômico-financeira evidencia capacidade de pagamento compatível com o cronograma do financiamento, com crescimento projetado das receitas provenientes da atividade pecuária e percentuais de comprometimento dentro dos limites aceitáveis. Diante do exposto, conclui-se que a operação encontra-se devidamente instruída, atende integralmente às exigências da IN 3102-03-09 e demais normativos vigentes, apresenta viabilidade técnica, econômica e financeira, manifestando-se esta Unidade de Relacionamento favoravelmente ao prosseguimento da proposta de crédito. Alçada de Decisão: Comag, na forma do MB-OC-1101-12-03.
+
+REPRESENTANTES BANCO:
+JAIRO FERREIRA DOS SANTOS F154768/GERENTE DE RELACIONAMENTO
+MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
   }, [
     selectedSubmission,
     parecerAtividadePlano,
@@ -2408,6 +2412,26 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     d.text(lines, 14, curY, { leading: 4.5 });
                     curY += blockH;
                   });
+
+                  // Representatives Block (no lines, just text)
+                  const footerBlockH = 20;
+                  if (curY + footerBlockH > H - 15) {
+                    d.addPage();
+                    curY = 20;
+                  }
+
+                  const textY = curY + 6;
+                  d.setFont("helvetica", "bold");
+                  d.setFontSize(7.5);
+                  d.setTextColor(15, 23, 42);
+                  d.text("MIERCIO BRUNO MIRANDA FRANCO F126870", 14, textY);
+                  d.setFont("helvetica", "normal");
+                  d.text("GERENTE DE AGENCIA", 14, textY + 4);
+
+                  d.setFont("helvetica", "bold");
+                  d.text("JAIRO FERREIRA DOS SANTOS F154768", W / 2 + 10, textY);
+                  d.setFont("helvetica", "normal");
+                  d.text("GERENTE DE RELACIONAMENTO", W / 2 + 10, textY + 4);
 
                   // Page Footer
                   d.setFillColor(15, 23, 42);
