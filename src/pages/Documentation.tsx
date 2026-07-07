@@ -2802,146 +2802,276 @@ MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-border/40">
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pl-6">
-                      Produtor
-                    </TableHead>
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      Projetista
-                    </TableHead>
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      Status Docs
-                    </TableHead>
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      Status Proposta
-                    </TableHead>
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                      Município
-                    </TableHead>
-                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">
-                      Ações
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSubmissions.map((sub) => {
-                    const pct =
-                      sub.totalFiles > 0
-                        ? Math.round((sub.approvedCount / sub.totalFiles) * 100)
-                        : 0;
-                    const allOk = sub.totalFiles > 0 && sub.approvedCount === sub.totalFiles;
-                    const hasRejects = sub.rejectedCount > 0;
+             <>
+              {/* Desktop View */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent border-border/40">
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground pl-6">
+                        Produtor
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Valor / Programa
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Projetista
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Status Docs
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Status Proposta
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Município
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">
+                        Ações
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSubmissions.map((sub) => {
+                      const pct =
+                        sub.totalFiles > 0
+                          ? Math.round((sub.approvedCount / sub.totalFiles) * 100)
+                          : 0;
+                      const allOk = sub.totalFiles > 0 && sub.approvedCount === sub.totalFiles;
+                      const hasRejects = sub.rejectedCount > 0;
 
-                    return (
-                      <TableRow
-                        key={sub.token.id}
-                        className="cursor-pointer transition-all duration-300 hover:bg-accent/50 border-border/30"
-                        onClick={() => setSelectedSubmission(sub)}
-                      >
-                        <TableCell className="pl-6 py-4">
-                          <div>
-                            <p className="font-semibold text-sm leading-tight">
-                              {sub.proposal.producer_name}
+                      return (
+                        <TableRow
+                          key={sub.token.id}
+                          className="cursor-pointer transition-all duration-300 hover:bg-accent/50 border-border/30"
+                          onClick={() => setSelectedSubmission(sub)}
+                        >
+                          <TableCell className="pl-6 py-4">
+                            <div>
+                              <p className="font-semibold text-sm leading-tight text-slate-900 dark:text-slate-100">
+                                {sub.proposal.producer_name}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5 font-mono">
+                                {sub.proposal.producer_cpf || "—"}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-bold text-sm text-indigo-600 dark:text-indigo-400">
+                                {sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+                              </p>
+                              <p className="text-[10.5px] font-medium text-slate-700 dark:text-slate-300 mt-0.5 leading-tight">
+                                {sub.proposal.credit_program || sub.proposal.linha_credito || "—"}
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <p className="text-sm text-muted-foreground">
+                              {sub.proposal.projetista || "—"}
                             </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {sub.proposal.producer_cpf || "CPF não informado"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1.5 min-w-[140px]">
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] ${
+                                  allOk
+                                    ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                    : hasRejects
+                                    ? "bg-red-100 text-red-700 border-red-200"
+                                    : "bg-amber-100 text-amber-700 border-amber-200"
+                                }`}
+                              >
+                                {sub.approvedCount}/{sub.totalFiles} aprovados
+                              </Badge>
+                              <Progress value={pct} className="h-1.5 rounded-full" />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-blue-50 text-blue-700 border-blue-200"
+                              >
+                                Enviado para Central
+                              </Badge>
+                            ) : !allOk || hasRejects ? (
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] px-2 py-0.5 font-semibold rounded-md ${
+                                  hasRejects
+                                    ? "bg-red-50 text-red-700 border-red-200"
+                                    : "bg-amber-50 text-amber-700 border-amber-200"
+                                }`}
+                              >
+                                Aguardando a documentação para envio à Central
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-emerald-50 text-emerald-700 border-emerald-200"
+                              >
+                                Todos os Documentos Aprovados - Aguardando Envio à Central
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <p className="text-sm text-muted-foreground">
+                              {sub.proposal.municipio || "—"}
                             </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm text-muted-foreground">
-                            {sub.proposal.projetista || "—"}
+                          </TableCell>
+                          <TableCell className="text-right pr-6">
+                            <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-xl h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                title="Copiar Link de Envio"
+                                onClick={async () => {
+                                  const url = `${window.location.origin}/enviar-documentacao?token=${sub.token.token}`;
+                                  await navigator.clipboard.writeText(url);
+                                  toast({
+                                    title: "Link copiado! 📋",
+                                    description: "O link de envio foi copiado para sua área de transferência.",
+                                  });
+                                }}
+                              >
+                                <Link2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-xl h-8 w-8 text-slate-500 hover:text-slate-700"
+                                title="Visualizar Detalhes"
+                                onClick={() => setSelectedSubmission(sub)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile View */}
+              <div className="block md:hidden divide-y divide-border/30">
+                {filteredSubmissions.map((sub) => {
+                  const pct =
+                    sub.totalFiles > 0
+                      ? Math.round((sub.approvedCount / sub.totalFiles) * 100)
+                      : 0;
+                  const allOk = sub.totalFiles > 0 && sub.approvedCount === sub.totalFiles;
+                  const hasRejects = sub.rejectedCount > 0;
+
+                  return (
+                    <div
+                      key={sub.token.id}
+                      className="p-5 space-y-4 hover:bg-accent/30 transition-colors cursor-pointer"
+                      onClick={() => setSelectedSubmission(sub)}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-bold text-sm text-slate-950 dark:text-slate-50 leading-tight truncate">
+                            {sub.proposal.producer_name}
+                          </h4>
+                          <p className="text-xs text-muted-foreground mt-0.5 font-mono">
+                            {sub.proposal.producer_cpf || "—"}
                           </p>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1.5 min-w-[140px]">
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] ${
-                                allOk
-                                  ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                                  : hasRejects
-                                  ? "bg-red-100 text-red-700 border-red-200"
-                                  : "bg-amber-100 text-amber-700 border-amber-200"
-                              }`}
-                            >
-                              {sub.approvedCount}/{sub.totalFiles} aprovados
-                            </Badge>
-                            <Progress value={pct} className="h-1.5 rounded-full" />
-                          </div>
-                        </TableCell>
-                        <TableCell>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-bold text-sm text-indigo-600 dark:text-indigo-400 leading-tight">
+                            {sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5 leading-none">
+                            {sub.proposal.credit_program || sub.proposal.linha_credito || "—"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-xs bg-muted/30 p-2.5 rounded-xl">
+                        <div>
+                          <span className="text-muted-foreground block text-[9px] uppercase font-bold tracking-wider">Projetista</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200 truncate block">{sub.proposal.projetista || "—"}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block text-[9px] uppercase font-bold tracking-wider">Município</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200 truncate block">{sub.proposal.municipio || "—"}</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground font-semibold">Status de Docs</span>
+                          <Badge
+                            variant="outline"
+                            className={`text-[9px] px-1.5 py-0 font-medium ${
+                              allOk
+                                ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                                : hasRejects
+                                ? "bg-red-100 text-red-700 border-red-200"
+                                : "bg-amber-100 text-amber-700 border-amber-200"
+                            }`}
+                          >
+                            {sub.approvedCount}/{sub.totalFiles} aprovados
+                          </Badge>
+                        </div>
+                        <Progress value={pct} className="h-1.5 rounded-full" />
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/20">
+                        <div>
                           {sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-blue-50 text-blue-700 border-blue-200"
-                            >
+                            <Badge variant="outline" className="text-[9px] bg-blue-50 text-blue-700 border-blue-200">
                               Enviado para Central
                             </Badge>
                           ) : !allOk || hasRejects ? (
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] px-2 py-0.5 font-semibold rounded-md ${
-                                hasRejects
-                                  ? "bg-red-50 text-red-700 border-red-200"
-                                  : "bg-amber-50 text-amber-700 border-amber-200"
-                              }`}
-                            >
-                              Aguardando a documentação para envio à Central
+                            <Badge variant="outline" className="text-[9px] bg-amber-50 text-amber-700 border-amber-200">
+                              Aguardando Docs
                             </Badge>
                           ) : (
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-emerald-50 text-emerald-700 border-emerald-200"
-                            >
-                              Todos os Documentos Aprovados - Aguardando Envio à Central
+                            <Badge variant="outline" className="text-[9px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                              Apto para Envio
                             </Badge>
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm text-muted-foreground">
-                            {sub.proposal.municipio || "—"}
-                          </p>
-                        </TableCell>
-                        <TableCell className="text-right pr-6">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="rounded-xl h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                              title="Copiar Link de Envio"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                const url = `${window.location.origin}/enviar-documentacao?token=${sub.token.token}`;
-                                await navigator.clipboard.writeText(url);
-                                toast({
-                                  title: "Link copiado! 📋",
-                                  description: "Link da página de envio copiado.",
-                                });
-                              }}
-                            >
-                              <Link2 className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="rounded-xl h-8 w-8 text-slate-500 hover:text-slate-700"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedSubmission(sub);
-                              }}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                        </div>
+
+                        <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-lg text-xs font-semibold gap-1 px-2 border-border/80 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                            onClick={async () => {
+                              const url = `${window.location.origin}/enviar-documentacao?token=${sub.token.token}`;
+                              await navigator.clipboard.writeText(url);
+                              toast({
+                                title: "Link copiado! 📋",
+                                description: "O link de envio foi copiado para sua área de transferência.",
+                              });
+                            }}
+                          >
+                            <Link2 className="h-3.5 w-3.5" />
+                            Link
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 rounded-lg text-xs font-semibold gap-1 px-2 border-border/80"
+                            onClick={() => setSelectedSubmission(sub)}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            Ver
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
