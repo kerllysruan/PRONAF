@@ -153,6 +153,36 @@ export default function Documentation() {
     const nomePA = parecerNomePA || "";
     const carColetivo = parecerCarColetivo || "";
     const dataHoje = new Date().toLocaleDateString("pt-BR");
+
+    const getGenderSuffix = (pName: string) => {
+      if (!pName) return { artigo: "O", proponente: "PROPONENTE", agricultor: "AGRICULTOR", enquadrado: "ENQUADRADO", produtor: "MINIPRODUTOR" };
+      const firstName = pName.trim().split(" ")[0].toUpperCase();
+      const maleNamesWithA = ["ANDREA", "LUCA", "SENNA", "VALTER", "ELIMAR", "ELCIMAR", "NILTON", "MILTON", "NEY", "NEY MEDEIROS", "NEY MEDEIRO"];
+      const femaleNamesWithoutA = ["NICOLE", "ROSE", "BEATRIZ", "CARMEM", "SUELI", "LIDIANE", "CLEIDE", "JOSILEUDE", "ANTONIA", "MARIA"];
+      
+      const lastChar = firstName.charAt(firstName.length - 1);
+      const isFemale = (lastChar === "A" && !maleNamesWithA.includes(firstName)) || femaleNamesWithoutA.includes(firstName);
+      
+      if (isFemale) {
+        return {
+          artigo: "A",
+          proponente: "PROPONENTE",
+          agricultor: "AGRICULTORA",
+          enquadrado: "ENQUADRADA",
+          produtor: "MINIPRODUTORA"
+        };
+      } else {
+        return {
+          artigo: "O",
+          proponente: "PROPONENTE",
+          agricultor: "AGRICULTOR",
+          enquadrado: "ENQUADRADO",
+          produtor: "MINIPRODUTOR"
+        };
+      }
+    };
+
+    const g = getGenderSuffix(nome);
     
     const invLines = parecerInversoes
       .filter((inv) => inv.trim().length > 0)
@@ -170,16 +200,22 @@ export default function Documentation() {
       ? `, visto que o cliente tem histórico de operação PRONAF A realizada na agência ${parecerAgenciaHistorico || "—"}`
       : "";
       
-    const carencia = parecerCarenciaMeses || "3 anos";
-    const prazoTotal = parecerTotalMeses || "10 anos";
+    let carencia = parecerCarenciaMeses || "36 MESES";
+    if (/^\d+$/.test(carencia.trim())) {
+      carencia = `${carencia.trim()} MESES`;
+    }
+    let prazoTotal = parecerTotalMeses || "120 MESES";
+    if (/^\d+$/.test(prazoTotal.trim())) {
+      prazoTotal = `${prazoTotal.trim()} MESES`;
+    }
 
-    return `Trata-se de proposta de crédito rural apresentada por ${nome.toUpperCase()}, CPF ${cpf}, agricultora familiar enquadrada no PRONAF Grupo A, miniprodutora, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no imóvel rural denominado:
+    return `Trata-se de proposta de crédito rural apresentada por ${nome.toUpperCase()}, CPF ${cpf}, ${g.agricultor} familiar ${g.enquadrado} no PRONAF Grupo A, ${g.produtor}, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no imóvel rural denominado:
 ${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, inserido no Projeto de assentamento ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}
 Possuindo aptidão agropecuária e infraestrutura compatível com a atividade financiada.
 
 No que se refere à relação entre o proponente e funcionário do Banco, informa-se que não há vínculo de parentesco com funcionário que atue na análise, deliberação ou decisão da presente operação de crédito.
 
-O relacionamento negocial do proponente com a instituição financeira apresenta-se condizente com o porte da operação, considerando os critérios de rentabilidade projetada, reciprocidade e aderência às diretrizes do programa PRONAF A. Quanto às restrições cadastrais, não foram identificadas restrições impeditivas ao crédito, conforme consultas realizadas aos sistemas internos do Banco e à Central de Risco de Crédito – SCR/BACEN na data ${dataHoje}. O histórico do cliente demonstra situação regular, não havendo registros de atrasos relevantes ou inadimplência em operações de crédito rural.
+O relacionamento negocial d${g.artigo} proponente com a instituição financeira apresenta-se condizente com o porte da operação, considerando os critérios de rentabilidade projetada, reciprocidade e aderência às diretrizes do programa PRONAF A. Quanto às restrições cadastrais, não foram identificadas restrições impeditivas ao crédito, conforme consultas realizadas aos sistemas internos do Banco e à Central de Risco de Crédito – SCR/BACEN na data ${dataHoje}. O histórico do cliente demonstra situação regular, não havendo registros de atrasos relevantes ou inadimplência em operações de crédito rural.
 
 O financiamento proposto contempla investimento fixo EM:
 ${inversoesStr}
@@ -187,7 +223,7 @@ ${inversoesStr}
 totalizando investimento no valor de ${valorTotal}.
 A operação será financiada com recursos do FNE/PRONAF Grupo A ${codPrograma}${complemento699}.
 
-Em relação aos recursos próprios, não haverá contrapartida financeira por parte do proponente, sendo o investimento integralmente financiado. Não se aplica à presente operação a utilização de imóveis de terceiros beneficiados com o crédito, visto que todas as inversões ocorrerão NO IMÓVEL ACIMA identificado.
+Em relação aos recursos próprios, não haverá contrapartida financeira por parte d${g.artigo} proponente, sendo o investimento integralmente financiado. Não se aplica à presente operação a utilização de imóveis de terceiros beneficiados com o crédito, visto que todas as inversões ocorrerão no imóvel acima identificado.
 
 A operação não contempla aquisição de veículo, inexistindo necessidade de justificativa de uso por, no mínimo, 120 dias ao ano.
 
@@ -1270,8 +1306,8 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                   setParecerCarColetivo(carColetivoFile?.ged_id || "");
                   setParecerMunicipioPA(sub.proposal.municipio || "");
                   setParecerAtividadePlano(initialAct);
-                  setParecerCarenciaMeses("3 anos");
-                  setParecerTotalMeses("10 anos");
+                  setParecerCarenciaMeses("36 MESES");
+                  setParecerTotalMeses("120 MESES");
                   setParecerGerenteGeral("MIERCIO Bruno Miranda Franco F126870");
                   setParecerGerenteRelacionamento("JAIRO Ferreira dos Santos F154768");
                   setParecerNumProjetoPA("");
@@ -1831,8 +1867,8 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                                     setParecerCarColetivo(carColetivoFile?.ged_id || "");
                                     setParecerMunicipioPA(sub.proposal.municipio || "");
                                     setParecerAtividadePlano(initialAct);
-                                    setParecerCarenciaMeses("3 anos");
-                                    setParecerTotalMeses("10 anos");
+                                    setParecerCarenciaMeses("36 MESES");
+                                    setParecerTotalMeses("120 MESES");
                                     setParecerGerenteGeral("MIERCIO Bruno Miranda Franco F126870");
                                     setParecerGerenteRelacionamento("JAIRO Ferreira dos Santos F154768");
                                     setParecerNumProjetoPA("");
@@ -2218,22 +2254,22 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Carência
+                        Carência (em meses)
                       </label>
                       <Input
                         className="rounded-xl"
-                        placeholder="Ex: 3 anos"
+                        placeholder="Ex: 36 meses"
                         value={parecerCarenciaMeses}
                         onChange={(e) => setParecerCarenciaMeses(e.target.value)}
                       />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Prazo Total
+                        Prazo Total (em meses)
                       </label>
                       <Input
                         className="rounded-xl"
-                        placeholder="Ex: 10 anos"
+                        placeholder="Ex: 120 meses"
                         value={parecerTotalMeses}
                         onChange={(e) => setParecerTotalMeses(e.target.value)}
                       />
