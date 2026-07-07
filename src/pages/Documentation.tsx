@@ -1622,6 +1622,15 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
           };
 
           const renderAgencyGrid = () => {
+            const CONFIRMATION_ACTIVITY_KEYS = [
+              "parecer_gerencial",
+              "consulta_s400",
+              "registro_visita_gerencial",
+              "avaliacao_risco",
+              "cadastro_atividade_plano",
+              "consulta_restricoes_serasa"
+            ];
+
             return (
               <div className="space-y-4 pt-2 animate-fade-in">
                 <div className="flex items-center gap-2 border-b border-border/40 pb-2.5">
@@ -1654,34 +1663,78 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
                             </Badge>
                           </div>
 
-                          <div className="flex items-center gap-2 pt-1">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
-                              ID-GED:
-                            </span>
-                            <input
-                              type="text"
-                              defaultValue={existingFile?.ged_id ?? ""}
-                              placeholder="Ex: GED-001"
-                              maxLength={40}
-                              className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all"
-                              onBlur={(e) => {
-                                const val = e.target.value.trim();
-                                const currentGed = existingFile?.ged_id ?? "";
-                                if (val !== currentGed) {
-                                  saveAgencyGedId(
-                                    sub.token.id,
-                                    sub.proposal.id,
-                                    doc.key,
-                                    val,
-                                    existingFile?.id
-                                  );
-                                }
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                              }}
-                            />
-                          </div>
+                          {CONFIRMATION_ACTIVITY_KEYS.includes(doc.key) ? (
+                            <div className="pt-1">
+                              {existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") ? (
+                                <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900/50 rounded-xl p-2.5">
+                                  <div className="min-w-0">
+                                    <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                      Atividade Confirmada
+                                    </p>
+                                    <p className="text-[9px] text-emerald-600/80 dark:text-emerald-500 font-medium leading-none mt-0.5 truncate">
+                                      {existingFile.ged_id.replace("CONFIRMADO - ", "")}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 px-2 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg ml-auto font-bold shrink-0"
+                                    onClick={() => {
+                                      saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "", existingFile?.id);
+                                    }}
+                                  >
+                                    Desfazer
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center"
+                                  onClick={() => {
+                                    const now = new Date();
+                                    const dateStr = now.toLocaleDateString("pt-BR");
+                                    const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                                    const val = `CONFIRMADO - ${dateStr} às ${timeStr}`;
+                                    saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, val, existingFile?.id);
+                                  }}
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                  Confirmar Realização
+                                </Button>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 pt-1">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                                ID-GED:
+                              </span>
+                              <input
+                                type="text"
+                                defaultValue={existingFile?.ged_id ?? ""}
+                                placeholder="Ex: GED-001"
+                                maxLength={40}
+                                className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all"
+                                onBlur={(e) => {
+                                  const val = e.target.value.trim();
+                                  const currentGed = existingFile?.ged_id ?? "";
+                                  if (val !== currentGed) {
+                                    saveAgencyGedId(
+                                      sub.token.id,
+                                      sub.proposal.id,
+                                      doc.key,
+                                      val,
+                                      existingFile?.id
+                                    );
+                                  }
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                }}
+                              />
+                            </div>
+                          )}
 
                           {doc.key === "parecer_gerencial" && (
                             <>
