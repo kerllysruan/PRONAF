@@ -209,11 +209,11 @@ export default function Documentation() {
       prazoTotal = `${prazoTotal.trim()} MESES`;
     }
 
-    return `Trata-se de proposta de crédito rural apresentada por ${nome.toUpperCase()}, CPF ${cpf}, ${g.agricultor} familiar ${g.enquadrado} no PRONAF Grupo A, ${g.produtor}, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no imóvel rural denominado:
+    return `Trata-se de proposta de crédito rural apresentad${g.artigo.toLowerCase()} por ${nome.toUpperCase()}, CPF ${cpf}, ${g.agricultor} familiar ${g.enquadrado} no PRONAF Grupo A, ${g.produtor}, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no imóvel rural denominado:
 ${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, inserido no Projeto de assentamento ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}
 Possuindo aptidão agropecuária e infraestrutura compatível com a atividade financiada.
 
-No que se refere à relação entre o proponente e funcionário do Banco, informa-se que não há vínculo de parentesco com funcionário que atue na análise, deliberação ou decisão da presente operação de crédito.
+No que se refere à relação entre ${g.artigo.toLowerCase() === "o" ? "o proponente" : "a proponente"} e funcionário do Banco, informa-se que não há vínculo de parentesco com funcionário que atue na análise, deliberação ou decisão da presente operação de crédito.
 
 O relacionamento negocial d${g.artigo} proponente com a instituição financeira apresenta-se condizente com o porte da operação, considerando os critérios de rentabilidade projetada, reciprocidade e aderência às diretrizes do programa PRONAF A. Quanto às restrições cadastrais, não foram identificadas restrições impeditivas ao crédito, conforme consultas realizadas aos sistemas internos do Banco e à Central de Risco de Crédito – SCR/BACEN na data ${dataHoje}. O histórico do cliente demonstra situação regular, não havendo registros de atrasos relevantes ou inadimplência em operações de crédito rural.
 
@@ -2093,30 +2093,54 @@ MIERCIO Bruno Miranda Franco F126870/Gerente de Agência.`;
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
               {/* PAINEL ESQUERDO: FORMULÁRIO DE PREENCHIMENTO */}
               <div className="lg:col-span-5 p-6 overflow-y-auto space-y-4 border-r border-border/40 max-h-[50vh] lg:max-h-[none]">
-                {/* Seção 1: Enquadramento e CAF */}
+                {/* Dados da Proposta Relacionada */}
+                <div className="bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 p-4 rounded-xl space-y-2">
+                  <h4 className="font-heading font-black text-[11px] uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
+                    Dados da Proposta Relacionada
+                  </h4>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10.5px]">
+                    <div>
+                      <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Proponente:</span>
+                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{sub.proposal.producer_name.toUpperCase()}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">CPF:</span>
+                      <strong className="text-slate-800 dark:text-slate-200 font-mono font-semibold">{sub.proposal.producer_cpf || "—"}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Linha de Crédito:</span>
+                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{sub.proposal.linha_credito || sub.proposal.credit_program || "—"}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Valor Estimado:</span>
+                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">
+                        {(Number(sub.proposal.estimated_value) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Município:</span>
+                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{sub.proposal.municipio || "—"}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Projetista:</span>
+                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{sub.proposal.projetista || "—"}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 1: Atividade do Plano */}
                 <div className="bg-muted/40 p-4 rounded-xl border border-border/40 space-y-3">
                   <h3 className="font-semibold text-xs uppercase tracking-wider text-indigo-600">
-                    Enquadramento e CAF
+                    Atividade do Plano
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Número do CAF
-                      </label>
-                      <Input
-                        className="rounded-xl"
-                        placeholder="Ex: CAF1234567890"
-                        value={parecerCaf}
-                        onChange={(e) => setParecerCaf(e.target.value)}
-                      />
-                    </div>
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                         Atividade Principal do Plano
                       </label>
                       <Input
                         className="rounded-xl"
-                        placeholder="Ex: Peculária Leiteira"
+                        placeholder="Ex: Pecuária Leiteira"
                         value={parecerAtividadePlano}
                         onChange={(e) => setParecerAtividadePlano(e.target.value)}
                       />
