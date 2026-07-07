@@ -698,7 +698,7 @@ export function useDocumentationReview() {
           // ZIP entry name instead of the original file_name. This prevents
           // overwrites when the same physical file is uploaded to multiple cards.
           const docDef = DOCUMENTATION_REQUIRED.find((d) => d.key === file.document_type);
-          const isAmbiental = docDef?.group === "ambiental";
+          const isAmbiental = docDef?.group === "ambiental" || file.document_type === "car_individual" || file.document_type === "car_coletivo";
           const ext = file.file_name.split(".").pop() || "pdf";
           
           // Replace slashes in document label to prevent JSZip from creating subfolders
