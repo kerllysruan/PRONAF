@@ -867,6 +867,69 @@ export function useDocumentationReview() {
     }
   }, [toast, fetchSubmissions]);
 
+  const saveAgencyGedId = useCallback(async (tokenId: string, stockProposalId: string, documentType: string, gedId: string, existingFileId?: string) => {
+    try {
+      if (existingFileId) {
+        const { error } = await supabase
+          .from("documentation_files")
+          .update({ ged_id: gedId || null })
+          .eq("id", existingFileId);
+
+        if (error) throw error;
+
+        setSubmissions((prev) =>
+          prev.map((sub) => {
+            if (sub.token.id !== tokenId) return sub;
+            return {
+              ...sub,
+              files: sub.files.map((f) =>
+                f.id === existingFileId ? { ...f, ged_id: gedId || null } : f
+              ),
+            };
+          })
+        );
+      } else {
+        const { data, error } = await supabase
+          .from("documentation_files")
+          .insert({
+            token_id: tokenId,
+            stock_proposal_id: stockProposalId,
+            document_type: documentType,
+            file_name: "Responsabilidade da Agência",
+            file_path: "agencia",
+            file_size: 0,
+            status: "aprovado",
+            ged_id: gedId || null,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setSubmissions((prev) =>
+          prev.map((sub) => {
+            if (sub.token.id !== tokenId) return sub;
+            return {
+              ...sub,
+              files: [...sub.files, data as DocumentationFile],
+            };
+          })
+        );
+      }
+      toast({
+        title: "ID-GED Atualizado",
+        description: "O ID-GED do documento da agência foi salvo com sucesso.",
+      });
+    } catch (err: any) {
+      console.error("Error saving Agency GED ID:", err);
+      toast({
+        title: "Erro ao salvar ID-GED",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
   const refetchAll = useCallback(async () => {
     await fetchSubmissions();
     await fetchAuthorizedProposals();
@@ -887,6 +950,7 @@ export function useDocumentationReview() {
     downloadAllAsZip,
     approveAllDocuments,
     rejectAllDocuments,
+    saveAgencyGedId,
     refetch: refetchAll,
   };
 }

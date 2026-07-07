@@ -6,6 +6,7 @@ import {
   DOC_STATUS_LABELS,
   DOCUMENTATION_REQUIRED,
   DocFileStatus,
+  AGENCY_DOCUMENTATION,
 } from "@/types/documentation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ import {
   Send,
   Clock,
   FileBarChart,
+  Building,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
@@ -81,6 +83,7 @@ export default function Documentation() {
     downloadAllAsZip,
     approveAllDocuments,
     rejectAllDocuments,
+    saveAgencyGedId,
     refetch,
   } = useDocumentationReview();
 
@@ -1533,14 +1536,85 @@ export default function Documentation() {
             );
           };
 
+          const renderAgencyGrid = () => {
+            return (
+              <div className="space-y-4 pt-2 animate-fade-in">
+                <div className="flex items-center gap-2 border-b border-border/40 pb-2.5">
+                  <Building className="h-5 w-5 text-indigo-500" />
+                  <h3 className="font-heading font-extrabold text-sm tracking-wider text-slate-800 dark:text-slate-200 uppercase">
+                    DOCUMENTOS DE RESPONSABILIDADE DA AGÊNCIA ({AGENCY_DOCUMENTATION.length})
+                  </h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {AGENCY_DOCUMENTATION.map((doc) => {
+                    const existingFile = sub.files.find((f) => f.document_type === doc.key);
+                    return (
+                      <Card
+                        key={doc.key}
+                        className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-indigo-50/10 dark:bg-indigo-950/5 border-l-4 border-l-indigo-500 backdrop-blur-sm transition-all duration-300 hover:shadow-lg group"
+                      >
+                        <CardContent className="p-5 space-y-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <FileText className="h-5 w-5 text-indigo-500 shrink-0" />
+                              <p className="font-heading font-bold text-sm leading-tight text-slate-800 dark:text-slate-200">
+                                {doc.label}
+                              </p>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] shrink-0 bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800"
+                            >
+                              Agência
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-1">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                              ID-GED:
+                            </span>
+                            <input
+                              type="text"
+                              defaultValue={existingFile?.ged_id ?? ""}
+                              placeholder="Ex: GED-001"
+                              maxLength={40}
+                              className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all"
+                              onBlur={(e) => {
+                                const val = e.target.value.trim();
+                                const currentGed = existingFile?.ged_id ?? "";
+                                if (val !== currentGed) {
+                                  saveAgencyGedId(
+                                    sub.token.id,
+                                    sub.proposal.id,
+                                    doc.key,
+                                    val,
+                                    existingFile?.id
+                                  );
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                              }}
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          };
+
           // Render grids
           const allKnownKeys = [...IDENTIFICACAO_KEYS, ...OPERACAO_KEYS, ...AMBIENTAIS_KEYS, ...PLANO_KEYS];
           const unknownKeys = uniqueFiles
-            .filter((f) => !allKnownKeys.includes(f.document_type))
+            .filter((f) => !allKnownKeys.includes(f.document_type) && !AGENCY_DOCUMENTATION.some((ad) => ad.key === f.document_type))
             .map((f) => f.document_type);
 
           return (
             <div className="space-y-8">
+              {renderAgencyGrid()}
               {renderGrid("Documentos de Identificação", IDENTIFICACAO_KEYS, <ShieldCheck className="h-5 w-5 text-sky-500" />)}
               {renderGrid("Documentos da Operação / Declarações Unificadas", OPERACAO_KEYS, <ClipboardList className="h-5 w-5 text-violet-500" />)}
               {renderGrid("Declarações Ambientais", AMBIENTAIS_KEYS, <FileCheck className="h-5 w-5 text-emerald-500" />)}

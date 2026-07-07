@@ -96,6 +96,18 @@ export interface DocumentationTokenWithProposal extends DocumentationToken {
   };
 }
 
+export const AGENCY_DOCUMENTATION: { key: string; label: string }[] = [
+  { key: "consulta_extrator_sicor", label: "CONSULTA EXTRATOR SICOR" },
+  { key: "parecer_gerencial", label: "PARECER GERENCIAL" },
+  { key: "select_confirmacao_atividades", label: "SELECT PARA CONFIRMAÇÃO ATIVIDADES REALIZADAS" },
+  { key: "consulta_s400", label: "CONSULTA S400" },
+  { key: "consulta_historico_operacao_pronaf", label: "CONSULTA HISTÓRICO DE OPERAÇÃO PRONAF" },
+  { key: "cadastro_atividade_plano", label: "CADASTRO ATIVIDADE PLANO" },
+  { key: "consulta_restricoes_serasa", label: "CONSULTA RESTRIÇÕES SERASA" },
+  { key: "avaliacao_risco", label: "AVALIAÇÃO RISCO" },
+  { key: "registro_visita_gerencial", label: "REGISTRO VISITA GERENCIAL" },
+];
+
 export const DOC_STATUS_LABELS: Record<DocFileStatus, string> = {
   pendente: "Pendente",
   aprovado: "Aprovado",
@@ -109,5 +121,9 @@ export const DOC_STATUS_COLORS: Record<DocFileStatus, string> = {
 };
 
 export function getDocLabel(key: string): string {
-  return DOCUMENTATION_REQUIRED.find((d) => d.key === key)?.label || key;
+  const reqDoc = DOCUMENTATION_REQUIRED.find((d) => d.key === key);
+  if (reqDoc) return reqDoc.label;
+  const agencyDoc = AGENCY_DOCUMENTATION.find((d) => d.key === key);
+  if (agencyDoc) return agencyDoc.label;
+  return key;
 }
