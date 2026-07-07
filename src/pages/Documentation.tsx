@@ -235,11 +235,7 @@ QUANTO AO PRAZO, A OPERAÇÃO ESTRUTURA-SE DA SEGUINTE FORMA:
 CARÊNCIA: ${carencia.toUpperCase()}
 PRAZO TOTAL: ${prazoTotal.toUpperCase()}
 
-A análise econômico-financeira evidencia capacidade de pagamento compatível com o cronograma do financiamento, com crescimento projetado das receitas provenientes da atividade pecuária e percentuais de comprometimento dentro dos limites aceitáveis. Diante do exposto, conclui-se que a operação encontra-se devidamente instruída, atende integralmente às exigências da IN 3102-03-09 e demais normativos vigentes, apresenta viabilidade técnica, econômica e financeira, manifestando-se esta Unidade de Relacionamento favoravelmente ao prosseguimento da proposta de crédito. Alçada de Decisão: Comag, na forma do MB-OC-1101-12-03.
-
-REPRESENTANTES BANCO:
-JAIRO FERREIRA DOS SANTOS F154768/GERENTE DE RELACIONAMENTO
-MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
+A análise econômico-financeira evidencia capacidade de pagamento compatível com o cronograma do financiamento, com crescimento projetado das receitas provenientes da atividade pecuária e percentuais de comprometimento dentro dos limites aceitáveis. Diante do exposto, conclui-se que a operação encontra-se devidamente instruída, atende integralmente às exigências da IN 3102-03-09 e demais normativos vigentes, apresenta viabilidade técnica, econômica e financeira, manifestando-se esta Unidade de Relacionamento favoravelmente ao prosseguimento da proposta de crédito. Alçada de Decisão: Comag, na forma do MB-OC-1101-12-03.`;
   }, [
     selectedSubmission,
     parecerAtividadePlano,
