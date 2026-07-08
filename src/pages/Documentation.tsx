@@ -224,7 +224,7 @@ ${inversoesStr}
 totalizando investimento no valor de ${valorTotal}.
 A operação será financiada com recursos do FNE/PRONAF Grupo A ${codPrograma}${complemento699}.
 
-Em relação aos recursos próprios, não haverá contrapartida financeira por parte d${g.artigo} proponente, sendo o investimento integralmente financiado. Não se aplica à presente operação a utilização de imóveis de terceiros beneficiados com o crédito, visto que todas as inversões ocorrerão ${invLocalStr}.
+Em relação aos recursos próprios, não haverá contrapartida financeira por parte d${g.artigo} proponente, sendo o investimento integralmente financiado. Não se aplica à presente operação a utilização de imóveis de terceiros beneficiados com o crédito, visto que todas as inversões ocorrerão no imóvel acima identificado.
 
 A operação não contempla aquisição de veículo, inexistindo necessidade de justificativa de uso por, no mínimo, 120 dias ao ano.
 
