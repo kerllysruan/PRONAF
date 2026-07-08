@@ -705,11 +705,15 @@ export function useDocumentationReview() {
           const safeLabel = (docDef?.label || file.document_type).replace(/\//g, "-");
           const zipName = `${safeLabel}.${ext}`;
 
+          const isCar = file.document_type === "car_individual" || file.document_type === "car_coletivo";
+
           if (isAmbiental && ambientalFolder) {
             ambientalFolder.file(zipName, data);
             ambientalSubZip.file(zipName, data);
             hasAmbientalFiles = true;
-          } else {
+          }
+          
+          if (!isAmbiental || isCar) {
             zip.file(zipName, data);
           }
         }
