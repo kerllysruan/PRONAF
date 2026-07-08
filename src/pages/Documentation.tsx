@@ -171,19 +171,19 @@ export default function Documentation() {
       
       if (isFemale) {
         return {
-          artigo: "A",
-          proponente: "PROPONENTE",
-          agricultor: "AGRICULTORA",
-          enquadrado: "ENQUADRADA",
-          produtor: "MINIPRODUTORA"
+          artigo: "a",
+          proponente: "proponente",
+          agricultor: "agricultora",
+          enquadrado: "enquadrada",
+          produtor: "miniprodutora"
         };
       } else {
         return {
-          artigo: "O",
-          proponente: "PROPONENTE",
-          agricultor: "AGRICULTOR",
-          enquadrado: "ENQUADRADO",
-          produtor: "MINIPRODUTOR"
+          artigo: "o",
+          proponente: "proponente",
+          agricultor: "agricultor",
+          enquadrado: "enquadrado",
+          produtor: "miniprodutor"
         };
       }
     };
