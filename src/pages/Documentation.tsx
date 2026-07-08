@@ -134,6 +134,7 @@ export default function Documentation() {
   const [parecerCarIndividual, setParecerCarIndividual] = useState("");
   const [parecerAgenciaHistorico, setParecerAgenciaHistorico] = useState("");
   const [parecerUtilizaCarIndividual, setParecerUtilizaCarIndividual] = useState("SIM");
+  const [parecerGeneroProponente, setParecerGeneroProponente] = useState("MASCULINO");
 
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
@@ -160,35 +161,21 @@ export default function Documentation() {
     const carColetivo = parecerCarColetivo || "";
     const dataHoje = new Date().toLocaleDateString("pt-BR");
 
-    const getGenderSuffix = (pName: string) => {
-      if (!pName) return { artigo: "O", proponente: "PROPONENTE", agricultor: "AGRICULTOR", enquadrado: "ENQUADRADO", produtor: "MINIPRODUTOR" };
-      const firstName = pName.trim().split(" ")[0].toUpperCase();
-      const maleNamesWithA = ["ANDREA", "LUCA", "SENNA", "VALTER", "ELIMAR", "ELCIMAR", "NILTON", "MILTON", "NEY", "NEY MEDEIROS", "NEY MEDEIRO"];
-      const femaleNamesWithoutA = ["NICOLE", "ROSE", "BEATRIZ", "CARMEM", "SUELI", "LIDIANE", "CLEIDE", "JOSILEUDE", "ANTONIA", "MARIA"];
-      
-      const lastChar = firstName.charAt(firstName.length - 1);
-      const isFemale = (lastChar === "A" && !maleNamesWithA.includes(firstName)) || femaleNamesWithoutA.includes(firstName);
-      
-      if (isFemale) {
-        return {
+    const g = parecerGeneroProponente === "FEMININO"
+      ? {
           artigo: "a",
           proponente: "proponente",
           agricultor: "agricultora",
           enquadrado: "enquadrada",
           produtor: "miniprodutora"
-        };
-      } else {
-        return {
+        }
+      : {
           artigo: "o",
           proponente: "proponente",
           agricultor: "agricultor",
           enquadrado: "enquadrado",
           produtor: "miniprodutor"
         };
-      }
-    };
-
-    const g = getGenderSuffix(nome);
     
     const invLines = parecerInversoes
       .filter((inv) => inv.trim().length > 0)
@@ -260,6 +247,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
     parecerTotalMeses,
     is699Selected,
     parecerUtilizaCarIndividual,
+    parecerGeneroProponente,
   ]);
 
   // ─── Stats (Reactivity to pageFilterProjetista) ───────────────
@@ -1327,9 +1315,19 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   const initialAct = (upperAct.includes("PRONAF") || upperAct.includes("368") || upperAct.includes("699") || upperAct.includes("GRUPO"))
                     ? ""
                     : sourceAct;
-
                    const hasCarInd = !!carIndividualFile?.ged_id;
                   setParecerUtilizaCarIndividual(hasCarInd ? "SIM" : "NÃO");
+
+                  const pName = sub.proposal.producer_name || "";
+                  const firstName = pName.trim().split(" ")[0].toUpperCase();
+                  const maleNamesWithA = ["ANDREA", "LUCA", "SENNA", "VALTER", "ELIMAR", "ELCIMAR", "NILTON", "MILTON", "NEY", "NEY MEDEIROS", "NEY MEDEIRO"];
+                  const femaleNamesWithoutA = ["NICOLE", "ROSE", "BEATRIZ", "CARMEM", "SUELI", "LIDIANE", "CLEIDE", "JOSILEUDE", "ANTONIA", "MARIA", "LUCILENE", "ELIENE", "MARLENE", "VIVIANE", "IRACEMA", "CLEIDE", "ELIETE"];
+                  const lastChar = firstName.charAt(firstName.length - 1);
+                  const endsWithEneOrAne = firstName.endsWith("ENE") || firstName.endsWith("ANE") || firstName.endsWith("ETE") || firstName.endsWith("ICE");
+                  const isFemale = (lastChar === "A" && !maleNamesWithA.includes(firstName)) || 
+                                   femaleNamesWithoutA.includes(firstName) || 
+                                   endsWithEneOrAne;
+                  setParecerGeneroProponente(isFemale ? "FEMININO" : "MASCULINO");
 
                   setParecerTexto("");
                   setParecerAnalista(sub.proposal.projetista || "");
@@ -1891,9 +1889,19 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     const initialAct = (upperAct.includes("PRONAF") || upperAct.includes("368") || upperAct.includes("699") || upperAct.includes("GRUPO"))
                                       ? ""
                                       : sourceAct;
-
                                     const hasCarInd = !!carIndividualFile?.ged_id;
                                     setParecerUtilizaCarIndividual(hasCarInd ? "SIM" : "NÃO");
+
+                                    const pName = sub.proposal.producer_name || "";
+                                    const firstName = pName.trim().split(" ")[0].toUpperCase();
+                                    const maleNamesWithA = ["ANDREA", "LUCA", "SENNA", "VALTER", "ELIMAR", "ELCIMAR", "NILTON", "MILTON", "NEY", "NEY MEDEIROS", "NEY MEDEIRO"];
+                                    const femaleNamesWithoutA = ["NICOLE", "ROSE", "BEATRIZ", "CARMEM", "SUELI", "LIDIANE", "CLEIDE", "JOSILEUDE", "ANTONIA", "MARIA", "LUCILENE", "ELIENE", "MARLENE", "VIVIANE", "IRACEMA", "CLEIDE", "ELIETE"];
+                                    const lastChar = firstName.charAt(firstName.length - 1);
+                                    const endsWithEneOrAne = firstName.endsWith("ENE") || firstName.endsWith("ANE") || firstName.endsWith("ETE") || firstName.endsWith("ICE");
+                                    const isFemale = (lastChar === "A" && !maleNamesWithA.includes(firstName)) || 
+                                                     femaleNamesWithoutA.includes(firstName) || 
+                                                     endsWithEneOrAne;
+                                    setParecerGeneroProponente(isFemale ? "FEMININO" : "MASCULINO");
 
                                     setParecerTexto("");
                                     setParecerAnalista(sub.proposal.projetista || "");
@@ -2169,9 +2177,27 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 {/* Seção 1: Atividade do Plano */}
                 <div className="bg-muted/40 p-4 rounded-xl border border-border/40 space-y-3">
                   <h3 className="font-semibold text-xs uppercase tracking-wider text-indigo-600">
-                    Atividade do Plano
+                    Atividade e Gênero do Proponente
                   </h3>
                   <div className="grid grid-cols-1 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        Gênero do(a) Proponente (Concordância Gramatical)
+                      </label>
+                      <Select
+                        value={parecerGeneroProponente}
+                        onValueChange={setParecerGeneroProponente}
+                      >
+                        <SelectTrigger className="rounded-xl bg-background border-border/60">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          <SelectItem value="MASCULINO">MASCULINO (o, agricultor, enquadrado, miniprodutor)</SelectItem>
+                          <SelectItem value="FEMININO">FEMININO (a, agricultora, enquadrada, miniprodutora)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                         Atividade Principal do Plano
