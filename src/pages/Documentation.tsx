@@ -111,6 +111,7 @@ export default function Documentation() {
   const [reportFilterProjetista, setReportFilterProjetista] = useState("all");
   const [reportFilterPrograma, setReportFilterPrograma] = useState("all");
   const [pageFilterProjetista, setPageFilterProjetista] = useState("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   
   // Manager Opinion State
   const [parecerDialogOpen, setParecerDialogOpen] = useState(false);
@@ -244,11 +245,7 @@ QUANTO AO PRAZO, A OPERAÇÃO ESTRUTURA-SE DA SEGUINTE FORMA:
 CARÊNCIA: ${carencia.toUpperCase()}
 PRAZO TOTAL: ${prazoTotal.toUpperCase()}
 
-A análise econômico-financeira evidencia capacidade de pagamento compatível com o cronograma do financiamento, com crescimento projetado das receitas provenientes da atividade pecuária e percentuais de comprometimento dentro dos limites aceitáveis. Diante do exposto, conclui-se que a operação encontra-se devidamente instruída, atende integralmente às exigências da IN 3102-03-09 e demais normativos vigentes, apresenta viabilidade técnica, econômica e financeira, manifestando-se esta Unidade de Relacionamento favoravelmente ao prosseguimento da proposta de crédito. Alçada de Decisão: Comag, na forma do MB-OC-1101-12-03.
-
-REPRESENTANTES BANCO:
-JAIRO FERREIRA DOS SANTOS F154768/GERENTE DE RELACIONAMENTO
-MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
+A análise econômico-financeira evidencia capacidade de pagamento compatível com o cronograma do financiamento, com crescimento projetado das receitas provenientes da atividade pecuária e percentuais de comprometimento dentro dos limites aceitáveis. Diante do exposto, conclui-se que a operação encontra-se devidamente instruída, atende integralmente às exigências da IN 3102-03-09 e demais normativos vigentes, apresenta viabilidade técnica, econômica e financeira, manifestando-se esta Unidade de Relacionamento favoravelmente ao prosseguimento da proposta de crédito. Alçada de Decisão: Comag, na forma do MB-OC-1101-12-03.`;
   }, [
     selectedSubmission,
     parecerAtividadePlano,
@@ -316,6 +313,26 @@ MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
         (s) => normalizeName(s.proposal.projetista) === pageFilterProjetista.toUpperCase()
       );
     }
+
+    if (filterStatus !== "all") {
+      result = result.filter((s) => {
+        const allOk = s.totalFiles > 0 && s.approvedCount === s.totalFiles;
+        const hasRejects = s.rejectedCount > 0;
+        const isEnviado = s.proposal.status === "ENVIADO PARA CENTRAL";
+
+        if (filterStatus === "aguardando") {
+          return !isEnviado && (!allOk || hasRejects);
+        }
+        if (filterStatus === "apto") {
+          return !isEnviado && allOk && !hasRejects;
+        }
+        if (filterStatus === "enviado") {
+          return isEnviado;
+        }
+        return true;
+      });
+    }
+
     if (!searchTerm.trim()) return result;
     const term = searchTerm.toLowerCase();
     return result.filter(
@@ -323,7 +340,7 @@ MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
         s.proposal.producer_name.toLowerCase().includes(term) ||
         (s.proposal.producer_cpf && s.proposal.producer_cpf.includes(term))
     );
-  }, [submissions, searchTerm, pageFilterProjetista]);
+  }, [submissions, searchTerm, pageFilterProjetista, filterStatus]);
 
   // ─── Filtered authorized proposals ────────────────────────────
   const filteredAuthorized = useMemo(() => {
@@ -2761,18 +2778,31 @@ MIERCIO BRUNO MIRANDA FRANCO F126870/GERENTE DE AGÊNCIA.`;
                 className="pl-10 rounded-xl border-border/60 bg-background/60"
               />
             </div>
-            <div className="w-full sm:w-[250px]">
+            <div className="w-full sm:w-[220px]">
               <Select value={pageFilterProjetista} onValueChange={setPageFilterProjetista}>
                 <SelectTrigger className="rounded-xl border-border/60 bg-background/60">
                   <SelectValue placeholder="Filtrar por projetista" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   <SelectItem value="all">Todos os Projetistas</SelectItem>
                   {allProjetistas.map((p) => (
                     <SelectItem key={p} value={p}>
                       {p}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full sm:w-[220px]">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="rounded-xl border-border/60 bg-background/60">
+                  <SelectValue placeholder="Filtrar por status" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="all">Todos os Status</SelectItem>
+                  <SelectItem value="aguardando">Aguardando Docs</SelectItem>
+                  <SelectItem value="apto">Apto para Envio</SelectItem>
+                  <SelectItem value="enviado">Enviado para Central</SelectItem>
                 </SelectContent>
               </Select>
             </div>
