@@ -23,6 +23,7 @@ export interface SubmittedProposal {
     estimated_value: number | null;
     projetista: string | null;
     linha_credito: string | null;
+    credit_purpose: string | null;
     status: string;
   };
   files: DocumentationFile[];
@@ -42,6 +43,7 @@ export interface AuthorizedProposal {
   estimated_value: number | null;
   projetista: string | null;
   linha_credito: string | null;
+  credit_purpose: string | null;
   status: string;
   token: string | null; // null = token being generated
 }
@@ -85,6 +87,7 @@ export function useDocumentationReview() {
             estimated_value,
             projetista,
             linha_credito,
+            credit_purpose,
             status,
             agency_id
           )
@@ -229,7 +232,7 @@ export function useDocumentationReview() {
       // 1. Fetch all stock_proposals with AUTORIZADO status
       let query = supabase
         .from("stock_proposals")
-        .select("id, producer_name, producer_cpf, credit_program, municipio, estimated_value, projetista, linha_credito, status, agency_id")
+        .select("id, producer_name, producer_cpf, credit_program, municipio, estimated_value, projetista, linha_credito, credit_purpose, status, agency_id")
         .in("status", AUTORIZADO_STATUSES);
 
       if (effectiveAgencyId !== "all") {
@@ -276,6 +279,7 @@ export function useDocumentationReview() {
         estimated_value: p.estimated_value,
         projetista: p.projetista,
         linha_credito: p.linha_credito,
+        credit_purpose: p.credit_purpose,
         status: p.status,
         token: tokenMap.get(p.id)?.token || null,
       }));

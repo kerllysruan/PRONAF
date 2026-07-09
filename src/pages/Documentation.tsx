@@ -146,6 +146,77 @@ export default function Documentation() {
     }
   }, [submissions]);
 
+  // Load opinion draft from localStorage to prevent loss during tab switching
+  useEffect(() => {
+    if (!selectedSubmission) return;
+    const key = `parecer_draft_${selectedSubmission.proposal.id}`;
+
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const draft = JSON.parse(saved);
+        if (draft.atividadePlano !== undefined) setParecerAtividadePlano(draft.atividadePlano);
+        if (draft.nomeImovel !== undefined) setParecerNomeImovel(draft.nomeImovel);
+        if (draft.municipioImovel !== undefined) setParecerMunicipioImovel(draft.municipioImovel);
+        if (draft.carIndividual !== undefined) setParecerCarIndividual(draft.carIndividual);
+        if (draft.numProjetoPA !== undefined) setParecerNumProjetoPA(draft.numProjetoPA);
+        if (draft.nomePA !== undefined) setParecerNomePA(draft.nomePA);
+        if (draft.carColetivo !== undefined) setParecerCarColetivo(draft.carColetivo);
+        if (draft.municipioPA !== undefined) setParecerMunicipioPA(draft.municipioPA);
+        if (draft.carenciaMeses !== undefined) setParecerCarenciaMeses(draft.carenciaMeses);
+        if (draft.totalMeses !== undefined) setParecerTotalMeses(draft.totalMeses);
+        if (draft.agenciaHistorico !== undefined) setParecerAgenciaHistorico(draft.agenciaHistorico);
+        if (draft.utilizaCarIndividual !== undefined) setParecerUtilizaCarIndividual(draft.utilizaCarIndividual);
+        if (draft.generoProponente !== undefined) setParecerGeneroProponente(draft.generoProponente);
+        if (draft.inversoes !== undefined) setParecerInversoes(draft.inversoes);
+      } catch (e) {
+        console.error("Error parsing draft from localStorage", e);
+      }
+    }
+  }, [selectedSubmission]);
+
+  // Save opinion draft to localStorage in real-time
+  useEffect(() => {
+    if (!selectedSubmission || !parecerDialogOpen) return;
+    const key = `parecer_draft_${selectedSubmission.proposal.id}`;
+
+    const draft = {
+      atividadePlano: parecerAtividadePlano,
+      nomeImovel: parecerNomeImovel,
+      municipioImovel: parecerMunicipioImovel,
+      carIndividual: parecerCarIndividual,
+      numProjetoPA: parecerNumProjetoPA,
+      nomePA: parecerNomePA,
+      carColetivo: parecerCarColetivo,
+      municipioPA: parecerMunicipioPA,
+      carenciaMeses: parecerCarenciaMeses,
+      totalMeses: parecerTotalMeses,
+      agenciaHistorico: parecerAgenciaHistorico,
+      utilizaCarIndividual: parecerUtilizaCarIndividual,
+      generoProponente: parecerGeneroProponente,
+      inversoes: parecerInversoes,
+    };
+
+    localStorage.setItem(key, JSON.stringify(draft));
+  }, [
+    selectedSubmission,
+    parecerDialogOpen,
+    parecerAtividadePlano,
+    parecerNomeImovel,
+    parecerMunicipioImovel,
+    parecerCarIndividual,
+    parecerNumProjetoPA,
+    parecerNomePA,
+    parecerCarColetivo,
+    parecerMunicipioPA,
+    parecerCarenciaMeses,
+    parecerTotalMeses,
+    parecerAgenciaHistorico,
+    parecerUtilizaCarIndividual,
+    parecerGeneroProponente,
+    parecerInversoes,
+  ]);
+
   const generatedParecerText = useMemo(() => {
     if (!selectedSubmission) return "";
     const sub = selectedSubmission;
@@ -1310,7 +1381,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   const historicoFile = sub.files.find(f => f.document_type === "consulta_historico_operacao_pronaf");
                   const historicoAgencia = (historicoFile?.ged_id && historicoFile.ged_id !== "NAO" && historicoFile.ged_id !== "SIM") ? historicoFile.ged_id : "";
 
-                  const sourceAct = sub.proposal.linha_credito || sub.proposal.credit_purpose || "";
+                  const sourceAct = sub.proposal.credit_purpose || sub.proposal.linha_credito || "";
                   const upperAct = sourceAct.toUpperCase();
                   const initialAct = (upperAct.includes("PRONAF") || upperAct.includes("368") || upperAct.includes("699") || upperAct.includes("GRUPO"))
                     ? ""
@@ -1884,7 +1955,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     const historicoFile = sub.files.find(f => f.document_type === "consulta_historico_operacao_pronaf");
                                     const historicoAgencia = (historicoFile?.ged_id && historicoFile.ged_id !== "NAO" && historicoFile.ged_id !== "SIM") ? historicoFile.ged_id : "";
 
-                                    const sourceAct = sub.proposal.linha_credito || sub.proposal.credit_purpose || "";
+                                    const sourceAct = sub.proposal.credit_purpose || sub.proposal.linha_credito || "";
                                     const upperAct = sourceAct.toUpperCase();
                                     const initialAct = (upperAct.includes("PRONAF") || upperAct.includes("368") || upperAct.includes("699") || upperAct.includes("GRUPO"))
                                       ? ""
@@ -2531,12 +2602,13 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   d.setFontSize(6.5);
                   d.setTextColor(148, 163, 184);
                   d.text(`Gerado em ${dateStr}  ·  Proponente: ${sub.proposal.producer_name}`, 14, H - 3.5);
-                  d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
+d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
 
                   const safeName = (sub.proposal.producer_name || "Produtor")
                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                     .replace(/\s+/g, "_").toUpperCase();
                   d.save(`Parecer_Gerencial_${safeName}.pdf`);
+                  localStorage.removeItem(`parecer_draft_${sub.proposal.id}`);
                   setParecerDialogOpen(false);
 
                   toast({
