@@ -2608,7 +2608,6 @@ d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                     .replace(/\s+/g, "_").toUpperCase();
                   d.save(`Parecer_Gerencial_${safeName}.pdf`);
-                  localStorage.removeItem(`parecer_draft_${sub.proposal.id}`);
                   setParecerDialogOpen(false);
 
                   toast({
