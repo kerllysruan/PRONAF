@@ -65,6 +65,15 @@ const DISBURSEMENT_COLORS: Record<string, string> = {
   negado: "#ef4444",
 };
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+
+const formatCompact = (value: number) => {
+  if (value >= 1000000) return `R$ ${(value / 1000000).toFixed(1)}mi`;
+  if (value >= 1000) return `R$ ${(value / 1000).toFixed(0)}k`;
+  return formatCurrency(value);
+};
+
 export default function Dashboard() {
   const { proposals, loading: loadingP } = useProposals();
   const { proposals: stockProposals, loading: loadingStock } = useStockProposals();
@@ -651,14 +660,7 @@ export default function Dashboard() {
     return items.slice(0, 4); // Max 4 insights
   }, [stats, monthlyData, designerChartData, disbursementStats, taskStats]);
 
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-  const formatCompact = (value: number) => {
-    if (value >= 1000000) return `R$ ${(value / 1000000).toFixed(1)}mi`;
-    if (value >= 1000) return `R$ ${(value / 1000).toFixed(0)}k`;
-    return formatCurrency(value);
-  };
 
   // Get greeting based on time of day
   const getGreeting = () => {
