@@ -245,6 +245,124 @@ export default function Documentation() {
     }
   };
 
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const carregarPdfJs = (): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      if ((window as any).pdfjsLib) {
+        resolve((window as any).pdfjsLib);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js";
+      script.onload = () => {
+        const pdfjs = (window as any).pdfjsLib;
+        pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+        resolve(pdfjs);
+      };
+      script.onerror = (err) => reject(err);
+      document.body.appendChild(script);
+    });
+  };
+
+  const extrairDadosCarDoPdf = async (isIndividual: boolean, proposalId: string, files: any[]) => {
+    const docType = isIndividual ? "car_individual" : "car_coletivo";
+    const carFile = files.find(f => f.document_type === docType && f.file_path && f.file_path !== "dispensado");
+    
+    if (!carFile) {
+      alert("Nenhum arquivo de CAR válido encontrado na documentação enviada para esta proposta.");
+      return;
+    }
+
+    setPdfLoading(true);
+    try {
+      console.log(`Baixando e processando PDF do CAR do storage: ${carFile.file_path}`);
+      
+      const { data, error } = await supabase.storage
+        .from("proposals_documents")
+        .download(carFile.file_path);
+      
+      if (error) throw error;
+      
+      const pdfjs = await carregarPdfJs();
+      const arrayBuffer = await data.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      
+      let textoCompleto = "";
+      const maxPages = Math.min(pdf.numPages, 5);
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map((item: any) => item.str).join(" ");
+        textoCompleto += pageText + "\n";
+      }
+      
+      console.log("Texto extraído do PDF com sucesso. Analisando padrões...");
+      
+      const carRegex = /[A-Z]{2}-\d{7}-[A-Z0-9]{4}(?:\.[A-Z0-9]{4}){7}/gi;
+      const matchCar = textoCompleto.match(carRegex);
+      const carEncontrado = matchCar ? matchCar[0].toUpperCase() : null;
+
+      const nomeImovelRegexes = [
+        /Nome do Imóvel Rural\s*[:\-–—]\s*([^\n\r\t]+)/i,
+        /Nome do Imóvel\s*[:\-–—]\s*([^\n\r\t]+)/i,
+        /Denominação do Imóvel Rural\s*[:\-–—]\s*([^\n\r\t]+)/i,
+        /Denominação\s*[:\-–—]\s*([^\n\r\t]+)/i,
+        /Nome do Estabelecimento\s*[:\-–—]\s*([^\n\r\t]+)/i,
+        /Imóvel Rural\s*[:\-–—]\s*([^\n\r\t]+)/i
+      ];
+
+      let nomeImovelEncontrado = null;
+      for (const regex of nomeImovelRegexes) {
+        const match = textoCompleto.match(regex);
+        if (match && match[1]) {
+          nomeImovelEncontrado = match[1].trim();
+          nomeImovelEncontrado = nomeImovelEncontrado.replace(/\s+/g, " ").replace(/[^a-zA-Z0-9À-ÿ\s\-\.\,\/]/g, "");
+          if (nomeImovelEncontrado.length > 80) {
+            nomeImovelEncontrado = nomeImovelEncontrado.substring(0, 80);
+          }
+          break;
+        }
+      }
+
+      const municipioRegex = /Município\s*[:\-–—]\s*([^\n\r\t]+)/i;
+      const matchMunicipio = textoCompleto.match(municipioRegex);
+      const municipioEncontrado = matchMunicipio ? matchMunicipio[1].trim().replace(/[^a-zA-Z0-9À-ÿ\s\-\.\,\/]/g, "") : null;
+
+      if (carEncontrado || nomeImovelEncontrado || municipioEncontrado) {
+        if (isIndividual) {
+          if (carEncontrado) setParecerCarIndividual(carEncontrado);
+          if (nomeImovelEncontrado) setParecerNomeImovel(nomeImovelEncontrado);
+          if (municipioEncontrado) setParecerMunicipioImovel(municipioEncontrado);
+        } else {
+          if (carEncontrado) setParecerCarColetivo(carEncontrado);
+          if (nomeImovelEncontrado) setParecerNomePA(nomeImovelEncontrado);
+          if (municipioEncontrado) setParecerMunicipioPA(municipioEncontrado);
+        }
+
+        const updateData: Record<string, string> = {};
+        if (nomeImovelEncontrado) updateData["localizacao"] = nomeImovelEncontrado;
+        if (municipioEncontrado) updateData["municipio"] = municipioEncontrado;
+
+        if (Object.keys(updateData).length > 0) {
+          await supabase
+            .from("stock_proposals")
+            .update(updateData)
+            .eq("id", proposalId);
+        }
+
+        alert(`Dados extraídos com sucesso do PDF!\n\n• CAR: ${carEncontrado || "Não identificado"}\n• Imóvel: ${nomeImovelEncontrado || "Não identificado"}\n• Município: ${municipioEncontrado || "Não identificado"}`);
+      } else {
+        alert("Não foi possível encontrar as informações do CAR no texto do PDF. O arquivo pode ser um documento escaneado sem reconhecimento de caracteres (OCR).");
+      }
+    } catch (err: any) {
+      console.error("Erro ao ler dados do PDF:", err);
+      alert(`Erro ao ler dados do PDF: ${err.message || err}`);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
     if (selectedSubmission) {
@@ -2493,6 +2611,17 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                               {sicarLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
                               Consultar
                             </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="rounded-xl gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-bold shrink-0 text-xs px-3"
+                              disabled={pdfLoading || !sub.files.find(f => f.document_type === "car_individual" && f.file_path && f.file_path !== "dispensado")}
+                              onClick={() => extrairDadosCarDoPdf(true, sub.proposal.id, sub.files)}
+                            >
+                              {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                              Ler PDF
+                            </Button>
                           </div>
                         </div>
                       </>
@@ -2551,6 +2680,17 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         >
                           {sicarLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
                           Consultar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl gap-1 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-bold shrink-0 text-xs px-3"
+                          disabled={pdfLoading || !sub.files.find(f => f.document_type === "car_coletivo" && f.file_path && f.file_path !== "dispensado")}
+                          onClick={() => extrairDadosCarDoPdf(false, sub.proposal.id, sub.files)}
+                        >
+                          {pdfLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                          Ler PDF
                         </Button>
                       </div>
                     </div>
