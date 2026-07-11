@@ -142,14 +142,13 @@ export default function Documentation() {
     if (!carNumber || carNumber.trim().length < 10) return;
     setSicarLoading(true);
     
-    // Limpa pontos do número do CAR para bater com o padrão de consulta (ex: MA-2104677-BE3259CD...)
-    const cleanCar = carNumber.replace(/\./g, "").trim().toUpperCase();
-    const uf = cleanCar.substring(0, 2).toLowerCase();
+    const carComPontos = carNumber.trim().toUpperCase();
+    const carSemPontos = carComPontos.replace(/\./g, "");
     
-    console.log(`Iniciando busca do CAR no SICAR (limpo: ${cleanCar}, UF: ${uf})`);
+    console.log(`Iniciando busca do CAR no SICAR via Proxy CORS (Original: ${carComPontos}, Limpo: ${carSemPontos})`);
     
     let item = null;
-    const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 6000) => {
+    const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 20000) => {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -163,90 +162,78 @@ export default function Documentation() {
     };
 
     try {
-      // 1. TENTATIVA DIRETA AO GEOSERVER WFS (Público, rápido, sem bloqueio de CORS ou captcha)
+      // 1. TENTA PRIMEIRO COM O CAR ORIGINAL (COM PONTOS) VIA CORSPROXY.IO
       try {
-        const wfsUrl = `https://geoserver.car.gov.br/geoserver/sicar/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=sicar:sicar_imoveis_${uf}&cql_filter=cod_imovel=%27${cleanCar}%27&outputFormat=application/json`;
-        const res = await fetchWithTimeout(wfsUrl, {}, 5000);
+        const targetUrl = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(carComPontos)}`;
+        const res = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, {}, 15000);
         if (res.ok) {
           const parsed = await res.json();
-          if (parsed && parsed.features && parsed.features.length > 0) {
-            const prop = parsed.features[0].properties;
-            item = {
-              nomeImovel: prop.nom_imovel || prop.nome_imovel || prop.nome || "",
-              municipio: prop.municipio || prop.nom_municipio || "",
-              uf: prop.uf || ""
-            };
-            console.log("CAR obtido com sucesso via GeoServer WFS:", item);
+          const resItem = Array.isArray(parsed) ? parsed[0] : parsed;
+          if (resItem) {
+            item = resItem;
+            console.log("CAR obtido com sucesso via corsproxy.io (com pontos):", item);
           }
         }
-      } catch (wfsErr) {
-        console.warn("Falha na consulta direta via GeoServer WFS:", wfsErr);
+      } catch (e) {
+        console.warn("Falha no corsproxy.io (com pontos), tentando sem pontos...");
       }
 
-      // 2. TENTATIVA VIA EDGE FUNCTION DO SUPABASE (Deno / Servidor)
+      // 2. TENTA COM O CAR LIMPO (SEM PONTOS) VIA CORSPROXY.IO
       if (!item) {
         try {
-          // Passamos o CAR limpo e com pontos para garantir compatibilidade
-          const { data, error } = await supabase.functions.invoke("consultar-sicar", {
-            body: { car_number: carNumber.trim() },
-          });
-          if (!error && data && data.success) {
-            const parsed = data.data;
-            const resItem = Array.isArray(parsed) ? parsed[0] : parsed;
-            if (resItem) {
-              item = {
-                nomeImovel: resItem.nomeImovel || resItem.nome || resItem.denominacao || "",
-                municipio: resItem.municipio || resItem.nomeMunicipio || "",
-                uf: resItem.uf || ""
-              };
-              console.log("CAR obtido com sucesso via Edge Function:", item);
-            }
-          }
-        } catch (efErr) {
-          console.warn("Falha na consulta via Edge Function:", efErr);
-        }
-      }
-
-      // 3. TENTATIVA VIA PROXY CORS 1 (corsproxy.io)
-      if (!item) {
-        try {
-          const targetUrl = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(carNumber.trim())}`;
-          const res = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, {}, 5000);
+          const targetUrl = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(carSemPontos)}`;
+          const res = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, {}, 15000);
           if (res.ok) {
             const parsed = await res.json();
             const resItem = Array.isArray(parsed) ? parsed[0] : parsed;
             if (resItem) {
-              item = {
-                nomeImovel: resItem.nomeImovel || resItem.nome || resItem.denominacao || "",
-                municipio: resItem.municipio || resItem.nomeMunicipio || "",
-                uf: resItem.uf || ""
-              };
-              console.log("CAR obtido com sucesso via corsproxy.io:", item);
+              item = resItem;
+              console.log("CAR obtido com sucesso via corsproxy.io (sem pontos):", item);
             }
           }
-        } catch (proxyIoErr) {
-          console.warn("Falha na consulta via corsproxy.io:", proxyIoErr);
+        } catch (e) {
+          console.warn("Falha no corsproxy.io (sem pontos), tentando allorigins...");
+        }
+      }
+
+      // 3. TENTA COM O CAR ORIGINAL VIA ALLORIGINS.WIN
+      if (!item) {
+        try {
+          const targetUrl = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(carComPontos)}`;
+          const res = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, {}, 15000);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.contents) {
+              const parsed = JSON.parse(json.contents);
+              const resItem = Array.isArray(parsed) ? parsed[0] : parsed;
+              if (resItem) {
+                item = resItem;
+                console.log("CAR obtido com sucesso via allorigins (com pontos):", item);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Falha no allorigins (com pontos)...");
         }
       }
 
       // Processa e preenche os dados no formulário
       if (item) {
-        // Se o nome do imóvel não vier no WFS, usamos um fallback amigável ou o nome já digitado
-        const nomeFinal = item.nomeImovel || parecerNomeImovel || `Imóvel Rural CAR ${uf.toUpperCase()}`;
-        const municipioFinal = item.municipio || "";
+        const nomeImovel = item.nomeImovel || item.nome || item.denominacao || "";
+        const municipio = item.municipio || item.nomeMunicipio || "";
         
         if (isIndividual) {
-          setParecerNomeImovel(nomeFinal);
-          if (municipioFinal) setParecerMunicipioImovel(municipioFinal);
+          if (nomeImovel) setParecerNomeImovel(nomeImovel);
+          if (municipio) setParecerMunicipioImovel(municipio);
         } else {
-          setParecerNomePA(nomeFinal);
-          if (municipioFinal) setParecerMunicipioPA(municipioFinal);
+          if (nomeImovel) setParecerNomePA(nomeImovel);
+          if (municipio) setParecerMunicipioPA(municipio);
         }
 
         // Atualiza o banco de dados da proposta
         const updateData: Record<string, string> = {};
-        if (nomeFinal) updateData["localizacao"] = nomeFinal;
-        if (municipioFinal) updateData["municipio"] = municipioFinal;
+        if (nomeImovel) updateData["localizacao"] = nomeImovel;
+        if (municipio) updateData["municipio"] = municipio;
 
         if (Object.keys(updateData).length > 0) {
           await supabase
@@ -255,11 +242,11 @@ export default function Documentation() {
             .eq("id", proposalId);
         }
       } else {
-        alert("Não foi possível localizar o cadastro do CAR no SICAR. Verifique o número digitado ou preencha os dados manualmente.");
+        alert("Não foi possível obter dados do CAR. O sistema do SICAR pode estar lento ou o número está incorreto. Preencha os campos manualmente.");
       }
     } catch (err) {
-      console.error("Erro geral na busca do CAR no SICAR:", err);
-      alert("Tempo limite de resposta excedido ao consultar o SICAR. Preencha as informações do imóvel manualmente.");
+      console.error("Erro na busca do CAR no SICAR:", err);
+      alert("Tempo limite excedido ao consultar o SICAR. Preencha os campos manualmente.");
     } finally {
       setSicarLoading(false);
     }
