@@ -3,7 +3,8 @@ import { ChartTooltip } from "@/components/ChartTooltip";
 import {
   FileText, CheckCircle2, Search, DollarSign, TrendingUp, Loader2,
   Sparkles, AlertTriangle, Clock, BarChart3, PieChart as PieChartIcon, ArrowUpRight, ArrowDownRight,
-  Filter, Check,
+  Filter, Check, Box, Zap, Target, Lightbulb, ShieldAlert, Award, Activity, Briefcase,
+  Users, TrendingDown, AlertCircle, Banknote, CircleDollarSign,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ import {
 import { useProposals } from "@/hooks/useProposals";
 import { useStockProposals } from "@/hooks/useStockProposals";
 import { useTeam } from "@/hooks/useTeam";
+import { useDisbursements } from "@/hooks/useDisbursements";
 import { STATUS_LABELS, PRONAF_LINE_LABELS, PROJECT_DESIGNER_LABELS, type ProposalStatus, type PronafLine, type ProjectDesigner } from "@/types/proposal";
 import { format, parseISO, subMonths, startOfMonth, endOfMonth, isWithinInterval, getMonth, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -56,10 +58,18 @@ const STATUS_CHART_COLORS: Record<string, string> = {
   negada: "hsl(0, 72%, 51%)", // red legacy
 };
 
+const DISBURSEMENT_COLORS: Record<string, string> = {
+  pendente: "#f59e0b",
+  aprovado: "#3b82f6",
+  liberado: "#22c55e",
+  negado: "#ef4444",
+};
+
 export default function Dashboard() {
   const { proposals, loading: loadingP } = useProposals();
   const { proposals: stockProposals, loading: loadingStock } = useStockProposals();
   const { tasks, members, loading: loadingT } = useTeam();
+  const { disbursements, loading: loadingD } = useDisbursements();
   const { agencies, effectiveAgencyId } = useAgency();
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
@@ -117,8 +127,6 @@ export default function Dashboard() {
   const filteredProposals = useMemo(() => {
     return proposals.filter((p) => {
       const d = parseISO(p.created_at);
-      const pMonth = (getMonth(d) + 1).toString();
-      const pYear = getYear(d).toString();
 
       // Core Filters (Month/Year from top bar)
       if (filterMonth !== "all" && getMonth(d) + 1 !== Number(filterMonth)) return false;
@@ -359,6 +367,10 @@ export default function Dashboard() {
     }
   };
 
+  // =============================================
+  // DATA COMPUTATIONS — Consolidated from all pages
+  // =============================================
+
   const stats = useMemo(() => {
     const total = filteredProposals.length;
     const aprovadas = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").length;
@@ -371,12 +383,67 @@ export default function Dashboard() {
     const taxaAprovacao = total > 0 ? Math.round((aprovadas / total) * 100) : 0;
     
     const estoqueTotal = stockProposals.length;
+    const estoqueAtivo = stockProposals.filter(p => p.status !== 'CONCLUÍDO' && p.status !== 'CONCLUIDO').length;
     const estoqueValor = stockProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
-    const concluidasEstoque = stockProposals.filter(p => p.status === 'CONCLUÍDO' || p.status === 'CONCLUIDO').length;
-    const concluidasTotal = concluidasEstoque + aprovadas;
+    const estoqueConcluido = stockProposals.filter(p => p.status === 'CONCLUÍDO' || p.status === 'CONCLUIDO').length;
+    const concluidasTotal = estoqueConcluido + aprovadas;
 
-    return { total, aprovadas, ativos, pendentes, novas, negadas, valorTotal, valorAprovado, taxaAprovacao, estoqueTotal, estoqueValor, concluidasTotal, concluidasEstoque };
+    return { total, aprovadas, ativos, pendentes, novas, negadas, valorTotal, valorAprovado, taxaAprovacao, estoqueTotal, estoqueAtivo, estoqueValor, concluidasTotal, estoqueConcluido };
   }, [filteredProposals, stockProposals]);
+
+  // Disbursement stats
+  const disbursementStats = useMemo(() => {
+    const totalCount = disbursements.length;
+    const totalAmount = disbursements.reduce((s, d) => s + Number(d.amount), 0);
+    const liberados = disbursements.filter(d => d.status === 'liberado');
+    const liberadoAmount = liberados.reduce((s, d) => s + Number(d.amount), 0);
+    const pendentes = disbursements.filter(d => d.status === 'pendente');
+    const pendenteAmount = pendentes.reduce((s, d) => s + Number(d.amount), 0);
+    const solicitados = disbursements.filter(d => d.status === 'aprovado');
+    const solicitadoAmount = solicitados.reduce((s, d) => s + Number(d.amount), 0);
+
+    return { totalCount, totalAmount, liberadoCount: liberados.length, liberadoAmount, pendenteCount: pendentes.length, pendenteAmount, solicitadoCount: solicitados.length, solicitadoAmount };
+  }, [disbursements]);
+
+  // Disbursement chart data by projetista
+  const disbursementByDesigner = useMemo(() => {
+    const map = new Map<string, { name: string; pendente: number; solicitado: number; liberado: number }>();
+    
+    Object.entries(PROJECT_DESIGNER_LABELS).forEach(([key, label]) => {
+      map.set(key, { name: label.split(" ")[0], pendente: 0, solicitado: 0, liberado: 0 });
+    });
+    map.set("others", { name: "Outros", pendente: 0, solicitado: 0, liberado: 0 });
+
+    disbursements.forEach(d => {
+      const proposal = proposals.find(p => p.id === d.proposal_id);
+      const designerKey = proposal?.project_designer || "others";
+      const key = map.has(designerKey) ? designerKey : "others";
+      const entry = map.get(key)!;
+      const amount = Number(d.amount);
+
+      if (d.status === 'pendente') entry.pendente += amount;
+      if (d.status === 'aprovado') entry.solicitado += amount;
+      if (d.status === 'liberado') entry.liberado += amount;
+    });
+
+    return Array.from(map.values()).filter(item => item.pendente > 0 || item.solicitado > 0 || item.liberado > 0);
+  }, [disbursements, proposals]);
+
+  // Disbursement status pie data
+  const disbursementPieData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    disbursements.forEach(d => {
+      counts[d.status] = (counts[d.status] || 0) + 1;
+    });
+    const labels: Record<string, string> = { pendente: "Pendente", aprovado: "Solicitado", liberado: "Liberado", negado: "Negado" };
+    return Object.entries(counts)
+      .filter(([_, v]) => v > 0)
+      .map(([status, value]) => ({
+        name: labels[status] || status,
+        value,
+        fill: DISBURSEMENT_COLORS[status] || "#94a3b8",
+      }));
+  }, [disbursements]);
 
   const statusChartData = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -384,7 +451,6 @@ export default function Dashboard() {
       counts[p.status] = (counts[p.status] || 0) + 1;
     });
     
-    // Sort array descending and filter empty
     return Object.entries(counts)
       .filter(([_, count]) => count > 0)
       .map(([status, count]) => ({
@@ -401,8 +467,6 @@ export default function Dashboard() {
     const months: { name: string; propostas: number; valor: number }[] = [];
     const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
     
-    // Initial cumulative value for ALL proposals before the 6-month window
-    // Important: Use 'proposals' to ignore date filters, but keep agency filter handled by hook
     let cumulativeValue = proposals
       .filter(p => parseISO(p.created_at) < sixMonthsAgo)
       .reduce((s, p) => s + Number(p.requested_value), 0);
@@ -443,7 +507,7 @@ export default function Dashboard() {
         valor: val.valor,
       }))
       .sort((a, b) => b.valor - a.valor)
-      .slice(0, 10); // Limita ao top 10 programas para não quebrar layout
+      .slice(0, 10);
   }, [filteredProposals]);
 
   const designerChartData = useMemo(() => {
@@ -470,25 +534,173 @@ export default function Dashboard() {
     atrasadas: tasks.filter((t) => t.due_date && new Date(t.due_date) < new Date() && t.status !== "concluida").length,
   }), [tasks]);
 
+  // =============================================
+  // SMART INSIGHTS — Auto-generated from data
+  // =============================================
+  const insights = useMemo(() => {
+    const items: { type: 'success' | 'warning' | 'danger' | 'info'; icon: typeof Zap; title: string; description: string }[] = [];
+
+    // Gargalo de documentação
+    if (stats.pendentes > 0) {
+      items.push({
+        type: 'warning',
+        icon: AlertTriangle,
+        title: 'Gargalo de Documentação',
+        description: `${stats.pendentes} proposta${stats.pendentes > 1 ? 's' : ''} com documentação pendente na esteira.`,
+      });
+    }
+
+    // Taxa de aprovação
+    if (stats.total > 0) {
+      const target = 80;
+      if (stats.taxaAprovacao >= target) {
+        items.push({
+          type: 'success',
+          icon: Target,
+          title: 'Meta de Aprovação Atingida',
+          description: `Taxa atual: ${stats.taxaAprovacao}% — Meta: ${target}%. Excelente performance!`,
+        });
+      } else {
+        items.push({
+          type: 'info',
+          icon: Target,
+          title: 'Performance de Aprovação',
+          description: `Taxa atual: ${stats.taxaAprovacao}% — Meta: ${target}%. Faltam ${target - stats.taxaAprovacao}pp.`,
+        });
+      }
+    }
+
+    // Tendência de volume (comparar últimos 2 meses)
+    if (monthlyData.length >= 2) {
+      const last = monthlyData[monthlyData.length - 1];
+      const prev = monthlyData[monthlyData.length - 2];
+      if (prev.propostas > 0) {
+        const growth = Math.round(((last.propostas - prev.propostas) / prev.propostas) * 100);
+        if (growth > 0) {
+          items.push({
+            type: 'success',
+            icon: TrendingUp,
+            title: 'Tendência de Crescimento',
+            description: `Volume de propostas cresceu ${growth}% em relação ao mês anterior.`,
+          });
+        } else if (growth < 0) {
+          items.push({
+            type: 'danger',
+            icon: TrendingDown,
+            title: 'Queda no Volume',
+            description: `Volume de propostas caiu ${Math.abs(growth)}% em relação ao mês anterior.`,
+          });
+        }
+      }
+    }
+
+    // Projetista destaque
+    if (designerChartData.length > 0) {
+      const top = designerChartData[0];
+      items.push({
+        type: 'info',
+        icon: Award,
+        title: 'Projetista Destaque',
+        description: `${top.name} processou ${top.value} proposta${top.value > 1 ? 's' : ''} no período.`,
+      });
+    }
+
+    // Desembolsos pendentes
+    if (disbursementStats.pendenteCount > 0) {
+      items.push({
+        type: 'warning',
+        icon: Banknote,
+        title: 'Desembolsos Pendentes',
+        description: `${formatCurrency(disbursementStats.pendenteAmount)} em ${disbursementStats.pendenteCount} pedido${disbursementStats.pendenteCount > 1 ? 's' : ''} aguardando liberação.`,
+      });
+    }
+
+    // Negadas
+    if (stats.negadas > 0 && stats.total > 0) {
+      const pctNeg = Math.round((stats.negadas / stats.total) * 100);
+      if (pctNeg > 15) {
+        items.push({
+          type: 'danger',
+          icon: ShieldAlert,
+          title: 'Alta Taxa de Negação',
+          description: `${pctNeg}% das propostas foram negadas. Revise critérios de entrada.`,
+        });
+      }
+    }
+
+    // Tarefas atrasadas
+    if (taskStats.atrasadas > 0) {
+      items.push({
+        type: 'danger',
+        icon: AlertCircle,
+        title: 'Tarefas em Atraso',
+        description: `${taskStats.atrasadas} tarefa${taskStats.atrasadas > 1 ? 's' : ''} da equipe estão vencidas.`,
+      });
+    }
+
+    // Estoque grande
+    if (stats.estoqueAtivo > 20) {
+      items.push({
+        type: 'info',
+        icon: Box,
+        title: 'Estoque Significativo',
+        description: `${stats.estoqueAtivo} propostas aguardando entrada na esteira. Volume: ${formatCurrency(stats.estoqueValor)}.`,
+      });
+    }
+
+    return items.slice(0, 4); // Max 4 insights
+  }, [stats, monthlyData, designerChartData, disbursementStats, taskStats]);
+
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-  if (loadingP || loadingT) {
+  const formatCompact = (value: number) => {
+    if (value >= 1000000) return `R$ ${(value / 1000000).toFixed(1)}mi`;
+    if (value >= 1000) return `R$ ${(value / 1000).toFixed(0)}k`;
+    return formatCurrency(value);
+  };
+
+  // Get greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Bom dia";
+    if (hour < 18) return "Boa tarde";
+    return "Boa noite";
+  };
+
+  if (loadingP || loadingT || loadingStock) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
+  const insightBgMap = {
+    success: 'from-emerald-500/10 to-emerald-500/5 border-emerald-200/60',
+    warning: 'from-amber-500/10 to-amber-500/5 border-amber-200/60',
+    danger: 'from-red-500/10 to-red-500/5 border-red-200/60',
+    info: 'from-blue-500/10 to-blue-500/5 border-blue-200/60',
+  };
+  const insightIconMap = {
+    success: 'text-emerald-600 bg-emerald-100',
+    warning: 'text-amber-600 bg-amber-100',
+    danger: 'text-red-600 bg-red-100',
+    info: 'text-blue-600 bg-blue-100',
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* ============================================= */}
+      {/* HEADER — Central de Comando */}
+      {/* ============================================= */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-card/40 backdrop-blur-xl p-6 rounded-3xl border border-border/50 shadow-premium">
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center shadow-inner group/icon transform transition-all duration-500 hover:rotate-6">
-            <Sparkles className="h-7 w-7 text-primary" />
+          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg group/icon transform transition-all duration-500 hover:rotate-6 hover:scale-110">
+            <Sparkles className="h-7 w-7 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-extrabold font-heading text-foreground tracking-tight">Dashboard Analítico</h1>
+            <p className="text-sm text-muted-foreground font-medium">{getGreeting()} 👋</p>
+            <h1 className="text-3xl font-extrabold font-heading text-foreground tracking-tight">Central de Comando</h1>
             <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Visão estratégica das propostas PRONAF
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Visão consolidada de todas as operações PRONAF
             </p>
           </div>
         </div>
@@ -506,6 +718,9 @@ export default function Dashboard() {
             {isExporting ? "Gerando..." : "Gerar Relatório Filtrado"}
           </button>
 
+          {/* ============================================= */}
+          {/* FILTER DIALOG — PDF Report Generation */}
+          {/* ============================================= */}
           <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
             <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden border-0 rounded-[32px] shadow-2xl">
               <DialogHeader className="p-8 bg-gradient-to-br from-primary to-primary/90 text-white shrink-0">
@@ -770,150 +985,174 @@ export default function Dashboard() {
       </div>
 
       <div ref={dashboardRef} className="space-y-8 p-1">
-      {/* Visão Geral Consolidada (Estoque e Concluídas) */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-3 mb-2">
+
+      {/* ============================================= */}
+      {/* KPI ROW 1 — Visão Geral (Estoque + Concluídas) */}
+      {/* ============================================= */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Total em Estoque */}
         <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="p-6 relative">
+          <CardContent className="p-5 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total em Estoque</p>
-                <p className="text-4xl font-extrabold font-heading text-foreground">{stats.estoqueTotal}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="secondary" className="px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-600 border-0 text-[10px] font-bold">AGUARDANDO ESTEIRA</Badge>
-                </div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Total em Estoque</p>
+                <p className="text-3xl font-extrabold font-heading text-foreground">{stats.estoqueAtivo}</p>
+                <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-600 border-0 text-[9px] font-bold">
+                  <Box className="h-2.5 w-2.5 mr-1" /> AGUARDANDO ESTEIRA
+                </Badge>
               </div>
-              <div className="h-14 w-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 transform group-hover:scale-110 group-hover:rotate-3 transition-all">
-                <FileText className="h-7 w-7" />
+              <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 transform group-hover:scale-110 group-hover:rotate-3 transition-all">
+                <Box className="h-6 w-6" />
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Volume em Estoque */}
         <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
           <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="p-6 relative">
+          <CardContent className="p-5 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Volume em Estoque</p>
-                <p className="text-2xl font-extrabold font-heading text-foreground mt-1">{formatCurrency(stats.estoqueValor)}</p>
-                <p className="text-[10px] font-bold text-muted-foreground mt-2 flex items-center gap-1 italic">
-                  <DollarSign className="h-3 w-3 opacity-50" /> TOTAL ESTIMADO
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Volume em Estoque</p>
+                <p className="text-xl font-extrabold font-heading text-foreground mt-0.5">{formatCompact(stats.estoqueValor)}</p>
+                <p className="text-[9px] font-bold text-muted-foreground mt-1 flex items-center gap-1 italic">
+                  <DollarSign className="h-2.5 w-2.5 opacity-50" /> TOTAL ESTIMADO
                 </p>
               </div>
-              <div className="h-14 w-14 rounded-2xl bg-violet-500/10 flex items-center justify-center text-violet-600 transform group-hover:scale-110 group-hover:rotate-6 transition-all">
-                <DollarSign className="h-7 w-7" />
+              <div className="h-12 w-12 rounded-2xl bg-violet-500/10 flex items-center justify-center text-violet-600 transform group-hover:scale-110 group-hover:rotate-6 transition-all">
+                <CircleDollarSign className="h-6 w-6" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Contratos Assinados */}
+        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="p-6 relative">
+          <CardContent className="p-5 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold text-emerald-600/80 uppercase tracking-widest mb-1">Geral Concluídas</p>
-                <p className="text-4xl font-extrabold font-heading text-emerald-600">{stats.concluidasTotal}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="secondary" className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 border-0 text-[10px] font-bold">
-                    {stats.concluidasEstoque} DO ESTOQUE
-                  </Badge>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Contratos Assinados</p>
+                <p className="text-3xl font-extrabold font-heading text-foreground">{stats.aprovadas}</p>
+                <div className="flex items-center gap-1 mt-1.5">
+                  <TrendingUp className="h-3 w-3 text-emerald-600" />
+                  <span className="text-[9px] text-emerald-600 font-bold">{stats.taxaAprovacao}% TAXA</span>
                 </div>
               </div>
-              <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all">
-                <CheckCircle2 className="h-7 w-7" />
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Geral Concluídas */}
+        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-slate-950">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-5 relative">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[10px] font-bold text-emerald-600/80 uppercase tracking-widest mb-0.5">Geral Concluídas</p>
+                <p className="text-3xl font-extrabold font-heading text-emerald-600">{stats.concluidasTotal}</p>
+                <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 border-0 text-[9px] font-bold">
+                  {stats.estoqueConcluido} DO ESTOQUE
+                </Badge>
+              </div>
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all">
+                <Award className="h-6 w-6" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* KPIs da Esteira Principal */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ============================================= */}
+      {/* KPI ROW 2 — Esteira, Financeiro, Docs, Desembolso */}
+      {/* ============================================= */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Total Propostas na Esteira */}
         <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="p-6 relative">
+          <CardContent className="p-5 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Propostas</p>
-                <p className="text-4xl font-extrabold font-heading text-foreground">{stats.total}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="secondary" className="px-2 py-0.5 rounded-lg bg-primary/10 text-primary border-0 text-[10px] font-bold">+{stats.novas} NOVAS</Badge>
-                </div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Total Propostas</p>
+                <p className="text-3xl font-extrabold font-heading text-foreground">{stats.total}</p>
+                <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-primary/10 text-primary border-0 text-[9px] font-bold">+{stats.novas} NOVAS</Badge>
               </div>
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary transform group-hover:scale-110 group-hover:rotate-3 transition-all">
-                <FileText className="h-7 w-7" />
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary transform group-hover:scale-110 group-hover:rotate-3 transition-all">
+                <FileText className="h-6 w-6" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="p-6 relative">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Contratos Assinados</p>
-                <p className="text-4xl font-extrabold font-heading text-foreground">{stats.aprovadas}</p>
-                <div className="flex flex-col gap-1 mt-2">
-                  <p className="text-sm font-bold text-success drop-shadow-sm font-heading">
-                    {formatCurrency(stats.valorAprovado)}
-                  </p>
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3 text-success" />
-                    <span className="text-[10px] text-success font-bold">{stats.taxaAprovacao}% TAXA</span>
-                  </div>
-                </div>
-              </div>
-              <div className="h-14 w-14 rounded-2xl bg-success/10 flex items-center justify-center text-success transform group-hover:scale-110 group-hover:-rotate-3 transition-all">
-                <CheckCircle2 className="h-7 w-7" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
+        {/* Volume Financeiro */}
         <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
           <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="p-6 relative">
+          <CardContent className="p-5 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Volume Financeiro</p>
-                <p className="text-2xl font-extrabold font-heading text-foreground mt-1">{formatCurrency(stats.valorTotal)}</p>
-                <p className="text-[10px] font-bold text-muted-foreground mt-2 flex items-center gap-1 italic">
-                  <DollarSign className="h-3 w-3 opacity-50" /> TOTAL PROCESSADO
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Volume Financeiro</p>
+                <p className="text-xl font-extrabold font-heading text-foreground mt-0.5">{formatCompact(stats.valorTotal)}</p>
+                <p className="text-[9px] font-bold text-muted-foreground mt-1 flex items-center gap-1 italic">
+                  <DollarSign className="h-2.5 w-2.5 opacity-50" /> TOTAL PROCESSADO
                 </p>
               </div>
-              <div className="h-14 w-14 rounded-2xl bg-accent/10 flex items-center justify-center text-accent transform group-hover:scale-110 group-hover:rotate-6 transition-all">
-                <DollarSign className="h-7 w-7" />
+              <div className="h-12 w-12 rounded-2xl bg-accent/10 flex items-center justify-center text-accent transform group-hover:scale-110 group-hover:rotate-6 transition-all">
+                <DollarSign className="h-6 w-6" />
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Desembolsos Liberados */}
         <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-warning/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <CardContent className="p-6 relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-5 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Processos Ativos</p>
-                <p className="text-4xl font-extrabold font-heading text-foreground">{stats.ativos}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="secondary" className="px-2 py-0.5 rounded-lg bg-warning/10 text-warning border-0 text-[10px] font-bold flex items-center gap-1">
-                    <Clock className="h-2.5 w-2.5" /> {stats.pendentes} PEND. DOCS
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Desembolsos</p>
+                <p className="text-xl font-extrabold font-heading text-foreground mt-0.5">{formatCompact(disbursementStats.liberadoAmount)}</p>
+                <div className="flex items-center gap-1 mt-1.5">
+                  <Badge variant="secondary" className="px-2 py-0.5 rounded-lg bg-teal-500/10 text-teal-600 border-0 text-[9px] font-bold">
+                    {disbursementStats.liberadoCount} LIBERADOS
                   </Badge>
                 </div>
               </div>
-              <div className="h-14 w-14 rounded-2xl bg-warning/10 flex items-center justify-center text-warning transform group-hover:scale-110 group-hover:-rotate-6 transition-all">
-                <Search className="h-7 w-7" />
+              <div className="h-12 w-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all">
+                <Banknote className="h-6 w-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Processos Ativos */}
+        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-warning/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardContent className="p-5 relative">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Processos Ativos</p>
+                <p className="text-3xl font-extrabold font-heading text-foreground">{stats.ativos}</p>
+                <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-warning/10 text-warning border-0 text-[9px] font-bold flex items-center gap-1 w-fit">
+                  <Clock className="h-2.5 w-2.5" /> {stats.pendentes} PEND. DOCS
+                </Badge>
+              </div>
+              <div className="h-12 w-12 rounded-2xl bg-warning/10 flex items-center justify-center text-warning transform group-hover:scale-110 group-hover:-rotate-6 transition-all">
+                <Activity className="h-6 w-6" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Secondary KPIs */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      {/* ============================================= */}
+      {/* SECONDARY KPIs — Documentação, Equipe, Negadas, Pendências */}
+      {/* ============================================= */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="group relative overflow-hidden border border-slate-200/60 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-[24px] bg-white/70 backdrop-blur-2xl">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <CardContent className="p-5 relative z-10">
@@ -963,7 +1202,44 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Charts Row 1 */}
+      {/* ============================================= */}
+      {/* INSIGHTS INTELIGENTES — Auto-generated */}
+      {/* ============================================= */}
+      {insights.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
+              <Lightbulb className="h-4 w-4 text-white" />
+            </div>
+            <h2 className="text-sm font-black text-foreground uppercase tracking-widest">Insights Inteligentes</h2>
+          </div>
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {insights.map((insight, idx) => {
+              const IconComp = insight.icon;
+              return (
+                <div
+                  key={idx}
+                  className={`group relative p-4 rounded-2xl border bg-gradient-to-br ${insightBgMap[insight.type]} hover:scale-[1.02] transition-all duration-300 cursor-default`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${insightIconMap[insight.type]}`}>
+                      <IconComp className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-foreground truncate">{insight.title}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{insight.description}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================= */}
+      {/* CHARTS ROW 1 — Status + Evolução */}
+      {/* ============================================= */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -1032,40 +1308,10 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Charts Row 2 */}
+      {/* ============================================= */}
+      {/* CHARTS ROW 2 — Programas + Desembolsos */}
+      {/* ============================================= */}
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-6 relative z-10 flex-1 flex flex-col">
-            <div className="flex flex-col mb-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Histórico de Volume</h3>
-              <p className="text-[10px] text-slate-700 font-medium">Volume financeiro adquirido mensal</p>
-            </div>
-            <div className="h-64 flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                  <defs>
-                    <linearGradient id="colorValorLine" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#052e16" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#052e16" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis 
-                    tick={{ fontSize: 11 }} 
-                    axisLine={false} 
-                    tickLine={false}
-                    tickFormatter={(value) => value >= 1000000 ? `R$ ${(value / 1000000).toFixed(1)}mi` : value >= 1000 ? `R$ ${(value / 1000).toFixed(0)}k` : `R$ ${value}`}
-                  />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="valor" name="Volume Financeiro" stroke="#052e16" fill="url(#colorValorLine)" strokeWidth={3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <CardContent className="p-6 relative z-10 flex-1 flex flex-col">
@@ -1114,9 +1360,43 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Desembolsos por Projetista — NOVO */}
+        <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
+          <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <CardContent className="p-6 relative z-10 flex-1 flex flex-col">
+            <div className="flex flex-col mb-4">
+              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Desembolsos por Projetista</h3>
+              <p className="text-[10px] text-slate-700 font-medium">Pendente, solicitado e liberado (R$)</p>
+            </div>
+            <div className="h-64 flex-1">
+              {disbursementByDesigner.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground gap-2">
+                  <Banknote className="h-8 w-8 opacity-30" />
+                  <span>Nenhum desembolso registrado</span>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={disbursementByDesigner} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(v) => `R$ ${v / 1000}k`} />
+                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number) => [formatCurrency(value), ""]} />
+                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                    <Bar name="Pendente" dataKey="pendente" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={24} />
+                    <Bar name="Solicitado" dataKey="solicitado" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
+                    <Bar name="Liberado" dataKey="liberado" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={24} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
+      {/* ============================================= */}
       {/* Recent Proposals */}
+      {/* ============================================= */}
       <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         <CardContent className="p-6 relative z-10 flex-1 flex flex-col">
@@ -1156,7 +1436,9 @@ export default function Dashboard() {
       </Card>
       </div>
 
-      {/* Hidden section for PDF Report Layout (Vertical & Large Graphics) */}
+      {/* ============================================= */}
+      {/* Hidden section for PDF Report Layout */}
+      {/* ============================================= */}
       <div style={{ position: 'absolute', left: '-9999px', top: '0', width: '1000px' }}>
         <div ref={printableContentRef} className="bg-white p-10 space-y-12">
           {/* KPI Summary Block */}
@@ -1207,7 +1489,7 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={monthlyData} margin={{ top: 20, right: 30, left: 40, bottom: 20 }}>
                     <defs>
-                      <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="colorValorPrint" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#1E3A8A" stopOpacity={0.3}/>
                         <stop offset="95%" stopColor="#1E3A8A" stopOpacity={0}/>
                       </linearGradient>
@@ -1215,7 +1497,7 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                     <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 500 }} />
                     <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `R$${v/1000}k`} />
-                    <Area type="monotone" dataKey="valor" stroke="#1E3A8A" fillOpacity={1} fill="url(#colorValor)" strokeWidth={4} />
+                    <Area type="monotone" dataKey="valor" stroke="#1E3A8A" fillOpacity={1} fill="url(#colorValorPrint)" strokeWidth={4} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
