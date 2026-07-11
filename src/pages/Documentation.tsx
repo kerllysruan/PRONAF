@@ -144,11 +144,12 @@ export default function Documentation() {
     
     const carComPontos = carNumber.trim().toUpperCase();
     const carSemPontos = carComPontos.replace(/\./g, "");
+    const uf = carSemPontos.substring(0, 2).toLowerCase();
     
-    console.log(`Iniciando busca do CAR no SICAR via Proxy CORS (Original: ${carComPontos}, Limpo: ${carSemPontos})`);
+    console.log(`Buscando no GeoServer do SICAR via Proxy CORS (UF: ${uf}, CAR: ${carSemPontos})`);
     
     let item = null;
-    const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 20000) => {
+    const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs = 15000) => {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), timeoutMs);
       try {
@@ -162,65 +163,57 @@ export default function Documentation() {
     };
 
     try {
-      // 1. TENTA PRIMEIRO COM O CAR ORIGINAL (COM PONTOS) VIA CORSPROXY.IO
+      const wfsTargetUrl = `https://geoserver.car.gov.br/geoserver/sicar/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=sicar:sicar_imoveis_${uf}&cql_filter=cod_imovel=%27${carSemPontos}%27&outputFormat=application/json`;
+
+      // 1. TENTA VIA CORSPROXY.IO BUSCANDO NO GEOSERVER WFS
       try {
-        const targetUrl = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(carComPontos)}`;
-        const res = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, {}, 15000);
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(wfsTargetUrl)}`;
+        const res = await fetchWithTimeout(proxyUrl, {}, 10000);
         if (res.ok) {
           const parsed = await res.json();
-          const resItem = Array.isArray(parsed) ? parsed[0] : parsed;
-          if (resItem) {
-            item = resItem;
-            console.log("CAR obtido com sucesso via corsproxy.io (com pontos):", item);
+          if (parsed && parsed.features && parsed.features.length > 0) {
+            const prop = parsed.features[0].properties;
+            item = {
+              nomeImovel: prop.nom_imovel || prop.nome_imovel || prop.nome || `Imóvel Rural (${prop.municipio || "CAR"})`,
+              municipio: prop.municipio || prop.nom_municipio || "",
+              uf: prop.uf || ""
+            };
+            console.log("CAR obtido via GeoServer + corsproxy.io:", item);
           }
         }
       } catch (e) {
-        console.warn("Falha no corsproxy.io (com pontos), tentando sem pontos...");
+        console.warn("Falha no GeoServer via corsproxy.io, tentando via allorigins...");
       }
 
-      // 2. TENTA COM O CAR LIMPO (SEM PONTOS) VIA CORSPROXY.IO
+      // 2. TENTA VIA ALLORIGINS.WIN BUSCANDO NO GEOSERVER WFS
       if (!item) {
         try {
-          const targetUrl = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(carSemPontos)}`;
-          const res = await fetchWithTimeout(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, {}, 15000);
-          if (res.ok) {
-            const parsed = await res.json();
-            const resItem = Array.isArray(parsed) ? parsed[0] : parsed;
-            if (resItem) {
-              item = resItem;
-              console.log("CAR obtido com sucesso via corsproxy.io (sem pontos):", item);
-            }
-          }
-        } catch (e) {
-          console.warn("Falha no corsproxy.io (sem pontos), tentando allorigins...");
-        }
-      }
-
-      // 3. TENTA COM O CAR ORIGINAL VIA ALLORIGINS.WIN
-      if (!item) {
-        try {
-          const targetUrl = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(carComPontos)}`;
-          const res = await fetchWithTimeout(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`, {}, 15000);
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(wfsTargetUrl)}`;
+          const res = await fetchWithTimeout(proxyUrl, {}, 10000);
           if (res.ok) {
             const json = await res.json();
             if (json.contents) {
               const parsed = JSON.parse(json.contents);
-              const resItem = Array.isArray(parsed) ? parsed[0] : parsed;
-              if (resItem) {
-                item = resItem;
-                console.log("CAR obtido com sucesso via allorigins (com pontos):", item);
+              if (parsed && parsed.features && parsed.features.length > 0) {
+                const prop = parsed.features[0].properties;
+                item = {
+                  nomeImovel: prop.nom_imovel || prop.nome_imovel || prop.nome || `Imóvel Rural (${prop.municipio || "CAR"})`,
+                  municipio: prop.municipio || prop.nom_municipio || "",
+                  uf: prop.uf || ""
+                };
+                console.log("CAR obtido via GeoServer + allorigins:", item);
               }
             }
           }
         } catch (e) {
-          console.warn("Falha no allorigins (com pontos)...");
+          console.warn("Falha no GeoServer via allorigins...");
         }
       }
 
       // Processa e preenche os dados no formulário
       if (item) {
-        const nomeImovel = item.nomeImovel || item.nome || item.denominacao || "";
-        const municipio = item.municipio || item.nomeMunicipio || "";
+        const nomeImovel = item.nomeImovel;
+        const municipio = item.municipio;
         
         if (isIndividual) {
           if (nomeImovel) setParecerNomeImovel(nomeImovel);
@@ -242,11 +235,11 @@ export default function Documentation() {
             .eq("id", proposalId);
         }
       } else {
-        alert("Não foi possível obter dados do CAR. O sistema do SICAR pode estar lento ou o número está incorreto. Preencha os campos manualmente.");
+        alert("Não foi possível obter dados do GeoServer do SICAR. O número do CAR pode estar incorreto ou o servidor instável. Preencha os campos manualmente.");
       }
     } catch (err) {
-      console.error("Erro na busca do CAR no SICAR:", err);
-      alert("Tempo limite excedido ao consultar o SICAR. Preencha os campos manualmente.");
+      console.error("Erro na busca do GeoServer do SICAR:", err);
+      alert("Tempo limite excedido ao consultar o GeoServer do SICAR. Preencha os campos manualmente.");
     } finally {
       setSicarLoading(false);
     }
