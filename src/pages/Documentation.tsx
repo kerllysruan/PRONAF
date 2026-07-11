@@ -143,45 +143,90 @@ export default function Documentation() {
     setSicarLoading(true);
     try {
       const cleanCar = carNumber.trim();
-      const url = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(cleanCar)}`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      const res = await fetch(proxyUrl);
-      if (!res.ok) throw new Error("Erro na requisição ao proxy");
-      const json = await res.json();
-      if (json.contents) {
-        const parsed = JSON.parse(json.contents);
-        const item = Array.isArray(parsed) ? parsed[0] : parsed;
-        if (item) {
-          const nomeImovel = item.nomeImovel || item.nome || item.denominacao || "";
-          const municipio = item.municipio || item.nomeMunicipio || "";
-          
-          if (nomeImovel) {
-            if (isIndividual) {
-              setParecerNomeImovel(nomeImovel);
-            } else {
-              setParecerNomePA(nomeImovel);
-            }
-          }
-          if (municipio) {
-            if (isIndividual) {
-              setParecerMunicipioImovel(municipio);
-            } else {
-              setParecerMunicipioPA(municipio);
-            }
-          }
+      let item = null;
 
-          // Atualiza permanentemente a proposta no banco de dados para associar
-          await supabase
-            .from("stock_proposals")
-            .update({
-              localizacao: nomeImovel || undefined,
-              municipio: municipio || undefined
-            })
-            .eq("id", proposalId);
+      // 1. Tenta via Edge Function do Supabase (Seguro e oficial, sem CORS)
+      try {
+        const { data, error } = await supabase.functions.invoke("consultar-sicar", {
+          body: { car_number: cleanCar },
+        });
+        if (!error && data && data.success) {
+          const parsed = data.data;
+          item = Array.isArray(parsed) ? parsed[0] : parsed;
+          console.log("CAR consultado via Edge Function com sucesso:", item);
+        } else if (error) {
+          throw error;
+        }
+      } catch (e) {
+        console.warn("Falha ao consultar via Edge Function, tentando via Proxy de CORS:", e);
+      }
+
+      // 2. Fallback para Proxy de CORS 1: corsproxy.io (Rápido e limpo)
+      if (!item) {
+        try {
+          const url = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(cleanCar)}`;
+          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+          const res = await fetch(proxyUrl);
+          if (res.ok) {
+            const parsed = await res.json();
+            item = Array.isArray(parsed) ? parsed[0] : parsed;
+            console.log("CAR consultado via corsproxy.io com sucesso:", item);
+          }
+        } catch (corsIoErr) {
+          console.warn("Falha no corsproxy.io, tentando allorigins:", corsIoErr);
         }
       }
+
+      // 3. Fallback para Proxy de CORS 2: allorigins.win (Redundância secundária)
+      if (!item) {
+        try {
+          const url = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(cleanCar)}`;
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+          const res = await fetch(proxyUrl);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.contents) {
+              const parsed = JSON.parse(json.contents);
+              item = Array.isArray(parsed) ? parsed[0] : parsed;
+              console.log("CAR consultado via allorigins com sucesso:", item);
+            }
+          }
+        } catch (proxyErr) {
+          console.error("Falha na consulta por allorigins:", proxyErr);
+        }
+      }
+
+      // Processa o resultado se encontrado
+      if (item) {
+        const nomeImovel = item.nomeImovel || item.nome || item.denominacao || "";
+        const municipio = item.municipio || item.nomeMunicipio || "";
+        
+        if (nomeImovel) {
+          if (isIndividual) {
+            setParecerNomeImovel(nomeImovel);
+          } else {
+            setParecerNomePA(nomeImovel);
+          }
+        }
+        if (municipio) {
+          if (isIndividual) {
+            setParecerMunicipioImovel(municipio);
+          } else {
+            setParecerMunicipioPA(municipio);
+          }
+        }
+
+        // Atualiza permanentemente a proposta no banco de dados para associar
+        await supabase
+          .from("stock_proposals")
+          .update({
+            localizacao: nomeImovel || undefined,
+            municipio: municipio || undefined
+          })
+          .eq("id", proposalId);
+      }
     } catch (err) {
-      console.error("Erro na busca automática do CAR no SICAR:", err);
+      console.error("Erro geral na busca do CAR no SICAR:", err);
     } finally {
       setSicarLoading(false);
     }
