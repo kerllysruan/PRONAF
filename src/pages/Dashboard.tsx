@@ -37,6 +37,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import html2canvas from "html2canvas";
 import { useAgency } from "@/contexts/AgencyContext";
+import { useDocumentationReview } from "@/hooks/useDocumentationReview";
 
 const CHART_COLORS = [
   "hsl(215, 70%, 32%)", "hsl(210, 80%, 55%)", "hsl(142, 71%, 35%)",
@@ -79,6 +80,7 @@ export default function Dashboard() {
   const { proposals: stockProposals, loading: loadingStock } = useStockProposals();
   const { tasks, members, loading: loadingT } = useTeam();
   const { disbursements, loading: loadingD } = useDisbursements();
+  const { submissions, loading: loadingDocs } = useDocumentationReview();
   const { agencies, effectiveAgencyId } = useAgency();
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
@@ -381,23 +383,54 @@ export default function Dashboard() {
   // =============================================
 
   const stats = useMemo(() => {
-    const total = filteredProposals.length;
-    const aprovadas = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").length;
-    const ativos = filteredProposals.filter((p) => !["nova", "aprovada", "negada", "contrato_liberado"].includes(p.status)).length;
-    const pendentes = filteredProposals.filter((p) => p.status === "documentacao_pendente").length;
-    const novas = filteredProposals.filter((p) => p.status === "nova").length;
-    const negadas = filteredProposals.filter((p) => p.status === "negada").length;
-    const valorTotal = filteredProposals.reduce((sum, p) => sum + Number(p.requested_value), 0);
-    const valorAprovado = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").reduce((s, p) => s + Number(p.requested_value), 0);
+    // 1. Esteira principal
+    const totalMain = filteredProposals.length;
+    const aprovadasMain = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").length;
+    const ativosMain = filteredProposals.filter((p) => !["nova", "aprovada", "negada", "contrato_liberado"].includes(p.status)).length;
+    const pendentesMain = filteredProposals.filter((p) => p.status === "documentacao_pendente").length;
+    const novasMain = filteredProposals.filter((p) => p.status === "nova").length;
+    const negadasMain = filteredProposals.filter((p) => p.status === "negada").length;
+    const valorTotalMain = filteredProposals.reduce((sum, p) => sum + Number(p.requested_value), 0);
+    const valorAprovadoMain = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").reduce((s, p) => s + Number(p.requested_value), 0);
+
+    // 2. Estoque (Pipeline)
+    const estoqueTotal = stockProposals.length;
+    
+    // Filtrar estoque ativo (excluindo concluídos)
+    const estoqueAtivoProposals = stockProposals.filter(p => p.status !== 'CONCLUÍDO' && p.status !== 'CONCLUIDO');
+    const estoqueAtivo = estoqueAtivoProposals.length;
+    const estoqueValor = estoqueAtivoProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
+    
+    // Estoque Concluído
+    const estoqueConcluidoProposals = stockProposals.filter(p => p.status === 'CONCLUÍDO' || p.status === 'CONCLUIDO');
+    const estoqueConcluido = estoqueConcluidoProposals.length;
+    const estoqueValorConcluido = estoqueConcluidoProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
+
+    // 3. Totais Consolidados (Estoque + Esteira)
+    const total = estoqueTotal + totalMain;
+    const aprovadas = estoqueConcluido + aprovadasMain;
+    const ativos = estoqueAtivo + ativosMain;
+    const valorTotal = estoqueValor + valorTotalMain;
+    const valorAprovado = estoqueValorConcluido + valorAprovadoMain;
+    
     const taxaAprovacao = total > 0 ? Math.round((aprovadas / total) * 100) : 0;
     
-    const estoqueTotal = stockProposals.length;
-    const estoqueAtivo = stockProposals.filter(p => p.status !== 'CONCLUÍDO' && p.status !== 'CONCLUIDO').length;
-    const estoqueValor = stockProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
-    const estoqueConcluido = stockProposals.filter(p => p.status === 'CONCLUÍDO' || p.status === 'CONCLUIDO').length;
-    const concluidasTotal = estoqueConcluido + aprovadas;
-
-    return { total, aprovadas, ativos, pendentes, novas, negadas, valorTotal, valorAprovado, taxaAprovacao, estoqueTotal, estoqueAtivo, estoqueValor, concluidasTotal, estoqueConcluido };
+    return {
+      total,
+      aprovadas,
+      ativos,
+      pendentes: pendentesMain,
+      novas: novasMain,
+      negadas: negadasMain,
+      valorTotal,
+      valorAprovado,
+      taxaAprovacao,
+      estoqueTotal,
+      estoqueAtivo,
+      estoqueValor,
+      concluidasTotal: aprovadas,
+      estoqueConcluido
+    };
   }, [filteredProposals, stockProposals]);
 
   // Disbursement stats
@@ -532,16 +565,30 @@ export default function Dashboard() {
   }, [filteredProposals]);
 
   const docStats = useMemo(() => {
-    const totalDocs = filteredProposals.reduce((a, p) => a + p.documents.length, 0);
-    const completedDocs = filteredProposals.reduce((a, p) => a + p.documents.filter((d) => d.completed).length, 0);
-    return { totalDocs, completedDocs, rate: totalDocs > 0 ? Math.round((completedDocs / totalDocs) * 100) : 0 };
-  }, [filteredProposals]);
+    const totalSubmissions = submissions.length;
+    const fullyApproved = submissions.filter(
+      (s) => s.totalFiles > 0 && s.approvedCount === s.totalFiles
+    ).length;
+    
+    const totalFiles = submissions.reduce((a, s) => a + s.totalFiles, 0);
+    const approvedFiles = submissions.reduce((a, s) => a + s.approvedCount, 0);
+    const rateFiles = totalFiles > 0 ? Math.round((approvedFiles / totalFiles) * 100) : 0;
 
-  const taskStats = useMemo(() => ({
-    total: tasks.length,
-    pendentes: tasks.filter((t) => t.status === "pendente").length,
-    atrasadas: tasks.filter((t) => t.due_date && new Date(t.due_date) < new Date() && t.status !== "concluida").length,
-  }), [tasks]);
+    return { 
+      totalDocs: totalSubmissions, 
+      completedDocs: fullyApproved, 
+      rate: rateFiles 
+    };
+  }, [submissions]);
+
+  const taskStats = useMemo(() => {
+    const docsComPendencia = submissions.filter((s) => s.pendingCount > 0 || s.rejectedCount > 0).length;
+    return {
+      total: tasks.length + docsComPendencia,
+      pendentes: tasks.filter((t) => t.status === "pendente").length + docsComPendencia,
+      atrasadas: tasks.filter((t) => t.due_date && new Date(t.due_date) < new Date() && t.status !== "concluida").length,
+    };
+  }, [tasks, submissions]);
 
   // =============================================
   // SMART INSIGHTS — Auto-generated from data
@@ -670,7 +717,7 @@ export default function Dashboard() {
     return "Boa noite";
   };
 
-  if (loadingP || loadingT || loadingStock) {
+  if (loadingP || loadingT || loadingStock || loadingDocs) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
