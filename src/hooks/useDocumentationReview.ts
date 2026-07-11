@@ -133,7 +133,9 @@ export function useDocumentationReview() {
         // Group files by document_type and pick the latest/most-favorable status per type
         // This prevents double-counting when multiple files exist for the same doc type
         const typeMap = new Map<string, string>(); // key -> best status
+        const requiredKeys = DOCUMENTATION_REQUIRED.map(d => d.key);
         files.forEach((f) => {
+          if (!requiredKeys.includes(f.document_type)) return; // Ignore agency tasks
           const existing = typeMap.get(f.document_type);
           // Priority: aprovado > pendente > reprovado
           if (!existing) {

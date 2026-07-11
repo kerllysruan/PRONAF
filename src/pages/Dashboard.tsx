@@ -749,7 +749,7 @@ export default function Dashboard() {
             <h1 className="text-3xl font-extrabold font-heading text-foreground tracking-tight">Central de Comando</h1>
             <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Visão consolidada de todas as operações PRONAF
+              Visão consolidada do estoque e documentação operacional
             </p>
           </div>
         </div>

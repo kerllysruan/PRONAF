@@ -77,6 +77,10 @@ export default function DocumentationSubmit() {
   // Track hovered card for instant paste (Ctrl+V) without click
   const [hoveredDocKey, setHoveredDocKey] = useState<string | null>(null);
 
+  // States for CAR numbers
+  const [carIndividualNumber, setCarIndividualNumber] = useState("");
+  const [carColetivoNumber, setCarColetivoNumber] = useState("");
+
   // Global paste handler when mouse is hovering over a card
   useEffect(() => {
     function handleGlobalPaste(e: ClipboardEvent) {
@@ -128,6 +132,13 @@ export default function DocumentationSubmit() {
       setTokenData(data);
       const existingFiles = await getFilesForToken(data.id);
       setFiles(existingFiles);
+
+      // Autofill CAR inputs if they already exist in database
+      const carInd = existingFiles.find(f => f.document_type === "car_individual");
+      const carCol = existingFiles.find(f => f.document_type === "car_coletivo");
+      if (carInd?.ged_id) setCarIndividualNumber(carInd.ged_id);
+      if (carCol?.ged_id) setCarColetivoNumber(carCol.ged_id);
+
       setPageLoading(false);
     }
 
@@ -253,11 +264,16 @@ export default function DocumentationSubmit() {
     if (!tokenData || !token || selectedCount < missingOrRejectedCount) return;
     setIsSubmitting(true);
 
+    const carNumbersMap: Record<string, string> = {};
+    if (carIndividualNumber.trim()) carNumbersMap["car_individual"] = carIndividualNumber.trim();
+    if (carColetivoNumber.trim()) carNumbersMap["car_coletivo"] = carColetivoNumber.trim();
+
     const success = await submitDocuments(
       tokenData.id,
       tokenData.stock_proposal_id,
       token,
-      selectedFiles
+      selectedFiles,
+      carNumbersMap
     );
 
     if (success) {
@@ -278,12 +294,17 @@ export default function DocumentationSubmit() {
     if (!tokenData || !token || selectedCount === 0) return;
     setIsSubmitting(true);
 
+    const carNumbersMap: Record<string, string> = {};
+    if (carIndividualNumber.trim()) carNumbersMap["car_individual"] = carIndividualNumber.trim();
+    if (carColetivoNumber.trim()) carNumbersMap["car_coletivo"] = carColetivoNumber.trim();
+
     const success = await resubmitDocuments(
       tokenData.id,
       tokenData.stock_proposal_id,
       token,
       selectedFiles,
-      existingFileIds
+      existingFileIds,
+      carNumbersMap
     );
 
     if (success) {
@@ -577,7 +598,6 @@ export default function DocumentationSubmit() {
                             }
                           }}
                           className="mt-3 flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 text-xs font-bold hover:bg-indigo-100 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none"
-                          style={{ WebkitTapHighlightColor: 'transparent' }}
                         >
                           {enablingDoc === doc.key ? (
                             <>
@@ -606,17 +626,8 @@ export default function DocumentationSubmit() {
                       </p>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center p-5 cursor-pointer min-h-[140px]">
-                      <input
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        className="hidden"
-                        onChange={(e) =>
-                          handleFileSelect(doc.key, e.target.files?.[0] || null)
-                        }
-                      />
-
-                      {selected ? (
+                    <div className="flex flex-col items-center justify-center p-5 min-h-[140px]">
+                      {(!needsUpload) ? (
                         <>
                           <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-3">
                             <FileCheck className="h-6 w-6 text-indigo-600" />
@@ -625,41 +636,105 @@ export default function DocumentationSubmit() {
                             {doc.label.toUpperCase()}
                           </p>
                           <p className="text-indigo-600 text-[10px] truncate max-w-full px-2">
-                            {selected.name}
+                            {dbFile?.file_name}
                           </p>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleFileSelect(doc.key, null);
-                            }}
-                            className="mt-2 text-[10px] text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1"
-                          >
-                            <XCircle className="h-3 w-3" />
-                            Remover
-                          </button>
                         </>
                       ) : (
                         <>
-                          <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mb-3 group-hover:bg-indigo-50 group-hover:border-indigo-200 transition-all duration-300">
-                            {isRejected ? (
-                              <XCircle className="h-5 w-5 text-rose-500" />
-                            ) : (
-                              <Upload className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                            )}
-                          </div>
-                          <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
-                            {doc.label.toUpperCase()}
-                          </p>
-                          {isRejected ? (
-                            <p className="text-rose-600 text-[10px] text-center px-2 truncate max-w-full font-semibold">
-                              Reprovado: {dbFile.rejection_reason || "Reenviar"}
-                            </p>
+                          {/* Alert & Input for CAR files */}
+                          {(doc.key === "car_individual" || doc.key === "car_coletivo") && (
+                            <div className="w-full space-y-2 mb-3" onClick={(e) => e.stopPropagation()}>
+                              <p className="text-rose-500 text-[10px] font-bold text-center leading-snug">
+                                necessário preenchimento do número do car a ser enviado, antes de habilitar o envio do arquivo
+                              </p>
+                              <input
+                                type="text"
+                                placeholder={`Número do ${doc.label}`}
+                                value={doc.key === "car_individual" ? carIndividualNumber : carColetivoNumber}
+                                onChange={(e) => {
+                                  const val = e.target.value.toUpperCase();
+                                  if (doc.key === "car_individual") setCarIndividualNumber(val);
+                                  else setCarColetivoNumber(val);
+                                }}
+                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                              />
+                            </div>
+                          )}
+
+                          {/* Only enable upload if number is filled for CAR docs, or if it is not a CAR doc */}
+                          {((doc.key === "car_individual" && carIndividualNumber.trim().length >= 10) ||
+                            (doc.key === "car_coletivo" && carColetivoNumber.trim().length >= 10) ||
+                            (doc.key !== "car_individual" && doc.key !== "car_coletivo")) ? (
+                              <label className="flex flex-col items-center justify-center cursor-pointer w-full">
+                                <input
+                                  type="file"
+                                  accept=".pdf,application/pdf"
+                                  className="hidden"
+                                  onChange={(e) =>
+                                    handleFileSelect(doc.key, e.target.files?.[0] || null)
+                                  }
+                                />
+
+                                {selected ? (
+                                  <>
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-3">
+                                      <FileCheck className="h-6 w-6 text-indigo-600" />
+                                    </div>
+                                    <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
+                                      {doc.label.toUpperCase()}
+                                    </p>
+                                    <p className="text-indigo-600 text-[10px] truncate max-w-full px-2">
+                                      {selected.name}
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleFileSelect(doc.key, null);
+                                      }}
+                                      className="mt-2 text-[10px] text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1"
+                                    >
+                                      <XCircle className="h-3 w-3" />
+                                      Remover
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mb-3 group-hover:bg-indigo-50 group-hover:border-indigo-200 transition-all duration-300">
+                                      {isRejected ? (
+                                        <XCircle className="h-5 w-5 text-rose-500" />
+                                      ) : (
+                                        <Upload className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                      )}
+                                    </div>
+                                    <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
+                                      {doc.label.toUpperCase()}
+                                    </p>
+                                    {isRejected ? (
+                                      <p className="text-rose-600 text-[10px] text-center px-2 truncate max-w-full font-semibold">
+                                        Reprovado: {dbFile.rejection_reason || "Reenviar"}
+                                      </p>
+                                    ) : (
+                                      <p className="text-slate-400 text-[10px]">
+                                        Clique, arraste ou cole (Ctrl+V)
+                                      </p>
+                                    )}
+                                  </>
+                                )}
+                              </label>
                           ) : (
-                            <p className="text-slate-400 text-[10px]">
-                              Clique, arraste ou cole (Ctrl+V)
-                            </p>
+                            <div className="flex flex-col items-center justify-center opacity-40 cursor-not-allowed w-full">
+                              <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mb-3">
+                                <Upload className="h-5 w-5 text-slate-300" />
+                              </div>
+                              <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
+                                {doc.label.toUpperCase()}
+                              </p>
+                              <p className="text-slate-400 text-[9px]">
+                                Envio Habilitado após preencher o número
+                              </p>
+                            </div>
                           )}
 
                           {/* Link de obtenção do documento */}
@@ -670,7 +745,6 @@ export default function DocumentationSubmit() {
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
                               className="mt-3 flex items-center justify-center gap-1.5 w-full min-h-[40px] px-3 py-2 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700 text-[11px] font-bold hover:bg-cyan-100 active:scale-95 transition-all duration-200 touch-manipulation select-none"
-                              style={{ WebkitTapHighlightColor: 'transparent' }}
                             >
                               <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
                               Obter{doc.fonte ? ` — ${doc.fonte}` : " Documento"}
@@ -680,15 +754,15 @@ export default function DocumentationSubmit() {
                             <button
                               type="button"
                               onClick={async (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                if (tokenData) {
-                                  const ok = await dispenseDocument(tokenData.id, tokenData.stock_proposal_id, doc.key, true);
-                                  if (ok) {
-                                    const refreshedFiles = await getFilesForToken(tokenData.id);
-                                    setFiles(refreshedFiles);
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  if (tokenData) {
+                                    const ok = await dispenseDocument(tokenData.id, tokenData.stock_proposal_id, doc.key, true);
+                                    if (ok) {
+                                      const refreshedFiles = await getFilesForToken(tokenData.id);
+                                      setFiles(refreshedFiles);
+                                    }
                                   }
-                                }
                               }}
                               className="mt-3 text-[9px] md:text-[10px] text-center text-amber-700 font-extrabold bg-amber-50 border border-amber-200 hover:bg-amber-100 px-3 py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.02] active:scale-95 w-full whitespace-normal leading-snug"
                             >
@@ -698,7 +772,7 @@ export default function DocumentationSubmit() {
                           )}
                         </>
                       )}
-                        </label>
+                    </div>
                   )}
                 </div>
               );

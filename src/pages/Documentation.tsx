@@ -1791,25 +1791,51 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {AGENCY_DOCUMENTATION.map((doc) => {
                     const existingFile = sub.files.find((f) => f.document_type === doc.key);
+                    const isComplete = (() => {
+                      if (doc.key === "consulta_historico_operacao_pronaf") {
+                        return !!existingFile?.ged_id && existingFile.ged_id !== "";
+                      }
+                      if (CONFIRMATION_ACTIVITY_KEYS.includes(doc.key)) {
+                        return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO");
+                      }
+                      return !!existingFile?.ged_id && existingFile.ged_id.trim() !== "";
+                    })();
+
                     return (
                       <Card
                         key={doc.key}
-                        className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-indigo-50/10 dark:bg-indigo-950/5 border-l-4 border-l-indigo-500 backdrop-blur-sm transition-all duration-300 hover:shadow-lg group"
+                        className={`shadow-premium rounded-3xl overflow-hidden backdrop-blur-sm transition-all duration-300 hover:shadow-lg group border-l-4 ${
+                          isComplete
+                            ? "bg-emerald-50/10 border-border/40 border-l-emerald-500"
+                            : "bg-amber-50/5 border-border/40 border-l-amber-500"
+                        }`}
                       >
                         <CardContent className="p-5 space-y-4">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
-                              <FileText className="h-5 w-5 text-indigo-500 shrink-0" />
+                              <FileText className={`h-5 w-5 shrink-0 ${isComplete ? "text-emerald-500" : "text-amber-500"}`} />
                               <p className="font-heading font-bold text-sm leading-tight text-slate-800 dark:text-slate-200">
                                 {doc.label}
                               </p>
                             </div>
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] shrink-0 bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800"
-                            >
-                              Agência
-                            </Badge>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] font-bold ${
+                                  isComplete
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                                    : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
+                                }`}
+                              >
+                                {isComplete ? "COMPLETA" : "PENDENTE"}
+                              </Badge>
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800"
+                              >
+                                Agência
+                              </Badge>
+                            </div>
                           </div>
 
                           {doc.key === "consulta_historico_operacao_pronaf" ? (

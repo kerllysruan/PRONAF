@@ -128,7 +128,8 @@ export function useDocumentationToken() {
     tokenId: string,
     stockProposalId: string,
     tokenStr: string,
-    filesMap: Record<string, File>
+    filesMap: Record<string, File>,
+    carNumbersMap?: Record<string, string>
   ): Promise<boolean> => {
     try {
       setLoading(true);
@@ -172,6 +173,8 @@ export function useDocumentationToken() {
 
         if (uploadError) throw uploadError;
 
+        const carNumber = carNumbersMap?.[docType];
+
         if (existing) {
           // Update file record
           const { error: dbError } = await supabase
@@ -184,6 +187,7 @@ export function useDocumentationToken() {
               rejection_reason: null,
               reviewed_at: null,
               reviewed_by: null,
+              ...(carNumber ? { ged_id: carNumber } : {}),
             })
             .eq("id", existing.id);
 
@@ -200,6 +204,7 @@ export function useDocumentationToken() {
               file_size: file.size,
               document_type: docType,
               status: "pendente",
+              ...(carNumber ? { ged_id: carNumber } : {}),
             });
 
           if (dbError) throw dbError;
@@ -243,7 +248,8 @@ export function useDocumentationToken() {
     stockProposalId: string,
     tokenStr: string,
     filesMap: Record<string, File>,
-    existingFileIds: Record<string, string>
+    existingFileIds: Record<string, string>,
+    carNumbersMap?: Record<string, string>
   ): Promise<boolean> => {
     try {
       setLoading(true);
@@ -285,6 +291,8 @@ export function useDocumentationToken() {
 
         if (uploadError) throw uploadError;
 
+        const carNumber = carNumbersMap?.[docType];
+
         if (existing) {
           // Update file record
           const { error: dbError } = await supabase
@@ -297,6 +305,7 @@ export function useDocumentationToken() {
               rejection_reason: null,
               reviewed_at: null,
               reviewed_by: null,
+              ...(carNumber ? { ged_id: carNumber } : {}),
             })
             .eq("id", existing.id);
 
@@ -313,6 +322,7 @@ export function useDocumentationToken() {
               file_size: file.size,
               document_type: docType,
               status: "pendente",
+              ...(carNumber ? { ged_id: carNumber } : {}),
             });
 
           if (dbError) throw dbError;
