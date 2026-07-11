@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
+import { supabase } from "@/lib/supabase";
 import {
   DOCUMENTATION_REQUIRED,
   DocumentationFile,
@@ -80,6 +81,8 @@ export default function DocumentationSubmit() {
   // States for CAR numbers
   const [carIndividualNumber, setCarIndividualNumber] = useState("");
   const [carColetivoNumber, setCarColetivoNumber] = useState("");
+  const [carIndividualName, setCarIndividualName] = useState("");
+  const [carColetivoName, setCarColetivoName] = useState("");
 
   // Global paste handler when mouse is hovering over a card
   useEffect(() => {
@@ -138,6 +141,10 @@ export default function DocumentationSubmit() {
       const carCol = existingFiles.find(f => f.document_type === "car_coletivo");
       if (carInd?.ged_id) setCarIndividualNumber(carInd.ged_id);
       if (carCol?.ged_id) setCarColetivoNumber(carCol.ged_id);
+      if (data.proposal?.localizacao) {
+        setCarIndividualName(data.proposal.localizacao);
+        setCarColetivoName(data.proposal.localizacao);
+      }
 
       setPageLoading(false);
     }
@@ -277,6 +284,25 @@ export default function DocumentationSubmit() {
     );
 
     if (success) {
+      // Salva o Nome do Imóvel Rural / Nome do PA diretamente na proposta no Supabase
+      const updateData: Record<string, string> = {};
+      if (carIndividualNumber.trim() && carIndividualName.trim()) {
+        updateData["localizacao"] = carIndividualName.trim();
+      } else if (carColetivoNumber.trim() && carColetivoName.trim()) {
+        updateData["localizacao"] = carColetivoName.trim();
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        try {
+          await supabase
+            .from("stock_proposals")
+            .update(updateData)
+            .eq("id", tokenData.stock_proposal_id);
+        } catch (dbErr) {
+          console.error("Erro ao atualizar localizacao da proposta:", dbErr);
+        }
+      }
+
       const refreshedData = await getTokenData(token);
       if (refreshedData) {
         setTokenData(refreshedData);
@@ -308,6 +334,25 @@ export default function DocumentationSubmit() {
     );
 
     if (success) {
+      // Salva o Nome do Imóvel Rural / Nome do PA diretamente na proposta no Supabase
+      const updateData: Record<string, string> = {};
+      if (carIndividualNumber.trim() && carIndividualName.trim()) {
+        updateData["localizacao"] = carIndividualName.trim();
+      } else if (carColetivoNumber.trim() && carColetivoName.trim()) {
+        updateData["localizacao"] = carColetivoName.trim();
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        try {
+          await supabase
+            .from("stock_proposals")
+            .update(updateData)
+            .eq("id", tokenData.stock_proposal_id);
+        } catch (dbErr) {
+          console.error("Erro ao atualizar localizacao da proposta no resubmit:", dbErr);
+        }
+      }
+
       const refreshedData = await getTokenData(token);
       if (refreshedData) {
         setTokenData(refreshedData);
@@ -645,7 +690,7 @@ export default function DocumentationSubmit() {
                           {(doc.key === "car_individual" || doc.key === "car_coletivo") && (
                             <div className="w-full space-y-2 mb-3" onClick={(e) => e.stopPropagation()}>
                               <p className="text-rose-500 text-[10px] font-bold text-center leading-snug">
-                                necessário preenchimento do número do car a ser enviado, antes de habilitar o envio do arquivo
+                                necessário preenchimento do número do car e nome do imóvel, antes de habilitar o envio do arquivo
                               </p>
                               <input
                                 type="text"
@@ -656,14 +701,25 @@ export default function DocumentationSubmit() {
                                   if (doc.key === "car_individual") setCarIndividualNumber(val);
                                   else setCarColetivoNumber(val);
                                 }}
+                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-background text-foreground mb-2"
+                              />
+                              <input
+                                type="text"
+                                placeholder={doc.key === "car_individual" ? "Nome do Imóvel Rural" : "Nome do PA / Assentamento"}
+                                value={doc.key === "car_individual" ? carIndividualName : carColetivoName}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (doc.key === "car_individual") setCarIndividualName(val);
+                                  else setCarColetivoName(val);
+                                }}
                                 className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
                               />
                             </div>
                           )}
 
                           {/* Only enable upload if number is filled for CAR docs, or if it is not a CAR doc */}
-                          {((doc.key === "car_individual" && carIndividualNumber.trim().length >= 10) ||
-                            (doc.key === "car_coletivo" && carColetivoNumber.trim().length >= 10) ||
+                          {((doc.key === "car_individual" && carIndividualNumber.trim().length >= 10 && carIndividualName.trim().length >= 3) ||
+                            (doc.key === "car_coletivo" && carColetivoNumber.trim().length >= 10 && carColetivoName.trim().length >= 3) ||
                             (doc.key !== "car_individual" && doc.key !== "car_coletivo")) ? (
                               <label className="flex flex-col items-center justify-center cursor-pointer w-full">
                                 <input
