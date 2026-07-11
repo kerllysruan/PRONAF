@@ -1,8 +1,69 @@
 import time
+import os
+import json
+import urllib.request
+import urllib.parse
 from playwright.sync_api import sync_playwright, Page, Browser
 from .config import SICAR_URL, HEADLESS, TIMEOUT
 from .logger import logger
 from .download import save_pdf_comprovante
+
+def extrair_dados_com_ia(texto_tela: str) -> dict:
+    """
+    Usa a API gratuita do Gemini para analisar o texto da tela do SICAR 
+    e retornar os dados estruturados do imóvel.
+    """
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        logger.warning("GEMINI_API_KEY não definida no ambiente. Usando extrator tradicional por seletores.")
+        return {}
+
+    prompt = (
+        "Você é um assistente especialista em Cadastro Ambiental Rural (CAR).\n"
+        "Analise o texto a seguir extraído da tela do sistema SICAR e extraia as informações em formato JSON válido:\n"
+        "{\n"
+        "  \"nome_imovel\": \"string\",\n"
+        "  \"municipio\": \"string\",\n"
+        "  \"uf\": \"string\",\n"
+        "  \"situacao_cadastro\": \"string\",\n"
+        "  \"status_analise\": \"string\",\n"
+        "  \"data_inscricao\": \"string\",\n"
+        "  \"area_total\": \"string\",\n"
+        "  \"proprietario\": \"string\"\n"
+        "}\n"
+        "Retorne APENAS o JSON no formato solicitado, sem textos adicionais, sem markdown ou aspas triplas.\n\n"
+        f"Texto da tela:\n{texto_tela}"
+    )
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
+    payload = {
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }],
+        "generationConfig": {
+            "responseMimeType": "application/json"
+        }
+    }
+
+    try:
+        data_json = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data_json,
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        
+        with urllib.request.urlopen(req, timeout=12) as response:
+            res_body = response.read().decode("utf-8")
+            res_json = json.loads(res_body)
+            text_response = res_json["candidates"][0]["content"]["parts"][0]["text"]
+            parsed_data = json.loads(text_response.strip())
+            logger.info("Extração do CAR concluída com sucesso via IA (Gemini).")
+            return parsed_data
+    except Exception as e:
+        logger.error(f"Erro na extração dos dados do CAR via IA: {str(e)}")
+        return {}
 
 def consultar_registro_sicar(car_number: str) -> dict:
     """
@@ -119,18 +180,29 @@ def consultar_registro_sicar(car_number: str) -> dict:
                     pass
                 return "Não disponível"
 
-            # Extração de Metadados detalhados
-            dados_car["Nome do imóvel"] = extrair_por_rotulo("Nome do Imóvel") or extrair_por_rotulo("Denominação do Imóvel")
-            dados_car["Município"] = extrair_por_rotulo("Município")
-            dados_car["UF"] = extrair_por_rotulo("UF") or extrair_por_rotulo("Estado")
-            dados_car["Situação do cadastro"] = extrair_por_rotulo("Situação") or extrair_por_rotulo("Situação do Cadastro")
-            dados_car["Status da análise"] = extrair_por_rotulo("Status") or extrair_por_rotulo("Status da Análise")
-            dados_car["Data de inscrição"] = extrair_por_rotulo("Inscrição") or extrair_por_rotulo("Data de Inscrição")
-            dados_car["Área total"] = extrair_por_rotulo("Área Total") or extrair_por_rotulo("Área do Imóvel")
+            # Extrai todo o texto da tela para passar para a IA
+            texto_tela = ""
+            try:
+                texto_tela = page.locator("body").inner_text()
+            except Exception:
+                pass
+
+            dados_ia = {}
+            if texto_tela:
+                dados_ia = extrair_dados_com_ia(texto_tela)
+
+            # Extração de Metadados detalhados (Híbrido: IA com Fallback para Seletores)
+            dados_car["Nome do imóvel"] = dados_ia.get("nome_imovel") or extrair_por_rotulo("Nome do Imóvel") or extrair_por_rotulo("Denominação do Imóvel")
+            dados_car["Município"] = dados_ia.get("municipio") or extrair_por_rotulo("Município")
+            dados_car["UF"] = dados_ia.get("uf") or extrair_por_rotulo("UF") or extrair_por_rotulo("Estado")
+            dados_car["Situação do cadastro"] = dados_ia.get("situacao_cadastro") or extrair_por_rotulo("Situação") or extrair_por_rotulo("Situação do Cadastro")
+            dados_car["Status da análise"] = dados_ia.get("status_analise") or extrair_por_rotulo("Status") or extrair_por_rotulo("Status da Análise")
+            dados_car["Data de inscrição"] = dados_ia.get("data_inscricao") or extrair_por_rotulo("Inscrição") or extrair_por_rotulo("Data de Inscrição")
+            dados_car["Área total"] = dados_ia.get("area_total") or extrair_por_rotulo("Área Total") or extrair_por_rotulo("Área do Imóvel")
             dados_car["Área cadastrada"] = extrair_por_rotulo("Área Cadastrada")
             
             # Nome do proprietário/possuidor (se disponível)
-            dados_car["Nome do proprietário ou possuidor"] = extrair_por_rotulo("Proprietário") or extrair_por_rotulo("Possuidor") or extrair_por_rotulo("Nome do Proponente")
+            dados_car["Nome do proprietário ou possuidor"] = dados_ia.get("proprietario") or extrair_por_rotulo("Proprietário") or extrair_por_rotulo("Possuidor") or extrair_por_rotulo("Nome do Proponente")
             
             # Valida se a consulta deu certo
             if dados_car["Município"] != "Não disponível" or dados_car["Situação do cadastro"] != "Não disponível":
