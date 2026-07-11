@@ -136,6 +136,57 @@ export default function Documentation() {
   const [parecerUtilizaCarIndividual, setParecerUtilizaCarIndividual] = useState("SIM");
   const [parecerGeneroProponente, setParecerGeneroProponente] = useState("MASCULINO");
 
+  const [sicarLoading, setSicarLoading] = useState(false);
+
+  const consultarSicarPorCar = async (carNumber: string, isIndividual: boolean, proposalId: string) => {
+    if (!carNumber || carNumber.trim().length < 10) return;
+    setSicarLoading(true);
+    try {
+      const cleanCar = carNumber.trim();
+      const url = `https://consultapublica.car.gov.br/publico/imoveis/buscar?codImovel=${encodeURIComponent(cleanCar)}`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      const res = await fetch(proxyUrl);
+      if (!res.ok) throw new Error("Erro na requisição ao proxy");
+      const json = await res.json();
+      if (json.contents) {
+        const parsed = JSON.parse(json.contents);
+        const item = Array.isArray(parsed) ? parsed[0] : parsed;
+        if (item) {
+          const nomeImovel = item.nomeImovel || item.nome || item.denominacao || "";
+          const municipio = item.municipio || item.nomeMunicipio || "";
+          
+          if (nomeImovel) {
+            if (isIndividual) {
+              setParecerNomeImovel(nomeImovel);
+            } else {
+              setParecerNomePA(nomeImovel);
+            }
+          }
+          if (municipio) {
+            if (isIndividual) {
+              setParecerMunicipioImovel(municipio);
+            } else {
+              setParecerMunicipioPA(municipio);
+            }
+          }
+
+          // Atualiza permanentemente a proposta no banco de dados para associar
+          await supabase
+            .from("stock_proposals")
+            .update({
+              localizacao: nomeImovel || undefined,
+              municipio: municipio || undefined
+            })
+            .eq("id", proposalId);
+        }
+      }
+    } catch (err) {
+      console.error("Erro na busca automática do CAR no SICAR:", err);
+    } finally {
+      setSicarLoading(false);
+    }
+  };
+
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
     if (selectedSubmission) {
@@ -1989,6 +2040,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     const hasCarInd = !!carIndividualFile?.ged_id;
                                     setParecerUtilizaCarIndividual(hasCarInd ? "SIM" : "NÃO");
 
+                                    setParecerNomeImovel(hasCarInd ? (sub.proposal.localizacao || "") : "");
+                                    setParecerMunicipioImovel(sub.proposal.municipio || "");
+                                    if (carIndividualFile?.ged_id && (!sub.proposal.localizacao || !sub.proposal.municipio)) {
+                                      consultarSicarPorCar(carIndividualFile.ged_id, true, sub.proposal.id);
+                                    } else if (carColetivoFile?.ged_id && (!sub.proposal.localizacao || !sub.proposal.municipio)) {
+                                      consultarSicarPorCar(carColetivoFile.ged_id, false, sub.proposal.id);
+                                    }
+
                                     const pName = sub.proposal.producer_name || "";
                                     const firstName = pName.trim().split(" ")[0].toUpperCase();
                                     const maleNamesWithA = ["ANDREA", "LUCA", "SENNA", "VALTER", "ELIMAR", "ELCIMAR", "NILTON", "MILTON", "NEY", "NEY MEDEIROS", "NEY MEDEIRO"];
@@ -2358,12 +2417,25 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                             Registro CAR Individual
                           </label>
-                          <Input
-                            className="rounded-xl"
-                            placeholder="Ex: MA-2106201-..."
-                            value={parecerCarIndividual}
-                            onChange={(e) => setParecerCarIndividual(e.target.value)}
-                          />
+                          <div className="flex gap-2">
+                            <Input
+                              className="rounded-xl flex-1 font-mono text-xs"
+                              placeholder="Ex: MA-2106201-..."
+                              value={parecerCarIndividual}
+                              onChange={(e) => setParecerCarIndividual(e.target.value)}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="rounded-xl gap-1 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold shrink-0 text-xs px-3"
+                              disabled={sicarLoading || !parecerCarIndividual}
+                              onClick={() => consultarSicarPorCar(parecerCarIndividual, true, sub.proposal.id)}
+                            >
+                              {sicarLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+                              Consultar
+                            </Button>
+                          </div>
                         </div>
                       </>
                     )}
@@ -2404,12 +2476,25 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                         Registro CAR Coletivo
                       </label>
-                      <Input
-                        className="rounded-xl"
-                        placeholder="Ex: MA-2100342-..."
-                        value={parecerCarColetivo}
-                        onChange={(e) => setParecerCarColetivo(e.target.value)}
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          className="rounded-xl flex-1 font-mono text-xs"
+                          placeholder="Ex: MA-2100342-..."
+                          value={parecerCarColetivo}
+                          onChange={(e) => setParecerCarColetivo(e.target.value)}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl gap-1 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold shrink-0 text-xs px-3"
+                          disabled={sicarLoading || !parecerCarColetivo}
+                          onClick={() => consultarSicarPorCar(parecerCarColetivo, false, sub.proposal.id)}
+                        >
+                          {sicarLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+                          Consultar
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
