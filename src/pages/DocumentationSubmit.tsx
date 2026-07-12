@@ -759,7 +759,7 @@ export default function DocumentationSubmit() {
                                  placeholder="Ex: CRIAÇÃO DE BOVINOS CORTE EXTENSIVA"
                                  value={atividadePlano}
                                  onChange={(e) => setAtividadePlano(e.target.value)}
-                                 className="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-extrabold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background placeholder:text-slate-700 placeholder:font-bold"
+                                 className="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background placeholder:text-slate-400 placeholder:font-normal"
                                />
                              </div>
                            )}
