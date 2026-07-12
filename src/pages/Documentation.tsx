@@ -2268,6 +2268,141 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               {renderGrid("Documentação Enquadramento Agricultura Familiar", ENQUADRAMENTO_KEYS, <ShieldCheck className="h-5 w-5 text-teal-500" />)}
               {renderGrid("Certidões Civis e Administrativas", CERTIDOES_CIVIS_KEYS, <FileCheck className="h-5 w-5 text-blue-500" />)}
               {renderGrid("Documentação do Plano de Investimento Proposto", PLANO_INVESTIMENTO_KEYS, <FileBarChart className="h-5 w-5 text-slate-500" />)}
+              
+              {/* INVERSÕES DO PLANO (Apenas leitura para o analista) */}
+              {(() => {
+                const invData = sub.proposal.inversoes;
+                let items: { quant: number; nome: string; valor: number }[] = [];
+                let custo = 0;
+                if (invData) {
+                  if (Array.isArray(invData)) {
+                    items = invData;
+                  } else if (typeof invData === "object") {
+                    const obj = invData as any;
+                    items = Array.isArray(obj.items) ? obj.items : [];
+                    custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
+                  }
+                }
+                if (items.length === 0 && custo === 0) return null;
+
+                const totalInversoes = items.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) + custo;
+                const estimatedValue = Number(sub.proposal.estimated_value) || 0;
+                const isValid = Math.abs(totalInversoes - estimatedValue) < 0.01;
+                
+                const formatCurrency = (val: number) => {
+                  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+                };
+
+                return (
+                  <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/50 shadow-sm animate-fade-in">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-200 shadow-sm w-fit">
+                        <span className="text-indigo-600 text-base">📊</span>
+                        <p className="text-indigo-700 text-xs font-black uppercase tracking-widest">
+                          INVERSÕES DO PLANO
+                        </p>
+                      </div>
+                      {/* Validador de Valor da Proposta */}
+                      <div className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-300 ${
+                        isValid 
+                          ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                          : 'bg-rose-50 border-rose-200 text-rose-700'
+                      }`}>
+                        {isValid ? (
+                          <span>✅ Inversões validadas! Soma bate 100% com o valor proposto: {formatCurrency(estimatedValue)}</span>
+                        ) : (
+                          <span>⚠️ Soma divergente: {formatCurrency(totalInversoes)} (Proposta: {formatCurrency(estimatedValue)})</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-500 mb-4 font-semibold">
+                      Conferência detalhada dos itens de investimento preenchidos pelo projetista no plano de negócio da operação.
+                    </p>
+
+                    <div className="space-y-3">
+                      {items.map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                          {/* Quantidade */}
+                          <div className="col-span-3 md:col-span-2">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Quant.</label>
+                            <input
+                              type="number"
+                              value={item.quant}
+                              disabled
+                              className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
+                            />
+                          </div>
+
+                          {/* Nome / Descrição */}
+                          <div className="col-span-9 md:col-span-7">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Item / Inversão</label>
+                            <input
+                              type="text"
+                              value={item.nome}
+                              disabled
+                              className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-slate-500 cursor-not-allowed"
+                            />
+                          </div>
+
+                          {/* Valor Total */}
+                          <div className="col-span-12 md:col-span-3">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Valor Total (R$)</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                              <input
+                                type="text"
+                                value={new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.valor)}
+                                disabled
+                                className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold bg-slate-50 text-slate-500 cursor-not-allowed"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Campo de Custo Assessoria */}
+                      {custo > 0 && (
+                        <div className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm mt-3">
+                          <div className="col-span-3 md:col-span-2">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Quant.</label>
+                            <input
+                              type="number"
+                              value={1}
+                              disabled
+                              className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
+                            />
+                          </div>
+
+                          <div className="col-span-9 md:col-span-7">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Item / Inversão</label>
+                            <input
+                              type="text"
+                              value="CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA"
+                              disabled
+                              className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-slate-500 cursor-not-allowed"
+                            />
+                          </div>
+
+                          <div className="col-span-12 md:col-span-3">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Valor Total (R$)</label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                              <input
+                                type="text"
+                                value={new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(custo)}
+                                disabled
+                                className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold bg-slate-50 text-slate-500 cursor-not-allowed"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {renderGrid("Declarações Ambientais", DECLARACOES_AMBIENTAIS_KEYS, <FileCheck className="h-5 w-5 text-emerald-500" />)}
               {renderGrid("Outros Documentos", unknownKeys, <FileText className="h-5 w-5 text-slate-500" />)}
             </div>
