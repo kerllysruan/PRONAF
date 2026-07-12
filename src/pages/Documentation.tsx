@@ -156,82 +156,101 @@ export default function Documentation() {
     const key = `parecer_draft_${selectedSubmission.proposal.id}`;
 
     const saved = localStorage.getItem(key);
+
+    // 1. First parse proposal data to have clean default fallbacks
+    let propInversoes: string[] = [""];
+    const invData = selectedSubmission.proposal.inversoes;
+    if (invData) {
+      const formatCurrency = (val: number) => {
+        return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+      };
+      if (Array.isArray(invData)) {
+        propInversoes = invData.map((item: any) => {
+          const q = item.quant || 1;
+          const n = item.nome || "";
+          const v = item.valor || 0;
+          return `${q} x ${n.toUpperCase()} (${formatCurrency(v)})`;
+        });
+      } else if (typeof invData === "object") {
+        const obj = invData as any;
+        const items = Array.isArray(obj.items) ? obj.items : [];
+        const custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
+        const itemsList = items.map((item: any) => {
+          const q = item.quant || 1;
+          const n = item.nome || "";
+          const v = item.valor || 0;
+          return `${q} x ${n.toUpperCase()} (${formatCurrency(v)})`;
+        });
+        if (custo > 0) {
+          itemsList.push(`CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA (${formatCurrency(custo)})`);
+        }
+        if (itemsList.length > 0) {
+          propInversoes = itemsList;
+        }
+      }
+    }
+
+    const propAtividade = (selectedSubmission.proposal.credit_purpose || "").toUpperCase();
+    const propNomeImovel = (selectedSubmission.proposal.localizacao || "").toUpperCase();
+    const propMunicipioImovel = (selectedSubmission.proposal.municipio || "").toUpperCase();
+
+    const carIndFile = selectedSubmission.files.find(f => f.document_type === "car_individual");
+    const propCarIndividual = carIndFile && carIndFile.ged_id ? carIndFile.ged_id : "";
+
+    const carColFile = selectedSubmission.files.find(f => f.document_type === "car_coletivo");
+    const propCarColetivo = carColFile && carColFile.ged_id ? carColFile.ged_id : "";
+
+    // 2. Load draft if exists, but dynamically override empty fields with fresh proposal data
     if (saved) {
       try {
         const draft = JSON.parse(saved);
-        if (draft.atividadePlano !== undefined) setParecerAtividadePlano(draft.atividadePlano);
+        
+        // If activity name is empty in draft, fall back to proposal's activity
+        if (draft.atividadePlano && draft.atividadePlano.trim() !== "") {
+          setParecerAtividadePlano(draft.atividadePlano);
+        } else {
+          setParecerAtividadePlano(propAtividade);
+        }
+
         if (draft.nomeImovel !== undefined) setParecerNomeImovel(draft.nomeImovel);
+        else setParecerNomeImovel(propNomeImovel);
+
         if (draft.municipioImovel !== undefined) setParecerMunicipioImovel(draft.municipioImovel);
+        else setParecerMunicipioImovel(propMunicipioImovel);
+
         if (draft.carIndividual !== undefined) setParecerCarIndividual(draft.carIndividual);
+        else setParecerCarIndividual(propCarIndividual);
+
+        if (draft.carColetivo !== undefined) setParecerCarColetivo(draft.carColetivo);
+        else setParecerCarColetivo(propCarColetivo);
+
         if (draft.numProjetoPA !== undefined) setParecerNumProjetoPA(draft.numProjetoPA);
         if (draft.nomePA !== undefined) setParecerNomePA(draft.nomePA);
-        if (draft.carColetivo !== undefined) setParecerCarColetivo(draft.carColetivo);
         if (draft.municipioPA !== undefined) setParecerMunicipioPA(draft.municipioPA);
         if (draft.carenciaMeses !== undefined) setParecerCarenciaMeses(draft.carenciaMeses);
         if (draft.totalMeses !== undefined) setParecerTotalMeses(draft.totalMeses);
         if (draft.agenciaHistorico !== undefined) setParecerAgenciaHistorico(draft.agenciaHistorico);
         if (draft.utilizaCarIndividual !== undefined) setParecerUtilizaCarIndividual(draft.utilizaCarIndividual);
         if (draft.generoProponente !== undefined) setParecerGeneroProponente(draft.generoProponente);
-        if (draft.inversoes !== undefined) setParecerInversoes(draft.inversoes);
+
+        // If inversions in draft are empty or only contains an empty string [""] but proposal has inversions, override
+        const hasDraftInversoes = draft.inversoes && draft.inversoes.length > 0 && draft.inversoes.some((i: string) => i.trim() !== "");
+        if (hasDraftInversoes) {
+          setParecerInversoes(draft.inversoes);
+        } else {
+          setParecerInversoes(propInversoes);
+        }
       } catch (e) {
         console.error("Error parsing draft from localStorage", e);
       }
     } else {
-      // Auto-populate from proposal data
-      if (selectedSubmission.proposal.credit_purpose) {
-        setParecerAtividadePlano(selectedSubmission.proposal.credit_purpose.toUpperCase());
-      } else {
-        setParecerAtividadePlano("");
-      }
-      setParecerNomeImovel((selectedSubmission.proposal.localizacao || "").toUpperCase());
-      setParecerMunicipioImovel((selectedSubmission.proposal.municipio || "").toUpperCase());
-      
-      const carIndFile = selectedSubmission.files.find(f => f.document_type === "car_individual");
-      if (carIndFile && carIndFile.ged_id) {
-        setParecerCarIndividual(carIndFile.ged_id);
-      } else {
-        setParecerCarIndividual("");
-      }
-
-      const carColFile = selectedSubmission.files.find(f => f.document_type === "car_coletivo");
-      if (carColFile && carColFile.ged_id) {
-        setParecerCarColetivo(carColFile.ged_id);
-      } else {
-        setParecerCarColetivo("");
-      }
-
-      let defaultInversoes: string[] = [""];
-      const invData = selectedSubmission.proposal.inversoes;
-      if (invData) {
-        const formatCurrency = (val: number) => {
-          return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
-        };
-        if (Array.isArray(invData)) {
-          defaultInversoes = invData.map((item: any) => {
-            const q = item.quant || 1;
-            const n = item.nome || "";
-            const v = item.valor || 0;
-            return `${q} x ${n.toUpperCase()} (${formatCurrency(v)})`;
-          });
-        } else if (typeof invData === "object") {
-          const obj = invData as any;
-          const items = Array.isArray(obj.items) ? obj.items : [];
-          const custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
-          const itemsList = items.map((item: any) => {
-            const q = item.quant || 1;
-            const n = item.nome || "";
-            const v = item.valor || 0;
-            return `${q} x ${n.toUpperCase()} (${formatCurrency(v)})`;
-          });
-          if (custo > 0) {
-            itemsList.push(`CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA (${formatCurrency(custo)})`);
-          }
-          if (itemsList.length > 0) {
-            defaultInversoes = itemsList;
-          }
-        }
-      }
-      setParecerInversoes(defaultInversoes);
+      // 3. Fallback: Auto-populate completely from proposal data
+      setParecerAtividadePlano(propAtividade);
+      setParecerNomeImovel(propNomeImovel);
+      setParecerMunicipioImovel(propMunicipioImovel);
+      setParecerCarIndividual(propCarIndividual);
+      setParecerCarColetivo(propCarColetivo);
+      setParecerInversoes(propInversoes);
     }
   }, [selectedSubmission]);
 
@@ -1007,20 +1026,34 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
       const items = Array.isArray(currentInversoes) ? currentInversoes : (currentInversoes?.items || []);
       const custoAssessoria = typeof currentInversoes?.custoAssessoria === "number" ? currentInversoes.custoAssessoria : 0;
       
+      const newInversoes = {
+        items,
+        custoAssessoria,
+        status: "aprovado",
+        rejection_reason: null
+      };
+
       const { error } = await supabase
         .from("stock_proposals")
         .update({
-          inversoes: {
-            items,
-            custoAssessoria,
-            status: "aprovado",
-            rejection_reason: null
-          }
+          inversoes: newInversoes
         })
         .eq("id", proposalId);
 
       if (error) throw error;
       toast({ title: "Inversões do plano aprovadas ✅" });
+
+      setSelectedSubmission((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          proposal: {
+            ...prev.proposal,
+            inversoes: newInversoes
+          }
+        };
+      });
+
       await refetch();
     } catch (err: any) {
       console.error("Error approving inversions:", err);
@@ -1046,20 +1079,33 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
       const items = Array.isArray(currentInversoes) ? currentInversoes : (currentInversoes?.items || []);
       const custoAssessoria = typeof currentInversoes?.custoAssessoria === "number" ? currentInversoes.custoAssessoria : 0;
       
+      const newInversoes = {
+        items,
+        custoAssessoria,
+        status: "reprovado",
+        rejection_reason: inversoesRejectReason
+      };
+
       const { error } = await supabase
         .from("stock_proposals")
         .update({
-          inversoes: {
-            items,
-            custoAssessoria,
-            status: "reprovado",
-            rejection_reason: inversoesRejectReason
-          }
+          inversoes: newInversoes
         })
         .eq("id", rejectingProposalId);
 
       if (error) throw error;
       toast({ title: "Inversões do plano reprovadas ❌" });
+
+      setSelectedSubmission((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          proposal: {
+            ...prev.proposal,
+            inversoes: newInversoes
+          }
+        };
+      });
       setInversoesRejectDialogOpen(false);
       setRejectingProposalId(null);
       setRejectingCurrentInversoes(null);
@@ -2532,7 +2578,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     {/* Barra de Ações para Inversões */}
                     {(() => {
                       const planoAssinadoFile = sub.files.find(
-                        (f) => f.document_type === "plano_eletronico" || f.document_type === "cadastro_atividade_plano"
+                        (f) => f.document_type === "plano_eletronico" || (f.document_type === "cadastro_atividade_plano" && f.file_path !== "preenchido")
                       );
                       const hasPlanoFile = !!planoAssinadoFile;
 

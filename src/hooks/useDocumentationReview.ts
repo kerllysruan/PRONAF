@@ -25,6 +25,8 @@ export interface SubmittedProposal {
     linha_credito: string | null;
     credit_purpose: string | null;
     status: string;
+    localizacao?: string;
+    inversoes?: any;
   };
   files: DocumentationFile[];
   approvedCount: number;
