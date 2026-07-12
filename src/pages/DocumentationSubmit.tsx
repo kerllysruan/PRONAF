@@ -749,20 +749,20 @@ export default function DocumentationSubmit() {
                             </div>
                           )}
 
-                          {doc.key === "cadastro_atividade_plano" && (
-                            <div className="w-full space-y-2 mb-3" onClick={(e) => e.stopPropagation()}>
-                              <p className="text-rose-600 text-xs font-black text-center uppercase tracking-wide leading-snug mb-1">
-                                ATENÇÃO: Digite a Atividade Cadastrada no Plano de Negócios abaixo para liberar o envio do arquivo PDF!
-                              </p>
-                              <input
-                                type="text"
-                                placeholder="Atividade (Ex: MILHO, BOVINOCULTURA LEITEIRA)"
-                                value={atividadePlano}
-                                onChange={(e) => setAtividadePlano(e.target.value)}
-                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground placeholder:text-slate-400 placeholder:font-normal"
-                              />
-                            </div>
-                          )}
+                           {doc.key === "cadastro_atividade_plano" && (
+                             <div className="w-full space-y-2 mb-3" onClick={(e) => e.stopPropagation()}>
+                               <p className="text-rose-600 text-xs font-black text-center tracking-wide leading-snug mb-1">
+                                 ATENÇÃO: Digite a Atividade Cadastrada no Plano de Negócios para liberar o envio do arquivo PDF!
+                               </p>
+                               <input
+                                 type="text"
+                                 placeholder="Ex: CRIAÇÃO DE BOVINOS CORTE EXTENSIVA"
+                                 value={atividadePlano}
+                                 onChange={(e) => setAtividadePlano(e.target.value)}
+                                 className="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-extrabold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background placeholder:text-slate-700 placeholder:font-bold"
+                               />
+                             </div>
+                           )}
 
                           {/* Only enable upload if number is filled for CAR docs, activity is filled for cadastro_atividade_plano, or if it is not a special doc */}
                           {((doc.key === "car_individual" && carIndividualNumber.trim().length >= 10 && carIndividualName.trim().length >= 3) ||
