@@ -1034,15 +1034,20 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     let nomePA = "";
                     
                     if (locParts.length > 1) {
-                      imovelRural = locParts[0];
-                      nomePA = locParts[1];
-                    } else if (carIndividualFile?.ged_id) {
-                      imovelRural = locParts[0];
-                    } else if (carColetivoFile?.ged_id) {
-                      nomePA = locParts[0];
-                    } else {
-                      imovelRural = locParts[0];
-                    }
+                       imovelRural = locParts[0];
+                       nomePA = locParts[1];
+                     } else {
+                       if (carIndividualFile?.ged_id && carColetivoFile?.ged_id) {
+                         imovelRural = locParts[0];
+                         nomePA = locParts[0];
+                       } else if (carIndividualFile?.ged_id) {
+                         imovelRural = locParts[0];
+                       } else if (carColetivoFile?.ged_id) {
+                         nomePA = locParts[0];
+                       } else {
+                         imovelRural = locParts[0];
+                       }
+                     }
 
                     return (
                       <>
@@ -1461,12 +1466,17 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   if (locParts.length > 1) {
                     imovelRural = locParts[0];
                     nomePA = locParts[1];
-                  } else if (hasCarInd) {
-                    imovelRural = locParts[0];
-                  } else if (hasCarCol) {
-                    nomePA = locParts[0];
                   } else {
-                    imovelRural = locParts[0];
+                    if (hasCarInd && hasCarCol) {
+                      imovelRural = locParts[0];
+                      nomePA = locParts[0];
+                    } else if (hasCarInd) {
+                      imovelRural = locParts[0];
+                    } else if (hasCarCol) {
+                      nomePA = locParts[0];
+                    } else {
+                      imovelRural = locParts[0];
+                    }
                   }
 
                   setParecerNomeImovel(hasCarInd ? imovelRural : "");
@@ -2078,23 +2088,28 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     setParecerResultado("Aprovado");
                                     setParecerCaf(cafFile?.ged_id || "");
                                     const loc = sub.proposal.localizacao || "";
-                                     const locParts = loc.split("|").map(p => p.trim());
-                                     let imovelRural = "";
-                                     let nomePA = "";
-                                     if (locParts.length > 1) {
-                                       imovelRural = locParts[0];
-                                       nomePA = locParts[1];
-                                     } else if (hasCarInd) {
-                                       imovelRural = locParts[0];
-                                     } else if (hasCarCol) {
-                                       nomePA = locParts[0];
-                                     } else {
-                                       imovelRural = locParts[0];
-                                     }
+                  const locParts = loc.split("|").map(p => p.trim());
+                  let imovelRural = "";
+                  let nomePA = "";
+                  if (locParts.length > 1) {
+                    imovelRural = locParts[0];
+                    nomePA = locParts[1];
+                  } else {
+                    if (hasCarInd && hasCarCol) {
+                      imovelRural = locParts[0];
+                      nomePA = locParts[0];
+                    } else if (hasCarInd) {
+                      imovelRural = locParts[0];
+                    } else if (hasCarCol) {
+                      nomePA = locParts[0];
+                    } else {
+                      imovelRural = locParts[0];
+                    }
+                  }
 
-                                     setParecerNomeImovel(hasCarInd ? imovelRural : "");
-                                     setParecerMunicipioImovel(sub.proposal.municipio || "");
-                                     setParecerNomePA(hasCarCol ? nomePA : "");
+                  setParecerNomeImovel(hasCarInd ? imovelRural : "");
+                  setParecerMunicipioImovel(sub.proposal.municipio || "");
+                  setParecerNomePA(hasCarCol ? nomePA : "");
                                     setParecerCarColetivo(carColetivoFile?.ged_id || "");
                                     setParecerMunicipioPA(sub.proposal.municipio || "");
                                     setParecerAtividadePlano(initialAct);
@@ -3421,4 +3436,5 @@ d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
     </div>
   );
 }
+
 
