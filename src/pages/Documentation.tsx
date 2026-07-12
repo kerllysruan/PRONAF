@@ -1026,16 +1026,51 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       {sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
                     </span>
                   </div>
-                  {sub.proposal.localizacao && (
+                  {(() => {
+                    const loc = sub.proposal.localizacao || "";
+                    const locParts = loc.split("|").map(p => p.trim());
+                    
+                    let imovelRural = "";
+                    let nomePA = "";
+                    
+                    if (locParts.length > 1) {
+                      imovelRural = locParts[0];
+                      nomePA = locParts[1];
+                    } else if (carIndividualFile?.ged_id) {
+                      imovelRural = locParts[0];
+                    } else if (carColetivoFile?.ged_id) {
+                      nomePA = locParts[0];
+                    } else {
+                      imovelRural = locParts[0];
+                    }
+
+                    return (
+                      <>
+                        {imovelRural && (
+                          <div>
+                            <span className="text-muted-foreground/70">Imóvel Rural:</span>{" "}
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{imovelRural}</span>
+                          </div>
+                        )}
+                        {nomePA && (
+                          <div>
+                            <span className="text-muted-foreground/70">PA/Assentamento:</span>{" "}
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{nomePA}</span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                  {carIndividualFile?.ged_id && (
                     <div>
-                      <span className="text-muted-foreground/70">{carIndividualFile ? "Imóvel Rural:" : "PA/Assentamento:"}</span>{" "}
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">{sub.proposal.localizacao}</span>
+                      <span className="text-muted-foreground/70">CAR Individual:</span>{" "}
+                      <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{carIndividualFile.ged_id}</span>
                     </div>
                   )}
-                  {carNumber && (
+                  {carColetivoFile?.ged_id && (
                     <div>
-                      <span className="text-muted-foreground/70">Registro CAR:</span>{" "}
-                      <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{carNumber}</span>
+                      <span className="text-muted-foreground/70">CAR Coletivo:</span>{" "}
+                      <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{carColetivoFile.ged_id}</span>
                     </div>
                   )}
                 </div>
@@ -1419,10 +1454,24 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   setParecerAnalista(sub.proposal.projetista || "");
                   setParecerResultado("Aprovado");
                   setParecerCaf(cafFile?.ged_id || "");
-                  const hasCarCol = !!carColetivoFile?.ged_id;
-                  setParecerNomeImovel(hasCarInd ? (sub.proposal.localizacao || "") : "");
+                  const loc = sub.proposal.localizacao || "";
+                  const locParts = loc.split("|").map(p => p.trim());
+                  let imovelRural = "";
+                  let nomePA = "";
+                  if (locParts.length > 1) {
+                    imovelRural = locParts[0];
+                    nomePA = locParts[1];
+                  } else if (hasCarInd) {
+                    imovelRural = locParts[0];
+                  } else if (hasCarCol) {
+                    nomePA = locParts[0];
+                  } else {
+                    imovelRural = locParts[0];
+                  }
+
+                  setParecerNomeImovel(hasCarInd ? imovelRural : "");
                   setParecerMunicipioImovel(sub.proposal.municipio || "");
-                  setParecerNomePA(hasCarCol ? (sub.proposal.localizacao || "") : "");
+                  setParecerNomePA(hasCarCol ? nomePA : "");
                   setParecerCarColetivo(carColetivoFile?.ged_id || "");
                   setParecerMunicipioPA(sub.proposal.municipio || "");
                   setParecerAtividadePlano(initialAct);
@@ -2028,10 +2077,24 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     setParecerAnalista(sub.proposal.projetista || "");
                                     setParecerResultado("Aprovado");
                                     setParecerCaf(cafFile?.ged_id || "");
-                                    setParecerNomeImovel(hasCarInd ? (sub.proposal.localizacao || "") : "");
-                                    setParecerMunicipioImovel(sub.proposal.municipio || "");
-                                    const hasCarCol = !!carColetivoFile?.ged_id;
-                                    setParecerNomePA(hasCarCol ? (sub.proposal.localizacao || "") : "");
+                                    const loc = sub.proposal.localizacao || "";
+                                     const locParts = loc.split("|").map(p => p.trim());
+                                     let imovelRural = "";
+                                     let nomePA = "";
+                                     if (locParts.length > 1) {
+                                       imovelRural = locParts[0];
+                                       nomePA = locParts[1];
+                                     } else if (hasCarInd) {
+                                       imovelRural = locParts[0];
+                                     } else if (hasCarCol) {
+                                       nomePA = locParts[0];
+                                     } else {
+                                       imovelRural = locParts[0];
+                                     }
+
+                                     setParecerNomeImovel(hasCarInd ? imovelRural : "");
+                                     setParecerMunicipioImovel(sub.proposal.municipio || "");
+                                     setParecerNomePA(hasCarCol ? nomePA : "");
                                     setParecerCarColetivo(carColetivoFile?.ged_id || "");
                                     setParecerMunicipioPA(sub.proposal.municipio || "");
                                     setParecerAtividadePlano(initialAct);
@@ -3358,3 +3421,4 @@ d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
     </div>
   );
 }
+

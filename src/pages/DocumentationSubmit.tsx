@@ -143,8 +143,14 @@ export default function DocumentationSubmit() {
       if (carInd?.ged_id) setCarIndividualNumber(carInd.ged_id);
       if (carCol?.ged_id) setCarColetivoNumber(carCol.ged_id);
       if (data.proposal?.localizacao) {
-        setCarIndividualName(data.proposal.localizacao);
-        setCarColetivoName(data.proposal.localizacao);
+        const parts = data.proposal.localizacao.split("|").map(p => p.trim());
+        if (parts.length > 1) {
+          setCarIndividualName(parts[0]);
+          setCarColetivoName(parts[1]);
+        } else {
+          setCarIndividualName(data.proposal.localizacao);
+          setCarColetivoName(data.proposal.localizacao);
+        }
       }
 
       setPageLoading(false);
@@ -287,10 +293,15 @@ export default function DocumentationSubmit() {
     if (success) {
       // Salva o Nome do Imóvel Rural / Nome do PA diretamente na proposta no Supabase
       const updateData: Record<string, string> = {};
-      if (carIndividualNumber.trim() && carIndividualName.trim()) {
-        updateData["localizacao"] = carIndividualName.trim();
-      } else if (carColetivoNumber.trim() && carColetivoName.trim()) {
-        updateData["localizacao"] = carColetivoName.trim();
+      const indName = carIndividualName.trim();
+      const colName = carColetivoName.trim();
+
+      if (indName && colName) {
+        updateData["localizacao"] = `${indName} | ${colName}`;
+      } else if (indName) {
+        updateData["localizacao"] = indName;
+      } else if (colName) {
+        updateData["localizacao"] = colName;
       }
 
       if (Object.keys(updateData).length > 0) {
@@ -337,10 +348,15 @@ export default function DocumentationSubmit() {
     if (success) {
       // Salva o Nome do Imóvel Rural / Nome do PA diretamente na proposta no Supabase
       const updateData: Record<string, string> = {};
-      if (carIndividualNumber.trim() && carIndividualName.trim()) {
-        updateData["localizacao"] = carIndividualName.trim();
-      } else if (carColetivoNumber.trim() && carColetivoName.trim()) {
-        updateData["localizacao"] = carColetivoName.trim();
+      const indName = carIndividualName.trim();
+      const colName = carColetivoName.trim();
+
+      if (indName && colName) {
+        updateData["localizacao"] = `${indName} | ${colName}`;
+      } else if (indName) {
+        updateData["localizacao"] = indName;
+      } else if (colName) {
+        updateData["localizacao"] = colName;
       }
 
       if (Object.keys(updateData).length > 0) {
@@ -695,7 +711,7 @@ export default function DocumentationSubmit() {
                               </p>
                               <input
                                 type="text"
-                                placeholder={doc.key === "car_individual" ? "Número do CAR Individual (Ex: BR-PA-1502406-C9E37894D742)" : "Número do CAR Coletivo (Ex: BR-PA-1502406-C9E37894D742)"}
+                                placeholder={doc.key === "car_individual" ? "Número do CAR Individual (Ex: PA-1502406-D5C8.92AF.381E.E70B.8C54.1A6D.90B2.74F3)" : "Número do CAR Coletivo (Ex: TO-1721000-F8C4.73BD.190A.D25C.6B4E.5F83.10A4.7E9B)"}
                                 value={doc.key === "car_individual" ? carIndividualNumber : carColetivoNumber}
                                 onChange={(e) => {
                                   const val = e.target.value.toUpperCase();
