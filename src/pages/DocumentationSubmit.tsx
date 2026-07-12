@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 // Trigger Vercel Build Sincronização 
 import { useSearchParams } from "react-router-dom";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
@@ -913,11 +913,20 @@ export default function DocumentationSubmit() {
               .filter((d) => enquadramentoKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
+            const certidoesCivisKeys = [
+              "certidao_improbidade",
+              "certidao_embargo_ambiental",
+              "declaracao_assistencia_tecnica"
+            ];
+            const certidoesCivisDocs = DOCUMENTATION_REQUIRED
+              .filter((d) => certidoesCivisKeys.includes(d.key))
+              .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+
             const mainDocs = DOCUMENTATION_REQUIRED
-              .filter((d) => d.group !== "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key) && !enquadramentoKeys.includes(d.key))
+              .filter((d) => d.group !== "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key) && !enquadramentoKeys.includes(d.key) && !certidoesCivisKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
             const ambientalDocs = DOCUMENTATION_REQUIRED
-              .filter((d) => d.group === "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key) && !enquadramentoKeys.includes(d.key))
+              .filter((d) => d.group === "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key) && !enquadramentoKeys.includes(d.key) && !certidoesCivisKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
             return (
