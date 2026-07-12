@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 // Trigger Vercel Build Sincronização 
 import { useSearchParams } from "react-router-dom";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DOCUMENTATION_REQUIRED,
   DocumentationFile,
