@@ -2249,9 +2249,9 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     const initialAct = (upperAct.includes("PRONAF") || upperAct.includes("368") || upperAct.includes("699") || upperAct.includes("GRUPO"))
                                       ? ""
                                       : sourceAct;
-                                    const hasCarInd = !!carIndividualFile?.ged_id;
-                  const hasCarCol = !!carColetivoFile?.ged_id;
-                  setParecerUtilizaCarIndividual(hasCarInd ? "SIM" : "NÃO");
+                                    const hasCarInd = !!carIndividualFile && carIndividualFile.file_path !== "dispensado";
+                                    const hasCarCol = !!carColetivoFile && carColetivoFile.file_path !== "dispensado";
+                                    setParecerUtilizaCarIndividual(hasCarInd ? "SIM" : "NÃO");
 
                                     setParecerNomeImovel(hasCarInd ? (sub.proposal.localizacao || "") : "");
                                     setParecerMunicipioImovel(sub.proposal.municipio || "");
