@@ -285,11 +285,16 @@ export default function Documentation() {
     const is699 = is699Selected;
     const programAcao = is699 ? "AMPLIAÇÃO" : "IMPLANTAÇÃO";
     const atividade = parecerAtividadePlano || "";
-    const imovel = parecerNomeImovel || "";
-    const carIndividual = parecerCarIndividual || "";
-    const numPA = parecerNumProjetoPA || "";
-    const nomePA = parecerNomePA || "";
-    const carColetivo = parecerCarColetivo || "";
+    const carIndFile = sub.files.find(f => f.document_type === "car_individual");
+    const carColFile = sub.files.find(f => f.document_type === "car_coletivo");
+    const isCarIndDispensed = carIndFile?.file_path === "dispensado";
+    const isCarColDispensed = carColFile?.file_path === "dispensado";
+
+    const imovel = isCarIndDispensed ? "" : (parecerNomeImovel || "");
+    const carIndividual = isCarIndDispensed ? "" : (parecerCarIndividual || "");
+    const numPA = isCarColDispensed ? "" : (parecerNumProjetoPA || "");
+    const nomePA = isCarColDispensed ? "" : (parecerNomePA || "");
+    const carColetivo = isCarColDispensed ? "" : (parecerCarColetivo || "");
     const dataHoje = new Date().toLocaleDateString("pt-BR");
 
     const g = parecerGeneroProponente === "FEMININO"
@@ -332,11 +337,6 @@ export default function Documentation() {
     if (/^\d+$/.test(prazoTotal.trim())) {
       prazoTotal = `${prazoTotal.trim()} MESES`;
     }
-
-    const carIndFile = sub.files.find(f => f.document_type === "car_individual");
-    const carColFile = sub.files.find(f => f.document_type === "car_coletivo");
-    const isCarIndDispensed = carIndFile?.file_path === "dispensado";
-    const isCarColDispensed = carColFile?.file_path === "dispensado";
 
     let localStr = "";
     if (isCarColDispensed) {
@@ -2899,109 +2899,143 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 </div>
 
                 {/* Seção 2: Imóvel Rural e CAR */}
-                <div className="bg-muted/40 p-4 rounded-xl border border-border/40 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-xs uppercase tracking-wider text-indigo-600">
-                      Imóvel Rural & CAR Individual
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Possui/Utilizará CAR Individual?
-                      </label>
-                      <Select
-                        value={parecerUtilizaCarIndividual}
-                        onValueChange={(val) => {
-                          setParecerUtilizaCarIndividual(val);
-                          if (val === "NÃO") {
-                            setParecerNomeImovel("");
-                            setParecerCarIndividual("");
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="rounded-xl bg-background border-border/60">
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl">
-                          <SelectItem value="SIM">SIM</SelectItem>
-                          <SelectItem value="NÃO">NÃO (Somente Assentamento/CAR Coletivo)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                {(() => {
+                  const carIndFile = selectedSubmission?.files?.find(f => f.document_type === "car_individual");
+                  const isCarIndDispensed = carIndFile?.file_path === "dispensado";
 
-                    {parecerUtilizaCarIndividual === "SIM" && (
-                      <>
-                        <div className="space-y-1.5 animate-fade-in">
+                  if (isCarIndDispensed) {
+                    return (
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                        <p className="text-xs font-bold text-slate-500">
+                          ℹ️ Imóvel Rural / CAR Individual dispensado para esta operação.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="bg-muted/40 p-4 rounded-xl border border-border/40 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-xs uppercase tracking-wider text-indigo-600">
+                          Imóvel Rural & CAR Individual
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="space-y-1.5">
                           <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                            Nome do Imóvel Rural
+                            Possui/Utilizará CAR Individual?
                           </label>
-                          <Input
-                            className="rounded-xl"
-                            placeholder="Ex: Fazenda Santa Maria"
-                            value={parecerNomeImovel}
-                            onChange={(e) => setParecerNomeImovel(e.target.value)}
-                          />
+                          <Select
+                            value={parecerUtilizaCarIndividual}
+                            onValueChange={(val) => {
+                              setParecerUtilizaCarIndividual(val);
+                              if (val === "NÃO") {
+                                setParecerNomeImovel("");
+                                setParecerCarIndividual("");
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="rounded-xl bg-background border-border/60">
+                              <SelectValue placeholder="Selecione..." />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                              <SelectItem value="SIM">SIM</SelectItem>
+                              <SelectItem value="NÃO">NÃO (Somente Assentamento/CAR Coletivo)</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        <div className="space-y-1.5 animate-fade-in">
+
+                        {parecerUtilizaCarIndividual === "SIM" && (
+                          <>
+                            <div className="space-y-1.5 animate-fade-in">
+                              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                Nome do Imóvel Rural
+                              </label>
+                              <Input
+                                className="rounded-xl"
+                                placeholder="Ex: Fazenda Santa Maria"
+                                value={parecerNomeImovel}
+                                onChange={(e) => setParecerNomeImovel(e.target.value)}
+                              />
+                            </div>
+                            <div className="space-y-1.5 animate-fade-in">
+                              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                Registro CAR Individual
+                              </label>
+                              <Input
+                                className="rounded-xl font-mono text-xs"
+                                placeholder="Ex: MA-2106201-..."
+                                value={parecerCarIndividual}
+                                onChange={(e) => setParecerCarIndividual(e.target.value)}
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Seção 3: Assentamento e CAR Coletivo */}
+                {(() => {
+                  const carColFile = selectedSubmission?.files?.find(f => f.document_type === "car_coletivo");
+                  const isCarColDispensed = carColFile?.file_path === "dispensado";
+
+                  if (isCarColDispensed) {
+                    return (
+                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                        <p className="text-xs font-bold text-slate-500">
+                          ℹ️ Projeto de Assentamento / CAR Coletivo dispensado para esta operação.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="bg-muted/40 p-4 rounded-xl border border-border/40 space-y-3">
+                      <h3 className="font-semibold text-xs uppercase tracking-wider text-indigo-600">
+                        Projeto de Assentamento & CAR Coletivo
+                      </h3>
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                              Nº Projeto Assent.
+                            </label>
+                            <Input
+                              className="rounded-xl"
+                              placeholder="Ex: 243"
+                              value={parecerNumProjetoPA}
+                              onChange={(e) => setParecerNumProjetoPA(e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                              Nome do PA
+                            </label>
+                            <Input
+                              className="rounded-xl"
+                              placeholder="Ex: PA Nova Vida"
+                              value={parecerNomePA}
+                              onChange={(e) => setParecerNomePA(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
                           <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                            Registro CAR Individual
+                            Registro CAR Coletivo
                           </label>
                           <Input
                             className="rounded-xl font-mono text-xs"
-                            placeholder="Ex: MA-2106201-..."
-                            value={parecerCarIndividual}
-                            onChange={(e) => setParecerCarIndividual(e.target.value)}
+                            placeholder="Ex: MA-2100342-..."
+                            value={parecerCarColetivo}
+                            onChange={(e) => setParecerCarColetivo(e.target.value)}
                           />
                         </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Seção 3: Assentamento e CAR Coletivo */}
-                <div className="bg-muted/40 p-4 rounded-xl border border-border/40 space-y-3">
-                  <h3 className="font-semibold text-xs uppercase tracking-wider text-indigo-600">
-                    Projeto de Assentamento & CAR Coletivo
-                  </h3>
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                          Nº Projeto Assent.
-                        </label>
-                        <Input
-                          className="rounded-xl"
-                          placeholder="Ex: 243"
-                          value={parecerNumProjetoPA}
-                          onChange={(e) => setParecerNumProjetoPA(e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                          Nome do PA
-                        </label>
-                        <Input
-                          className="rounded-xl"
-                          placeholder="Ex: PA Nova Vida"
-                          value={parecerNomePA}
-                          onChange={(e) => setParecerNomePA(e.target.value)}
-                        />
                       </div>
                     </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Registro CAR Coletivo
-                      </label>
-                      <Input
-                        className="rounded-xl font-mono text-xs"
-                        placeholder="Ex: MA-2100342-..."
-                        value={parecerCarColetivo}
-                        onChange={(e) => setParecerCarColetivo(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Seção 4: Inversões */}
                 <div className="bg-muted/40 p-4 rounded-xl border border-border/40 space-y-3">
