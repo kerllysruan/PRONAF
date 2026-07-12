@@ -1001,7 +1001,7 @@ export default function DocumentationSubmit() {
                     <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm">
                       <span className="text-slate-600 text-base">📄</span>
                       <p className="text-slate-700 text-xs font-black uppercase tracking-widest">
-                        DOCUMENTOS GERAIS
+                        DOCUMENTAÇÃO DO PLANO DE INVESTIMENTO PROPOSTO
                       </p>
                     </div>
                     <div className="flex-1 h-px bg-slate-200" />
