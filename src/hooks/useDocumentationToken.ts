@@ -141,6 +141,44 @@ export function useDocumentationToken() {
       // Upload sequentially to avoid concurrent blob-read issues when the
       // same physical file is assigned to multiple document cards.
       for (const [docType, file] of fileEntries) {
+        // cadastro_atividade_plano only requires text input, no file upload
+        if (docType === "cadastro_atividade_plano") {
+          const { data: existing } = await supabase
+            .from("documentation_files")
+            .select("id, file_path")
+            .eq("token_id", tokenId)
+            .eq("document_type", docType)
+            .maybeSingle();
+
+          if (existing) {
+            await supabase
+              .from("documentation_files")
+              .update({
+                file_name: "atividade_plano_preenchida",
+                file_path: "preenchido",
+                file_size: 0,
+                status: "aprovado",
+                rejection_reason: null,
+                reviewed_at: new Date().toISOString(),
+                reviewed_by: null,
+              })
+              .eq("id", existing.id);
+          } else {
+            await supabase
+              .from("documentation_files")
+              .insert({
+                token_id: tokenId,
+                stock_proposal_id: stockProposalId,
+                file_name: "atividade_plano_preenchida",
+                file_path: "preenchido",
+                file_size: 0,
+                document_type: docType,
+                status: "aprovado",
+              });
+          }
+          continue;
+        }
+
         const fileExt = file.name.split(".").pop() || "pdf";
         const filePath = `documentation/${tokenStr}/${docType}.${fileExt}`;
 
@@ -154,7 +192,7 @@ export function useDocumentationToken() {
 
         if (existing) {
           // If the path is different, delete the old file to save space
-          if (existing.file_path !== filePath && existing.file_path !== "dispensado") {
+          if (existing.file_path !== filePath && existing.file_path !== "dispensado" && existing.file_path !== "preenchido") {
             await supabase.storage
               .from("proposals_documents")
               .remove([existing.file_path]);
@@ -261,6 +299,44 @@ export function useDocumentationToken() {
       // Upload sequentially to avoid concurrent blob-read issues when the
       // same physical file is assigned to multiple document cards.
       for (const [docType, file] of fileEntries) {
+        // cadastro_atividade_plano only requires text input, no file upload
+        if (docType === "cadastro_atividade_plano") {
+          const { data: existing } = await supabase
+            .from("documentation_files")
+            .select("id, file_path")
+            .eq("token_id", tokenId)
+            .eq("document_type", docType)
+            .maybeSingle();
+
+          if (existing) {
+            await supabase
+              .from("documentation_files")
+              .update({
+                file_name: "atividade_plano_preenchida",
+                file_path: "preenchido",
+                file_size: 0,
+                status: "aprovado",
+                rejection_reason: null,
+                reviewed_at: new Date().toISOString(),
+                reviewed_by: null,
+              })
+              .eq("id", existing.id);
+          } else {
+            await supabase
+              .from("documentation_files")
+              .insert({
+                token_id: tokenId,
+                stock_proposal_id: stockProposalId,
+                file_name: "atividade_plano_preenchida",
+                file_path: "preenchido",
+                file_size: 0,
+                document_type: docType,
+                status: "aprovado",
+              });
+          }
+          continue;
+        }
+
         const fileExt = file.name.split(".").pop() || "pdf";
         const filePath = `documentation/${tokenStr}/${docType}.${fileExt}`;
 
@@ -274,7 +350,7 @@ export function useDocumentationToken() {
 
         if (existing) {
           // If the path is different, delete the old file to save space
-          if (existing.file_path !== filePath && existing.file_path !== "dispensado") {
+          if (existing.file_path !== filePath && existing.file_path !== "dispensado" && existing.file_path !== "preenchido") {
             await supabase.storage
               .from("proposals_documents")
               .remove([existing.file_path]);

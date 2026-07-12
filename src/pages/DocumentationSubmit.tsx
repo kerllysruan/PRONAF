@@ -202,7 +202,14 @@ export default function DocumentationSubmit() {
         }
       }
       if (data.stock_proposals?.credit_purpose) {
-        setAtividadePlano(data.stock_proposals.credit_purpose);
+        const savedAtividade = data.stock_proposals.credit_purpose;
+        setAtividadePlano(savedAtividade);
+        if (savedAtividade.trim().length >= 3) {
+          setSelectedFiles((prev) => ({
+            ...prev,
+            cadastro_atividade_plano: new File(["Habilitado"], "atividade_plano.pdf", { type: "application/pdf" })
+          }));
+        }
       }
       if (data.stock_proposals?.inversoes) {
         const inv = data.stock_proposals.inversoes;
@@ -317,6 +324,22 @@ export default function DocumentationSubmit() {
       }
       return { ...prev, [docKey]: file };
     });
+  }
+
+  function handleAtividadeChange(val: string) {
+    setAtividadePlano(val);
+    if (val.trim().length >= 3) {
+      setSelectedFiles((prev) => ({
+        ...prev,
+        cadastro_atividade_plano: new File(["Habilitado"], "atividade_plano.pdf", { type: "application/pdf" })
+      }));
+    } else {
+      setSelectedFiles((prev) => {
+        const next = { ...prev };
+        delete next.cadastro_atividade_plano;
+        return next;
+      });
+    }
   }
 
   function handleDrop(docKey: string, e: React.DragEvent<HTMLDivElement>) {
@@ -824,7 +847,7 @@ export default function DocumentationSubmit() {
                                   if (doc.key === "car_individual") setCarIndividualNumber(val);
                                   else setCarColetivoNumber(val);
                                 }}
-                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground mb-2 placeholder:text-slate-400 placeholder:font-normal"
+                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground placeholder:text-slate-400 placeholder:font-normal"
                               />
                               <input
                                 type="text"
@@ -840,25 +863,38 @@ export default function DocumentationSubmit() {
                             </div>
                           )}
 
-                           {doc.key === "cadastro_atividade_plano" && (
-                             <div className="w-full space-y-2 mb-3" onClick={(e) => e.stopPropagation()}>
-                               <p className="text-rose-600 text-xs font-black text-center tracking-wide leading-snug mb-1">
-                                 ATENÇÃO: Digite a Atividade Cadastrada no Plano de Negócios para liberar o envio do arquivo PDF!
-                               </p>
-                               <input
-                                 type="text"
-                                 placeholder="Ex: CRIAÇÃO DE BOVINOS CORTE EXTENSIVA"
-                                 value={atividadePlano}
-                                 onChange={(e) => setAtividadePlano(e.target.value)}
-                                 className="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background placeholder:text-slate-400 placeholder:font-normal"
-                               />
-                             </div>
+                          {doc.key === "cadastro_atividade_plano" && (
+                              <div className="w-full space-y-2 mb-3" onClick={(e) => e.stopPropagation()}>
+                                <p className="text-slate-600 text-xs font-black text-center tracking-wide leading-snug mb-1">
+                                  Informe detalhadamente a Atividade Cadastrada no Plano de Negócios da operação.
+                                </p>
+                                <input
+                                  type="text"
+                                  placeholder="Ex: CRIAÇÃO DE BOVINOS CORTE EXTENSIVA"
+                                  value={atividadePlano}
+                                  onChange={(e) => handleAtividadeChange(e.target.value)}
+                                  className="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background placeholder:text-slate-400 placeholder:font-normal"
+                                />
+                              </div>
                            )}
 
-                          {/* Only enable upload if number is filled for CAR docs, activity is filled for cadastro_atividade_plano, or if it is not a special doc */}
-                          {((doc.key === "car_individual" && carIndividualNumber.trim().length >= 10 && carIndividualName.trim().length >= 3) ||
+                          {/* Atividade card: somente preenchimento, sem envio de arquivo */}
+                          {doc.key === "cadastro_atividade_plano" ? (
+                            <div className="w-full text-center py-3">
+                              {atividadePlano.trim().length >= 3 ? (
+                                <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-1">
+                                  ✅ Atividade preenchida com sucesso!
+                                </p>
+                              ) : (
+                                <p className="text-xs font-bold text-rose-500">
+                                  ⚠️ Preencha a atividade acima para continuar.
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                          /* Upload de arquivo normal para os outros cards */
+                          ((doc.key === "car_individual" && carIndividualNumber.trim().length >= 10 && carIndividualName.trim().length >= 3) ||
                             (doc.key === "car_coletivo" && carColetivoNumber.trim().length >= 10 && carColetivoName.trim().length >= 3) ||
-                            (doc.key === "cadastro_atividade_plano" && atividadePlano.trim().length >= 3) ||
                             (doc.key !== "car_individual" && doc.key !== "car_coletivo" && doc.key !== "cadastro_atividade_plano")) ? (
                               <label className="flex flex-col items-center justify-center cursor-pointer w-full">
                                 <input
@@ -925,7 +961,7 @@ export default function DocumentationSubmit() {
                               <p className="text-slate-400 text-[9px] opacity-40">Envio Habilitado após preencher o número
                               </p>
                             </div>
-                          )}
+                          ))}
 
                           {/* Link de obtenção do documento */}
                           {doc.obtencaoUrl && !selected && (
