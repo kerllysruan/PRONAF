@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 // Trigger Vercel Build Sincronização 
 import { useSearchParams } from "react-router-dom";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
@@ -160,21 +160,21 @@ export default function DocumentationSubmit() {
       const carCol = existingFiles.find(f => f.document_type === "car_coletivo");
       if (carInd?.ged_id) setCarIndividualNumber(carInd.ged_id);
       if (carCol?.ged_id) setCarColetivoNumber(carCol.ged_id);
-      if (data.proposal?.localizacao) {
-        const parts = data.proposal.localizacao.split("|").map(p => p.trim());
+      if (data.stock_proposals?.localizacao) {
+        const parts = data.stock_proposals.localizacao.split("|").map(p => p.trim());
         if (parts.length > 1) {
           setCarIndividualName(parts[0]);
           setCarColetivoName(parts[1]);
         } else {
-          setCarIndividualName(data.proposal.localizacao);
-          setCarColetivoName(data.proposal.localizacao);
+          setCarIndividualName(data.stock_proposals.localizacao);
+          setCarColetivoName(data.stock_proposals.localizacao);
         }
       }
-      if (data.proposal?.credit_purpose) {
-        setAtividadePlano(data.proposal.credit_purpose);
+      if (data.stock_proposals?.credit_purpose) {
+        setAtividadePlano(data.stock_proposals.credit_purpose);
       }
-      if (data.proposal?.inversoes && Array.isArray(data.proposal.inversoes)) {
-        setInversoes(data.proposal.inversoes as any);
+      if (data.stock_proposals?.inversoes && Array.isArray(data.stock_proposals.inversoes)) {
+        setInversoes(data.stock_proposals.inversoes as any);
       }
 
       setPageLoading(false);
@@ -303,7 +303,7 @@ export default function DocumentationSubmit() {
 
     // Validação das Inversões
     const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
-    const estimatedValue = tokenData.proposal?.estimated_value || 0;
+    const estimatedValue = tokenData.stock_proposals?.estimated_value || 0;
     if (Math.abs(totalInversoes - estimatedValue) >= 0.01) {
       toast({
         title: "Soma das Inversões Divergente",
@@ -376,7 +376,7 @@ export default function DocumentationSubmit() {
 
     // Validação das Inversões
     const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
-    const estimatedValue = tokenData.proposal?.estimated_value || 0;
+    const estimatedValue = tokenData.stock_proposals?.estimated_value || 0;
     if (Math.abs(totalInversoes - estimatedValue) >= 0.01) {
       toast({
         title: "Soma das Inversões Divergente",
@@ -977,7 +977,7 @@ export default function DocumentationSubmit() {
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
             const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
-            const estimatedValue = tokenData?.proposal?.estimated_value || 0;
+            const estimatedValue = tokenData?.stock_proposals?.estimated_value || 0;
 
             return (
               <>
