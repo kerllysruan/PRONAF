@@ -62,6 +62,10 @@ import {
   Clock,
   FileBarChart,
   Building,
+  Tractor,
+  Map,
+  Scroll,
+  Leaf,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
