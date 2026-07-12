@@ -90,7 +90,8 @@ export function useDocumentationReview() {
             credit_purpose,
             status,
             agency_id,
-            localizacao
+            localizacao,
+            inversoes
           )
         `)
         .eq("documents_submitted", true)
@@ -148,13 +149,29 @@ export function useDocumentationReview() {
           }
         });
 
-        const approved = [...typeMap.values()].filter((s) => s === "aprovado").length;
+        let invValida = false;
+        const estimatedVal = Number(t.stock_proposals?.estimated_value) || 0;
+        const invData = t.stock_proposals?.inversoes;
+        if (invData) {
+          let totalInv = 0;
+          if (Array.isArray(invData)) {
+            totalInv = invData.reduce((acc: number, item: any) => acc + (Number(item.valor) || 0), 0);
+          } else if (typeof invData === "object") {
+            const obj = invData as any;
+            const items = Array.isArray(obj.items) ? obj.items : [];
+            const custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
+            totalInv = items.reduce((acc: number, item: any) => acc + (Number(item.valor) || 0), 0) + custo;
+          }
+          invValida = Math.abs(totalInv - estimatedVal) < 0.01;
+        }
+
+        const approved = [...typeMap.values()].filter((s) => s === "aprovado").length + (invValida ? 1 : 0);
         const rejected = [...typeMap.values()].filter((s) => s === "reprovado").length;
         const submittedTypes = typeMap.size;
         // Pending = types in pending state + types not yet submitted at all
         const pendingInTypes = [...typeMap.values()].filter((s) => s === "pendente").length;
         const notSubmitted = Math.max(0, DOCUMENTATION_REQUIRED.length - submittedTypes);
-        const pending = pendingInTypes + notSubmitted;
+        const pending = pendingInTypes + notSubmitted + (invValida ? 0 : 1);
 
         return {
           token: {
@@ -172,7 +189,7 @@ export function useDocumentationReview() {
           approvedCount: approved,
           rejectedCount: rejected,
           pendingCount: pending,
-          totalFiles: DOCUMENTATION_REQUIRED.length,
+          totalFiles: DOCUMENTATION_REQUIRED.length + 1,
         };
       });
 
