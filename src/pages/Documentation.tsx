@@ -172,6 +172,62 @@ export default function Documentation() {
       } catch (e) {
         console.error("Error parsing draft from localStorage", e);
       }
+    } else {
+      // Auto-populate from proposal data
+      if (selectedSubmission.proposal.credit_purpose) {
+        setParecerAtividadePlano(selectedSubmission.proposal.credit_purpose.toUpperCase());
+      } else {
+        setParecerAtividadePlano("");
+      }
+      setParecerNomeImovel((selectedSubmission.proposal.localizacao || "").toUpperCase());
+      setParecerMunicipioImovel((selectedSubmission.proposal.municipio || "").toUpperCase());
+      
+      const carIndFile = selectedSubmission.files.find(f => f.document_type === "car_individual");
+      if (carIndFile && carIndFile.ged_id) {
+        setParecerCarIndividual(carIndFile.ged_id);
+      } else {
+        setParecerCarIndividual("");
+      }
+
+      const carColFile = selectedSubmission.files.find(f => f.document_type === "car_coletivo");
+      if (carColFile && carColFile.ged_id) {
+        setParecerCarColetivo(carColFile.ged_id);
+      } else {
+        setParecerCarColetivo("");
+      }
+
+      let defaultInversoes: string[] = [""];
+      const invData = selectedSubmission.proposal.inversoes;
+      if (invData) {
+        const formatCurrency = (val: number) => {
+          return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+        };
+        if (Array.isArray(invData)) {
+          defaultInversoes = invData.map((item: any) => {
+            const q = item.quant || 1;
+            const n = item.nome || "";
+            const v = item.valor || 0;
+            return `${q} x ${n.toUpperCase()} (${formatCurrency(v)})`;
+          });
+        } else if (typeof invData === "object") {
+          const obj = invData as any;
+          const items = Array.isArray(obj.items) ? obj.items : [];
+          const custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
+          const itemsList = items.map((item: any) => {
+            const q = item.quant || 1;
+            const n = item.nome || "";
+            const v = item.valor || 0;
+            return `${q} x ${n.toUpperCase()} (${formatCurrency(v)})`;
+          });
+          if (custo > 0) {
+            itemsList.push(`CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA (${formatCurrency(custo)})`);
+          }
+          if (itemsList.length > 0) {
+            defaultInversoes = itemsList;
+          }
+        }
+      }
+      setParecerInversoes(defaultInversoes);
     }
   }, [selectedSubmission]);
 
