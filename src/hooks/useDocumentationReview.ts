@@ -89,7 +89,8 @@ export function useDocumentationReview() {
             linha_credito,
             credit_purpose,
             status,
-            agency_id
+            agency_id,
+            localizacao
           )
         `)
         .eq("documents_submitted", true)

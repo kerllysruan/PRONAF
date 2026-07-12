@@ -949,6 +949,9 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
         ? Math.round((sub.approvedCount / sub.totalFiles) * 100)
         : 0;
     const allApproved = sub.totalFiles > 0 && sub.approvedCount === sub.totalFiles;
+    const carIndividualFile = sub.files.find(f => f.document_type === "car_individual");
+    const carColetivoFile = sub.files.find(f => f.document_type === "car_coletivo");
+    const carNumber = carIndividualFile?.ged_id || carColetivoFile?.ged_id || "";
 
     return (
       <div className="animate-fade-in max-w-[1600px] mx-auto space-y-6 p-4 md:p-6">
@@ -1023,6 +1026,18 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       {sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
                     </span>
                   </div>
+                  {sub.proposal.localizacao && (
+                    <div>
+                      <span className="text-muted-foreground/70">{carIndividualFile ? "Imóvel Rural:" : "PA/Assentamento:"}</span>{" "}
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{sub.proposal.localizacao}</span>
+                    </div>
+                  )}
+                  {carNumber && (
+                    <div>
+                      <span className="text-muted-foreground/70">Registro CAR:</span>{" "}
+                      <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{carNumber}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1404,9 +1419,10 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   setParecerAnalista(sub.proposal.projetista || "");
                   setParecerResultado("Aprovado");
                   setParecerCaf(cafFile?.ged_id || "");
+                  const hasCarCol = !!carColetivoFile?.ged_id;
                   setParecerNomeImovel(hasCarInd ? (sub.proposal.localizacao || "") : "");
                   setParecerMunicipioImovel(sub.proposal.municipio || "");
-                  setParecerNomePA("");
+                  setParecerNomePA(hasCarCol ? (sub.proposal.localizacao || "") : "");
                   setParecerCarColetivo(carColetivoFile?.ged_id || "");
                   setParecerMunicipioPA(sub.proposal.municipio || "");
                   setParecerAtividadePlano(initialAct);
@@ -2014,7 +2030,8 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     setParecerCaf(cafFile?.ged_id || "");
                                     setParecerNomeImovel(hasCarInd ? (sub.proposal.localizacao || "") : "");
                                     setParecerMunicipioImovel(sub.proposal.municipio || "");
-                                    setParecerNomePA("");
+                                    const hasCarCol = !!carColetivoFile?.ged_id;
+                                    setParecerNomePA(hasCarCol ? (sub.proposal.localizacao || "") : "");
                                     setParecerCarColetivo(carColetivoFile?.ged_id || "");
                                     setParecerMunicipioPA(sub.proposal.municipio || "");
                                     setParecerAtividadePlano(initialAct);
