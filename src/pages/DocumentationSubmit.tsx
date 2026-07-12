@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 // Trigger Vercel Build Sincronização 
 import { useSearchParams } from "react-router-dom";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
@@ -967,6 +967,22 @@ export default function DocumentationSubmit() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {enquadramentoDocs.map(renderCard)}
+                  </div>
+                </div>
+
+                {/* CERTIDÕES CIVIS E ADMINISTRATIVAS grid */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-50 border border-blue-200 shadow-sm">
+                      <span className="text-blue-600 text-base">📜</span>
+                      <p className="text-blue-700 text-xs font-black uppercase tracking-widest">
+                        CERTIDÕES CIVIS E ADMINISTRATIVAS
+                      </p>
+                    </div>
+                    <div className="flex-1 h-px bg-blue-200" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {certidoesCivisDocs.map(renderCard)}
                   </div>
                 </div>
 
