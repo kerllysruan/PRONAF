@@ -339,19 +339,15 @@ export default function Documentation() {
     const isCarColDispensed = carColFile?.file_path === "dispensado";
 
     let localStr = "";
-    if (isCarColDispensed && carIndividual.trim()) {
+    if (isCarColDispensed) {
       localStr = `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}`;
-    } else if (isCarIndDispensed && carColetivo.trim()) {
+    } else if (isCarIndDispensed) {
       localStr = `PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
-    } else if (carIndividual.trim() && carColetivo.trim()) {
-      localStr = `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, INSERIDO NO PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
-    } else if (carIndividual.trim()) {
-      localStr = `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}`;
     } else {
-      localStr = `PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+      localStr = `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, INSERIDO NO PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
     }
 
-    const invLocalStr = (isCarColDispensed || (parecerUtilizaCarIndividual === "SIM" && !carColetivo.trim()))
+    const invLocalStr = isCarColDispensed
       ? "NO IMÓVEL ACIMA IDENTIFICADO"
       : `NO PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
 
@@ -2293,17 +2289,17 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   }
 
                   setParecerNomeImovel(hasCarInd ? imovelRural : "");
-                  setParecerMunicipioImovel(sub.proposal.municipio || "");
+                  setParecerMunicipioImovel(hasCarInd ? (sub.proposal.municipio || "") : "");
                   setParecerNomePA(hasCarCol ? nomePA : "");
-                                    setParecerCarColetivo(carColetivoFile?.ged_id || "");
-                                    setParecerMunicipioPA(sub.proposal.municipio || "");
-                                    setParecerAtividadePlano(initialAct);
-                                    setParecerCarenciaMeses("36 MESES");
-                                    setParecerTotalMeses("120 MESES");
-                                    setParecerGerenteGeral("MIERCIO Bruno Miranda Franco F126870");
-                                    setParecerGerenteRelacionamento("JAIRO Ferreira dos Santos F154768");
-                                    setParecerNumProjetoPA("");
-                                    setParecerCarIndividual(carIndividualFile?.ged_id || "");
+                  setParecerCarColetivo(hasCarCol ? (carColetivoFile?.ged_id || "") : "");
+                  setParecerMunicipioPA(hasCarCol ? (sub.proposal.municipio || "") : "");
+                  setParecerAtividadePlano(initialAct);
+                  setParecerCarenciaMeses("36 MESES");
+                  setParecerTotalMeses("120 MESES");
+                  setParecerGerenteGeral("MIERCIO Bruno Miranda Franco F126870");
+                  setParecerGerenteRelacionamento("JAIRO Ferreira dos Santos F154768");
+                  setParecerNumProjetoPA("");
+                  setParecerCarIndividual(hasCarInd ? (carIndividualFile?.ged_id || "") : "");
                                     setParecerAgenciaHistorico(historicoAgencia);
                                     setParecerInversoes([""]);
                                     setParecerDialogOpen(true);
