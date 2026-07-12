@@ -235,8 +235,7 @@ export default function DocumentationSubmit() {
   }, [token]);
 
   // ── Derived state ─────────────────────────────────────────────
-  const selectedCount = Object.keys(selectedFiles).length;
-  const totalDocs = DOCUMENTATION_REQUIRED.length + 1;
+  const totalDocs = DOCUMENTATION_REQUIRED.length + 1; // +1 for inversões
 
   const dbFilesMap = useMemo(() => {
     return files.reduce((acc, f) => {
@@ -250,6 +249,74 @@ export default function DocumentationSubmit() {
   function isReenabledFile(f: DocumentationFile | undefined) {
     return f?.file_path === "habilitado";
   }
+
+  // ── Per-key progress calculation (prevents double counting) ──
+  // For each required doc key, determine its "effective status":
+  //   - "ready"    = in selectedFiles (new upload chosen) OR in DB as aprovado/pendente/preenchido/dispensado (not re-enabled)
+  //   - "rejected" = in DB as reprovado AND no new file selected
+  //   - "missing"  = not in DB and not selected
+
+  const perDocStatus = useMemo(() => {
+    const result: Record<string, "ready" | "rejected" | "missing"> = {};
+    for (const doc of DOCUMENTATION_REQUIRED) {
+      const dbFile = dbFilesMap[doc.key];
+      const hasNewSelection = doc.key in selectedFiles;
+
+      if (hasNewSelection) {
+        // User selected a new file (or virtual placeholder for atividade) — counts as ready
+        result[doc.key] = "ready";
+      } else if (dbFile && !isReenabledFile(dbFile)) {
+        if (dbFile.status === "reprovado") {
+          result[doc.key] = "rejected";
+        } else {
+          // aprovado, pendente, dispensado, preenchido
+          result[doc.key] = "ready";
+        }
+      } else {
+        result[doc.key] = "missing";
+      }
+    }
+    return result;
+  }, [dbFilesMap, selectedFiles]);
+
+  const readyCount = useMemo(() => {
+    let count = Object.values(perDocStatus).filter(s => s === "ready").length;
+    count += isInversõesValidadas ? 1 : 0;
+    return count;
+  }, [perDocStatus, isInversõesValidadas]);
+
+  const selectedCount = Object.keys(selectedFiles).length;
+
+  const missingOrRejectedCount = useMemo(() => {
+    const docsCount = Object.values(perDocStatus).filter(s => s !== "ready").length;
+    return docsCount + (isInversõesValidadas ? 0 : 1);
+  }, [perDocStatus, isInversõesValidadas]);
+
+  // How many NEW file selections are for docs that actually need uploading
+  // (not already ready in DB)
+  const newSelectionsForMissing = useMemo(() => {
+    let count = 0;
+    for (const key of Object.keys(selectedFiles)) {
+      const dbFile = dbFilesMap[key];
+      // Only count if this doc was missing or rejected (i.e., genuinely needs this selection)
+      if (!dbFile || isReenabledFile(dbFile) || dbFile.status === "reprovado") {
+        count++;
+      }
+    }
+    return count;
+  }, [selectedFiles, dbFilesMap]);
+
+  const approvedOrPendingCount = useMemo(() => {
+    const docsCount = files.filter((f) => {
+      if (isReenabledFile(f)) return false;
+      return f.status === "aprovado" || f.status === "pendente";
+    }).length;
+    return docsCount + (isInversõesValidadas ? 1 : 0);
+  }, [files, isInversõesValidadas]);
+
+  const progressPercent = Math.round(
+    (readyCount / totalDocs) * 100
+  );
 
   const allApproved = useMemo(() => {
     const docsApproved = DOCUMENTATION_REQUIRED.every((doc) => {
@@ -272,34 +339,12 @@ export default function DocumentationSubmit() {
   }, [files]);
 
   const isAwaitingAnalysis = useMemo(() => {
-    // True when all submitted docs are pending review (no missing, no rejections, not yet all approved)
     return !!(tokenData?.documents_submitted && !hasRejections && !hasMissingFiles && !allApproved);
   }, [tokenData, hasRejections, hasMissingFiles, allApproved]);
 
-  // Dispensed docs that are currently "approved" but marked as dispensed (file_path === 'dispensado')
   const hasDispensedDocs = useMemo(() => {
     return files.some((f) => f.file_path === "dispensado");
   }, [files]);
-
-  const missingOrRejectedCount = useMemo(() => {
-    const docsCount = DOCUMENTATION_REQUIRED.filter((doc) => {
-      const dbFile = dbFilesMap[doc.key];
-      return !dbFile || isReenabledFile(dbFile) || dbFile.status === "reprovado";
-    }).length;
-    return docsCount + (isInversõesValidadas ? 0 : 1);
-  }, [dbFilesMap, isInversõesValidadas]);
-
-  const approvedOrPendingCount = useMemo(() => {
-    const docsCount = files.filter((f) => {
-      if (isReenabledFile(f)) return false; // treat as missing
-      return f.status === "aprovado" || f.status === "pendente";
-    }).length;
-    return docsCount + (isInversõesValidadas ? 1 : 0);
-  }, [files, isInversõesValidadas]);
-
-  const progressPercent = Math.round(
-    ((approvedOrPendingCount + selectedCount) / totalDocs) * 100
-  );
 
   const rejectedFiles = useMemo(
     () => files.filter((f) => f.status === "reprovado"),
@@ -709,7 +754,7 @@ export default function DocumentationSubmit() {
                   Progresso do envio
                 </p>
                 <span className="text-slate-700 text-sm font-bold">
-                  {approvedOrPendingCount + selectedCount}/{totalDocs}
+                  {readyCount}/{totalDocs}
                 </span>
               </div>
               <Progress
@@ -1326,52 +1371,66 @@ export default function DocumentationSubmit() {
           })()}
 
           {/* Submit button — only shown when there are docs to upload or inversions to validate */}
-          {(missingOrRejectedCount > 0 || selectedCount > 0) && (
-            <div className="flex flex-col items-center gap-3 pt-4 pb-4">
-              {selectedCount < (missingOrRejectedCount - (isInversõesValidadas ? 0 : 1)) && (missingOrRejectedCount - (isInversõesValidadas ? 0 : 1)) > 0 && (
-                <p className="text-amber-800 text-xs font-bold tracking-wide bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl mb-1 shadow-sm">
-                  ⚠️ Selecione todos os {(missingOrRejectedCount - (isInversõesValidadas ? 0 : 1))} documentos obrigatórios pendentes para habilitar o envio.
-                </p>
-              )}
-              {!isInversõesValidadas && (
-                <p className="text-rose-800 text-xs font-bold tracking-wide bg-rose-50 border border-rose-200 px-4 py-2 rounded-xl mb-1 shadow-sm">
-                  ⚠️ A soma das inversões ({formatCurrency(totalInversoes)}) não é igual ao valor proposto da operação ({formatCurrency(estimatedValue)}). Ajuste os valores no grid para habilitar o envio.
-                </p>
-              )}
-              <Button
-                onClick={hasRejections ? handleResubmit : handleSubmit}
-                disabled={
-                  (selectedCount < (missingOrRejectedCount - (isInversõesValidadas ? 0 : 1))) || 
-                  (selectedCount === 0 && (missingOrRejectedCount - (isInversõesValidadas ? 0 : 1)) > 0) || 
-                  isSubmitting || 
-                  !isInversõesValidadas
-                }
-                className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                    Enviando documentos...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-5 w-5 mr-2" />
-                    {hasRejections ? "Reenviar Documentos" : "Enviar Documentação"}
-                    {selectedCount > 0 && (
-                      <Badge className="ml-2 bg-white/20 text-white border-0 rounded-full text-xs">
-                        {selectedCount}
-                      </Badge>
-                    )}
-                  </>
+          {(() => {
+            // Count how many docs are NOT ready (missing or rejected) excluding inversões
+            const docsNotReady = Object.values(perDocStatus).filter(s => s !== "ready").length;
+            const needsUploads = docsNotReady > 0;
+            const showButton = needsUploads || selectedCount > 0 || !isInversõesValidadas;
+
+            if (!showButton) return null;
+
+            // Count how many missing/rejected docs DON'T have a new selection yet
+            const docsStillNeeded = Object.entries(perDocStatus)
+              .filter(([key, status]) => status !== "ready" && !(key in selectedFiles))
+              .length;
+
+            return (
+              <div className="flex flex-col items-center gap-3 pt-4 pb-4">
+                {docsStillNeeded > 0 && (
+                  <p className="text-amber-800 text-xs font-bold tracking-wide bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl mb-1 shadow-sm">
+                    ⚠️ Selecione todos os {docsStillNeeded} documentos obrigatórios pendentes para habilitar o envio.
+                  </p>
                 )}
-              </Button>
-              {selectedCount === 0 && (missingOrRejectedCount - (isInversõesValidadas ? 0 : 1)) > 0 && (
-                <p className="text-slate-400 text-xs font-medium">
-                  Selecione os documentos necessários para continuar
-                </p>
-              )}
-            </div>
-          )}
+                {!isInversõesValidadas && (
+                  <p className="text-rose-800 text-xs font-bold tracking-wide bg-rose-50 border border-rose-200 px-4 py-2 rounded-xl mb-1 shadow-sm">
+                    ⚠️ A soma das inversões ({formatCurrency(totalInversoes)}) não é igual ao valor proposto da operação ({formatCurrency(estimatedValue)}). Ajuste os valores no grid para habilitar o envio.
+                  </p>
+                )}
+                <Button
+                  onClick={hasRejections ? handleResubmit : handleSubmit}
+                  disabled={
+                    docsStillNeeded > 0 ||
+                    (selectedCount === 0 && docsNotReady > 0) ||
+                    isSubmitting || 
+                    !isInversõesValidadas
+                  }
+                  className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      Enviando documentos...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5 mr-2" />
+                      {hasRejections ? "Reenviar Documentos" : "Enviar Documentação"}
+                      {selectedCount > 0 && (
+                        <Badge className="ml-2 bg-white/20 text-white border-0 rounded-full text-xs">
+                          {selectedCount}
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </Button>
+                {selectedCount === 0 && docsNotReady > 0 && (
+                  <p className="text-slate-400 text-xs font-medium">
+                    Selecione os documentos necessários para continuar
+                  </p>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         <Footer />
