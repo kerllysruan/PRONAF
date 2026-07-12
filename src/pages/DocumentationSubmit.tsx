@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 // Trigger Vercel Build Sincronização 
 import { useSearchParams } from "react-router-dom";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
@@ -102,6 +102,28 @@ export default function DocumentationSubmit() {
   const [inversoes, setInversoes] = useState<{ quant: number; nome: string; valor: number }[]>([
     { quant: 1, nome: "", valor: 0 }
   ]);
+
+  const formatInputMoney = (value: number) => {
+    if (value === 0 || isNaN(value)) return "";
+    return new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+
+  const handleMoneyChange = (idx: number, rawValue: string) => {
+    const cleanValue = rawValue.replace(/\D/g, "");
+    if (!cleanValue) {
+      const updated = [...inversoes];
+      updated[idx].valor = 0;
+      setInversoes(updated);
+      return;
+    }
+    const numValue = parseFloat(cleanValue) / 100;
+    const updated = [...inversoes];
+    updated[idx].valor = numValue;
+    setInversoes(updated);
+  };
 
   // Global paste handler when mouse is hovering over a card
   useEffect(() => {
@@ -1074,7 +1096,7 @@ export default function DocumentationSubmit() {
                     <div className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-300 ${
                       Math.abs(totalInversoes - estimatedValue) < 0.01 
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                        : 'bg-rose-50 border-rose-200 text-rose-700 animate-pulse'
+                        : 'bg-rose-50 border-rose-200 text-rose-700'
                     }`}>
                       {Math.abs(totalInversoes - estimatedValue) < 0.01 ? (
                         <span>✅ Inversões validadas! Soma bate 100% com o valor proposto: {formatCurrency(estimatedValue)}</span>
@@ -1126,18 +1148,16 @@ export default function DocumentationSubmit() {
                         {/* Valor Total */}
                         <div className="col-span-3">
                           <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Valor Total (R$)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={item.valor || ""}
-                            onChange={(e) => {
-                              const updated = [...inversoes];
-                              updated[idx].valor = parseFloat(e.target.value) || 0;
-                              setInversoes(updated);
-                            }}
-                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
-                          />
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                            <input
+                              type="text"
+                              placeholder="0,00"
+                              value={formatInputMoney(item.valor)}
+                              onChange={(e) => handleMoneyChange(idx, e.target.value)}
+                              className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                            />
+                          </div>
                         </div>
 
                         {/* Ações */}
