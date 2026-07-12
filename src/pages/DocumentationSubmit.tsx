@@ -891,18 +891,19 @@ export default function DocumentationSubmit() {
             const ruralPropertyDocs = DOCUMENTATION_REQUIRED.filter((d) => ruralPropertyKeys.includes(d.key));
 
             const identificationKeys = [
-              "certidao_casamento",
-              "certidao_obito",
-              "ficha_cadastro_cliente",
-              "ficha_cadastro_esposa",
-              "procuracao",
               "rg",
               "rg_esposa",
-              "rg_procurador"
+              "rg_procurador",
+              "ficha_cadastro_cliente",
+              "ficha_cadastro_esposa",
+              "declaracoes_unificadas",
+              "procuracao",
+              "certidao_casamento",
+              "certidao_obito"
             ];
-            const identificationDocs = DOCUMENTATION_REQUIRED
-              .filter((d) => identificationKeys.includes(d.key))
-              .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+            const identificationDocs = identificationKeys
+              .map((key) => DOCUMENTATION_REQUIRED.find((d) => d.key === key))
+              .filter((d): d is typeof DOCUMENTATION_REQUIRED[0] => d !== undefined);
 
             const enquadramentoKeys = [
               "caf_extrato",
