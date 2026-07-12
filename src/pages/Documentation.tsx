@@ -1025,7 +1025,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
       if (error) throw error;
       toast({ title: "Inversões do plano aprovadas ✅" });
-      await fetchSubmissions(true);
+      await refetch();
     } catch (err: any) {
       console.error("Error approving inversions:", err);
       toast({
@@ -1034,7 +1034,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
         variant: "destructive"
       });
     }
-  }, [fetchSubmissions, toast]);
+  }, [refetch, toast]);
 
   const handleOpenInversoesRejectDialog = useCallback((proposalId: string, currentInversoes: any) => {
     setRejectingProposalId(proposalId);
@@ -1068,7 +1068,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
       setRejectingProposalId(null);
       setRejectingCurrentInversoes(null);
       setInversoesRejectReason("");
-      await fetchSubmissions(true);
+      await refetch();
     } catch (err: any) {
       console.error("Error reproving inversions:", err);
       toast({
@@ -1077,7 +1077,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
         variant: "destructive"
       });
     }
-  }, [rejectingProposalId, rejectingCurrentInversoes, inversoesRejectReason, fetchSubmissions, toast]);
+  }, [rejectingProposalId, rejectingCurrentInversoes, inversoesRejectReason, refetch, toast]);
 
   // ─── Loading state ────────────────────────────────────────────
   if (loading) {
