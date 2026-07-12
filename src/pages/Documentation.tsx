@@ -2283,7 +2283,6 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
                   }
                 }
-                if (items.length === 0 && custo === 0) return null;
 
                 const totalInversoes = items.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) + custo;
                 const estimatedValue = Number(sub.proposal.estimated_value) || 0;
@@ -2294,7 +2293,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 };
 
                 return (
-                  <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/50 shadow-sm animate-fade-in">
+                  <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/50 shadow-sm animate-fade-in mb-8">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                       <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-200 shadow-sm w-fit">
                         <span className="text-indigo-600 text-base">📊</span>
@@ -2321,6 +2320,13 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     </p>
 
                     <div className="space-y-3">
+                      {items.length === 0 && custo === 0 && (
+                        <div className="p-4 rounded-2xl border border-rose-200 bg-rose-50/50 text-center">
+                          <p className="text-xs text-rose-700 font-bold">
+                            ⚠️ Nenhuma inversão de plano cadastrada para esta proposta. Os itens de investimento devem ser preenchidos pelo projetista para validação.
+                          </p>
+                        </div>
+                      )}
                       {items.map((item, idx) => (
                         <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
                           {/* Quantidade */}
