@@ -1677,33 +1677,47 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
             "declaracao_anexo_128"
           ];
 
-          // Category definitions
+          // Category definitions matching DocumentationSubmit layout
           const IDENTIFICACAO_KEYS = [
             "rg",
+            "rg_esposa",
+            "rg_procurador",
             "ficha_cadastro_cliente",
             "ficha_cadastro_esposa",
-            "rg_esposa",
-            "certidao_casamento",
-            "procuracao",
-            "rg_procurador",
-            "caf_extrato",
-            "certidao_obito",
-            "autorizacao_modificacao_projeto"
-          ];
-
-          const OPERACAO_KEYS = [
             "declaracoes_unificadas",
-            "dcaa",
-            "espelho_beneficiario",
-            "titulo_dominio",
-            "carta_consulta",
-            "certidao_embargo_ambiental",
-            "certidao_improbidade",
-            "car_individual",
-            "car_coletivo"
+            "procuracao",
+            "certidao_casamento",
+            "certidao_obito"
           ];
 
-          const AMBIENTAIS_KEYS = [
+          const RURAL_KEYS = [
+            "car_individual",
+            "car_coletivo",
+            "espelho_beneficiario"
+          ];
+
+          const ENQUADRAMENTO_KEYS = [
+            "caf_extrato",
+            "carta_consulta"
+          ];
+
+          const CERTIDOES_CIVIS_KEYS = [
+            "certidao_improbidade",
+            "certidao_embargo_ambiental",
+            "declaracao_assistencia_tecnica"
+          ];
+
+          const PLANO_INVESTIMENTO_KEYS = [
+            "autorizacao_modificacao_projeto",
+            "contrato_assessoria",
+            "orcamento",
+            "plano_eletronico",
+            "titulo_dominio",
+            "cadastro_atividade_plano"
+          ];
+
+          const DECLARACOES_AMBIENTAIS_KEYS = [
+            "dcaa",
             "declaracao_suporte_hidrico",
             "autorizacao_desmatamento_queima",
             "declaracao_regularidade_ambiental",
@@ -1712,16 +1726,10 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
             "declaracao_anexo_128"
           ];
 
-          const PLANO_KEYS = [
-            "cadastro_atividade_plano",
-            "plano_eletronico",
-            "declaracao_assistencia_tecnica",
-            "orcamento",
-            "contrato_assessoria"
-          ];
-
           const renderGrid = (title: string, keys: string[], icon: React.ReactNode) => {
-            const filtered = uniqueFiles.filter((f) => keys.includes(f.document_type));
+            const filtered = uniqueFiles
+              .filter((f) => keys.includes(f.document_type))
+              .sort((a, b) => keys.indexOf(a.document_type) - keys.indexOf(b.document_type));
             if (filtered.length === 0) return null;
 
             return (
@@ -2150,8 +2158,15 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
             );
           };
 
-          // Render grids
-          const allKnownKeys = [...IDENTIFICACAO_KEYS, ...OPERACAO_KEYS, ...AMBIENTAIS_KEYS, ...PLANO_KEYS];
+          // Render grids matching the order and layout of DocumentationSubmit
+          const allKnownKeys = [
+            ...IDENTIFICACAO_KEYS,
+            ...RURAL_KEYS,
+            ...ENQUADRAMENTO_KEYS,
+            ...CERTIDOES_CIVIS_KEYS,
+            ...PLANO_INVESTIMENTO_KEYS,
+            ...DECLARACOES_AMBIENTAIS_KEYS
+          ];
           const unknownKeys = uniqueFiles
             .filter((f) => !allKnownKeys.includes(f.document_type) && !AGENCY_DOCUMENTATION.some((ad) => ad.key === f.document_type))
             .map((f) => f.document_type);
@@ -2160,9 +2175,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
             <div className="space-y-8">
               {renderAgencyGrid()}
               {renderGrid("Documentos de Identificação", IDENTIFICACAO_KEYS, <ShieldCheck className="h-5 w-5 text-sky-500" />)}
-              {renderGrid("Documentos da Operação / Declarações Unificadas", OPERACAO_KEYS, <ClipboardList className="h-5 w-5 text-violet-500" />)}
-              {renderGrid("Declarações Ambientais", AMBIENTAIS_KEYS, <FileCheck className="h-5 w-5 text-emerald-500" />)}
-              {renderGrid("Documentos do Plano", PLANO_KEYS, <FileBarChart className="h-5 w-5 text-amber-500" />)}
+              {renderGrid("Identificação Imóvel Rural", RURAL_KEYS, <Map className="h-5 w-5 text-indigo-500" />)}
+              {renderGrid("Documentação Enquadramento Agricultura Familiar", ENQUADRAMENTO_KEYS, <Tractor className="h-5 w-5 text-teal-500" />)}
+              {renderGrid("Certidões Civis e Administrativas", CERTIDOES_CIVIS_KEYS, <Scroll className="h-5 w-5 text-blue-500" />)}
+              {renderGrid("Documentação do Plano de Investimento Proposto", PLANO_INVESTIMENTO_KEYS, <FileBarChart className="h-5 w-5 text-slate-500" />)}
+              {renderGrid("Declarações Ambientais", DECLARACOES_AMBIENTAIS_KEYS, <Leaf className="h-5 w-5 text-emerald-500" />)}
               {renderGrid("Outros Documentos", unknownKeys, <FileText className="h-5 w-5 text-slate-500" />)}
             </div>
           );
