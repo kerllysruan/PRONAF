@@ -102,6 +102,10 @@ export default function Documentation() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectingFileId, setRejectingFileId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [inversoesRejectDialogOpen, setInversoesRejectDialogOpen] = useState(false);
+  const [inversoesRejectReason, setInversoesRejectReason] = useState("");
+  const [rejectingProposalId, setRejectingProposalId] = useState<string | null>(null);
+  const [rejectingCurrentInversoes, setRejectingCurrentInversoes] = useState<any>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [revertDialogOpen, setRevertDialogOpen] = useState(false);
   const [isReverting, setIsReverting] = useState(false);
@@ -1001,6 +1005,79 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
     setBulkRejectDialogOpen(false);
     setBulkRejectReason("");
   }, [selectedSubmission, bulkRejectReason, rejectAllDocuments]);
+
+  const handleApproveInversoes = useCallback(async (proposalId: string, currentInversoes: any) => {
+    try {
+      const items = Array.isArray(currentInversoes) ? currentInversoes : (currentInversoes?.items || []);
+      const custoAssessoria = typeof currentInversoes?.custoAssessoria === "number" ? currentInversoes.custoAssessoria : 0;
+      
+      const { error } = await supabase
+        .from("stock_proposals")
+        .update({
+          inversoes: {
+            items,
+            custoAssessoria,
+            status: "aprovado",
+            rejection_reason: null
+          }
+        })
+        .eq("id", proposalId);
+
+      if (error) throw error;
+      toast({ title: "Inversões do plano aprovadas ✅" });
+      await fetchSubmissions(true);
+    } catch (err: any) {
+      console.error("Error approving inversions:", err);
+      toast({
+        title: "Erro ao aprovar inversões",
+        description: err.message,
+        variant: "destructive"
+      });
+    }
+  }, [fetchSubmissions, toast]);
+
+  const handleOpenInversoesRejectDialog = useCallback((proposalId: string, currentInversoes: any) => {
+    setRejectingProposalId(proposalId);
+    setRejectingCurrentInversoes(currentInversoes);
+    setInversoesRejectReason("");
+    setInversoesRejectDialogOpen(true);
+  }, []);
+
+  const handleConfirmRejectInversoes = useCallback(async () => {
+    if (!rejectingProposalId) return;
+    try {
+      const currentInversoes = rejectingCurrentInversoes;
+      const items = Array.isArray(currentInversoes) ? currentInversoes : (currentInversoes?.items || []);
+      const custoAssessoria = typeof currentInversoes?.custoAssessoria === "number" ? currentInversoes.custoAssessoria : 0;
+      
+      const { error } = await supabase
+        .from("stock_proposals")
+        .update({
+          inversoes: {
+            items,
+            custoAssessoria,
+            status: "reprovado",
+            rejection_reason: inversoesRejectReason
+          }
+        })
+        .eq("id", rejectingProposalId);
+
+      if (error) throw error;
+      toast({ title: "Inversões do plano reprovadas ❌" });
+      setInversoesRejectDialogOpen(false);
+      setRejectingProposalId(null);
+      setRejectingCurrentInversoes(null);
+      setInversoesRejectReason("");
+      await fetchSubmissions(true);
+    } catch (err: any) {
+      console.error("Error reproving inversions:", err);
+      toast({
+        title: "Erro ao reprovar inversões",
+        description: err.message,
+        variant: "destructive"
+      });
+    }
+  }, [rejectingProposalId, rejectingCurrentInversoes, inversoesRejectReason, fetchSubmissions, toast]);
 
   // ─── Loading state ────────────────────────────────────────────
   if (loading) {
@@ -2292,13 +2369,61 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
                 };
 
+                const invStatus = (invData as any)?.status || "pendente";
+                const invRejectionReason = (invData as any)?.rejection_reason || "";
+
+                let cardBgClass = "bg-slate-50/50 border-slate-200";
+                if (invStatus === "aprovado") {
+                  cardBgClass = "bg-emerald-50/50 border-emerald-200 shadow-sm shadow-emerald-100/50";
+                } else if (invStatus === "reprovado") {
+                  cardBgClass = "bg-rose-50/50 border-rose-200 shadow-sm shadow-rose-100/50";
+                }
+
                 return (
-                  <div className="p-6 rounded-3xl border border-slate-200 bg-slate-50/50 shadow-sm animate-fade-in mb-8">
+                  <div className={`p-6 rounded-[2.5rem] border-2 shadow-sm animate-fade-in mb-8 ${cardBgClass}`}>
+                    
+                    {/* Top Visual Status with Large Central Icon */}
+                    <div className="flex flex-col items-center text-center mb-6">
+                      {invStatus === "aprovado" ? (
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 border border-emerald-200 shadow-sm mb-2.5">
+                          <CheckCircle2 className="h-5.5 w-5.5 text-emerald-600" />
+                        </div>
+                      ) : invStatus === "reprovado" ? (
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-100 border border-rose-200 shadow-sm mb-2.5">
+                          <XCircle className="h-5.5 w-5.5 text-rose-600" />
+                        </div>
+                      ) : (
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-50 border border-indigo-100 shadow-sm mb-2.5">
+                          <FileBarChart className="h-5.5 w-5.5 text-indigo-500" />
+                        </div>
+                      )}
+                      <h4 className="font-heading font-black text-sm uppercase tracking-widest text-slate-800 leading-tight">
+                        INVERSÕES DO PLANO PROPOSTO
+                      </h4>
+                      <p className="text-[10.5px] text-slate-500 font-extrabold mt-1">
+                        {invStatus === "aprovado" 
+                          ? "Inversões Aprovadas ✅" 
+                          : invStatus === "reprovado" 
+                            ? "Inversões Reprovadas ❌" 
+                            : "Pendente de Análise ⏳"
+                        }
+                      </p>
+                    </div>
+
+                    {/* Rejection Reason Box */}
+                    {invStatus === "reprovado" && invRejectionReason && (
+                      <div className="bg-rose-100/60 border border-rose-200 rounded-2xl p-4 mb-4">
+                        <p className="text-xs text-rose-800 leading-relaxed">
+                          <span className="font-bold">Motivo da Reprovação das Inversões:</span> {invRejectionReason}
+                        </p>
+                      </div>
+                    )}
+
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                       <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-200 shadow-sm w-fit">
                         <span className="text-indigo-600 text-base">📊</span>
                         <p className="text-indigo-700 text-xs font-black uppercase tracking-widest">
-                          INVERSÕES DO PLANO
+                          DETALHAMENTO
                         </p>
                       </div>
                       {/* Validador de Valor da Proposta */}
@@ -2405,6 +2530,74 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         </div>
                       )}
                     </div>
+
+                    <Separator className="my-5 opacity-50" />
+
+                    {/* Barra de Ações para Inversões */}
+                    {(() => {
+                      const planoAssinadoFile = sub.files.find(
+                        (f) => f.document_type === "plano_eletronico" || f.document_type === "cadastro_atividade_plano"
+                      );
+                      const hasPlanoFile = !!planoAssinadoFile;
+
+                      return (
+                        <div className="flex items-center gap-2 justify-center flex-wrap pt-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                            disabled={pdfLoading || !hasPlanoFile}
+                            onClick={() => {
+                              if (planoAssinadoFile) {
+                                handleViewPdf(planoAssinadoFile.file_path, planoAssinadoFile.file_name);
+                              }
+                            }}
+                          >
+                            {pdfLoading ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Eye className="h-3.5 w-3.5" />
+                            )}
+                            Ver Plano
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                            disabled={!hasPlanoFile}
+                            onClick={() => {
+                              if (planoAssinadoFile) {
+                                downloadFile(planoAssinadoFile.file_path, planoAssinadoFile.file_name);
+                              }
+                            }}
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            Baixar Plano
+                          </Button>
+                          {invStatus !== "aprovado" && (
+                            <Button
+                              size="sm"
+                              className="gap-1 rounded-xl text-[11px] font-bold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                              onClick={() => handleApproveInversoes(sub.proposal.id, sub.proposal.inversoes)}
+                            >
+                              <ThumbsUp className="h-3.5 w-3.5" />
+                              Aprovar Inversões
+                            </Button>
+                          )}
+                          {invStatus !== "reprovado" && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="gap-1 rounded-xl text-[11px] font-bold h-8 shadow-sm"
+                              onClick={() => handleOpenInversoesRejectDialog(sub.proposal.id, sub.proposal.inversoes)}
+                            >
+                              <ThumbsDown className="h-3.5 w-3.5" />
+                              Reprovar Inversões
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })()}
@@ -2524,6 +2717,45 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               >
                 <ThumbsDown className="h-4 w-4" />
                 Reprovar Todos
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* ── Inversões Reject Dialog ──────────────────────────────────── */}
+        <Dialog open={inversoesRejectDialogOpen} onOpenChange={setInversoesRejectDialogOpen}>
+          <DialogContent className="max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="font-heading font-extrabold flex items-center gap-2">
+                <XCircle className="h-5 w-5 text-red-500" />
+                Reprovar Inversões do Plano
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                Informe o motivo de reprovação das inversões do plano de negócios.
+              </DialogDescription>
+            </DialogHeader>
+            <Textarea
+              placeholder="Motivo da reprovação das inversões..."
+              value={inversoesRejectReason}
+              onChange={(e) => setInversoesRejectReason(e.target.value)}
+              className="min-h-[100px] rounded-xl"
+            />
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => setInversoesRejectDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                className="rounded-xl gap-2"
+                disabled={!inversoesRejectReason.trim()}
+                onClick={handleConfirmRejectInversoes}
+              >
+                <ThumbsDown className="h-4 w-4" />
+                Confirmar Reprovação
               </Button>
             </DialogFooter>
           </DialogContent>

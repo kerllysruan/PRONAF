@@ -162,7 +162,7 @@ export function useDocumentationReview() {
             const custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
             totalInv = items.reduce((acc: number, item: any) => acc + (Number(item.valor) || 0), 0) + custo;
           }
-          invValida = Math.abs(totalInv - estimatedVal) < 0.01;
+          invValida = (Math.abs(totalInv - estimatedVal) < 0.01) && (invData as any)?.status === "aprovado";
         }
 
         const approved = [...typeMap.values()].filter((s) => s === "aprovado").length + (invValida ? 1 : 0);
