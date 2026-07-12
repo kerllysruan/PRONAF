@@ -904,15 +904,39 @@ export default function DocumentationSubmit() {
               .filter((d) => identificationKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
+            const enquadramentoKeys = [
+              "caf_extrato",
+              "carta_consulta"
+            ];
+            const enquadramentoDocs = DOCUMENTATION_REQUIRED
+              .filter((d) => enquadramentoKeys.includes(d.key))
+              .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+
             const mainDocs = DOCUMENTATION_REQUIRED
-              .filter((d) => d.group !== "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key))
+              .filter((d) => d.group !== "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key) && !enquadramentoKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
             const ambientalDocs = DOCUMENTATION_REQUIRED
-              .filter((d) => d.group === "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key))
+              .filter((d) => d.group === "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key) && !enquadramentoKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
             return (
               <>
+                {/* DOCUMENTOS DE IDENTIFICAÇÃO grid */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-50 border border-amber-200 shadow-sm">
+                      <span className="text-amber-600 text-base">🆔</span>
+                      <p className="text-amber-700 text-xs font-black uppercase tracking-widest">
+                        DOCUMENTOS DE IDENTIFICAÇÃO
+                      </p>
+                    </div>
+                    <div className="flex-1 h-px bg-amber-200" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {identificationDocs.map(renderCard)}
+                  </div>
+                </div>
+
                 {/* IDENTIFICAÇÃO IMÓVEL RURAL grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
@@ -929,19 +953,19 @@ export default function DocumentationSubmit() {
                   </div>
                 </div>
 
-                {/* DOCUMENTOS DE IDENTIFICAÇÃO grid */}
+                {/* DOCUMENTAÇÃO ENQUADRAMENTO AGRICULTURA FAMILIAR grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-50 border border-amber-200 shadow-sm">
-                      <span className="text-amber-600 text-base">🆔</span>
-                      <p className="text-amber-700 text-xs font-black uppercase tracking-widest">
-                        DOCUMENTOS DE IDENTIFICAÇÃO
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-teal-50 border border-teal-200 shadow-sm">
+                      <span className="text-teal-600 text-base">🚜</span>
+                      <p className="text-teal-700 text-xs font-black uppercase tracking-widest">
+                        DOCUMENTAÇÃO ENQUADRAMENTO AGRICULTURA FAMILIAR
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-amber-200" />
+                    <div className="flex-1 h-px bg-teal-200" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {identificationDocs.map(renderCard)}
+                    {enquadramentoDocs.map(renderCard)}
                   </div>
                 </div>
 
