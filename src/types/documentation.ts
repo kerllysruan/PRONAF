@@ -50,6 +50,7 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
   },
   { key: "autorizacao_modificacao_projeto", label: "AUTORIZAÇÃO MODIFICAÇÃO PROJETO", ged_id: "GED-029" },
   { key: "certidao_obito", label: "CERTIDÃO DE ÓBITO CÔNJUGE", ged_id: "GED-030" },
+  { key: "cadastro_atividade_plano", label: "ATIVIDADE CADASTRADA PLANO NEGÓCIO", ged_id: "GED-031" },
 ];
 
 export type DocFileStatus = "pendente" | "aprovado" | "reprovado";
@@ -101,7 +102,6 @@ export const AGENCY_DOCUMENTATION: { key: string; label: string }[] = [
   { key: "parecer_gerencial", label: "PARECER GERENCIAL" },
   { key: "consulta_s400", label: "CONSULTA S400" },
   { key: "consulta_historico_operacao_pronaf", label: "CONSULTA HISTÓRICO DE OPERAÇÃO PRONAF" },
-  { key: "cadastro_atividade_plano", label: "CADASTRO ATIVIDADE PLANO" },
   { key: "consulta_restricoes_serasa", label: "CONSULTA RESTRIÇÕES SERASA" },
   { key: "avaliacao_risco", label: "AVALIAÇÃO RISCO" },
   { key: "registro_visita_gerencial", label: "REGISTRO VISITA GERENCIAL" },

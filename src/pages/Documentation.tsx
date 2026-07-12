@@ -1866,7 +1866,6 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               "consulta_s400",
               "registro_visita_gerencial",
               "avaliacao_risco",
-              "cadastro_atividade_plano",
               "consulta_restricoes_serasa"
             ];
 
@@ -3448,6 +3447,7 @@ d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
     </div>
   );
 }
+
 
 
 

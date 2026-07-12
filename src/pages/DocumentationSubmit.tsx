@@ -87,6 +87,7 @@ export default function DocumentationSubmit() {
   const [carColetivoNumber, setCarColetivoNumber] = useState("");
   const [carIndividualName, setCarIndividualName] = useState("");
   const [carColetivoName, setCarColetivoName] = useState("");
+  const [atividadePlano, setAtividadePlano] = useState("");
 
   // Global paste handler when mouse is hovering over a card
   useEffect(() => {
@@ -154,6 +155,9 @@ export default function DocumentationSubmit() {
           setCarIndividualName(data.proposal.localizacao);
           setCarColetivoName(data.proposal.localizacao);
         }
+      }
+      if (data.proposal?.credit_purpose) {
+        setAtividadePlano(data.proposal.credit_purpose);
       }
 
       setPageLoading(false);
@@ -307,6 +311,10 @@ export default function DocumentationSubmit() {
         updateData["localizacao"] = colName;
       }
 
+      if (atividadePlano.trim()) {
+        updateData["credit_purpose"] = atividadePlano.trim();
+      }
+
       if (Object.keys(updateData).length > 0) {
         try {
           await supabase
@@ -360,6 +368,10 @@ export default function DocumentationSubmit() {
         updateData["localizacao"] = indName;
       } else if (colName) {
         updateData["localizacao"] = colName;
+      }
+
+      if (atividadePlano.trim()) {
+        updateData["credit_purpose"] = atividadePlano.trim();
       }
 
       if (Object.keys(updateData).length > 0) {
@@ -737,10 +749,26 @@ export default function DocumentationSubmit() {
                             </div>
                           )}
 
-                          {/* Only enable upload if number is filled for CAR docs, or if it is not a CAR doc */}
+                          {doc.key === "cadastro_atividade_plano" && (
+                            <div className="w-full space-y-2 mb-3" onClick={(e) => e.stopPropagation()}>
+                              <p className="text-rose-600 text-xs font-black text-center uppercase tracking-wide leading-snug mb-1">
+                                ATENÇÃO: Digite a Atividade Cadastrada no Plano de Negócios abaixo para liberar o envio do arquivo PDF!
+                              </p>
+                              <input
+                                type="text"
+                                placeholder="Atividade (Ex: MILHO, BOVINOCULTURA LEITEIRA)"
+                                value={atividadePlano}
+                                onChange={(e) => setAtividadePlano(e.target.value)}
+                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground placeholder:text-slate-400 placeholder:font-normal"
+                              />
+                            </div>
+                          )}
+
+                          {/* Only enable upload if number is filled for CAR docs, activity is filled for cadastro_atividade_plano, or if it is not a special doc */}
                           {((doc.key === "car_individual" && carIndividualNumber.trim().length >= 10 && carIndividualName.trim().length >= 3) ||
                             (doc.key === "car_coletivo" && carColetivoNumber.trim().length >= 10 && carColetivoName.trim().length >= 3) ||
-                            (doc.key !== "car_individual" && doc.key !== "car_coletivo")) ? (
+                            (doc.key === "cadastro_atividade_plano" && atividadePlano.trim().length >= 3) ||
+                            (doc.key !== "car_individual" && doc.key !== "car_coletivo" && doc.key !== "cadastro_atividade_plano")) ? (
                               <label className="flex flex-col items-center justify-center cursor-pointer w-full">
                                 <input
                                   type="file"
@@ -867,18 +895,48 @@ export default function DocumentationSubmit() {
               );
             };
 
+            const ruralPropertyKeys = ["car_individual", "car_coletivo", "espelho_beneficiario", "cadastro_atividade_plano"];
+            const ruralPropertyDocs = DOCUMENTATION_REQUIRED.filter((d) => ruralPropertyKeys.includes(d.key));
+
             const mainDocs = DOCUMENTATION_REQUIRED
-              .filter((d) => d.group !== "ambiental")
+              .filter((d) => d.group !== "ambiental" && !ruralPropertyKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
             const ambientalDocs = DOCUMENTATION_REQUIRED
-              .filter((d) => d.group === "ambiental")
+              .filter((d) => d.group === "ambiental" && !ruralPropertyKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
             return (
               <>
+                {/* IDENTIFICAÇÃO IMÓVEL RURAL grid */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-200 shadow-sm">
+                      <span className="text-indigo-600 text-base">🏡</span>
+                      <p className="text-indigo-700 text-xs font-black uppercase tracking-widest">
+                        IDENTIFICAÇÃO IMÓVEL RURAL
+                      </p>
+                    </div>
+                    <div className="flex-1 h-px bg-indigo-200" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {ruralPropertyDocs.map(renderCard)}
+                  </div>
+                </div>
+
                 {/* Main documents grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {mainDocs.map(renderCard)}
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm">
+                      <span className="text-slate-600 text-base">📄</span>
+                      <p className="text-slate-700 text-xs font-black uppercase tracking-widest">
+                        DOCUMENTOS GERAIS
+                      </p>
+                    </div>
+                    <div className="flex-1 h-px bg-slate-200" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {mainDocs.map(renderCard)}
+                  </div>
                 </div>
 
                 {/* ── Declarações Ambientais section ────────────────── */}
