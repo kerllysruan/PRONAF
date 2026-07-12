@@ -690,30 +690,30 @@ export default function DocumentationSubmit() {
                           {/* Alert & Input for CAR files */}
                           {(doc.key === "car_individual" || doc.key === "car_coletivo") && (
                             <div className="w-full space-y-2 mb-3" onClick={(e) => e.stopPropagation()}>
-                              <p className="text-rose-500 text-[10px] font-bold text-center leading-snug">
-                                necessário preenchimento do número do car e nome do imóvel, antes de habilitar o envio do arquivo
+                              <p className="text-rose-600 text-xs font-black text-center uppercase tracking-wide leading-snug mb-1">
+                                ATENÇÃO: Digite o número do CAR e o Nome do Imóvel abaixo para liberar o envio do arquivo PDF!
                               </p>
                               <input
                                 type="text"
-                                placeholder={`Número do ${doc.label}`}
+                                placeholder={doc.key === "car_individual" ? "Número do CAR Individual (Ex: BR-PA-1502406-C9E37894D742)" : "Número do CAR Coletivo (Ex: BR-PA-1502406-C9E37894D742)"}
                                 value={doc.key === "car_individual" ? carIndividualNumber : carColetivoNumber}
                                 onChange={(e) => {
                                   const val = e.target.value.toUpperCase();
                                   if (doc.key === "car_individual") setCarIndividualNumber(val);
                                   else setCarColetivoNumber(val);
                                 }}
-                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-background text-foreground mb-2"
+                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground mb-2 placeholder:text-slate-400 placeholder:font-normal"
                               />
                               <input
                                 type="text"
-                                placeholder={doc.key === "car_individual" ? "Nome do Imóvel Rural" : "Nome do PA / Assentamento"}
+                                placeholder={doc.key === "car_individual" ? "Nome do Imóvel Rural (Ex: Fazenda Santa Maria)" : "Nome do PA / Assentamento (Ex: PA Nova Fronteira)"}
                                 value={doc.key === "car_individual" ? carIndividualName : carColetivoName}
                                 onChange={(e) => {
                                   const val = e.target.value;
                                   if (doc.key === "car_individual") setCarIndividualName(val);
                                   else setCarColetivoName(val);
                                 }}
-                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-medium focus:ring-1 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground placeholder:text-slate-400 placeholder:font-normal"
                               />
                             </div>
                           )}
