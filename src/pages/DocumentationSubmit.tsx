@@ -102,6 +102,7 @@ export default function DocumentationSubmit() {
   const [inversoes, setInversoes] = useState<{ quant: number; nome: string; valor: number }[]>([
     { quant: 1, nome: "", valor: 0 }
   ]);
+  const [custoAssessoria, setCustoAssessoria] = useState<number>(0);
 
   const formatInputMoney = (value: number) => {
     if (value === 0 || isNaN(value)) return "";
@@ -195,8 +196,20 @@ export default function DocumentationSubmit() {
       if (data.stock_proposals?.credit_purpose) {
         setAtividadePlano(data.stock_proposals.credit_purpose);
       }
-      if (data.stock_proposals?.inversoes && Array.isArray(data.stock_proposals.inversoes)) {
-        setInversoes(data.stock_proposals.inversoes as any);
+      if (data.stock_proposals?.inversoes) {
+        const inv = data.stock_proposals.inversoes;
+        if (Array.isArray(inv)) {
+          setInversoes(inv as any);
+          setCustoAssessoria(0);
+        } else if (inv && typeof inv === "object") {
+          const obj = inv as any;
+          if (Array.isArray(obj.items)) {
+            setInversoes(obj.items);
+          }
+          if (typeof obj.custoAssessoria === "number") {
+            setCustoAssessoria(obj.custoAssessoria);
+          }
+        }
       }
 
       setPageLoading(false);
@@ -324,7 +337,7 @@ export default function DocumentationSubmit() {
     if (!tokenData || !token || selectedCount < missingOrRejectedCount) return;
 
     // Validação das Inversões
-    const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
+    const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) + custoAssessoria;
     const estimatedValue = tokenData.stock_proposals?.estimated_value || 0;
     if (Math.abs(totalInversoes - estimatedValue) >= 0.01) {
       toast({
@@ -367,7 +380,7 @@ export default function DocumentationSubmit() {
         updateData["credit_purpose"] = atividadePlano.trim();
       }
 
-      updateData["inversoes"] = inversoes;
+      updateData["inversoes"] = { items: inversoes, custoAssessoria: custoAssessoria };
 
       if (Object.keys(updateData).length > 0) {
         try {
@@ -397,7 +410,7 @@ export default function DocumentationSubmit() {
     if (!tokenData || !token || selectedCount === 0) return;
 
     // Validação das Inversões
-    const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
+    const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) + custoAssessoria;
     const estimatedValue = tokenData.stock_proposals?.estimated_value || 0;
     if (Math.abs(totalInversoes - estimatedValue) >= 0.01) {
       toast({
@@ -441,7 +454,7 @@ export default function DocumentationSubmit() {
         updateData["credit_purpose"] = atividadePlano.trim();
       }
 
-      updateData["inversoes"] = inversoes;
+      updateData["inversoes"] = { items: inversoes, custoAssessoria: custoAssessoria };
 
       if (Object.keys(updateData).length > 0) {
         try {
@@ -1188,6 +1201,30 @@ export default function DocumentationSubmit() {
                     <Plus className="h-3.5 w-3.5" />
                     Adicionar Item
                   </button>
+
+                  {/* Custo Assessoria Empresarial e Técnica */}
+                  <div className="mt-6 pt-6 border-t border-slate-200 max-w-sm">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">
+                      Custo Assessoria Empresarial e Técnica (R$)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                      <input
+                        type="text"
+                        placeholder="0,00"
+                        value={formatInputMoney(custoAssessoria)}
+                        onChange={(e) => {
+                          const cleanValue = e.target.value.replace(/\D/g, "");
+                          if (!cleanValue) {
+                            setCustoAssessoria(0);
+                            return;
+                          }
+                          setCustoAssessoria(parseFloat(cleanValue) / 100);
+                        }}
+                        className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* ── Declarações Ambientais section ────────────────── */}
