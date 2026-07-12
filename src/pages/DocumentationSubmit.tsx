@@ -887,7 +887,7 @@ export default function DocumentationSubmit() {
               );
             };
 
-            const ruralPropertyKeys = ["car_individual", "car_coletivo", "espelho_beneficiario", "cadastro_atividade_plano"];
+            const ruralPropertyKeys = ["car_individual", "car_coletivo", "espelho_beneficiario"];
             const ruralPropertyDocs = DOCUMENTATION_REQUIRED.filter((d) => ruralPropertyKeys.includes(d.key));
 
             const identificationKeys = [
