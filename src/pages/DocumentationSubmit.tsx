@@ -1011,7 +1011,7 @@ export default function DocumentationSubmit() {
               .filter((d) => d.group === "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key) && !enquadramentoKeys.includes(d.key) && !certidoesCivisKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
-            const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
+            const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) + custoAssessoria;
             const estimatedValue = tokenData?.stock_proposals?.estimated_value || 0;
 
             return (
