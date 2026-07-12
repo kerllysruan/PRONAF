@@ -581,11 +581,11 @@ export default function DocumentationSubmit() {
             const renderCard = (doc: (typeof DOCUMENTATION_REQUIRED)[0]) => {
               const selected = selectedFiles[doc.key];
               const dbFile = dbFilesMap[doc.key];
-              // A 're-enabled' record (file_path='habilitado') should be treated as needing upload
-              const needsUpload = !dbFile || dbFile.file_path === "habilitado";
+              // A 're-enabled' record (file_path='habilitado') or rejected file should be treated as needing upload
+              const needsUpload = !dbFile || dbFile.file_path === "habilitado" || dbFile.status === "reprovado";
               const isApproved = !needsUpload && dbFile?.status === "aprovado";
               const isPending  = !needsUpload && dbFile?.status === "pendente";
-              const isRejected = !needsUpload && dbFile?.status === "reprovado";
+              const isRejected = dbFile?.status === "reprovado";
 
               return (
                 <div
