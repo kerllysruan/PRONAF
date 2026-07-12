@@ -215,7 +215,7 @@ export function useDocumentationReview() {
             res.proposal.status = "DOCUMENTAÇÃO APROVADA";
           }
         } else {
-          if (currentStatus === "DOCUMENTAÇÃO APROVADA") {
+          if (currentStatus === "DOCUMENTAÇÃO APROVADA" || currentStatus === "ENVIADO PARA CENTRAL") {
             supabase
               .from("stock_proposals")
               .update({ status: "documentacao_pendente" })
