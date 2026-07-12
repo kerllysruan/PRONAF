@@ -648,8 +648,7 @@ export default function DocumentationSubmit() {
                           <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                         )}
                       </div>
-                      <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
-                        {doc.label.toUpperCase()}
+                      <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                       </p>
                       <p className={`${dbFile?.file_path === 'dispensado' ? 'text-slate-500' : 'text-emerald-600'} text-[10px] font-bold`}>
                         {dbFile?.file_path === 'dispensado' ? "Dispensado / Não possui 🚫" : "Aprovado ✅"}
@@ -695,8 +694,7 @@ export default function DocumentationSubmit() {
                       <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center mb-3">
                         <Loader2 className="h-6 w-6 text-amber-600 animate-spin" />
                       </div>
-                      <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
-                        {doc.label.toUpperCase()}
+                      <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                       </p>
                       <p className="text-amber-600 text-[10px] font-bold">
                         Aguardando Análise ⏳
@@ -709,8 +707,7 @@ export default function DocumentationSubmit() {
                           <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-3">
                             <FileCheck className="h-6 w-6 text-indigo-600" />
                           </div>
-                          <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
-                            {doc.label.toUpperCase()}
+                          <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                           </p>
                           <p className="text-indigo-600 text-[10px] truncate max-w-full px-2">
                             {dbFile?.file_name}
@@ -784,8 +781,7 @@ export default function DocumentationSubmit() {
                                     <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-3">
                                       <FileCheck className="h-6 w-6 text-indigo-600" />
                                     </div>
-                                    <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
-                                      {doc.label.toUpperCase()}
+                                    <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                                     </p>
                                     <p className="text-indigo-600 text-[10px] truncate max-w-full px-2">
                                       {selected.name}
@@ -812,8 +808,7 @@ export default function DocumentationSubmit() {
                                         <Upload className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                                       )}
                                     </div>
-                                    <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
-                                      {doc.label.toUpperCase()}
+                                    <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                                     </p>
                                     {isRejected ? (
                                       <p className="text-rose-600 text-[10px] text-center px-2 truncate max-w-full font-semibold">
@@ -828,15 +823,12 @@ export default function DocumentationSubmit() {
                                 )}
                               </label>
                           ) : (
-                            <div className="flex flex-col items-center justify-center opacity-40 cursor-not-allowed w-full">
-                              <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mb-3">
-                                <Upload className="h-5 w-5 text-slate-300" />
+                            <div className="flex flex-col items-center justify-center cursor-not-allowed w-full">
+                              <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mb-3 opacity-40"><Upload className="h-5 w-5 text-slate-300" />
                               </div>
-                              <p className="text-slate-800 text-xs font-bold text-center leading-snug mb-1">
-                                {doc.label.toUpperCase()}
+                              <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                               </p>
-                              <p className="text-slate-400 text-[9px]">
-                                Envio Habilitado após preencher o número
+                              <p className="text-slate-400 text-[9px] opacity-40">Envio Habilitado após preencher o número
                               </p>
                             </div>
                           )}
@@ -1073,3 +1065,5 @@ function Footer() {
     </div>
   );
 }
+
+
