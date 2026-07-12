@@ -83,7 +83,8 @@ export function useDocumentationToken() {
             estimated_value,
             projetista,
             linha_credito,
-            status
+            status,
+            inversoes
           )
         `)
         .eq("token", token)

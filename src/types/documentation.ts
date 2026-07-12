@@ -93,6 +93,7 @@ export interface DocumentationTokenWithProposal extends DocumentationToken {
     projetista: string | null;
     linha_credito: string | null;
     status: string;
+    inversoes?: any;
   };
 }
 

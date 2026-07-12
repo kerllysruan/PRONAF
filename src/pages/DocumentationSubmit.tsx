@@ -28,6 +28,8 @@ import {
   RotateCcw,
   ShieldCheck,
   ExternalLink,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 // List of document keys that can be dispensed
@@ -42,6 +44,13 @@ const DISPENSABLE_DOCS = [
   "car_coletivo",
   "certidao_obito",
 ];
+
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+};
 
 function getDispenseButtonLabel(docKey: string): string {
   switch (docKey) {
@@ -88,6 +97,11 @@ export default function DocumentationSubmit() {
   const [carIndividualName, setCarIndividualName] = useState("");
   const [carColetivoName, setCarColetivoName] = useState("");
   const [atividadePlano, setAtividadePlano] = useState("");
+
+  // Inversões state
+  const [inversoes, setInversoes] = useState<{ quant: number; nome: string; valor: number }[]>([
+    { quant: 1, nome: "", valor: 0 }
+  ]);
 
   // Global paste handler when mouse is hovering over a card
   useEffect(() => {
@@ -158,6 +172,9 @@ export default function DocumentationSubmit() {
       }
       if (data.proposal?.credit_purpose) {
         setAtividadePlano(data.proposal.credit_purpose);
+      }
+      if (data.proposal?.inversoes && Array.isArray(data.proposal.inversoes)) {
+        setInversoes(data.proposal.inversoes as any);
       }
 
       setPageLoading(false);
@@ -283,6 +300,19 @@ export default function DocumentationSubmit() {
 
   async function handleSubmit() {
     if (!tokenData || !token || selectedCount < missingOrRejectedCount) return;
+
+    // Validação das Inversões
+    const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
+    const estimatedValue = tokenData.proposal?.estimated_value || 0;
+    if (Math.abs(totalInversoes - estimatedValue) >= 0.01) {
+      toast({
+        title: "Soma das Inversões Divergente",
+        description: `A soma das inversões (${formatCurrency(totalInversoes)}) deve ser exatamente igual ao valor proposto da operação (${formatCurrency(estimatedValue)})!`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     const carNumbersMap: Record<string, string> = {};
@@ -299,7 +329,7 @@ export default function DocumentationSubmit() {
 
     if (success) {
       // Salva o Nome do Imóvel Rural / Nome do PA diretamente na proposta no Supabase
-      const updateData: Record<string, string> = {};
+      const updateData: Record<string, any> = {};
       const indName = carIndividualName.trim();
       const colName = carColetivoName.trim();
 
@@ -314,6 +344,8 @@ export default function DocumentationSubmit() {
       if (atividadePlano.trim()) {
         updateData["credit_purpose"] = atividadePlano.trim();
       }
+
+      updateData["inversoes"] = inversoes;
 
       if (Object.keys(updateData).length > 0) {
         try {
@@ -341,6 +373,19 @@ export default function DocumentationSubmit() {
   // ── Resubmit rejected ─────────────────────────────────────────
   async function handleResubmit() {
     if (!tokenData || !token || selectedCount === 0) return;
+
+    // Validação das Inversões
+    const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
+    const estimatedValue = tokenData.proposal?.estimated_value || 0;
+    if (Math.abs(totalInversoes - estimatedValue) >= 0.01) {
+      toast({
+        title: "Soma das Inversões Divergente",
+        description: `A soma das inversões (${formatCurrency(totalInversoes)}) deve ser exatamente igual ao valor proposto da operação (${formatCurrency(estimatedValue)})!`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     const carNumbersMap: Record<string, string> = {};
@@ -358,7 +403,7 @@ export default function DocumentationSubmit() {
 
     if (success) {
       // Salva o Nome do Imóvel Rural / Nome do PA diretamente na proposta no Supabase
-      const updateData: Record<string, string> = {};
+      const updateData: Record<string, any> = {};
       const indName = carIndividualName.trim();
       const colName = carColetivoName.trim();
 
@@ -373,6 +418,8 @@ export default function DocumentationSubmit() {
       if (atividadePlano.trim()) {
         updateData["credit_purpose"] = atividadePlano.trim();
       }
+
+      updateData["inversoes"] = inversoes;
 
       if (Object.keys(updateData).length > 0) {
         try {
@@ -929,6 +976,9 @@ export default function DocumentationSubmit() {
               .filter((d) => d.group === "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key) && !enquadramentoKeys.includes(d.key) && !certidoesCivisKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
+            const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
+            const estimatedValue = tokenData?.proposal?.estimated_value || 0;
+
             return (
               <>
                 {/* DOCUMENTOS DE IDENTIFICAÇÃO grid */}
@@ -1009,6 +1059,115 @@ export default function DocumentationSubmit() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {mainDocs.map(renderCard)}
                   </div>
+                </div>
+
+                {/* INVERSÕES DO PLANO */}
+                <div className="mb-8 p-6 rounded-3xl border border-slate-200 bg-slate-50/50 shadow-sm">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-200 shadow-sm w-fit">
+                      <span className="text-indigo-600 text-base">📊</span>
+                      <p className="text-indigo-700 text-xs font-black uppercase tracking-widest">
+                        INVERSÕES DO PLANO
+                      </p>
+                    </div>
+                    {/* Validador de Valor da Proposta */}
+                    <div className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-300 ${
+                      Math.abs(totalInversoes - estimatedValue) < 0.01 
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                        : 'bg-rose-50 border-rose-200 text-rose-700 animate-pulse'
+                    }`}>
+                      {Math.abs(totalInversoes - estimatedValue) < 0.01 ? (
+                        <span>✅ Inversões validadas! Soma bate 100% com o valor proposto: {formatCurrency(estimatedValue)}</span>
+                      ) : (
+                        <span>⚠️ Soma divergente: {formatCurrency(totalInversoes)} (Proposta: {formatCurrency(estimatedValue)})</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-500 mb-4 font-semibold">
+                    Informe detalhadamente os itens de investimento que compõem o plano de negócio da operação. A soma total deve ser exatamente igual ao valor proposto da operação.
+                  </p>
+
+                  <div className="space-y-3">
+                    {inversoes.map((item, idx) => (
+                      <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm animate-fade-in">
+                        {/* Quantidade */}
+                        <div className="col-span-3 md:col-span-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Qtd.</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quant}
+                            onChange={(e) => {
+                              const updated = [...inversoes];
+                              updated[idx].quant = Math.max(1, parseInt(e.target.value) || 1);
+                              setInversoes(updated);
+                            }}
+                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                          />
+                        </div>
+
+                        {/* Nome / Descrição */}
+                        <div className="col-span-5 md:col-span-6">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Item / Inversão</label>
+                          <input
+                            type="text"
+                            placeholder="Ex: Aquisição de Bovinos de Leite"
+                            value={item.nome}
+                            onChange={(e) => {
+                              const updated = [...inversoes];
+                              updated[idx].nome = e.target.value;
+                              setInversoes(updated);
+                            }}
+                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                          />
+                        </div>
+
+                        {/* Valor Total */}
+                        <div className="col-span-3">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Valor Total (R$)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.valor || ""}
+                            onChange={(e) => {
+                              const updated = [...inversoes];
+                              updated[idx].valor = parseFloat(e.target.value) || 0;
+                              setInversoes(updated);
+                            }}
+                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                          />
+                        </div>
+
+                        {/* Ações */}
+                        <div className="col-span-1 flex justify-center pt-5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (inversoes.length > 1) {
+                                setInversoes(inversoes.filter((_, i) => i !== idx));
+                              } else {
+                                setInversoes([{ quant: 1, nome: "", valor: 0 }]);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setInversoes([...inversoes, { quant: 1, nome: "", valor: 0 }])}
+                    className="mt-4 px-4 py-2 border border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50/50 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 w-full md:w-auto bg-background"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Adicionar Item
+                  </button>
                 </div>
 
                 {/* ── Declarações Ambientais section ────────────────── */}
