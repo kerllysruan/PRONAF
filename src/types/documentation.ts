@@ -30,7 +30,6 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
   { key: "declaracoes_unificadas", label: "DECLARAÇÕES UNIFICADAS", ged_id: "GED-014" },
   { key: "certidao_improbidade", label: "CERTIDÃO IMPROBIDADE", ged_id: "GED-015", obtencaoUrl: "https://www.cnj.jus.br/improbidade_adm/consultar_requerido.php", fonte: "CNJ" },
   { key: "certidao_embargo_ambiental", label: "CERTIDÃO NEGATIVA DE EMBARGO AMBIENTAL", ged_id: "GED-016", obtencaoUrl: "https://servicos.ibama.gov.br/ctf/publico/areasembargadas/ConsultaPublicaAreasEmbargadas.php", fonte: "IBAMA" },
-  { key: "plano_assinado", label: "PLANO ASSINADO", ged_id: "GED-017" },
   { key: "plano_eletronico", label: "PLANO ELETRÔNICO", ged_id: "GED-018" },
   { key: "orcamento", label: "ORÇAMENTO", ged_id: "GED-019" },
   { key: "contrato_assessoria", label: "CONTRATO DE ASSESSORIA", ged_id: "GED-020" },
@@ -50,7 +49,7 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
   },
   { key: "autorizacao_modificacao_projeto", label: "AUTORIZAÇÃO MODIFICAÇÃO PROJETO", ged_id: "GED-029" },
   { key: "certidao_obito", label: "CERTIDÃO DE ÓBITO CÔNJUGE", ged_id: "GED-030" },
-  { key: "cadastro_atividade_plano", label: "ATIVIDADE CADASTRADA PLANO NEGÓCIO", ged_id: "GED-031" },
+  { key: "cadastro_atividade_plano", label: "PLANO NEGÓCIO ASSINADO", ged_id: "GED-031" },
 ];
 
 export type DocFileStatus = "pendente" | "aprovado" | "reprovado";

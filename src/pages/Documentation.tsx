@@ -1252,7 +1252,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   ];
 
                   const PLANO_KEYS = [
-                    "plano_assinado",
+                    "cadastro_atividade_plano",
                     "plano_eletronico",
                     "declaracao_assistencia_tecnica",
                     "orcamento",
@@ -1713,7 +1713,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
           ];
 
           const PLANO_KEYS = [
-            "plano_assinado",
+            "cadastro_atividade_plano",
             "plano_eletronico",
             "declaracao_assistencia_tecnica",
             "orcamento",
@@ -3447,6 +3447,7 @@ d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
     </div>
   );
 }
+
 
 
 
