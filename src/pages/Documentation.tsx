@@ -62,10 +62,6 @@ import {
   Clock,
   FileBarChart,
   Building,
-  Tractor,
-  Map,
-  Scroll,
-  Leaf,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
@@ -2179,11 +2175,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
             <div className="space-y-8">
               {renderAgencyGrid()}
               {renderGrid("Documentos de Identificação", IDENTIFICACAO_KEYS, <ShieldCheck className="h-5 w-5 text-sky-500" />)}
-              {renderGrid("Identificação Imóvel Rural", RURAL_KEYS, <Map className="h-5 w-5 text-indigo-500" />)}
-              {renderGrid("Documentação Enquadramento Agricultura Familiar", ENQUADRAMENTO_KEYS, <Tractor className="h-5 w-5 text-teal-500" />)}
-              {renderGrid("Certidões Civis e Administrativas", CERTIDOES_CIVIS_KEYS, <Scroll className="h-5 w-5 text-blue-500" />)}
+              {renderGrid("Identificação Imóvel Rural", RURAL_KEYS, <ClipboardList className="h-5 w-5 text-indigo-500" />)}
+              {renderGrid("Documentação Enquadramento Agricultura Familiar", ENQUADRAMENTO_KEYS, <ShieldCheck className="h-5 w-5 text-teal-500" />)}
+              {renderGrid("Certidões Civis e Administrativas", CERTIDOES_CIVIS_KEYS, <FileCheck className="h-5 w-5 text-blue-500" />)}
               {renderGrid("Documentação do Plano de Investimento Proposto", PLANO_INVESTIMENTO_KEYS, <FileBarChart className="h-5 w-5 text-slate-500" />)}
-              {renderGrid("Declarações Ambientais", DECLARACOES_AMBIENTAIS_KEYS, <Leaf className="h-5 w-5 text-emerald-500" />)}
+              {renderGrid("Declarações Ambientais", DECLARACOES_AMBIENTAIS_KEYS, <FileCheck className="h-5 w-5 text-emerald-500" />)}
               {renderGrid("Outros Documentos", unknownKeys, <FileText className="h-5 w-5 text-slate-500" />)}
             </div>
           );
