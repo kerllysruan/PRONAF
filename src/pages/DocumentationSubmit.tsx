@@ -104,6 +104,14 @@ export default function DocumentationSubmit() {
   ]);
   const [custoAssessoria, setCustoAssessoria] = useState<number>(0);
 
+  const totalInversoes = useMemo(() => {
+    const sumItems = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
+    return sumItems + custoAssessoria;
+  }, [inversoes, custoAssessoria]);
+
+  const estimatedValue = tokenData?.stock_proposals?.estimated_value || 0;
+  const isInversõesValidadas = Math.abs(totalInversoes - estimatedValue) < 0.01;
+
   const formatInputMoney = (value: number) => {
     if (value === 0 || isNaN(value)) return "";
     return new Intl.NumberFormat("pt-BR", {
@@ -221,7 +229,7 @@ export default function DocumentationSubmit() {
 
   // ── Derived state ─────────────────────────────────────────────
   const selectedCount = Object.keys(selectedFiles).length;
-  const totalDocs = DOCUMENTATION_REQUIRED.length;
+  const totalDocs = DOCUMENTATION_REQUIRED.length + 1;
 
   const dbFilesMap = useMemo(() => {
     return files.reduce((acc, f) => {
@@ -237,18 +245,20 @@ export default function DocumentationSubmit() {
   }
 
   const allApproved = useMemo(() => {
-    return DOCUMENTATION_REQUIRED.every((doc) => {
+    const docsApproved = DOCUMENTATION_REQUIRED.every((doc) => {
       const f = dbFilesMap[doc.key];
       return f?.status === "aprovado" && f.file_path !== "habilitado";
     });
-  }, [dbFilesMap]);
+    return docsApproved && isInversõesValidadas;
+  }, [dbFilesMap, isInversõesValidadas]);
 
   const hasMissingFiles = useMemo(() => {
-    return DOCUMENTATION_REQUIRED.some((doc) => {
+    const docsMissing = DOCUMENTATION_REQUIRED.some((doc) => {
       const f = dbFilesMap[doc.key];
       return !f || isReenabledFile(f);
     });
-  }, [dbFilesMap]);
+    return docsMissing || !isInversõesValidadas;
+  }, [dbFilesMap, isInversõesValidadas]);
 
   const hasRejections = useMemo(() => {
     return files.some((f) => f.status === "reprovado" && !isReenabledFile(f));
@@ -265,18 +275,20 @@ export default function DocumentationSubmit() {
   }, [files]);
 
   const missingOrRejectedCount = useMemo(() => {
-    return DOCUMENTATION_REQUIRED.filter((doc) => {
+    const docsCount = DOCUMENTATION_REQUIRED.filter((doc) => {
       const dbFile = dbFilesMap[doc.key];
       return !dbFile || isReenabledFile(dbFile) || dbFile.status === "reprovado";
     }).length;
-  }, [dbFilesMap]);
+    return docsCount + (isInversõesValidadas ? 0 : 1);
+  }, [dbFilesMap, isInversõesValidadas]);
 
   const approvedOrPendingCount = useMemo(() => {
-    return files.filter((f) => {
+    const docsCount = files.filter((f) => {
       if (isReenabledFile(f)) return false; // treat as missing
       return f.status === "aprovado" || f.status === "pendente";
     }).length;
-  }, [files]);
+    return docsCount + (isInversõesValidadas ? 1 : 0);
+  }, [files, isInversõesValidadas]);
 
   const progressPercent = Math.round(
     ((approvedOrPendingCount + selectedCount) / totalDocs) * 100
@@ -1011,9 +1023,6 @@ export default function DocumentationSubmit() {
               .filter((d) => d.group === "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key) && !enquadramentoKeys.includes(d.key) && !certidoesCivisKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
-            const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) + custoAssessoria;
-            const estimatedValue = tokenData?.stock_proposals?.estimated_value || 0;
-
             return (
               <>
                 {/* DOCUMENTOS DE IDENTIFICAÇÃO grid */}
@@ -1280,17 +1289,27 @@ export default function DocumentationSubmit() {
             );
           })()}
 
-          {/* Submit button — only shown when there are docs to upload */}
+          {/* Submit button — only shown when there are docs to upload or inversions to validate */}
           {(missingOrRejectedCount > 0 || selectedCount > 0) && (
             <div className="flex flex-col items-center gap-3 pt-4 pb-4">
-              {selectedCount < missingOrRejectedCount && missingOrRejectedCount > 0 && (
-                <p className="text-amber-800 text-xs font-bold tracking-wide animate-pulse bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl mb-1 shadow-sm">
-                  ⚠️ Selecione todos os {missingOrRejectedCount} documentos obrigatórios ({missingOrRejectedCount - selectedCount} ainda pendentes) para habilitar o envio.
+              {selectedCount < (missingOrRejectedCount - (isInversõesValidadas ? 0 : 1)) && (missingOrRejectedCount - (isInversõesValidadas ? 0 : 1)) > 0 && (
+                <p className="text-amber-800 text-xs font-bold tracking-wide bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl mb-1 shadow-sm">
+                  ⚠️ Selecione todos os {(missingOrRejectedCount - (isInversõesValidadas ? 0 : 1))} documentos obrigatórios pendentes para habilitar o envio.
+                </p>
+              )}
+              {!isInversõesValidadas && (
+                <p className="text-rose-800 text-xs font-bold tracking-wide bg-rose-50 border border-rose-200 px-4 py-2 rounded-xl mb-1 shadow-sm">
+                  ⚠️ A soma das inversões ({formatCurrency(totalInversoes)}) não é igual ao valor proposto da operação ({formatCurrency(estimatedValue)}). Ajuste os valores no grid para habilitar o envio.
                 </p>
               )}
               <Button
                 onClick={hasRejections ? handleResubmit : handleSubmit}
-                disabled={selectedCount < missingOrRejectedCount || selectedCount === 0 || isSubmitting}
+                disabled={
+                  (selectedCount < (missingOrRejectedCount - (isInversõesValidadas ? 0 : 1))) || 
+                  (selectedCount === 0 && (missingOrRejectedCount - (isInversõesValidadas ? 0 : 1)) > 0) || 
+                  isSubmitting || 
+                  !isInversõesValidadas
+                }
                 className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
@@ -1310,7 +1329,7 @@ export default function DocumentationSubmit() {
                   </>
                 )}
               </Button>
-              {selectedCount === 0 && missingOrRejectedCount > 0 && (
+              {selectedCount === 0 && (missingOrRejectedCount - (isInversõesValidadas ? 0 : 1)) > 0 && (
                 <p className="text-slate-400 text-xs font-medium">
                   Selecione os documentos necessários para continuar
                 </p>
