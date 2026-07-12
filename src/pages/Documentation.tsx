@@ -1799,51 +1799,83 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filtered.map((file) => {
                     const status = file.status as DocFileStatus;
+                    
+                    let cardBg = "bg-white border-slate-200 shadow-sm";
+                    if (status === "aprovado") {
+                      cardBg = "bg-emerald-50/50 border-emerald-200 shadow-sm shadow-emerald-100/50";
+                    } else if (file.file_path === "dispensado") {
+                      cardBg = "bg-slate-50/70 border-slate-200 shadow-sm";
+                    } else if (status === "reprovado") {
+                      cardBg = "bg-rose-50/50 border-rose-200 shadow-sm shadow-rose-100/50";
+                    }
+
                     return (
                       <Card
                         key={file.id}
-                        className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm transition-all duration-300 hover:shadow-lg group"
+                        className={`rounded-[2.5rem] overflow-hidden transition-all duration-300 hover:shadow-md group border-2 ${cardBg}`}
                       >
-                        <CardContent className="p-5 space-y-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <FileText className="h-5 w-5 text-primary shrink-0" />
-                              <p className="font-heading font-bold text-sm truncate">
-                                {getDocLabel(file.document_type)}
-                              </p>
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] shrink-0 ${DOC_STATUS_COLORS[status]}`}
-                            >
-                              {DOC_STATUS_LABELS[status]}
-                            </Badge>
+                        <CardContent className="p-6 space-y-4">
+                          {/* Top Visual Status with Large Central Icon */}
+                          <div className="flex flex-col items-center text-center">
+                            {status === "aprovado" ? (
+                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 border border-emerald-200 shadow-sm mb-2.5">
+                                <CheckCircle2 className="h-5.5 w-5.5 text-emerald-600" />
+                              </div>
+                            ) : file.file_path === "dispensado" ? (
+                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-200 border border-slate-300 shadow-sm mb-2.5">
+                                <XCircle className="h-5.5 w-5.5 text-slate-500" />
+                              </div>
+                            ) : status === "reprovado" ? (
+                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-100 border border-rose-200 shadow-sm mb-2.5">
+                                <XCircle className="h-5.5 w-5.5 text-rose-600" />
+                              </div>
+                            ) : (
+                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-50 border border-indigo-100 shadow-sm mb-2.5">
+                                <FileText className="h-5.5 w-5.5 text-indigo-500" />
+                              </div>
+                            )}
+                            <h4 className="font-heading font-black text-xs uppercase tracking-widest text-slate-800 leading-tight">
+                              {getDocLabel(file.document_type)}
+                            </h4>
+                            <p className="text-[10px] text-slate-500 font-extrabold mt-1">
+                              {status === "aprovado" 
+                                ? "Aprovado ✅" 
+                                : file.file_path === "dispensado" 
+                                  ? "Dispensado / Não possui 🚫" 
+                                  : status === "reprovado" 
+                                    ? "Reprovado ❌" 
+                                    : "Pendente de Análise ⏳"
+                              }
+                            </p>
                           </div>
 
+                          {/* Rejection Reason Alert */}
                           {status === "reprovado" && file.rejection_reason && (
-                            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-3">
-                              <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">
+                            <div className="bg-rose-100/60 border border-rose-200 rounded-2xl p-3">
+                              <p className="text-xs text-rose-800 leading-relaxed">
                                 <span className="font-bold">Motivo:</span> {file.rejection_reason}
                               </p>
                             </div>
                           )}
 
-                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground truncate">
-                            {file.file_name}
-                          </p>
+                          {/* Original Filename Display */}
+                          <div className="text-center">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">Arquivo Enviado</span>
+                            <p className="text-[11px] font-bold text-slate-600 truncate max-w-full px-2" title={file.file_name}>
+                              {file.file_name}
+                            </p>
+                          </div>
 
-                          {/* ── GED ID field or Dispensation Message ──────────────────────────── */}
+                          {/* GED ID Field or Dispensation message */}
                           {file.file_path === "dispensado" ? (
-                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5">
-                              <span className="text-[9.5px] font-bold text-slate-600 dark:text-slate-400">
+                            <div className="bg-slate-200/50 border border-slate-300 rounded-2xl py-2 px-3 text-center">
+                              <span className="text-[9px] font-bold text-slate-600 block">
                                 DOC. DISPENSADO NÃO POSSUI / NÃO NECESSÁRIO
                               </span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
-                                ID-GED:
-                              </span>
+                            <div className="space-y-1 bg-slate-50 border border-slate-100 rounded-2xl p-2.5">
+                              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block ml-1">ID-GED</label>
                               <input
                                 type="text"
                                 defaultValue={file.ged_id ?? ""}
@@ -1853,7 +1885,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     : "Ex: GED-001"
                                 }
                                 maxLength={40}
-                                className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/40 focus:border-primary/60 transition-all"
+                                className="w-full h-8 rounded-xl border border-slate-200 bg-white px-3 text-xs font-mono font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-center"
                                 onBlur={(e) => {
                                   const val = e.target.value.trim();
                                   if (val !== (file.ged_id ?? "")) {
@@ -1869,11 +1901,12 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
                           <Separator className="opacity-50" />
 
-                          <div className="flex items-center gap-2 flex-wrap">
+                          {/* Action Buttons for Analista */}
+                          <div className="flex items-center gap-2 justify-center flex-wrap pt-1">
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 rounded-xl text-xs h-8"
+                              className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50"
                               disabled={pdfLoading}
                               onClick={() => handleViewPdf(file.file_path, file.file_name)}
                             >
@@ -1887,7 +1920,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                             <Button
                               variant="outline"
                               size="sm"
-                              className="gap-1.5 rounded-xl text-xs h-8"
+                              className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50"
                               onClick={() => downloadFile(file.file_path, file.file_name)}
                             >
                               <Download className="h-3.5 w-3.5" />
@@ -1896,7 +1929,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                             {status !== "aprovado" && (
                               <Button
                                 size="sm"
-                                className="gap-1.5 rounded-xl text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="gap-1 rounded-xl text-[11px] font-bold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
                                 onClick={() => approveDocument(file.id)}
                               >
                                 <ThumbsUp className="h-3.5 w-3.5" />
@@ -1907,7 +1940,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                className="gap-1.5 rounded-xl text-xs h-8"
+                                className="gap-1 rounded-xl text-[11px] font-bold h-8 shadow-sm"
                                 onClick={() => handleOpenRejectDialog(file.id)}
                               >
                                 <ThumbsDown className="h-3.5 w-3.5" />
