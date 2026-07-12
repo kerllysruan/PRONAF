@@ -1119,8 +1119,8 @@ export default function DocumentationSubmit() {
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-500 mb-4 font-semibold">
-                    Informe detalhadamente os itens de investimento que compõem o plano de negócio da operação. A soma total deve ser exatamente igual ao valor proposto da operação.
+                  <p className="text-xs text-slate-500 mb-4 font-semibold leading-relaxed">
+                    Informe detalhadamente os itens de investimento que compõem o plano de negócio da operação. O total, a quantidade e a nomenclatura dos itens devem ser exatamente iguais ao proposto no plano assinado e eletrônico!
                   </p>
 
                   <div className="space-y-3">
@@ -1255,6 +1255,9 @@ export default function DocumentationSubmit() {
                       {/* Coluna de Ações vazia apenas para manter o alinhamento de 12 colunas */}
                       <div className="col-span-1" />
                     </div>
+                    <p className="text-xs text-slate-500 mt-2 font-semibold leading-relaxed">
+                      Informe o valor do custo da assessoria empresarial e técnica que compõem o plano de negócio da operação. O valor deve ser exatamente igual ao valor contido no plano assinado e eletrônico!
+                    </p>
                   </div>
                 </div>
 
