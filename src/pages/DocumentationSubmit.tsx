@@ -1202,27 +1202,58 @@ export default function DocumentationSubmit() {
                     Adicionar Item
                   </button>
 
-                  {/* Custo Assessoria Empresarial e Técnica */}
-                  <div className="mt-6 pt-6 border-t border-slate-200 max-w-sm">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">
-                      Custo Assessoria Empresarial e Técnica (R$)
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
-                      <input
-                        type="text"
-                        placeholder="0,00"
-                        value={formatInputMoney(custoAssessoria)}
-                        onChange={(e) => {
-                          const cleanValue = e.target.value.replace(/\D/g, "");
-                          if (!cleanValue) {
-                            setCustoAssessoria(0);
-                            return;
-                          }
-                          setCustoAssessoria(parseFloat(cleanValue) / 100);
-                        }}
-                        className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
-                      />
+                  {/* Custo Assessoria Empresarial e Técnica com o mesmo layout dos itens */}
+                  <div className="mt-6 pt-6 border-t border-slate-200">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                      Custos de Assessoria da Operação
+                    </p>
+                    <div className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                      {/* Quantidade (Fixa) */}
+                      <div className="col-span-3 md:col-span-2">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Qtd.</label>
+                        <input
+                          type="number"
+                          value="1"
+                          disabled
+                          className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-slate-400 cursor-not-allowed focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Nome / Descrição (Fixo) */}
+                      <div className="col-span-5 md:col-span-6">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Item / Inversão</label>
+                        <input
+                          type="text"
+                          value="CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA"
+                          disabled
+                          className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-slate-500 font-bold cursor-not-allowed focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Valor Total */}
+                      <div className="col-span-3">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Valor Total (R$)</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                          <input
+                            type="text"
+                            placeholder="0,00"
+                            value={formatInputMoney(custoAssessoria)}
+                            onChange={(e) => {
+                              const cleanValue = e.target.value.replace(/\D/g, "");
+                              if (!cleanValue) {
+                                setCustoAssessoria(0);
+                                return;
+                              }
+                              setCustoAssessoria(parseFloat(cleanValue) / 100);
+                            }}
+                            className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Coluna de Ações vazia apenas para manter o alinhamento de 12 colunas */}
+                      <div className="col-span-1" />
                     </div>
                   </div>
                 </div>
