@@ -2066,11 +2066,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
                                     setParecerNomeImovel(hasCarInd ? (sub.proposal.localizacao || "") : "");
                                     setParecerMunicipioImovel(sub.proposal.municipio || "");
-                                    if (carIndividualFile?.ged_id && (!sub.proposal.localizacao || !sub.proposal.municipio)) {
-                                      consultarSicarPorCar(carIndividualFile.ged_id, true, sub.proposal.id);
-                                    } else if (carColetivoFile?.ged_id && (!sub.proposal.localizacao || !sub.proposal.municipio)) {
-                                      consultarSicarPorCar(carColetivoFile.ged_id, false, sub.proposal.id);
-                                    }
+                                    
 
                                     const pName = sub.proposal.producer_name || "";
                                     const firstName = pName.trim().split(" ")[0].toUpperCase();
@@ -3436,5 +3432,6 @@ d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
     </div>
   );
 }
+
 
 
