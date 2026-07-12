@@ -890,11 +890,25 @@ export default function DocumentationSubmit() {
             const ruralPropertyKeys = ["car_individual", "car_coletivo", "espelho_beneficiario", "cadastro_atividade_plano"];
             const ruralPropertyDocs = DOCUMENTATION_REQUIRED.filter((d) => ruralPropertyKeys.includes(d.key));
 
+            const identificationKeys = [
+              "certidao_casamento",
+              "certidao_obito",
+              "ficha_cadastro_cliente",
+              "ficha_cadastro_esposa",
+              "procuracao",
+              "rg",
+              "rg_esposa",
+              "rg_procurador"
+            ];
+            const identificationDocs = DOCUMENTATION_REQUIRED
+              .filter((d) => identificationKeys.includes(d.key))
+              .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+
             const mainDocs = DOCUMENTATION_REQUIRED
-              .filter((d) => d.group !== "ambiental" && !ruralPropertyKeys.includes(d.key))
+              .filter((d) => d.group !== "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
             const ambientalDocs = DOCUMENTATION_REQUIRED
-              .filter((d) => d.group === "ambiental" && !ruralPropertyKeys.includes(d.key))
+              .filter((d) => d.group === "ambiental" && !ruralPropertyKeys.includes(d.key) && !identificationKeys.includes(d.key))
               .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
 
             return (
@@ -915,8 +929,24 @@ export default function DocumentationSubmit() {
                   </div>
                 </div>
 
+                {/* DOCUMENTOS DE IDENTIFICAÇÃO grid */}
+                <div className="mb-8">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-50 border border-amber-200 shadow-sm">
+                      <span className="text-amber-600 text-base">🆔</span>
+                      <p className="text-amber-700 text-xs font-black uppercase tracking-widest">
+                        DOCUMENTOS DE IDENTIFICAÇÃO
+                      </p>
+                    </div>
+                    <div className="flex-1 h-px bg-amber-200" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {identificationDocs.map(renderCard)}
+                  </div>
+                </div>
+
                 {/* Main documents grid */}
-                <div>
+                <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm">
                       <span className="text-slate-600 text-base">📄</span>
