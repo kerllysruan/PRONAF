@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import {
   DOCUMENTATION_REQUIRED,
   DocumentationFile,
@@ -38,6 +39,7 @@ const DISPENSABLE_DOCS = [
   "rg_procurador",
   "titulo_dominio",
   "car_individual",
+  "car_coletivo",
   "certidao_obito",
 ];
 
@@ -59,6 +61,7 @@ function getDispenseButtonLabel(docKey: string): string {
 export default function DocumentationSubmit() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
+  const { toast } = useToast();
   const {
     loading,
     getTokenData,
@@ -830,6 +833,19 @@ export default function DocumentationSubmit() {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   if (tokenData) {
+                                    // Validação para os CARs: ao menos um deve ser enviado!
+                                    if (doc.key === "car_individual" || doc.key === "car_coletivo") {
+                                      const otherKey = doc.key === "car_individual" ? "car_coletivo" : "car_individual";
+                                      const otherFile = files.find(f => f.document_type === otherKey);
+                                      if (otherFile?.file_path === "dispensado") {
+                                        toast({
+                                          title: "Operação não permitida ⚠️",
+                                          description: "Você não pode dispensar ambos os CARs. É necessário fornecer ao menos um (CAR Individual ou CAR Coletivo)!",
+                                          variant: "destructive"
+                                        });
+                                        return;
+                                      }
+                                    }
                                     const ok = await dispenseDocument(tokenData.id, tokenData.stock_proposal_id, doc.key, true);
                                     if (ok) {
                                       const refreshedFiles = await getFilesForToken(tokenData.id);

@@ -273,11 +273,25 @@ export default function Documentation() {
       prazoTotal = `${prazoTotal.trim()} MESES`;
     }
 
-    const localStr = parecerUtilizaCarIndividual === "SIM"
-      ? `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, INSERIDO NO PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`
-      : `PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+    const carIndFile = sub.files.find(f => f.document_type === "car_individual");
+    const carColFile = sub.files.find(f => f.document_type === "car_coletivo");
+    const isCarIndDispensed = carIndFile?.file_path === "dispensado";
+    const isCarColDispensed = carColFile?.file_path === "dispensado";
 
-    const invLocalStr = parecerUtilizaCarIndividual === "SIM"
+    let localStr = "";
+    if (isCarColDispensed && carIndividual.trim()) {
+      localStr = `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}`;
+    } else if (isCarIndDispensed && carColetivo.trim()) {
+      localStr = `PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+    } else if (carIndividual.trim() && carColetivo.trim()) {
+      localStr = `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, INSERIDO NO PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+    } else if (carIndividual.trim()) {
+      localStr = `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}`;
+    } else {
+      localStr = `PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+    }
+
+    const invLocalStr = (isCarColDispensed || (parecerUtilizaCarIndividual === "SIM" && !carColetivo.trim()))
       ? "NO IMÓVEL ACIMA IDENTIFICADO"
       : `NO PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
 
