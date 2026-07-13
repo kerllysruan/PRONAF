@@ -136,20 +136,33 @@ export function useDocumentationReview() {
 
         // Group files by document_type and pick the latest/most-favorable status per type
         // This prevents double-counting when multiple files exist for the same doc type
-        const typeMap = new Map<string, { status: string; isDispensado: boolean }>();
+        const typeMap = new Map<string, { status: string; isDispensado: boolean; weight: number }>();
         const requiredKeys = DOCUMENTATION_REQUIRED.map(d => d.key);
         files.forEach((f) => {
           if (!requiredKeys.includes(f.document_type)) return; // Ignore agency tasks
           const isDispensado = f.file_path === "dispensado" || f.file_path === "preenchido";
           const currentStatus = isDispensado ? "aprovado" : f.status;
           
+          let weight = 10;
+          if (f.file_path && f.file_path !== "dispensado" && f.file_path !== "habilitado") {
+            weight = 30;
+          } else if (isDispensado) {
+            weight = 20;
+          }
+          
           const existing = typeMap.get(f.document_type);
           if (!existing) {
-            typeMap.set(f.document_type, { status: currentStatus, isDispensado });
-          } else if (currentStatus === "aprovado") {
-            typeMap.set(f.document_type, { status: "aprovado", isDispensado: isDispensado || existing.isDispensado });
-          } else if (currentStatus === "pendente" && existing.status !== "aprovado") {
-            typeMap.set(f.document_type, { status: "pendente", isDispensado: isDispensado || existing.isDispensado });
+            typeMap.set(f.document_type, { status: currentStatus, isDispensado, weight });
+          } else {
+            if (weight > existing.weight) {
+              typeMap.set(f.document_type, { status: currentStatus, isDispensado, weight });
+            } else if (weight === existing.weight) {
+              const newPrio = currentStatus === "aprovado" ? 3 : currentStatus === "pendente" ? 2 : 1;
+              const oldPrio = existing.status === "aprovado" ? 3 : existing.status === "pendente" ? 2 : 1;
+              if (newPrio > oldPrio) {
+                typeMap.set(f.document_type, { status: currentStatus, isDispensado: isDispensado || existing.isDispensado, weight });
+              }
+            }
           }
         });
 
