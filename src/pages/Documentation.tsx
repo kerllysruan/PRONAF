@@ -1834,6 +1834,28 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               }
             }
           });
+
+          // Ensure all current required documents exist (even as virtual pendente cards)
+          DOCUMENTATION_REQUIRED.forEach((doc) => {
+            if (!bestByType.has(doc.key)) {
+              bestByType.set(doc.key, {
+                id: `temp_${doc.key}`,
+                token_id: sub.id,
+                stock_proposal_id: sub.proposal?.id,
+                file_name: "Pendente de envio",
+                file_path: "habilitado",
+                file_size: 0,
+                document_type: doc.key,
+                status: "pendente",
+                rejection_reason: null,
+                reviewed_at: null,
+                reviewed_by: null,
+                created_at: new Date().toISOString(),
+                ged_id: null
+              } as any);
+            }
+          });
+
           const uniqueFiles = [...bestByType.values()];
 
           const socioAmbientalKeys = [
@@ -1895,10 +1917,15 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
             "declaracao_anexo_128"
           ];
 
-          const renderGrid = (title: string, keys: string[], icon: React.ReactNode) => {
+          const renderGrid = (title: string, keys: string[], icon: React.ReactNode, sortByLabel = false) => {
             const filtered = uniqueFiles
               .filter((f) => keys.includes(f.document_type))
-              .sort((a, b) => keys.indexOf(a.document_type) - keys.indexOf(b.document_type));
+              .sort((a, b) => {
+                if (sortByLabel) {
+                  return getDocLabel(a.document_type).localeCompare(getDocLabel(b.document_type), "pt-BR");
+                }
+                return keys.indexOf(a.document_type) - keys.indexOf(b.document_type);
+              });
             if (filtered.length === 0) return null;
 
             return (
@@ -2356,11 +2383,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
           return (
             <div className="space-y-8">
               {renderAgencyGrid()}
-              {renderGrid("Documentos de Identificação", IDENTIFICACAO_KEYS, <ShieldCheck className="h-5 w-5 text-sky-500" />)}
-              {renderGrid("Identificação Imóvel Rural", RURAL_KEYS, <ClipboardList className="h-5 w-5 text-indigo-500" />)}
-              {renderGrid("Documentação Enquadramento Agricultura Familiar", ENQUADRAMENTO_KEYS, <ShieldCheck className="h-5 w-5 text-teal-500" />)}
-              {renderGrid("Certidões Civis e Administrativas", CERTIDOES_CIVIS_KEYS, <FileCheck className="h-5 w-5 text-blue-500" />)}
-              {renderGrid("Documentação do Plano de Investimento Proposto", PLANO_INVESTIMENTO_KEYS, <FileBarChart className="h-5 w-5 text-slate-500" />)}
+              {renderGrid("Documentos de Identificação", IDENTIFICACAO_KEYS, <ShieldCheck className="h-5 w-5 text-sky-500" />, false)}
+              {renderGrid("Identificação Imóvel Rural", RURAL_KEYS, <ClipboardList className="h-5 w-5 text-indigo-500" />, false)}
+              {renderGrid("Documentação Enquadramento Agricultura Familiar", ENQUADRAMENTO_KEYS, <ShieldCheck className="h-5 w-5 text-teal-500" />, true)}
+              {renderGrid("Certidões Civis e Administrativas", CERTIDOES_CIVIS_KEYS, <FileCheck className="h-5 w-5 text-blue-500" />, true)}
+              {renderGrid("Documentação do Plano de Investimento Proposto", PLANO_INVESTIMENTO_KEYS, <FileBarChart className="h-5 w-5 text-slate-500" />, true)}
               
               {/* INVERSÕES DO PLANO (Apenas leitura para o analista) */}
               {(() => {
@@ -2643,7 +2670,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 );
               })()}
 
-              {renderGrid("Declarações Ambientais", DECLARACOES_AMBIENTAIS_KEYS, <FileCheck className="h-5 w-5 text-emerald-500" />)}
+              {renderGrid("Declarações Ambientais", DECLARACOES_AMBIENTAIS_KEYS, <FileCheck className="h-5 w-5 text-emerald-500" />, true)}
               {renderGrid("Outros Documentos", unknownKeys, <FileText className="h-5 w-5 text-slate-500" />)}
             </div>
           );
