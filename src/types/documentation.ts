@@ -49,7 +49,7 @@ export const DOCUMENTATION_REQUIRED: DocumentType[] = [
   },
   { key: "autorizacao_modificacao_projeto", label: "AUTORIZAÇÃO MODIFICAÇÃO PROJETO", ged_id: "GED-029" },
   { key: "certidao_obito", label: "CERTIDÃO DE ÓBITO CÔNJUGE", ged_id: "GED-030" },
-  { key: "cadastro_atividade_plano", label: "PLANO DE NEGÓCIO", ged_id: "GED-031" },
+  { key: "cadastro_atividade_plano", label: "ATIVIDADE CADASTRADA NO PLANO NEGÓCIO", ged_id: "GED-031" },
 ];
 
 export type DocFileStatus = "pendente" | "aprovado" | "reprovado";
