@@ -95,8 +95,16 @@ export default function Documentation() {
   const [selectedSubmission, setSelectedSubmission] = useState<SubmittedProposal | null>(null);
   const is699Selected = useMemo(() => {
     if (!selectedSubmission) return false;
-    const progStr = `${selectedSubmission.proposal.credit_program || ""} ${selectedSubmission.proposal.linha_credito || ""}`;
-    return progStr.includes("699");
+    const progStr = (selectedSubmission.proposal.credit_program || "").toUpperCase();
+    const linhaStr = (selectedSubmission.proposal.linha_credito || "").toUpperCase();
+    const value = Number(selectedSubmission.proposal.estimated_value) || 0;
+    
+    if (progStr.includes("PRONAF A") || progStr.includes("PRONAF GRUPO A") || 
+        linhaStr.includes("PRONAF A") || linhaStr.includes("PRONAF GRUPO A")) {
+      return value > 50000;
+    }
+    
+    return progStr.includes("699") || linhaStr.includes("699");
   }, [selectedSubmission]);
   const [viewingPdfUrl, setViewingPdfUrl] = useState<string | null>(null);
   const [viewingPdfName, setViewingPdfName] = useState("");
