@@ -1203,6 +1203,16 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     <h1 className="font-sans font-bold text-base md:text-lg text-slate-900 dark:text-slate-50 leading-tight">
                       {sub.proposal.producer_name}
                     </h1>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={loading}
+                      title="Atualizar dados da documentação"
+                      className="rounded-xl border border-border/60 text-slate-500 hover:text-slate-700 hover:bg-muted h-7 w-7"
+                      onClick={() => refetch()}
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                    </Button>
                     <Badge
                       variant="outline"
                       className={`text-[10px] px-2 py-0.5 font-semibold rounded-md ${
