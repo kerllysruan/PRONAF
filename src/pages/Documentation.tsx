@@ -435,18 +435,28 @@ export default function Documentation() {
       prazoTotal = `${prazoTotal.trim()} MESES`;
     }
 
+    const cleanImovel = (parecerNomeImovel || "").split("|")[0].trim().toUpperCase();
+    let cleanNomePA = (parecerNomePA || "").trim().toUpperCase();
+    if (!cleanNomePA && (sub.proposal.localizacao || "").includes("|")) {
+      cleanNomePA = (sub.proposal.localizacao || "").split("|")[1].trim().toUpperCase();
+    }
+    let paPrefix = "PROJETO DE ASSENTAMENTO ";
+    if (cleanNomePA.startsWith("PROJETO DE ASSENTAMENTO") || cleanNomePA.startsWith("PROJETO ASSENTAMENTO") || cleanNomePA.startsWith("PA ")) {
+      paPrefix = "";
+    }
+
     let localStr = "";
     if (isCarColDispensed) {
-      localStr = `${imovel.toUpperCase()} | COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}`;
+      localStr = `${cleanImovel} | COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}`;
     } else if (isCarIndDispensed) {
-      localStr = `PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()} | COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+      localStr = `${paPrefix}${numPA ? numPA.toUpperCase() + ' ' : ''}${cleanNomePA} | COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
     } else {
-      localStr = `${imovel.toUpperCase()} | COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, INSERIDO NO PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()}  |   COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+      localStr = `${cleanImovel} | COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, INSERIDO NO ${paPrefix}${numPA ? numPA.toUpperCase() + ' ' : ''}${cleanNomePA} |   COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
     }
 
     const invLocalStr = isCarColDispensed
       ? "NO IMÓVEL ACIMA IDENTIFICADO"
-      : `NO PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+      : `NO ${paPrefix}${numPA ? numPA.toUpperCase() + ' ' : ''}${cleanNomePA} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
 
     return `Trata-se de proposta de crédito rural apresentad${g.artigo.toLowerCase()} por ${nome.toUpperCase()}, CPF ${cpf}, ${g.agricultor} familiar ${g.enquadrado} no ${sub.proposal.credit_program || "PRONAF Grupo A"}, ${g.produtor}, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no IMOVÉL RURAL:
 ${localStr}
@@ -3396,9 +3406,9 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   d.text(`CPF: ${sub.proposal.producer_cpf || "—"}`, W - 14, 25, { align: "right" });
  
                   // Content
-                  let curY = 48;
+                  let curY = 46;
                   d.setFont("helvetica", "normal");
-                  d.setFontSize(9.5);
+                  d.setFontSize(8.5);
                   d.setTextColor(30, 41, 59);
  
                   // Split generatedParecerText by double newline to treat as paragraphs
@@ -3406,12 +3416,12 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   paragraphs.forEach((pText) => {
                     if (pText.includes("O financiamento proposto contempla investimento fixo EM:")) {
                       const lines = d.splitTextToSize("O financiamento proposto contempla investimento fixo EM:", W - 28);
-                      const blockH = lines.length * 4.8 + 2;
-                      if (curY + blockH > H - 25) {
+                      const blockH = lines.length * 4.0 + 2;
+                      if (curY + blockH > H - 18) {
                         d.addPage();
-                        curY = 20;
+                        curY = 12;
                       }
-                      d.text(lines, 14, curY, { leading: 4.8 });
+                      d.text(lines, 14, curY, { leading: 4.0 });
                       curY += blockH;
 
                       // Tabela elegante de Inversões
@@ -3430,26 +3440,27 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         head: [["QTD", "UNID", "DESCRIÇÃO DO ITEM / INVESTIMENTO FIXO", "VALOR TOTAL (R$)"]],
                         body: tableRows,
                         theme: "striped",
-                        headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
-                        bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
+                        headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5 },
+                        bodyStyles: { fontSize: 7, textColor: [30, 41, 59] },
+                        styles: { cellPadding: 1.5 },
                         columnStyles: {
                           0: { cellWidth: 12, halign: "center" },
-                          1: { cellWidth: 18, halign: "center" },
+                          1: { cellWidth: 16, halign: "center" },
                           2: { cellWidth: "auto" },
-                          3: { cellWidth: 35, halign: "right" }
+                          3: { cellWidth: 32, halign: "right" }
                         },
                         margin: { left: 14, right: 14 }
                       });
 
-                      curY = (d as any).lastAutoTable.finalY + 6;
+                      curY = (d as any).lastAutoTable.finalY + 4;
                     } else {
                       const lines = d.splitTextToSize(pText, W - 28);
-                      const blockH = lines.length * 4.8 + 4;
-                      if (curY + blockH > H - 25) {
+                      const blockH = lines.length * 4.0 + 3;
+                      if (curY + blockH > H - 18) {
                         d.addPage();
-                        curY = 20;
+                        curY = 12;
                       }
-                      d.text(lines, 14, curY, { leading: 4.8 });
+                      d.text(lines, 14, curY, { leading: 4.0 });
                       curY += blockH;
                     }
                   });
