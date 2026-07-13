@@ -45,6 +45,36 @@ const DISPENSABLE_DOCS = [
   "certidao_obito",
 ];
 
+const CAR_REGEX = /^[A-Z]{2}-\d{7}-[A-F0-9]{4}\.[A-F0-9]{4}\.[A-F0-9]{4}\.[A-F0-9]{4}\.[A-F0-9]{4}\.[A-F0-9]{4}\.[A-F0-9]{4}\.[A-F0-9]{4}$/;
+
+function formatCAR(val: string): string {
+  const clean = val.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+  let formatted = "";
+  
+  if (clean.length > 0) {
+    const ufPart = clean.substring(0, Math.min(2, clean.length)).replace(/[^A-Z]/g, "");
+    formatted += ufPart;
+  }
+  if (clean.length > 2) {
+    const munPart = clean.substring(2, Math.min(9, clean.length)).replace(/[^0-9]/g, "");
+    if (munPart.length > 0) {
+      formatted += "-" + munPart;
+    }
+  }
+  if (clean.length > 9) {
+    const hashPart = clean.substring(9, Math.min(41, clean.length)).replace(/[^A-F0-9]/g, "");
+    if (hashPart.length > 0) {
+      formatted += "-";
+      const chunks: string[] = [];
+      for (let i = 0; i < hashPart.length; i += 4) {
+        chunks.push(hashPart.substring(i, Math.min(i + 4, hashPart.length)));
+      }
+      formatted += chunks.join(".");
+    }
+  }
+  return formatted.substring(0, 50);
+}
+
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -888,22 +918,22 @@ export default function DocumentationSubmit() {
                                 placeholder={doc.key === "car_individual" ? "Número do CAR Individual (Ex: PA-1502406-D5C8.92AF.381E.E70B.8C54.1A6D.90B2.74F3)" : "Número do CAR Coletivo (Ex: TO-1721000-F8C4.73BD.190A.D25C.6B4E.5F83.10A4.7E9B)"}
                                 value={doc.key === "car_individual" ? carIndividualNumber : carColetivoNumber}
                                 onChange={(e) => {
-                                  const val = e.target.value.toUpperCase();
+                                  const val = formatCAR(e.target.value);
                                   if (doc.key === "car_individual") setCarIndividualNumber(val);
                                   else setCarColetivoNumber(val);
                                 }}
-                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground placeholder:text-slate-400 placeholder:font-normal"
+                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground placeholder:text-slate-400 placeholder:font-normal uppercase"
                               />
                               <input
                                 type="text"
                                 placeholder={doc.key === "car_individual" ? "Nome do Imóvel Rural (Ex: Fazenda Santa Maria)" : "Nome do PA / Assentamento (Ex: PA Nova Fronteira)"}
                                 value={doc.key === "car_individual" ? carIndividualName : carColetivoName}
                                 onChange={(e) => {
-                                  const val = e.target.value;
+                                  const val = e.target.value.toUpperCase();
                                   if (doc.key === "car_individual") setCarIndividualName(val);
                                   else setCarColetivoName(val);
                                 }}
-                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground placeholder:text-slate-400 placeholder:font-normal"
+                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground placeholder:text-slate-400 placeholder:font-normal uppercase"
                               />
                             </div>
                           )}
@@ -917,8 +947,8 @@ export default function DocumentationSubmit() {
                                   type="text"
                                   placeholder="Ex: CRIAÇÃO DE BOVINOS CORTE EXTENSIVA"
                                   value={atividadePlano}
-                                  onChange={(e) => handleAtividadeChange(e.target.value)}
-                                  className="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background placeholder:text-slate-400 placeholder:font-normal"
+                                  onChange={(e) => handleAtividadeChange(e.target.value.toUpperCase())}
+                                  className="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background placeholder:text-slate-400 placeholder:font-normal uppercase"
                                 />
                               </div>
                            )}
@@ -938,8 +968,8 @@ export default function DocumentationSubmit() {
                             </div>
                           ) : (
                           /* Upload de arquivo normal para os outros cards */
-                          ((doc.key === "car_individual" && carIndividualNumber.trim().length >= 10 && carIndividualName.trim().length >= 3) ||
-                            (doc.key === "car_coletivo" && carColetivoNumber.trim().length >= 10 && carColetivoName.trim().length >= 3) ||
+                          ((doc.key === "car_individual" && CAR_REGEX.test(carIndividualNumber) && carIndividualName.trim().length >= 3) ||
+                            (doc.key === "car_coletivo" && CAR_REGEX.test(carColetivoNumber) && carColetivoName.trim().length >= 3) ||
                             (doc.key !== "car_individual" && doc.key !== "car_coletivo" && doc.key !== "cadastro_atividade_plano")) ? (
                               <label className="flex flex-col items-center justify-center cursor-pointer w-full">
                                 <input
@@ -1241,10 +1271,10 @@ export default function DocumentationSubmit() {
                             value={item.nome}
                             onChange={(e) => {
                               const updated = [...inversoes];
-                              updated[idx].nome = e.target.value;
+                              updated[idx].nome = e.target.value.toUpperCase();
                               setInversoes(updated);
                             }}
-                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground uppercase"
                           />
                         </div>
 
