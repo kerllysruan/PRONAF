@@ -167,13 +167,11 @@ export function useDocumentationReview() {
           invValida = (Math.abs(totalInv - estimatedVal) < 0.01) && (invData as any)?.status === "aprovado";
         }
 
-        const approved = [...typeMap.values()].filter((s) => s === "aprovado").length + (invValida ? 1 : 0);
-        const rejected = [...typeMap.values()].filter((s) => s === "reprovado").length;
-        const submittedTypes = typeMap.size;
-        // Pending = types in pending state + types not yet submitted at all
-        const pendingInTypes = [...typeMap.values()].filter((s) => s === "pendente").length;
-        const notSubmitted = Math.max(0, DOCUMENTATION_REQUIRED.length - submittedTypes);
-        const pending = pendingInTypes + notSubmitted + (invValida ? 0 : 1);
+        const docFiles = files.filter(f => requiredKeys.includes(f.document_type) || f.document_type === "plano_assinado");
+        const approved = docFiles.filter((f) => f.status === "aprovado").length + (invValida ? 1 : 0);
+        const rejected = docFiles.filter((f) => f.status === "reprovado").length;
+        const pending = docFiles.filter((f) => f.status === "pendente").length + (invValida ? 0 : 1);
+        const totalFiles = docFiles.length + 1;
 
         return {
           token: {
@@ -191,7 +189,7 @@ export function useDocumentationReview() {
           approvedCount: approved,
           rejectedCount: rejected,
           pendingCount: pending,
-          totalFiles: DOCUMENTATION_REQUIRED.length + 1,
+          totalFiles,
         };
       });
 

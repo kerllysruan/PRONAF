@@ -1858,54 +1858,54 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filtered.map((file) => {
                     const status = file.status as DocFileStatus;
+                    let cardBorder = "border-slate-200 dark:border-slate-800";
+                    let badgeColor = "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
+                    let badgeLabel = "Não enviado";
                     
-                    let cardBg = "bg-white border-slate-200 shadow-sm";
                     if (status === "aprovado") {
-                      cardBg = "bg-emerald-50/50 border-emerald-200 shadow-sm shadow-emerald-100/50";
-                    } else if (file.file_path === "dispensado") {
-                      cardBg = "bg-slate-50/70 border-slate-200 shadow-sm";
+                      if (file.file_path === "dispensado") {
+                        cardBorder = "border-slate-200 dark:border-slate-800";
+                        badgeColor = "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
+                        badgeLabel = "Dispensado 🚫";
+                      } else {
+                        cardBorder = "border-emerald-300 dark:border-emerald-900/60";
+                        badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50";
+                        badgeLabel = "Aprovado ✅";
+                      }
                     } else if (status === "reprovado") {
-                      cardBg = "bg-rose-50/50 border-rose-200 shadow-sm shadow-rose-100/50";
+                      cardBorder = "border-rose-300 dark:border-rose-900/60";
+                      badgeColor = "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50";
+                      badgeLabel = "Reprovado ❌";
+                    } else {
+                      cardBorder = "border-amber-300 dark:border-amber-900/60";
+                      badgeColor = "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50";
+                      badgeLabel = "Pendente ⏳";
                     }
 
                     return (
                       <Card
                         key={file.id}
-                        className={`rounded-[2.5rem] overflow-hidden transition-all duration-300 hover:shadow-md group border-2 ${cardBg}`}
+                        className={`rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-md bg-white dark:bg-slate-950 relative border-2 ${cardBorder}`}
                       >
-                        <CardContent className="p-6 space-y-4">
-                          {/* Top Visual Status with Large Central Icon */}
-                          <div className="flex flex-col items-center text-center">
-                            {status === "aprovado" ? (
-                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 border border-emerald-200 shadow-sm mb-2.5">
-                                <CheckCircle2 className="h-5.5 w-5.5 text-emerald-600" />
-                              </div>
-                            ) : file.file_path === "dispensado" ? (
-                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-200 border border-slate-300 shadow-sm mb-2.5">
-                                <XCircle className="h-5.5 w-5.5 text-slate-500" />
-                              </div>
-                            ) : status === "reprovado" ? (
-                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-100 border border-rose-200 shadow-sm mb-2.5">
-                                <XCircle className="h-5.5 w-5.5 text-rose-600" />
-                              </div>
-                            ) : (
-                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-50 border border-indigo-100 shadow-sm mb-2.5">
-                                <FileText className="h-5.5 w-5.5 text-indigo-500" />
-                              </div>
-                            )}
-                            <h4 className="font-heading font-black text-xs uppercase tracking-widest text-slate-800 leading-tight">
-                              {getDocLabel(file.document_type)}
-                            </h4>
-                            <p className="text-[10px] text-slate-500 font-extrabold mt-1">
-                              {status === "aprovado" 
-                                ? "Aprovado ✅" 
-                                : file.file_path === "dispensado" 
-                                  ? "Dispensado / Não possui 🚫" 
-                                  : status === "reprovado" 
-                                    ? "Reprovado ❌" 
-                                    : "Pendente de Análise ⏳"
-                              }
-                            </p>
+                        <CardContent className="p-6 space-y-4 pt-8">
+                          {/* Top Right Mini Badge */}
+                          <div className={`absolute top-3 right-3 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                            {badgeLabel}
+                          </div>
+
+                          {/* Left Aligned Content Header mimicking DocumentationSubmit */}
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                              <FileText className="h-4.5 w-4.5 text-slate-500 dark:text-slate-400" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-heading font-black text-xs uppercase tracking-widest text-slate-800 dark:text-slate-200 leading-tight truncate" title={getDocLabel(file.document_type)}>
+                                {getDocLabel(file.document_type)}
+                              </h4>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">
+                                {file.document_type === "cadastro_atividade_plano" ? "Atividade no Plano" : "Documento do Proponente"}
+                              </p>
+                            </div>
                           </div>
 
                           {/* Rejection Reason Alert */}
@@ -2324,42 +2324,41 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 const invStatus = (invData as any)?.status || "pendente";
                 const invRejectionReason = (invData as any)?.rejection_reason || "";
 
-                let cardBgClass = "bg-slate-50/50 border-slate-200";
+                let cardBorder = "border-slate-200 dark:border-slate-800";
+                let badgeColor = "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/50";
+                let badgeLabel = "Pendente ⏳";
+
                 if (invStatus === "aprovado") {
-                  cardBgClass = "bg-emerald-50/50 border-emerald-200 shadow-sm shadow-emerald-100/50";
+                  cardBorder = "border-emerald-300 dark:border-emerald-900/60";
+                  badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50";
+                  badgeLabel = "Aprovado ✅";
                 } else if (invStatus === "reprovado") {
-                  cardBgClass = "bg-rose-50/50 border-rose-200 shadow-sm shadow-rose-100/50";
+                  cardBorder = "border-rose-300 dark:border-rose-900/60";
+                  badgeColor = "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50";
+                  badgeLabel = "Reprovado ❌";
                 }
 
                 return (
-                  <div className={`p-6 rounded-[2.5rem] border-2 shadow-sm animate-fade-in mb-8 ${cardBgClass}`}>
+                  <div className={`p-6 rounded-3xl border-2 shadow-sm animate-fade-in mb-8 relative bg-white dark:bg-slate-950 pt-8 ${cardBorder}`}>
                     
-                    {/* Top Visual Status with Large Central Icon */}
-                    <div className="flex flex-col items-center text-center mb-6">
-                      {invStatus === "aprovado" ? (
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 border border-emerald-200 shadow-sm mb-2.5">
-                          <CheckCircle2 className="h-5.5 w-5.5 text-emerald-600" />
-                        </div>
-                      ) : invStatus === "reprovado" ? (
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-rose-100 border border-rose-200 shadow-sm mb-2.5">
-                          <XCircle className="h-5.5 w-5.5 text-rose-600" />
-                        </div>
-                      ) : (
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-indigo-50 border border-indigo-100 shadow-sm mb-2.5">
-                          <FileBarChart className="h-5.5 w-5.5 text-indigo-500" />
-                        </div>
-                      )}
-                      <h4 className="font-heading font-black text-sm uppercase tracking-widest text-slate-800 leading-tight">
-                        INVERSÕES DO PLANO PROPOSTO
-                      </h4>
-                      <p className="text-[10.5px] text-slate-500 font-extrabold mt-1">
-                        {invStatus === "aprovado" 
-                          ? "Inversões Aprovadas ✅" 
-                          : invStatus === "reprovado" 
-                            ? "Inversões Reprovadas ❌" 
-                            : "Pendente de Análise ⏳"
-                        }
-                      </p>
+                    {/* Top Right Mini Badge */}
+                    <div className={`absolute top-3 right-3 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                      {badgeLabel}
+                    </div>
+
+                    {/* Left Aligned Content Header matching the rest of the documents */}
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                        <FileBarChart className="h-4.5 w-4.5 text-slate-500 dark:text-slate-400" />
+                      </div>
+                      <div>
+                        <h4 className="font-heading font-black text-xs uppercase tracking-widest text-slate-800 dark:text-slate-200 leading-tight">
+                          INVERSÕES DO PLANO PROPOSTO
+                        </h4>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">
+                          Análise do Plano de Negócio
+                        </p>
+                      </div>
                     </div>
 
                     {/* Rejection Reason Box */}
