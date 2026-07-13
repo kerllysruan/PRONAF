@@ -1840,16 +1840,24 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
         {/* ── Documents Grids by Category ───────────────────────── */}
         {(() => {
           const bestByType = new Map<string, typeof sub.files[0]>();
-          sub.files.forEach((file) => {
-            const existing = bestByType.get(file.document_type);
-            if (!existing) {
-              bestByType.set(file.document_type, file);
+          const grouped = new Map<string, typeof sub.files>();
+          sub.files.forEach((f) => {
+            const list = grouped.get(f.document_type) || [];
+            list.push(f);
+            grouped.set(f.document_type, list);
+          });
+
+          grouped.forEach((fileList, docType) => {
+            const sorted = [...fileList].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            if (sorted[0].file_path === "habilitado" && sorted[0].status === "pendente") {
+              bestByType.set(docType, sorted[0]);
+              return;
+            }
+            const realFile = sorted.find(f => f.file_path && f.file_path !== "habilitado");
+            if (realFile) {
+              bestByType.set(docType, realFile);
             } else {
-              const newTime = new Date(file.created_at).getTime();
-              const oldTime = new Date(existing.created_at).getTime();
-              if (newTime > oldTime) {
-                bestByType.set(file.document_type, file);
-              }
+              bestByType.set(docType, sorted[0]);
             }
           });
 

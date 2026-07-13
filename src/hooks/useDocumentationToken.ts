@@ -446,13 +446,14 @@ export function useDocumentationToken() {
     try {
       setLoading(true);
 
-      // Check if file record already exists
-      const { data: existing } = await supabase
+      const { data: records } = await supabase
         .from("documentation_files")
         .select("id, file_path")
         .eq("token_id", tokenId)
         .eq("document_type", docType)
-        .maybeSingle();
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const existing = records && records.length > 0 ? records[0] : null;
 
       if (dispense) {
         // If it exists, delete any existing file in storage

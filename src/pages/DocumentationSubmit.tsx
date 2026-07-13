@@ -269,17 +269,25 @@ export default function DocumentationSubmit() {
 
   const dbFilesMap = useMemo(() => {
     const map = new Map<string, DocumentationFile>();
-    files.forEach((file) => {
-      const existing = map.get(file.document_type);
-      if (!existing) {
-        map.set(file.document_type, file);
-      } else {
-        const newTime = new Date(file.created_at).getTime();
-        const oldTime = new Date(existing.created_at).getTime();
-        if (newTime > oldTime) {
-          map.set(file.document_type, file);
-        }
+    
+    // Group files by type
+    const grouped = new Map<string, DocumentationFile[]>();
+    files.forEach((f) => {
+      const list = grouped.get(f.document_type) || [];
+      list.push(f);
+      grouped.set(f.document_type, list);
+    });
+
+    grouped.forEach((fileList, docType) => {
+      const sorted = [...fileList].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      let selectedFile = sorted[0];
+      if (!(sorted[0].file_path === "habilitado" && sorted[0].status === "pendente")) {
+        const realFile = sorted.find(f => f.file_path && f.file_path !== "habilitado");
+        if (realFile) selectedFile = realFile;
       }
+      
+      map.set(docType, selectedFile);
     });
 
     const result: Record<string, DocumentationFile> = {};

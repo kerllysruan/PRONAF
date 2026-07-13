@@ -138,21 +138,28 @@ export function useDocumentationReview() {
         // This prevents double-counting when multiple files exist for the same doc type
         const typeMap = new Map<string, { status: string; isDispensado: boolean; created_at: string }>();
         const requiredKeys = DOCUMENTATION_REQUIRED.map(d => d.key);
+        
+        // Group files by type
+        const grouped = new Map<string, typeof files>();
         files.forEach((f) => {
-          if (!requiredKeys.includes(f.document_type)) return; // Ignore agency tasks
-          const isDispensado = f.file_path === "dispensado" || f.file_path === "preenchido";
-          const currentStatus = isDispensado ? "aprovado" : f.status;
+          if (!requiredKeys.includes(f.document_type)) return;
+          const list = grouped.get(f.document_type) || [];
+          list.push(f);
+          grouped.set(f.document_type, list);
+        });
+
+        grouped.forEach((fileList, docType) => {
+          const sorted = [...fileList].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
           
-          const existing = typeMap.get(f.document_type);
-          if (!existing) {
-            typeMap.set(f.document_type, { status: currentStatus, isDispensado, created_at: f.created_at });
-          } else {
-            const newTime = new Date(f.created_at).getTime();
-            const oldTime = new Date(existing.created_at).getTime();
-            if (newTime > oldTime) {
-              typeMap.set(f.document_type, { status: currentStatus, isDispensado, created_at: f.created_at });
-            }
+          let selectedFile = sorted[0];
+          if (!(sorted[0].file_path === "habilitado" && sorted[0].status === "pendente")) {
+            const realFile = sorted.find(f => f.file_path && f.file_path !== "habilitado");
+            if (realFile) selectedFile = realFile;
           }
+
+          const isDispensado = selectedFile.file_path === "dispensado" || selectedFile.file_path === "preenchido";
+          const currentStatus = isDispensado ? "aprovado" : selectedFile.status;
+          typeMap.set(docType, { status: currentStatus, isDispensado, created_at: selectedFile.created_at });
         });
 
         let invValida = false;
