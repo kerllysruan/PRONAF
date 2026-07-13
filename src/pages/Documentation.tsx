@@ -2581,13 +2581,12 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
                     {/* Barra de Ações para Inversões */}
                     {(() => {
-                      const planoAssinadoFile = sub.files.find(
-                        (f) => 
-                          (f.document_type === "plano_eletronico" || f.document_type === "cadastro_atividade_plano") &&
-                          f.file_path !== "preenchido" &&
-                          f.file_path !== "dispensado" &&
-                          f.file_path !== "habilitado"
-                      );
+                      const planoAssinadoFile = sub.files.find((f) => {
+                        const type = f.document_type.toLowerCase();
+                        const isVirtual = f.file_path === "preenchido" || f.file_path === "dispensado" || f.file_path === "habilitado";
+                        if (isVirtual) return false;
+                        return type === "plano_assinado" || type === "plano_eletronico" || type.includes("plano");
+                      });
                       const hasPlanoFile = !!planoAssinadoFile;
 
                       return (
