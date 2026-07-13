@@ -345,9 +345,9 @@ export default function Documentation() {
     
     const invLines = parecerInversoes
       .filter((inv) => inv.trim().length > 0)
-      .map((inv) => inv.trim().toUpperCase())
-      .join(";\n");
-    const inversoesStr = invLines ? `${invLines};` : "";
+      .map((inv) => `  • ${inv.trim().toUpperCase()}`)
+      .join("\n");
+    const inversoesStr = invLines ? `${invLines}` : "";
     
     const rawValue = Number(sub.proposal.estimated_value) || 0;
     const valorTotal = rawValue > 0
@@ -1622,55 +1622,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   const hasCarCol = !!carColetivoFile?.ged_id;
                   setParecerUtilizaCarIndividual(hasCarInd ? "SIM" : "NÃO");
 
-                  const pName = sub.proposal.producer_name || "";
-                  const firstName = pName.trim().split(" ")[0].toUpperCase();
-                  const maleNamesWithA = ["ANDREA", "LUCA", "SENNA", "VALTER", "ELIMAR", "ELCIMAR", "NILTON", "MILTON", "NEY", "NEY MEDEIROS", "NEY MEDEIRO"];
-                  const femaleNamesWithoutA = ["NICOLE", "ROSE", "BEATRIZ", "CARMEM", "SUELI", "LIDIANE", "CLEIDE", "JOSILEUDE", "ANTONIA", "MARIA", "LUCILENE", "ELIENE", "MARLENE", "VIVIANE", "IRACEMA", "CLEIDE", "ELIETE"];
-                  const lastChar = firstName.charAt(firstName.length - 1);
-                  const endsWithEneOrAne = firstName.endsWith("ENE") || firstName.endsWith("ANE") || firstName.endsWith("ETE") || firstName.endsWith("ICE");
-                  const isFemale = (lastChar === "A" && !maleNamesWithA.includes(firstName)) || 
-                                   femaleNamesWithoutA.includes(firstName) || 
-                                   endsWithEneOrAne;
-                  setParecerGeneroProponente(isFemale ? "FEMININO" : "MASCULINO");
-
-                  setParecerTexto("");
-                  setParecerAnalista(sub.proposal.projetista || "");
-                  setParecerResultado("Aprovado");
-                  setParecerCaf(cafFile?.ged_id || "");
-                  const loc = sub.proposal.localizacao || "";
-                  const locParts = loc.split("|").map(p => p.trim());
-                  let imovelRural = "";
-                  let nomePA = "";
-                  if (locParts.length > 1) {
-                    imovelRural = locParts[0];
-                    nomePA = locParts[1];
-                  } else {
-                    if (hasCarInd && hasCarCol) {
-                      imovelRural = locParts[0];
-                      nomePA = locParts[0];
-                    } else if (hasCarInd) {
-                      imovelRural = locParts[0];
-                    } else if (hasCarCol) {
-                      nomePA = locParts[0];
-                    } else {
-                      imovelRural = locParts[0];
-                    }
-                  }
-
-                  setParecerNomeImovel(hasCarInd ? imovelRural : "");
-                  setParecerMunicipioImovel(sub.proposal.municipio || "");
-                  setParecerNomePA(hasCarCol ? nomePA : "");
-                  setParecerCarColetivo(carColetivoFile?.ged_id || "");
-                  setParecerMunicipioPA(sub.proposal.municipio || "");
-                  setParecerAtividadePlano(initialAct);
-                  setParecerCarenciaMeses("36 MESES");
-                  setParecerTotalMeses("120 MESES");
-                  setParecerGerenteGeral("MIERCIO Bruno Miranda Franco F126870");
-                  setParecerGerenteRelacionamento("JAIRO Ferreira dos Santos F154768");
-                  setParecerNumProjetoPA("");
-                  setParecerCarIndividual(carIndividualFile?.ged_id || "");
-                  setParecerAgenciaHistorico(historicoAgencia);
-                  setParecerInversoes([""]);
+                  setSelectedSubmission(sub);
                   setParecerDialogOpen(true);
                 }}
               >
@@ -2305,61 +2257,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                       : sourceAct;
                                     const hasCarInd = !!carIndividualFile && carIndividualFile.file_path !== "dispensado";
                                     const hasCarCol = !!carColetivoFile && carColetivoFile.file_path !== "dispensado";
-                                    setParecerUtilizaCarIndividual(hasCarInd ? "SIM" : "NÃO");
-
-                                    setParecerNomeImovel(hasCarInd ? (sub.proposal.localizacao || "") : "");
-                                    setParecerMunicipioImovel(sub.proposal.municipio || "");
-                                    
-
-                                    const pName = sub.proposal.producer_name || "";
-                                    const firstName = pName.trim().split(" ")[0].toUpperCase();
-                                    const maleNamesWithA = ["ANDREA", "LUCA", "SENNA", "VALTER", "ELIMAR", "ELCIMAR", "NILTON", "MILTON", "NEY", "NEY MEDEIROS", "NEY MEDEIRO"];
-                                    const femaleNamesWithoutA = ["NICOLE", "ROSE", "BEATRIZ", "CARMEM", "SUELI", "LIDIANE", "CLEIDE", "JOSILEUDE", "ANTONIA", "MARIA", "LUCILENE", "ELIENE", "MARLENE", "VIVIANE", "IRACEMA", "CLEIDE", "ELIETE"];
-                                    const lastChar = firstName.charAt(firstName.length - 1);
-                                    const endsWithEneOrAne = firstName.endsWith("ENE") || firstName.endsWith("ANE") || firstName.endsWith("ETE") || firstName.endsWith("ICE");
-                                    const isFemale = (lastChar === "A" && !maleNamesWithA.includes(firstName)) || 
-                                                     femaleNamesWithoutA.includes(firstName) || 
-                                                     endsWithEneOrAne;
-                                    setParecerGeneroProponente(isFemale ? "FEMININO" : "MASCULINO");
-
-                                    setParecerTexto("");
-                                    setParecerAnalista(sub.proposal.projetista || "");
-                                    setParecerResultado("Aprovado");
-                                    setParecerCaf(cafFile?.ged_id || "");
-                                    const loc = sub.proposal.localizacao || "";
-                  const locParts = loc.split("|").map(p => p.trim());
-                  let imovelRural = "";
-                  let nomePA = "";
-                  if (locParts.length > 1) {
-                    imovelRural = locParts[0];
-                    nomePA = locParts[1];
-                  } else {
-                    if (hasCarInd && hasCarCol) {
-                      imovelRural = locParts[0];
-                      nomePA = locParts[0];
-                    } else if (hasCarInd) {
-                      imovelRural = locParts[0];
-                    } else if (hasCarCol) {
-                      nomePA = locParts[0];
-                    } else {
-                      imovelRural = locParts[0];
-                    }
-                  }
-
-                  setParecerNomeImovel(hasCarInd ? imovelRural : "");
-                  setParecerMunicipioImovel(hasCarInd ? (sub.proposal.municipio || "") : "");
-                  setParecerNomePA(hasCarCol ? nomePA : "");
-                  setParecerCarColetivo(hasCarCol ? (carColetivoFile?.ged_id || "") : "");
-                  setParecerMunicipioPA(hasCarCol ? (sub.proposal.municipio || "") : "");
-                  setParecerAtividadePlano(initialAct);
-                  setParecerCarenciaMeses("36 MESES");
-                  setParecerTotalMeses("120 MESES");
-                  setParecerGerenteGeral("MIERCIO Bruno Miranda Franco F126870");
-                  setParecerGerenteRelacionamento("JAIRO Ferreira dos Santos F154768");
-                  setParecerNumProjetoPA("");
-                  setParecerCarIndividual(hasCarInd ? (carIndividualFile?.ged_id || "") : "");
-                                    setParecerAgenciaHistorico(historicoAgencia);
-                                    setParecerInversoes([""]);
+                                    setSelectedSubmission(sub);
                                     setParecerDialogOpen(true);
                                   }}
                                 >
@@ -3276,17 +3174,58 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   // Split generatedParecerText by double newline to treat as paragraphs
                   const paragraphs = generatedParecerText.split("\n\n");
                   paragraphs.forEach((pText) => {
-                    const lines = d.splitTextToSize(pText, W - 28);
-                    const blockH = lines.length * 4.8 + 4;
- 
-                    if (curY + blockH > H - 25) {
-                      d.addPage();
-                      curY = 20;
+                    if (pText.includes("O financiamento proposto contempla investimento fixo EM:")) {
+                      const lines = d.splitTextToSize("O financiamento proposto contempla investimento fixo EM:", W - 28);
+                      const blockH = lines.length * 4.8 + 2;
+                      if (curY + blockH > H - 25) {
+                        d.addPage();
+                        curY = 20;
+                      }
+                      d.text(lines, 14, curY, { leading: 4.8 });
+                      curY += blockH;
+
+                      // Tabela elegante de Inversões
+                      const tableRows = parecerInversoes
+                        .filter(inv => inv.trim().length > 0)
+                        .map(inv => {
+                          const cleanInv = inv.replace(/^\s*•\s*/, "").replace(/^\s*-\s*/, "").trim();
+                          const match = cleanInv.match(/^(\d+)\s*[xX]\s*(.*?)\s*\((.*?)\)$/i);
+                          if (match) {
+                            return [match[1], match[2].trim().toUpperCase(), match[3].trim()];
+                          }
+                          const matchNoQty = cleanInv.match(/^(.*?)\s*\((.*?)\)$/);
+                          if (matchNoQty) {
+                            return ["1", matchNoQty[1].trim().toUpperCase(), matchNoQty[2].trim()];
+                          }
+                          return ["1", cleanInv.toUpperCase(), "—"];
+                        });
+
+                      autoTable(d, {
+                        startY: curY,
+                        head: [["QTD", "DESCRIÇÃO DO ITEM / INVESTIMENTO FIXO", "VALOR TOTAL (R$)"]],
+                        body: tableRows,
+                        theme: "striped",
+                        headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+                        bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
+                        columnStyles: {
+                          0: { cellWidth: 15, halign: "center" },
+                          1: { cellWidth: "auto" },
+                          2: { cellWidth: 40, halign: "right" }
+                        },
+                        margin: { left: 14, right: 14 }
+                      });
+
+                      curY = (d as any).lastAutoTable.finalY + 6;
+                    } else {
+                      const lines = d.splitTextToSize(pText, W - 28);
+                      const blockH = lines.length * 4.8 + 4;
+                      if (curY + blockH > H - 25) {
+                        d.addPage();
+                        curY = 20;
+                      }
+                      d.text(lines, 14, curY, { leading: 4.8 });
+                      curY += blockH;
                     }
- 
-                    // Render clean left-aligned text with smart wraps to avoid huge gaps
-                    d.text(lines, 14, curY, { leading: 4.8 });
-                    curY += blockH;
                   });
 
                   // Representatives Block (no lines, just text)
