@@ -243,9 +243,10 @@ export default function Documentation() {
         if (draft.utilizaCarIndividual !== undefined) setParecerUtilizaCarIndividual(draft.utilizaCarIndividual);
         if (draft.generoProponente !== undefined) setParecerGeneroProponente(draft.generoProponente);
 
-        // If inversions in draft are empty or only contains an empty string [""] but proposal has inversions, override
-        const hasDraftInversoes = draft.inversoes && draft.inversoes.length > 0 && draft.inversoes.some((i: string) => i.trim() !== "");
-        if (hasDraftInversoes) {
+        // Always prioritize the original proposal inversions from database for pre-populating, allowing analyst to edit them.
+        if (propInversoes && propInversoes.length > 0 && propInversoes.some((i: string) => i.trim() !== "")) {
+          setParecerInversoes(propInversoes);
+        } else if (draft.inversoes && draft.inversoes.length > 0) {
           setParecerInversoes(draft.inversoes);
         } else {
           setParecerInversoes(propInversoes);
