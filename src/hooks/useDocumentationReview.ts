@@ -372,37 +372,81 @@ export function useDocumentationReview() {
    */
   const approveDocument = useCallback(async (fileId: string) => {
     try {
-      const { error } = await supabase
-        .from("documentation_files")
-        .update({
-          status: "aprovado",
-          rejection_reason: null,
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: user?.id,
-        })
-        .eq("id", fileId);
+      let activeTokenId = "";
+      if (fileId.startsWith("temp_")) {
+        const documentType = fileId.substring(5);
+        let submissionId: string | null = null;
+        let proposalId: string | null = null;
+        
+        for (const sub of submissions) {
+          const isTarget = !sub.files.some(f => f.document_type === documentType);
+          if (isTarget) {
+            submissionId = sub.token.id;
+            proposalId = sub.proposal?.id || null;
+            break;
+          }
+        }
 
-      if (error) throw error;
+        if (!submissionId || !proposalId) {
+          throw new Error("Não foi possível encontrar a proposta correspondente.");
+        }
+        activeTokenId = submissionId;
+
+        const { error } = await supabase
+          .from("documentation_files")
+          .insert({
+            token_id: submissionId,
+            stock_proposal_id: proposalId,
+            file_name: "Pendente de envio",
+            file_path: "habilitado",
+            file_size: 0,
+            document_type: documentType,
+            status: "aprovado",
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: user?.id,
+          });
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("documentation_files")
+          .update({
+            status: "aprovado",
+            rejection_reason: null,
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: user?.id,
+          })
+          .eq("id", fileId);
+
+        if (error) throw error;
+
+        // Fetch token_id
+        const { data: fileData } = await supabase
+          .from("documentation_files")
+          .select("token_id")
+          .eq("id", fileId)
+          .single();
+        activeTokenId = fileData?.token_id || "";
+      }
 
       // Check if all files for this token are now approved
-      const { data: fileData } = await supabase
-        .from("documentation_files")
-        .select("token_id")
-        .eq("id", fileId)
-        .single();
-
-      if (fileData?.token_id) {
+      if (activeTokenId) {
         const { data: files } = await supabase
           .from("documentation_files")
-          .select("status")
-          .eq("token_id", fileData.token_id);
+          .select("status, document_type")
+          .eq("token_id", activeTokenId);
 
-        const allApproved = (files || []).every(f => f.status === "aprovado");
+        // Ensure we check against all required files
+        const requiredKeys = DOCUMENTATION_REQUIRED.map(d => d.key);
+        const fileStatusMap = new Map<string, string>();
+        (files || []).forEach(f => fileStatusMap.set(f.document_type, f.status));
+
+        const allApproved = requiredKeys.every(key => fileStatusMap.get(key) === "aprovado");
         if (allApproved) {
           const { data: tokenData } = await supabase
             .from("documentation_tokens")
             .select("stock_proposal_id")
-            .eq("id", fileData.token_id)
+            .eq("id", activeTokenId)
             .maybeSingle();
 
           if (tokenData?.stock_proposal_id) {
@@ -428,7 +472,7 @@ export function useDocumentationReview() {
         variant: "destructive",
       });
     }
-  }, [user, toast, fetchSubmissions]);
+  }, [user, toast, fetchSubmissions, submissions]);
 
   /**
    * Reject a document file with a reason.
@@ -436,18 +480,57 @@ export function useDocumentationReview() {
    */
   const rejectDocument = useCallback(async (fileId: string, reason: string, tokenId: string) => {
     try {
-      // Update file status
-      const { error: fileError } = await supabase
-        .from("documentation_files")
-        .update({
-          status: "reprovado",
-          rejection_reason: reason || "Documento reprovado",
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: user?.id,
-        })
-        .eq("id", fileId);
+      let activeFileId = fileId;
+      if (fileId.startsWith("temp_")) {
+        const documentType = fileId.substring(5);
+        let submissionId: string | null = null;
+        let proposalId: string | null = null;
+        
+        for (const sub of submissions) {
+          const isTarget = !sub.files.some(f => f.document_type === documentType);
+          if (isTarget) {
+            submissionId = sub.token.id;
+            proposalId = sub.proposal?.id || null;
+            break;
+          }
+        }
 
-      if (fileError) throw fileError;
+        if (!submissionId || !proposalId) {
+          throw new Error("Não foi possível encontrar a proposta correspondente.");
+        }
+
+        const { data: newFile, error } = await supabase
+          .from("documentation_files")
+          .insert({
+            token_id: submissionId,
+            stock_proposal_id: proposalId,
+            file_name: "Pendente de envio",
+            file_path: "habilitado",
+            file_size: 0,
+            document_type: documentType,
+            status: "reprovado",
+            rejection_reason: reason || "Documento reprovado",
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: user?.id,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        activeFileId = newFile.id;
+      } else {
+        const { error: fileError } = await supabase
+          .from("documentation_files")
+          .update({
+            status: "reprovado",
+            rejection_reason: reason || "Documento reprovado",
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: user?.id,
+          })
+          .eq("id", fileId);
+
+        if (fileError) throw fileError;
+      }
 
       // Mark token as having rejections (reopens link)
       const { error: tokenError } = await supabase
@@ -483,7 +566,7 @@ export function useDocumentationReview() {
         variant: "destructive",
       });
     }
-  }, [user, toast, fetchSubmissions]);
+  }, [user, toast, fetchSubmissions, submissions]);
 
   /**
    * Save a GED identifier for a specific documentation file.
