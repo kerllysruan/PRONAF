@@ -136,18 +136,20 @@ export function useDocumentationReview() {
 
         // Group files by document_type and pick the latest/most-favorable status per type
         // This prevents double-counting when multiple files exist for the same doc type
-        const typeMap = new Map<string, string>(); // key -> best status
+        const typeMap = new Map<string, { status: string; isDispensado: boolean }>();
         const requiredKeys = DOCUMENTATION_REQUIRED.map(d => d.key);
         files.forEach((f) => {
           if (!requiredKeys.includes(f.document_type)) return; // Ignore agency tasks
+          const isDispensado = f.file_path === "dispensado" || f.file_path === "preenchido";
+          const currentStatus = isDispensado ? "aprovado" : f.status;
+          
           const existing = typeMap.get(f.document_type);
-          // Priority: aprovado > pendente > reprovado
           if (!existing) {
-            typeMap.set(f.document_type, f.status);
-          } else if (f.status === "aprovado") {
-            typeMap.set(f.document_type, "aprovado");
-          } else if (f.status === "pendente" && existing !== "aprovado") {
-            typeMap.set(f.document_type, "pendente");
+            typeMap.set(f.document_type, { status: currentStatus, isDispensado });
+          } else if (currentStatus === "aprovado") {
+            typeMap.set(f.document_type, { status: "aprovado", isDispensado: isDispensado || existing.isDispensado });
+          } else if (currentStatus === "pendente" && existing.status !== "aprovado") {
+            typeMap.set(f.document_type, { status: "pendente", isDispensado: isDispensado || existing.isDispensado });
           }
         });
 
@@ -172,10 +174,12 @@ export function useDocumentationReview() {
         let pending = invValida ? 0 : 1;
 
         requiredKeys.forEach((key) => {
-          const status = typeMap.get(key);
-          if (status === "aprovado") {
+          const fileInfo = typeMap.get(key);
+          if (!fileInfo) {
+            pending++;
+          } else if (fileInfo.isDispensado || fileInfo.status === "aprovado") {
             approved++;
-          } else if (status === "reprovado") {
+          } else if (fileInfo.status === "reprovado") {
             rejected++;
           } else {
             pending++;
@@ -487,22 +491,70 @@ export function useDocumentationReview() {
    */
   const updateGedId = useCallback(async (fileId: string, gedId: string) => {
     try {
-      const { error } = await supabase
-        .from("documentation_files")
-        .update({ ged_id: gedId || null })
-        .eq("id", fileId);
+      if (fileId.startsWith("temp_")) {
+        const documentType = fileId.substring(5);
+        let submissionId: string | null = null;
+        let proposalId: string | null = null;
+        
+        for (const sub of submissions) {
+          const isTarget = !sub.files.some(f => f.document_type === documentType);
+          if (isTarget) {
+            submissionId = sub.token.id;
+            proposalId = sub.proposal?.id || null;
+            break;
+          }
+        }
 
-      if (error) throw error;
+        if (!submissionId || !proposalId) {
+          throw new Error("Não foi possível encontrar a proposta correspondente.");
+        }
 
-      // Optimistically update local state so UI reflects immediately
-      setSubmissions((prev) =>
-        prev.map((sub) => ({
-          ...sub,
-          files: sub.files.map((f) =>
-            f.id === fileId ? { ...f, ged_id: gedId || null } : f
-          ),
-        }))
-      );
+        const { data: newFile, error } = await supabase
+          .from("documentation_files")
+          .insert({
+            token_id: submissionId,
+            stock_proposal_id: proposalId,
+            file_name: "Pendente de envio",
+            file_path: "habilitado",
+            file_size: 0,
+            document_type: documentType,
+            status: "pendente",
+            ged_id: gedId || null
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setSubmissions((prev) =>
+          prev.map((sub) => {
+            if (sub.token.id === submissionId) {
+              return {
+                ...sub,
+                files: [...sub.files, newFile as DocumentationFile]
+              };
+            }
+            return sub;
+          })
+        );
+      } else {
+        const { error } = await supabase
+          .from("documentation_files")
+          .update({ ged_id: gedId || null })
+          .eq("id", fileId);
+
+        if (error) throw error;
+
+        // Optimistically update local state so UI reflects immediately
+        setSubmissions((prev) =>
+          prev.map((sub) => ({
+            ...sub,
+            files: sub.files.map((f) =>
+              f.id === fileId ? { ...f, ged_id: gedId || null } : f
+            ),
+          }))
+        );
+      }
     } catch (err: any) {
       console.error("Error saving GED ID:", err);
       toast({
@@ -511,7 +563,7 @@ export function useDocumentationReview() {
         variant: "destructive",
       });
     }
-  }, [toast]);
+  }, [toast, submissions]);
 
   /**
    * Approve the entire proposal (all docs must be approved first).

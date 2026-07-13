@@ -1939,20 +1939,25 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filtered.map((file) => {
                     const status = file.status as DocFileStatus;
+                    const isVirtual = file.id.startsWith("temp_");
+                    const isDispensado = file.file_path === "dispensado";
+                    const isCarCard = file.document_type === "car_individual" || file.document_type === "car_coletivo";
                     let cardBorder = "border-slate-200 dark:border-slate-800";
                     let badgeColor = "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
                     let badgeLabel = "Não enviado";
                     
-                    if (status === "aprovado") {
-                      if (file.file_path === "dispensado") {
-                        cardBorder = "border-slate-200 dark:border-slate-800";
-                        badgeColor = "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
-                        badgeLabel = "Dispensado 🚫";
-                      } else {
-                        cardBorder = "border-emerald-300 dark:border-emerald-900/60";
-                        badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50";
-                        badgeLabel = "Aprovado ✅";
-                      }
+                    if (isDispensado) {
+                      cardBorder = "border-slate-200 dark:border-slate-800";
+                      badgeColor = "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
+                      badgeLabel = "Dispensado 🚫";
+                    } else if (isVirtual) {
+                      cardBorder = "border-amber-200 dark:border-amber-900/40";
+                      badgeColor = "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50";
+                      badgeLabel = "Pendente ⏳";
+                    } else if (status === "aprovado") {
+                      cardBorder = "border-emerald-300 dark:border-emerald-900/60";
+                      badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50";
+                      badgeLabel = "Aprovado ✅";
                     } else if (status === "reprovado") {
                       cardBorder = "border-rose-300 dark:border-rose-900/60";
                       badgeColor = "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50";
@@ -1998,16 +2003,36 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                             </div>
                           )}
 
-                          {/* Original Filename Display */}
-                          <div className="text-center">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">{file.document_type === "cadastro_atividade_plano" ? "Atividade do Plano" : "Arquivo Enviado"}</span>
-                            <p className="text-[11px] font-bold text-slate-600 truncate max-w-full px-2" title={file.file_name}>
-                              {file.document_type === "cadastro_atividade_plano" ? (sub.proposal.credit_purpose || "NÃO PREENCHIDA Pelo projetista") : file.file_name}
-                            </p>
-                          </div>
+                           {/* CAR cards: show property name and CAR number */}
+                           {isCarCard && !isVirtual && !isDispensado && (
+                             <div className="space-y-2">
+                               {sub.proposal.localizacao && (
+                                 <div className="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-2.5 text-center">
+                                   <span className="text-[9px] font-black uppercase tracking-widest text-indigo-400 block mb-0.5">Nome do Imóvel</span>
+                                   <p className="text-[11px] font-bold text-indigo-700 break-words">{(sub.proposal.localizacao || "").toUpperCase()}</p>
+                                 </div>
+                               )}
+                               {file.file_name && (
+                                 <div className="bg-sky-50/60 border border-sky-100 rounded-2xl p-2.5 text-center">
+                                   <span className="text-[9px] font-black uppercase tracking-widest text-sky-400 block mb-0.5">Número do CAR</span>
+                                   <p className="text-[11px] font-bold text-sky-700 break-all leading-relaxed">{file.file_name.replace(/\.pdf$/i, "")}</p>
+                                 </div>
+                               )}
+                             </div>
+                           )}
 
-                          {/* GED ID Field or Dispensation message */}
-                           {file.id.startsWith("temp_") ? (
+                           {/* Original Filename Display (non-CAR cards) */}
+                           {(!isCarCard || isVirtual || isDispensado) && (
+                             <div className="text-center">
+                               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">{file.document_type === "cadastro_atividade_plano" ? "Atividade do Plano" : "Arquivo Enviado"}</span>
+                               <p className="text-[11px] font-bold text-slate-600 truncate max-w-full px-2" title={file.file_name}>
+                                 {isVirtual ? "—" : file.document_type === "cadastro_atividade_plano" ? (sub.proposal.credit_purpose || "NÃO PREENCHIDA Pelo projetista") : file.file_name}
+                               </p>
+                             </div>
+                           )}
+
+                           {/* GED ID Field or Dispensation message */}
+                           {(file.id.startsWith("temp_") && !isCarCard) ? (
                              <div className="bg-slate-100/60 border border-slate-200 rounded-2xl py-3 px-3 text-center">
                                <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-widest leading-relaxed">
                                  Aguardando envio pelo projetista ⏳
@@ -2031,8 +2056,8 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                        ? "INSERIR ID - CERT. SOCIO AMBIENTAL ZIP"
                                        : "Ex: GED-001"
                                    }
-                                   maxLength={40}
-                                   className="w-full h-8 rounded-xl border border-slate-200 bg-white px-3 text-xs font-mono font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-center"
+                                   maxLength={80}
+                                   className="w-full h-8 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-mono font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-center"
                                    onBlur={(e) => {
                                      const val = e.target.value.trim();
                                      if (val !== (file.ged_id ?? "")) {
@@ -2043,6 +2068,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                                    }}
                                  />
+                                 {file.ged_id && (
+                                   <div className="mt-1 px-1 bg-slate-100/60 rounded border border-slate-200/50 py-0.5 text-center">
+                                     <p className="text-[9px] font-mono break-all text-slate-500 leading-normal select-all font-bold" title="Clique duas vezes para selecionar tudo">{file.ged_id}</p>
+                                   </div>
+                                 )}
                                </div>
                              ))
                            )}
