@@ -437,18 +437,18 @@ export default function Documentation() {
 
     let localStr = "";
     if (isCarColDispensed) {
-      localStr = `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}`;
+      localStr = `${imovel.toUpperCase()} | COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}`;
     } else if (isCarIndDispensed) {
-      localStr = `PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+      localStr = `PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()} | COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
     } else {
-      localStr = `${imovel.toUpperCase()} COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, INSERIDO NO PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
+      localStr = `${imovel.toUpperCase()} | COM REGISTRO NO CAR: ${carIndividual.toUpperCase()}, INSERIDO NO PROJETO DE ASSENTAMENTO ${numPA ? numPA.toUpperCase() + ' - ' : ''}${nomePA.toUpperCase()}  |   COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
     }
 
     const invLocalStr = isCarColDispensed
       ? "NO IMÓVEL ACIMA IDENTIFICADO"
       : `NO PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
 
-    return `Trata-se de proposta de crédito rural apresentad${g.artigo.toLowerCase()} por ${nome.toUpperCase()}, CPF ${cpf}, ${g.agricultor} familiar ${g.enquadrado} no ${sub.proposal.credit_program || "PRONAF Grupo A"}, ${g.produtor}, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no:
+    return `Trata-se de proposta de crédito rural apresentad${g.artigo.toLowerCase()} por ${nome.toUpperCase()}, CPF ${cpf}, ${g.agricultor} familiar ${g.enquadrado} no ${sub.proposal.credit_program || "PRONAF Grupo A"}, ${g.produtor}, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no IMOVÉL RURAL:
 ${localStr}
 Possuindo aptidão agropecuária e infraestrutura compatível com a atividade financiada.
 
