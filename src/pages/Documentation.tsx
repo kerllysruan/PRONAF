@@ -1861,7 +1861,8 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
           const RURAL_KEYS = [
             "car_individual",
             "car_coletivo",
-            "espelho_beneficiario"
+            "espelho_beneficiario",
+            "titulo_dominio"
           ];
 
           const ENQUADRAMENTO_KEYS = [
@@ -1881,7 +1882,6 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
             "orcamento",
             "plano_eletronico",
             "plano_assinado",
-            "titulo_dominio",
             "cadastro_atividade_plano"
           ];
 

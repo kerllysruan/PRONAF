@@ -1092,7 +1092,7 @@ export default function DocumentationSubmit() {
               );
             };
 
-            const ruralPropertyKeys = ["car_individual", "car_coletivo", "espelho_beneficiario"];
+            const ruralPropertyKeys = ["car_individual", "car_coletivo", "espelho_beneficiario", "titulo_dominio"];
             const ruralPropertyDocs = DOCUMENTATION_REQUIRED.filter((d) => ruralPropertyKeys.includes(d.key));
 
             const identificationKeys = [
