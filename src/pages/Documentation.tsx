@@ -143,7 +143,9 @@ export default function Documentation() {
   const [parecerTotalMeses, setParecerTotalMeses] = useState("");
   const [parecerGerenteGeral, setParecerGerenteGeral] = useState("");
   const [parecerGerenteRelacionamento, setParecerGerenteRelacionamento] = useState("");
-  const [parecerInversoes, setParecerInversoes] = useState<string[]>([""]);
+  const [parecerInversoes, setParecerInversoes] = useState<{ quant: number; unid: string; nome: string; valor: number }[]>([
+    { quant: 1, unid: "UNID", nome: "", valor: 0 }
+  ]);
   const [parecerNumProjetoPA, setParecerNumProjetoPA] = useState("");
   const [parecerCarIndividual, setParecerCarIndividual] = useState("");
   const [parecerAgenciaHistorico, setParecerAgenciaHistorico] = useState("");
@@ -168,33 +170,35 @@ export default function Documentation() {
     const saved = localStorage.getItem(key);
 
     // 1. First parse proposal data to have clean default fallbacks
-    let propInversoes: string[] = [""];
+    let propInversoes: { quant: number; unid: string; nome: string; valor: number }[] = [
+      { quant: 1, unid: "UNID", nome: "", valor: 0 }
+    ];
     const invData = selectedSubmission.proposal.inversoes;
     if (invData) {
-      const formatCurrency = (val: number) => {
-        return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
-      };
       if (Array.isArray(invData)) {
-        propInversoes = invData.map((item: any) => {
-          const q = item.quant || 1;
-          const u = (item.unid || "UNID").toUpperCase();
-          const n = item.nome || "";
-          const v = item.valor || 0;
-          return `${q} ${u} x ${n.toUpperCase()} (${formatCurrency(v)})`;
-        });
+        propInversoes = invData.map((item: any) => ({
+          quant: Number(item.quant) || 1,
+          unid: (item.unid || "UNID").toUpperCase(),
+          nome: (item.nome || "").toUpperCase(),
+          valor: Number(item.valor) || 0
+        }));
       } else if (typeof invData === "object") {
         const obj = invData as any;
         const items = Array.isArray(obj.items) ? obj.items : [];
         const custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
-        const itemsList = items.map((item: any) => {
-          const q = item.quant || 1;
-          const u = (item.unid || "UNID").toUpperCase();
-          const n = item.nome || "";
-          const v = item.valor || 0;
-          return `${q} ${u} x ${n.toUpperCase()} (${formatCurrency(v)})`;
-        });
+        const itemsList = items.map((item: any) => ({
+          quant: Number(item.quant) || 1,
+          unid: (item.unid || "UNID").toUpperCase(),
+          nome: (item.nome || "").toUpperCase(),
+          valor: Number(item.valor) || 0
+        }));
         if (custo > 0) {
-          itemsList.push(`CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA (${formatCurrency(custo)})`);
+          itemsList.push({
+            quant: 1,
+            unid: "UNID",
+            nome: "CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA",
+            valor: custo
+          });
         }
         if (itemsList.length > 0) {
           propInversoes = itemsList;
@@ -245,10 +249,7 @@ export default function Documentation() {
         if (draft.utilizaCarIndividual !== undefined) setParecerUtilizaCarIndividual(draft.utilizaCarIndividual);
         if (draft.generoProponente !== undefined) setParecerGeneroProponente(draft.generoProponente);
 
-        // Always prioritize the original proposal inversions from database for pre-populating, allowing analyst to edit them.
-        if (propInversoes && propInversoes.length > 0 && propInversoes.some((i: string) => i.trim() !== "")) {
-          setParecerInversoes(propInversoes);
-        } else if (draft.inversoes && draft.inversoes.length > 0) {
+        if (draft.inversoes && draft.inversoes.length > 0) {
           setParecerInversoes(draft.inversoes);
         } else {
           setParecerInversoes(propInversoes);
@@ -345,9 +346,21 @@ export default function Documentation() {
           produtor: "miniprodutor"
         };
     
+    const formatCurrency = (val: number) => {
+      return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+    };
     const invLines = parecerInversoes
-      .filter((inv) => inv.trim().length > 0)
-      .map((inv) => `  • ${inv.trim().toUpperCase()}`)
+      .filter((item) => (item.nome || "").trim().length > 0)
+      .map((item) => {
+        const q = item.quant || 1;
+        const u = (item.unid || "UNID").toUpperCase();
+        const n = (item.nome || "").trim().toUpperCase();
+        const v = item.valor || 0;
+        if (n === "CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA") {
+          return `  • CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA (${formatCurrency(v)})`;
+        }
+        return `  • ${q} ${u} x ${n} (${formatCurrency(v)})`;
+      })
       .join("\n");
     const inversoesStr = invLines ? `${invLines}` : "";
     
@@ -3035,29 +3048,99 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       variant="outline"
                       size="sm"
                       className="h-7 text-xs rounded-lg border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold"
-                      onClick={() => setParecerInversoes([...parecerInversoes, ""])}
+                      onClick={() => setParecerInversoes([...parecerInversoes, { quant: 1, unid: "UNID", nome: "", valor: 0 }])}
                     >
                       + Adicionar Inversão
                     </Button>
                   </div>
-                  <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
-                    {parecerInversoes.map((inv, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <Input
-                          className="rounded-xl text-xs h-8 flex-1 uppercase"
-                          placeholder={`Inversão ${idx + 1} (Ex: Aquisição de 12 matrizes bovinas)`}
-                          value={inv}
-                          onChange={(e) => {
-                            const updated = [...parecerInversoes];
-                            updated[idx] = e.target.value.toUpperCase();
-                            setParecerInversoes(updated);
-                          }}
-                        />
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    {parecerInversoes.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5 bg-white p-1.5 rounded-lg border border-slate-100 shadow-sm">
+                        {/* Qtd */}
+                        <div className="w-[50px] shrink-0">
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quant || ""}
+                            onChange={(e) => {
+                              const updated = [...parecerInversoes];
+                              updated[idx] = {
+                                ...updated[idx],
+                                quant: Math.max(1, parseInt(e.target.value) || 1)
+                              };
+                              setParecerInversoes(updated);
+                            }}
+                            className="w-full text-center text-xs h-7 border border-slate-200 rounded-md font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            placeholder="Qtd"
+                          />
+                        </div>
+
+                        {/* Unid */}
+                        <div className="w-[70px] shrink-0">
+                          <select
+                            value={item.unid || "UNID"}
+                            onChange={(e) => {
+                              const updated = [...parecerInversoes];
+                              updated[idx] = {
+                                ...updated[idx],
+                                unid: e.target.value
+                              };
+                              setParecerInversoes(updated);
+                            }}
+                            className="w-full text-center text-[10px] font-bold h-7 border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                          >
+                            <option value="UNID">UNID</option>
+                            <option value="CX">CX</option>
+                            <option value="SC">SC</option>
+                            <option value="T">T</option>
+                            <option value="HECT">HECT</option>
+                          </select>
+                        </div>
+
+                        {/* Descrição */}
+                        <div className="flex-1 min-w-0">
+                          <input
+                            type="text"
+                            value={item.nome || ""}
+                            onChange={(e) => {
+                              const updated = [...parecerInversoes];
+                              updated[idx] = {
+                                ...updated[idx],
+                                nome: e.target.value.toUpperCase()
+                              };
+                              setParecerInversoes(updated);
+                            }}
+                            className="w-full px-2 text-xs h-7 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 uppercase font-semibold"
+                            placeholder="Descrição do item"
+                          />
+                        </div>
+
+                        {/* Valor */}
+                        <div className="w-[100px] shrink-0">
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={item.valor || ""}
+                            onChange={(e) => {
+                              const updated = [...parecerInversoes];
+                              updated[idx] = {
+                                ...updated[idx],
+                                valor: parseFloat(e.target.value) || 0
+                              };
+                              setParecerInversoes(updated);
+                            }}
+                            className="w-full px-1.5 text-right text-xs h-7 border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 font-medium"
+                            placeholder="Valor R$"
+                          />
+                        </div>
+
+                        {/* Excluir */}
                         {parecerInversoes.length > 1 && (
                           <Button
                             type="button"
                             variant="ghost"
-                            className="h-8 w-8 p-0 rounded-lg text-red-500 hover:bg-red-50"
+                            className="h-7 w-7 p-0 rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 shrink-0"
                             onClick={() => {
                               const updated = parecerInversoes.filter((_, i) => i !== idx);
                               setParecerInversoes(updated);
@@ -3210,23 +3293,13 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
                       // Tabela elegante de Inversões
                       const tableRows = parecerInversoes
-                        .filter(inv => inv.trim().length > 0)
-                        .map(inv => {
-                          const cleanInv = inv.replace(/^\s*•\s*/, "").replace(/^\s*-\s*/, "").trim();
-                          // Suporta com unidade: "7 UNID x MATRIZES BOVINAS (R$ 22.400,00)" ou sem: "7 x MATRIZES BOVINAS (R$ 22.400,00)"
-                          const matchWithUnid = cleanInv.match(/^(\d+)\s+([A-Z]{1,5})\s*[xX]\s*(.*?)\s*\((.*?)\)$/i);
-                          if (matchWithUnid) {
-                            return [matchWithUnid[1], matchWithUnid[2].toUpperCase(), matchWithUnid[3].trim().toUpperCase(), matchWithUnid[4].trim()];
-                          }
-                          const matchNoUnid = cleanInv.match(/^(\d+)\s*[xX]\s*(.*?)\s*\((.*?)\)$/i);
-                          if (matchNoUnid) {
-                            return [matchNoUnid[1], "UNID", matchNoUnid[2].trim().toUpperCase(), matchNoUnid[3].trim()];
-                          }
-                          const matchNoQty = cleanInv.match(/^(.*?)\s*\((.*?)\)$/);
-                          if (matchNoQty) {
-                            return ["1", "UNID", matchNoQty[1].trim().toUpperCase(), matchNoQty[2].trim()];
-                          }
-                          return ["1", "UNID", cleanInv.toUpperCase(), "—"];
+                        .filter(item => (item.nome || "").trim().length > 0)
+                        .map(item => {
+                          const q = String(item.quant || 1);
+                          const u = (item.unid || "UNID").toUpperCase();
+                          const n = (item.nome || "").trim().toUpperCase();
+                          const v = (item.valor || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                          return [q, u, n, `R$ ${v}`];
                         });
 
                       autoTable(d, {
