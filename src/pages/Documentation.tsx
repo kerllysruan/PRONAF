@@ -101,7 +101,7 @@ export default function Documentation() {
     
     if (progStr.includes("PRONAF A") || progStr.includes("PRONAF GRUPO A") || 
         linhaStr.includes("PRONAF A") || linhaStr.includes("PRONAF GRUPO A")) {
-      return value > 50000;
+      return value <= 50000;
     }
     
     return progStr.includes("699") || linhaStr.includes("699");
