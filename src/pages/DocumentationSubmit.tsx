@@ -269,32 +269,15 @@ export default function DocumentationSubmit() {
 
   const dbFilesMap = useMemo(() => {
     const map = new Map<string, DocumentationFile>();
-    const getFileWeight = (f: DocumentationFile) => {
-      if (f.file_path && f.file_path !== "dispensado" && f.file_path !== "habilitado") {
-        return 30; // Real PDF upload
-      }
-      if (f.file_path === "dispensado" || f.file_path === "preenchido") {
-        return 20; // Dispensation or Activity form
-      }
-      return 10; // Placeholder
-    };
-    const statusPriority: Record<string, number> = { aprovado: 3, pendente: 2, reprovado: 1 };
-
     files.forEach((file) => {
       const existing = map.get(file.document_type);
       if (!existing) {
         map.set(file.document_type, file);
       } else {
-        const newWeight = getFileWeight(file);
-        const oldWeight = getFileWeight(existing);
-        if (newWeight > oldWeight) {
+        const newTime = new Date(file.created_at).getTime();
+        const oldTime = new Date(existing.created_at).getTime();
+        if (newTime > oldTime) {
           map.set(file.document_type, file);
-        } else if (newWeight === oldWeight) {
-          const newPrio = statusPriority[file.status] || 0;
-          const oldPrio = statusPriority[existing.status] || 0;
-          if (newPrio > oldPrio || (newPrio === oldPrio && file.created_at > existing.created_at)) {
-            map.set(file.document_type, file);
-          }
         }
       }
     });
