@@ -350,6 +350,21 @@ export default function Documentation() {
       ? `, visto que o cliente tem histórico de operação PRONAF A realizada na agência ${parecerAgenciaHistorico || "—"}`
       : "";
       
+    const programa = sub.proposal.credit_program || "PRONAF Grupo A";
+    const linha = sub.proposal.linha_credito || "";
+    let linhaFinanciamento = "";
+    if (!linha) {
+      linhaFinanciamento = programa;
+    } else if (linha.toLowerCase().includes(programa.toLowerCase())) {
+      linhaFinanciamento = linha;
+    } else {
+      if (/^\d+$/.test(linha.trim())) {
+        linhaFinanciamento = `${programa} ${linha.trim()}`;
+      } else {
+        linhaFinanciamento = `${programa} - ${linha}`;
+      }
+    }
+      
     let carencia = parecerCarenciaMeses || "36 MESES";
     if (/^\d+$/.test(carencia.trim())) {
       carencia = `${carencia.trim()} MESES`;
@@ -384,7 +399,7 @@ O financiamento proposto contempla investimento fixo EM:
 ${inversoesStr}
 
 totalizando investimento no valor de ${valorTotal}.
-A operação será financiada com recursos do FNE/${sub.proposal.credit_program || "PRONAF Grupo A"} ${codPrograma}${complemento699}.
+A operação será financiada com recursos do FNE/${linhaFinanciamento}${complemento699}.
 
 Em relação aos recursos próprios, não haverá contrapartida financeira por parte d${g.artigo} proponente, sendo o investimento integralmente financiado. Não se aplica à presente operação a utilização de imóveis de terceiros beneficiados com o crédito, visto que todas as inversões ocorrerão no imóvel acima identificado.
 
