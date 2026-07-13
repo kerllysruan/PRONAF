@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -34,6 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
 
+  const userRef = useRef<User | null>(null);
+  userRef.current = user;
+
   useEffect(() => {
     const fetchUserData = async (uid: string) => {
       // Robust profile fetch: user_id is the preferred link, but id might be synced
@@ -50,58 +53,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (profile) {
-        setAgencyId((profile as any).agency_id);
-        setDisplayName((profile as any).display_name || (profile as any).full_name || null);
+        const newAgencyId = (profile as any).agency_id;
+        const newDisplayName = (profile as any).display_name || (profile as any).full_name || null;
+        setAgencyId(prev => prev !== newAgencyId ? newAgencyId : prev);
+        setDisplayName(prev => prev !== newDisplayName ? newDisplayName : prev);
       }
-      if (roleData) setRole(roleData.role);
+      if (roleData) {
+        const newRole = roleData.role;
+        setRole(prev => prev !== newRole ? newRole : prev);
+      }
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (event, session) => {
+        const currentUser = session?.user ?? null;
         setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          fetchUserData(session.user.id);
+        
+        if (currentUser?.id !== userRef.current?.id) {
+          setUser(currentUser);
+          if (currentUser) {
+            await fetchUserData(currentUser.id);
 
-          // Subscribe to role changes for the current user
-          const roleChannel = supabase
-            .channel(`user-role-${session.user.id}`)
-            .on(
-              'postgres_changes',
-              {
-                event: '*',
-                schema: 'public',
-                table: 'user_roles',
-                filter: `user_id=eq.${session.user.id}`
-              },
-              (payload: any) => {
-                if (payload.new && payload.new.role) {
-                  setRole(payload.new.role);
+            // Subscribe to role changes for the current user
+            const roleChannel = supabase
+              .channel(`user-role-${currentUser.id}`)
+              .on(
+                'postgres_changes',
+                {
+                  event: '*',
+                  schema: 'public',
+                  table: 'user_roles',
+                  filter: `user_id=eq.${currentUser.id}`
+                },
+                (payload: any) => {
+                  if (payload.new && payload.new.role) {
+                    setRole(prev => prev !== payload.new.role ? payload.new.role : prev);
+                  }
                 }
-              }
-            )
-            .subscribe();
+              )
+              .subscribe();
 
-          return () => {
-            supabase.removeChannel(roleChannel);
-          };
-        } else {
-          setAgencyId(null);
-          setRole(null);
-          setDisplayName(null);
+            return () => {
+              supabase.removeChannel(roleChannel);
+            };
+          } else {
+            setAgencyId(null);
+            setRole(null);
+            setDisplayName(null);
+          }
         }
         setLoading(false);
       }
     );
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const currentUser = session?.user ?? null;
       setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) await fetchUserData(session.user.id);
-      else {
-        setAgencyId(null);
-        setRole(null);
-        setDisplayName(null);
+      if (currentUser?.id !== userRef.current?.id) {
+        setUser(currentUser);
+        if (currentUser) await fetchUserData(currentUser.id);
+        else {
+          setAgencyId(null);
+          setRole(null);
+          setDisplayName(null);
+        }
       }
       setLoading(false);
     });
