@@ -177,9 +177,10 @@ export default function Documentation() {
       if (Array.isArray(invData)) {
         propInversoes = invData.map((item: any) => {
           const q = item.quant || 1;
+          const u = (item.unid || "UNID").toUpperCase();
           const n = item.nome || "";
           const v = item.valor || 0;
-          return `${q} x ${n.toUpperCase()} (${formatCurrency(v)})`;
+          return `${q} ${u} x ${n.toUpperCase()} (${formatCurrency(v)})`;
         });
       } else if (typeof invData === "object") {
         const obj = invData as any;
@@ -187,9 +188,10 @@ export default function Documentation() {
         const custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
         const itemsList = items.map((item: any) => {
           const q = item.quant || 1;
+          const u = (item.unid || "UNID").toUpperCase();
           const n = item.nome || "";
           const v = item.valor || 0;
-          return `${q} x ${n.toUpperCase()} (${formatCurrency(v)})`;
+          return `${q} ${u} x ${n.toUpperCase()} (${formatCurrency(v)})`;
         });
         if (custo > 0) {
           itemsList.push(`CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA (${formatCurrency(custo)})`);
@@ -2406,18 +2408,29 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       {items.map((item, idx) => (
                         <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
                           {/* Quantidade */}
-                          <div className="col-span-3 md:col-span-2">
+                          <div className="col-span-2 md:col-span-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Quant.</label>
                             <input
                               type="number"
                               value={item.quant}
                               disabled
-                              className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
+                              className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
+                            />
+                          </div>
+
+                          {/* Unidade */}
+                          <div className="col-span-3 md:col-span-2">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Unid.</label>
+                            <input
+                              type="text"
+                              value={item.unid || "UNID"}
+                              disabled
+                              className="w-full px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
                             />
                           </div>
 
                           {/* Nome / Descrição */}
-                          <div className="col-span-9 md:col-span-7">
+                          <div className="col-span-4 md:col-span-6">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Item / Inversão</label>
                             <input
                               type="text"
@@ -2428,7 +2441,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           </div>
 
                           {/* Valor Total */}
-                          <div className="col-span-12 md:col-span-3">
+                          <div className="col-span-3">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Valor Total (R$)</label>
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
@@ -2446,17 +2459,29 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       {/* Campo de Custo Assessoria */}
                       {custo > 0 && (
                         <div className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm mt-3">
-                          <div className="col-span-3 md:col-span-2">
+                          <div className="col-span-2 md:col-span-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Quant.</label>
                             <input
                               type="number"
                               value={1}
                               disabled
-                              className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
+                              className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
                             />
                           </div>
 
-                          <div className="col-span-9 md:col-span-7">
+                          {/* Unidade */}
+                          <div className="col-span-3 md:col-span-2">
+                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Unid.</label>
+                            <input
+                              type="text"
+                              value="UNID"
+                              disabled
+                              className="w-full px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
+                            />
+                          </div>
+
+                          {/* Nome / Descrição */}
+                          <div className="col-span-4 md:col-span-6">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Item / Inversão</label>
                             <input
                               type="text"
@@ -3019,12 +3044,12 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     {parecerInversoes.map((inv, idx) => (
                       <div key={idx} className="flex items-center gap-2">
                         <Input
-                          className="rounded-xl text-xs h-8 flex-1"
+                          className="rounded-xl text-xs h-8 flex-1 uppercase"
                           placeholder={`Inversão ${idx + 1} (Ex: Aquisição de 12 matrizes bovinas)`}
                           value={inv}
                           onChange={(e) => {
                             const updated = [...parecerInversoes];
-                            updated[idx] = e.target.value;
+                            updated[idx] = e.target.value.toUpperCase();
                             setParecerInversoes(updated);
                           }}
                         />
@@ -3188,28 +3213,34 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         .filter(inv => inv.trim().length > 0)
                         .map(inv => {
                           const cleanInv = inv.replace(/^\s*•\s*/, "").replace(/^\s*-\s*/, "").trim();
-                          const match = cleanInv.match(/^(\d+)\s*[xX]\s*(.*?)\s*\((.*?)\)$/i);
-                          if (match) {
-                            return [match[1], match[2].trim().toUpperCase(), match[3].trim()];
+                          // Suporta com unidade: "7 UNID x MATRIZES BOVINAS (R$ 22.400,00)" ou sem: "7 x MATRIZES BOVINAS (R$ 22.400,00)"
+                          const matchWithUnid = cleanInv.match(/^(\d+)\s+([A-Z]{1,5})\s*[xX]\s*(.*?)\s*\((.*?)\)$/i);
+                          if (matchWithUnid) {
+                            return [matchWithUnid[1], matchWithUnid[2].toUpperCase(), matchWithUnid[3].trim().toUpperCase(), matchWithUnid[4].trim()];
+                          }
+                          const matchNoUnid = cleanInv.match(/^(\d+)\s*[xX]\s*(.*?)\s*\((.*?)\)$/i);
+                          if (matchNoUnid) {
+                            return [matchNoUnid[1], "UNID", matchNoUnid[2].trim().toUpperCase(), matchNoUnid[3].trim()];
                           }
                           const matchNoQty = cleanInv.match(/^(.*?)\s*\((.*?)\)$/);
                           if (matchNoQty) {
-                            return ["1", matchNoQty[1].trim().toUpperCase(), matchNoQty[2].trim()];
+                            return ["1", "UNID", matchNoQty[1].trim().toUpperCase(), matchNoQty[2].trim()];
                           }
-                          return ["1", cleanInv.toUpperCase(), "—"];
+                          return ["1", "UNID", cleanInv.toUpperCase(), "—"];
                         });
 
                       autoTable(d, {
                         startY: curY,
-                        head: [["QTD", "DESCRIÇÃO DO ITEM / INVESTIMENTO FIXO", "VALOR TOTAL (R$)"]],
+                        head: [["QTD", "UNID", "DESCRIÇÃO DO ITEM / INVESTIMENTO FIXO", "VALOR TOTAL (R$)"]],
                         body: tableRows,
                         theme: "striped",
                         headStyles: { fillColor: [79, 70, 229], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
                         bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
                         columnStyles: {
-                          0: { cellWidth: 15, halign: "center" },
-                          1: { cellWidth: "auto" },
-                          2: { cellWidth: 40, halign: "right" }
+                          0: { cellWidth: 12, halign: "center" },
+                          1: { cellWidth: 18, halign: "center" },
+                          2: { cellWidth: "auto" },
+                          3: { cellWidth: 35, halign: "right" }
                         },
                         margin: { left: 14, right: 14 }
                       });

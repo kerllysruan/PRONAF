@@ -129,8 +129,8 @@ export default function DocumentationSubmit() {
   const [atividadePlano, setAtividadePlano] = useState("");
 
   // Inversões state
-  const [inversoes, setInversoes] = useState<{ quant: number; nome: string; valor: number }[]>([
-    { quant: 1, nome: "", valor: 0 }
+  const [inversoes, setInversoes] = useState<{ quant: number; nome: string; valor: number; unid?: string }[]>([
+    { quant: 1, nome: "", valor: 0, unid: "UNID" }
   ]);
   const [custoAssessoria, setCustoAssessoria] = useState<number>(0);
 
@@ -1247,7 +1247,7 @@ export default function DocumentationSubmit() {
                     {inversoes.map((item, idx) => (
                       <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm animate-fade-in">
                         {/* Quantidade */}
-                        <div className="col-span-3 md:col-span-2">
+                        <div className="col-span-2 md:col-span-1">
                           <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Qtd.</label>
                           <input
                             type="number"
@@ -1258,12 +1258,32 @@ export default function DocumentationSubmit() {
                               updated[idx].quant = Math.max(1, parseInt(e.target.value) || 1);
                               setInversoes(updated);
                             }}
-                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                            className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground text-center"
                           />
                         </div>
 
+                        {/* Unidade */}
+                        <div className="col-span-3 md:col-span-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Unid.</label>
+                          <select
+                            value={item.unid || "UNID"}
+                            onChange={(e) => {
+                              const updated = [...inversoes];
+                              updated[idx].unid = e.target.value;
+                              setInversoes(updated);
+                            }}
+                            className="w-full px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground cursor-pointer h-[32px]"
+                          >
+                            <option value="UNID">UNID</option>
+                            <option value="CX">CX</option>
+                            <option value="SC">SC</option>
+                            <option value="T">T</option>
+                            <option value="HECT">HECT</option>
+                          </select>
+                        </div>
+
                         {/* Nome / Descrição */}
-                        <div className="col-span-5 md:col-span-6">
+                        <div className="col-span-3 md:col-span-5">
                           <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Item / Inversão</label>
                           <input
                             type="text"
@@ -1315,7 +1335,7 @@ export default function DocumentationSubmit() {
 
                   <button
                     type="button"
-                    onClick={() => setInversoes([...inversoes, { quant: 1, nome: "", valor: 0 }])}
+                    onClick={() => setInversoes([...inversoes, { quant: 1, nome: "", valor: 0, unid: "UNID" }])}
                     className="mt-4 px-4 py-2 border border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50/50 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 w-full md:w-auto bg-background"
                   >
                     <Plus className="h-3.5 w-3.5" />
