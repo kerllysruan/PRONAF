@@ -250,7 +250,45 @@ export default function Documentation() {
         if (draft.generoProponente !== undefined) setParecerGeneroProponente(draft.generoProponente);
 
         if (draft.inversoes && draft.inversoes.length > 0) {
-          setParecerInversoes(draft.inversoes);
+          // Parse dynamic structure to ensure backwards compatibility with string arrays
+          const parsedInvs = draft.inversoes.map((item: any) => {
+            if (typeof item === "string") {
+              const cleanInv = item.replace(/^\s*•\s*/, "").replace(/^\s*-\s*/, "").trim();
+              const matchWithUnid = cleanInv.match(/^(\d+)\s+([A-Z]{1,5})\s*[xX]\s*(.*?)\s*\((.*?)\)$/i);
+              if (matchWithUnid) {
+                const valStr = matchWithUnid[4].replace(/[R$\s.]/g, "").replace(",", ".");
+                return {
+                  quant: parseInt(matchWithUnid[1]) || 1,
+                  unid: matchWithUnid[2].toUpperCase(),
+                  nome: matchWithUnid[3].trim().toUpperCase(),
+                  valor: parseFloat(valStr) || 0
+                };
+              }
+              const matchNoUnid = cleanInv.match(/^(\d+)\s*[xX]\s*(.*?)\s*\((.*?)\)$/i);
+              if (matchNoUnid) {
+                const valStr = matchNoUnid[3].replace(/[R$\s.]/g, "").replace(",", ".");
+                return {
+                  quant: parseInt(matchNoUnid[1]) || 1,
+                  unid: "UNID",
+                  nome: matchNoUnid[2].trim().toUpperCase(),
+                  valor: parseFloat(valStr) || 0
+                };
+              }
+              const matchNoQty = cleanInv.match(/^(.*?)\s*\((.*?)\)$/);
+              if (matchNoQty) {
+                const valStr = matchNoQty[2].replace(/[R$\s.]/g, "").replace(",", ".");
+                return {
+                  quant: 1,
+                  unid: "UNID",
+                  nome: matchNoQty[1].trim().toUpperCase(),
+                  valor: parseFloat(valStr) || 0
+                };
+              }
+              return { quant: 1, unid: "UNID", nome: cleanInv.toUpperCase(), valor: 0 };
+            }
+            return item;
+          });
+          setParecerInversoes(parsedInvs);
         } else {
           setParecerInversoes(propInversoes);
         }
@@ -1842,6 +1880,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
             "contrato_assessoria",
             "orcamento",
             "plano_eletronico",
+            "plano_assinado",
             "titulo_dominio",
             "cadastro_atividade_plano"
           ];
