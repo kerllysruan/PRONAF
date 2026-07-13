@@ -349,9 +349,8 @@ export default function Documentation() {
     const complemento699 = codPrograma === "699"
       ? `, visto que o cliente tem histórico de operação PRONAF A realizada na agência ${parecerAgenciaHistorico || "—"}`
       : "";
-      
-    const programa = sub.proposal.credit_program || "PRONAF Grupo A";
-    const linha = sub.proposal.linha_credito || "";
+    const programa = is699 ? "PRONAF A (699)" : (sub.proposal.credit_program || "PRONAF Grupo A");
+    const linha = is699 ? "PRONAF A 699" : (sub.proposal.linha_credito || "");
     let linhaFinanciamento = "";
     if (!linha) {
       linhaFinanciamento = programa;
@@ -2894,11 +2893,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     </div>
                     <div>
                       <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Programa de Crédito:</span>
-                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{sub.proposal.credit_program || "—"}</strong>
+                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{is699Selected ? "PRONAF A (699)" : (sub.proposal.credit_program || "—")}</strong>
                     </div>
                     <div>
                       <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Linha de Crédito:</span>
-                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{sub.proposal.linha_credito || "—"}</strong>
+                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{is699Selected ? "PRONAF A 699" : (sub.proposal.linha_credito || "—")}</strong>
                     </div>
                     <div>
                       <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Valor Estimado:</span>
