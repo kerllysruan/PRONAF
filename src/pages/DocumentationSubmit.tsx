@@ -268,10 +268,42 @@ export default function DocumentationSubmit() {
   const totalDocs = DOCUMENTATION_REQUIRED.length + 1; // +1 for inversões
 
   const dbFilesMap = useMemo(() => {
-    return files.reduce((acc, f) => {
-      acc[f.document_type] = f;
-      return acc;
-    }, {} as Record<string, DocumentationFile>);
+    const map = new Map<string, DocumentationFile>();
+    const getFileWeight = (f: DocumentationFile) => {
+      if (f.file_path && f.file_path !== "dispensado" && f.file_path !== "habilitado") {
+        return 30; // Real PDF upload
+      }
+      if (f.file_path === "dispensado" || f.file_path === "preenchido") {
+        return 20; // Dispensation or Activity form
+      }
+      return 10; // Placeholder
+    };
+    const statusPriority: Record<string, number> = { aprovado: 3, pendente: 2, reprovado: 1 };
+
+    files.forEach((file) => {
+      const existing = map.get(file.document_type);
+      if (!existing) {
+        map.set(file.document_type, file);
+      } else {
+        const newWeight = getFileWeight(file);
+        const oldWeight = getFileWeight(existing);
+        if (newWeight > oldWeight) {
+          map.set(file.document_type, file);
+        } else if (newWeight === oldWeight) {
+          const newPrio = statusPriority[file.status] || 0;
+          const oldPrio = statusPriority[existing.status] || 0;
+          if (newPrio > oldPrio || (newPrio === oldPrio && file.created_at > existing.created_at)) {
+            map.set(file.document_type, file);
+          }
+        }
+      }
+    });
+
+    const result: Record<string, DocumentationFile> = {};
+    map.forEach((value, key) => {
+      result[key] = value;
+    });
+    return result;
   }, [files]);
 
   // Helper: is this file a re-enabled (previously dispensed) record?

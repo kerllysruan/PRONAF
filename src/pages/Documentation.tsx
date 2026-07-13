@@ -2147,7 +2147,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                  Baixar
                                </Button>
                              )}
-                             {status !== "aprovado" && (
+                              {!isDispensado && status !== "aprovado" && (
                                <Button
                                  size="sm"
                                  className="gap-1 rounded-xl text-[11px] font-bold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
@@ -2157,7 +2157,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                  Aprovar
                                </Button>
                              )}
-                             {status !== "reprovado" && (
+                             {!isDispensado && status !== "reprovado" && (
                                <Button
                                  variant="destructive"
                                  size="sm"
