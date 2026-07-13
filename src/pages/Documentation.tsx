@@ -1979,14 +1979,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
                           {/* Original Filename Display */}
                           <div className="text-center">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">Arquivo Enviado</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">{file.document_type === "cadastro_atividade_plano" ? "Atividade do Plano" : "Arquivo Enviado"}</span>
                             <p className="text-[11px] font-bold text-slate-600 truncate max-w-full px-2" title={file.file_name}>
-                              {file.file_name}
+                              {file.document_type === "cadastro_atividade_plano" ? (sub.proposal.credit_purpose || "NÃO PREENCHIDA Pelo projetista") : file.file_name}
                             </p>
                           </div>
 
                           {/* GED ID Field or Dispensation message */}
-                          {file.file_path === "dispensado" ? (
+                          {file.document_type !== "cadastro_atividade_plano" && (file.file_path === "dispensado" ? (
                             <div className="bg-slate-200/50 border border-slate-300 rounded-2xl py-2 px-3 text-center">
                               <span className="text-[9px] font-bold text-slate-600 block">
                                 DOC. DISPENSADO NÃO POSSUI / NÃO NECESSÁRIO
@@ -2016,9 +2016,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                 }}
                               />
                             </div>
-                          )}
+                          ))}`
 
-                          <Separator className="opacity-50" />
+                          {file.document_type !== "cadastro_atividade_plano" && (
+                            <>
+                              <Separator className="opacity-50" />
 
                           {/* Action Buttons for Analista */}
                           <div className="flex items-center gap-2 justify-center flex-wrap pt-1">
@@ -2067,6 +2069,8 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                               </Button>
                             )}
                           </div>
+                            </>
+                          )}
                         </CardContent>
                       </Card>
                     );
