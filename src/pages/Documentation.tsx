@@ -1980,111 +1980,121 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           </div>
 
                           {/* GED ID Field or Dispensation message */}
-                          {file.document_type !== "cadastro_atividade_plano" && (file.file_path === "dispensado" ? (
-                            <div className="bg-slate-200/50 border border-slate-300 rounded-2xl py-2 px-3 text-center">
-                              <span className="text-[9px] font-bold text-slate-600 block">
-                                DOC. DISPENSADO NÃO POSSUI / NÃO NECESSÁRIO
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="space-y-1 bg-slate-50 border border-slate-100 rounded-2xl p-2.5">
-                              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block ml-1">ID-GED</label>
-                              <input
-                                type="text"
-                                defaultValue={file.ged_id ?? ""}
-                                placeholder={
-                                  socioAmbientalKeys.includes(file.document_type)
-                                    ? "INSERIR ID - CERT. SOCIO AMBIENTAL ZIP"
-                                    : "Ex: GED-001"
-                                }
-                                maxLength={40}
-                                className="w-full h-8 rounded-xl border border-slate-200 bg-white px-3 text-xs font-mono font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-center"
-                                onBlur={(e) => {
-                                  const val = e.target.value.trim();
-                                  if (val !== (file.ged_id ?? "")) {
-                                    updateGedId(file.id, val);
-                                  }
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                                }}
-                              />
-                            </div>
-                          ))}`
+                           {file.id.startsWith("temp_") ? (
+                             <div className="bg-slate-100/60 border border-slate-200 rounded-2xl py-3 px-3 text-center">
+                               <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-widest leading-relaxed">
+                                 Aguardando envio pelo projetista ⏳
+                               </span>
+                             </div>
+                           ) : (
+                             file.document_type !== "cadastro_atividade_plano" && (file.file_path === "dispensado" ? (
+                               <div className="bg-slate-200/50 border border-slate-300 rounded-2xl py-2 px-3 text-center">
+                                 <span className="text-[9px] font-bold text-slate-600 block">
+                                   DOC. DISPENSADO NÃO POSSUI / NÃO NECESSÁRIO
+                                 </span>
+                               </div>
+                             ) : (
+                               <div className="space-y-1 bg-slate-50 border border-slate-100 rounded-2xl p-2.5">
+                                 <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block ml-1">ID-GED</label>
+                                 <input
+                                   type="text"
+                                   defaultValue={file.ged_id ?? ""}
+                                   placeholder={
+                                     socioAmbientalKeys.includes(file.document_type)
+                                       ? "INSERIR ID - CERT. SOCIO AMBIENTAL ZIP"
+                                       : "Ex: GED-001"
+                                   }
+                                   maxLength={40}
+                                   className="w-full h-8 rounded-xl border border-slate-200 bg-white px-3 text-xs font-mono font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-center"
+                                   onBlur={(e) => {
+                                     const val = e.target.value.trim();
+                                     if (val !== (file.ged_id ?? "")) {
+                                       updateGedId(file.id, val);
+                                     }
+                                   }}
+                                   onKeyDown={(e) => {
+                                     if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                   }}
+                                 />
+                               </div>
+                             ))
+                           )}
 
                            <Separator className="opacity-50" />
 
                            {/* Action Buttons for Analista */}
-                           <div className="flex items-center gap-2 justify-center flex-wrap pt-1">
-                             <Button
-                               variant="outline"
-                               size="sm"
-                               className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50"
-                               disabled={pdfLoading || (
-                                 file.document_type === "cadastro_atividade_plano" &&
-                                 !sub.files.find((f) => {
-                                   const type = f.document_type.toLowerCase();
-                                   const isVirtual = f.file_path === "preenchido" || f.file_path === "dispensado" || f.file_path === "habilitado";
-                                   if (isVirtual) return false;
-                                   return type === "plano_assinado" || type === "plano_eletronico" || type.includes("plano");
-                                 })
-                               )}
-                               onClick={() => {
-                                 if (file.document_type === "cadastro_atividade_plano") {
-                                   const planoAssinadoFile = sub.files.find((f) => {
-                                     const type = f.document_type.toLowerCase();
-                                     const isVirtual = f.file_path === "preenchido" || f.file_path === "dispensado" || f.file_path === "habilitado";
-                                     if (isVirtual) return false;
-                                     return type === "plano_assinado" || type === "plano_eletronico" || type.includes("plano");
-                                   });
-                                   if (planoAssinadoFile) {
-                                     handleViewPdf(planoAssinadoFile.file_path, planoAssinadoFile.file_name);
-                                   }
-                                 } else {
-                                   handleViewPdf(file.file_path, file.file_name);
-                                 }
-                               }}
-                             >
-                               {pdfLoading ? (
-                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                               ) : (
-                                 <Eye className="h-3.5 w-3.5" />
-                               )}
-                               Ver
-                             </Button>
-                             {file.document_type !== "cadastro_atividade_plano" && (
+                           {!file.id.startsWith("temp_") ? (
+                             <div className="flex items-center gap-2 justify-center flex-wrap pt-1">
                                <Button
                                  variant="outline"
                                  size="sm"
                                  className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50"
-                                 onClick={() => downloadFile(file.file_path, file.file_name)}
+                                 disabled={pdfLoading || (
+                                   file.document_type === "cadastro_atividade_plano" &&
+                                   !sub.files.find((f) => {
+                                     const type = f.document_type.toLowerCase();
+                                     const isVirtual = f.file_path === "preenchido" || f.file_path === "dispensado" || f.file_path === "habilitado";
+                                     if (isVirtual) return false;
+                                     return type === "plano_assinado" || type === "plano_eletronico" || type.includes("plano");
+                                   })
+                                 )}
+                                 onClick={() => {
+                                   if (file.document_type === "cadastro_atividade_plano") {
+                                     const planoAssinadoFile = sub.files.find((f) => {
+                                       const type = f.document_type.toLowerCase();
+                                       const isVirtual = f.file_path === "preenchido" || f.file_path === "dispensado" || f.file_path === "habilitado";
+                                       if (isVirtual) return false;
+                                       return type === "plano_assinado" || type === "plano_eletronico" || type.includes("plano");
+                                     });
+                                     if (planoAssinadoFile) {
+                                       handleViewPdf(planoAssinadoFile.file_path, planoAssinadoFile.file_name);
+                                     }
+                                   } else {
+                                     handleViewPdf(file.file_path, file.file_name);
+                                   }
+                                 }}
                                >
-                                 <Download className="h-3.5 w-3.5" />
-                                 Baixar
+                                 {pdfLoading ? (
+                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                 ) : (
+                                   <Eye className="h-3.5 w-3.5" />
+                                 )}
+                                 Ver
                                </Button>
-                             )}
-                             {status !== "aprovado" && (
-                               <Button
-                                 size="sm"
-                                 className="gap-1 rounded-xl text-[11px] font-bold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                                 onClick={() => approveDocument(file.id)}
-                               >
-                                 <ThumbsUp className="h-3.5 w-3.5" />
-                                 Aprovar
-                               </Button>
-                             )}
-                             {status !== "reprovado" && (
-                               <Button
-                                 variant="destructive"
-                                 size="sm"
-                                 className="gap-1 rounded-xl text-[11px] font-bold h-8 shadow-sm"
-                                 onClick={() => handleOpenRejectDialog(file.id)}
-                               >
-                                 <ThumbsDown className="h-3.5 w-3.5" />
-                                 Reprovar
-                               </Button>
-                             )}
-                           </div>
+                               {file.document_type !== "cadastro_atividade_plano" && (
+                                 <Button
+                                   variant="outline"
+                                   size="sm"
+                                   className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50"
+                                   onClick={() => downloadFile(file.file_path, file.file_name)}
+                                 >
+                                   <Download className="h-3.5 w-3.5" />
+                                   Baixar
+                                 </Button>
+                               )}
+                               {status !== "aprovado" && (
+                                 <Button
+                                   size="sm"
+                                   className="gap-1 rounded-xl text-[11px] font-bold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                                   onClick={() => approveDocument(file.id)}
+                                 >
+                                   <ThumbsUp className="h-3.5 w-3.5" />
+                                   Aprovar
+                                 </Button>
+                               )}
+                               {status !== "reprovado" && (
+                                 <Button
+                                   variant="destructive"
+                                   size="sm"
+                                   className="gap-1 rounded-xl text-[11px] font-bold h-8 shadow-sm"
+                                   onClick={() => handleOpenRejectDialog(file.id)}
+                                 >
+                                   <ThumbsDown className="h-3.5 w-3.5" />
+                                   Reprovar
+                                 </Button>
+                               )}
+                             </div>
+                           ) : null}
                         </CardContent>
                       </Card>
                     );

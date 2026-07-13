@@ -167,11 +167,22 @@ export function useDocumentationReview() {
           invValida = (Math.abs(totalInv - estimatedVal) < 0.01) && (invData as any)?.status === "aprovado";
         }
 
-        const docFiles = files.filter(f => requiredKeys.includes(f.document_type) || f.document_type === "plano_assinado");
-        const approved = docFiles.filter((f) => f.status === "aprovado").length + (invValida ? 1 : 0);
-        const rejected = docFiles.filter((f) => f.status === "reprovado").length;
-        const pending = docFiles.filter((f) => f.status === "pendente").length + (invValida ? 0 : 1);
-        const totalFiles = docFiles.length + 1;
+        let approved = invValida ? 1 : 0;
+        let rejected = 0;
+        let pending = invValida ? 0 : 1;
+
+        requiredKeys.forEach((key) => {
+          const status = typeMap.get(key);
+          if (status === "aprovado") {
+            approved++;
+          } else if (status === "reprovado") {
+            rejected++;
+          } else {
+            pending++;
+          }
+        });
+
+        const totalFiles = requiredKeys.length + 1;
 
         return {
           token: {
