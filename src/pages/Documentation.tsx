@@ -372,19 +372,19 @@ export default function Documentation() {
       ? "NO IMÓVEL ACIMA IDENTIFICADO"
       : `NO PROJETO DE ASSENTAMENTO ${numPA.toUpperCase()} - ${nomePA.toUpperCase()} COM REGISTRO NO CAR: ${carColetivo.toUpperCase()}`;
 
-    return `Trata-se de proposta de crédito rural apresentad${g.artigo.toLowerCase()} por ${nome.toUpperCase()}, CPF ${cpf}, ${g.agricultor} familiar ${g.enquadrado} no PRONAF Grupo A, ${g.produtor}, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no:
+    return `Trata-se de proposta de crédito rural apresentad${g.artigo.toLowerCase()} por ${nome.toUpperCase()}, CPF ${cpf}, ${g.agricultor} familiar ${g.enquadrado} no ${sub.proposal.credit_program || "PRONAF Grupo A"}, ${g.produtor}, para ${programAcao} da atividade de ${atividade.toUpperCase()}, a ser desenvolvida no:
 ${localStr}
 Possuindo aptidão agropecuária e infraestrutura compatível com a atividade financiada.
 
 No que se refere à relação entre ${g.artigo.toLowerCase() === "o" ? "o proponente" : "a proponente"} e funcionário do Banco, informa-se que não há vínculo de parentesco com funcionário que atue na análise, deliberação ou decisão da presente operação de crédito.
 
-O relacionamento negocial d${g.artigo} proponente com a instituição financeira apresenta-se condizente com o porte da operação, considerando os critérios de rentabilidade projetada, reciprocidade e aderência às diretrizes do programa PRONAF A. Quanto às restrições cadastrais, não foram identificadas restrições impeditivas ao crédito, conforme consultas realizadas aos sistemas internos do Banco e à Central de Risco de Crédito – SCR/BACEN na data ${dataHoje}. O histórico do cliente demonstra situação regular, não havendo registros de atrasos relevantes ou inadimplência em operações de crédito rural.
+O relacionamento negocial d${g.artigo} proponente com a instituição financeira apresenta-se condizente com o porte da operação, considerando os critérios de rentabilidade projetada, reciprocidade e aderência às diretrizes do programa ${sub.proposal.credit_program || "PRONAF A"}. Quanto às restrições cadastrais, não foram identificadas restrições impeditivas ao crédito, conforme consultas realizadas aos sistemas internos do Banco e à Central de Risco de Crédito – SCR/BACEN na data ${dataHoje}. O histórico do cliente demonstra situação regular, não havendo registros de atrasos relevantes ou inadimplência em operações de crédito rural.
 
 O financiamento proposto contempla investimento fixo EM:
 ${inversoesStr}
 
 totalizando investimento no valor de ${valorTotal}.
-A operação será financiada com recursos do FNE/PRONAF Grupo A ${codPrograma}${complemento699}.
+A operação será financiada com recursos do FNE/${sub.proposal.credit_program || "PRONAF Grupo A"} ${codPrograma}${complemento699}.
 
 Em relação aos recursos próprios, não haverá contrapartida financeira por parte d${g.artigo} proponente, sendo o investimento integralmente financiado. Não se aplica à presente operação a utilização de imóveis de terceiros beneficiados com o crédito, visto que todas as inversões ocorrerão no imóvel acima identificado.
 
@@ -2858,8 +2858,12 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       <strong className="text-slate-800 dark:text-slate-200 font-mono font-semibold">{sub.proposal.producer_cpf || "—"}</strong>
                     </div>
                     <div>
+                      <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Programa de Crédito:</span>
+                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{sub.proposal.credit_program || "—"}</strong>
+                    </div>
+                    <div>
                       <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Linha de Crédito:</span>
-                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{sub.proposal.linha_credito || sub.proposal.credit_program || "—"}</strong>
+                      <strong className="text-slate-800 dark:text-slate-200 font-semibold">{sub.proposal.linha_credito || "—"}</strong>
                     </div>
                     <div>
                       <span className="text-muted-foreground block font-bold text-[9px] uppercase tracking-wider">Valor Estimado:</span>
