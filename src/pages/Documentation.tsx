@@ -76,6 +76,8 @@ export default function Documentation() {
     rejectDocument,
     updateGedId,
     approveProposal,
+    approveInversoes,
+    rejectInversoes,
     sendToCentral,
     revertProposal,
     downloadFile,
@@ -1022,48 +1024,29 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
   }, [selectedSubmission, bulkRejectReason, rejectAllDocuments]);
 
   const handleApproveInversoes = useCallback(async (proposalId: string, currentInversoes: any) => {
-    try {
-      const items = Array.isArray(currentInversoes) ? currentInversoes : (currentInversoes?.items || []);
-      const custoAssessoria = typeof currentInversoes?.custoAssessoria === "number" ? currentInversoes.custoAssessoria : 0;
-      
-      const newInversoes = {
-        items,
-        custoAssessoria,
-        status: "aprovado",
-        rejection_reason: null
-      };
+    const items = Array.isArray(currentInversoes) ? currentInversoes : (currentInversoes?.items || []);
+    const custoAssessoria = typeof currentInversoes?.custoAssessoria === "number" ? currentInversoes.custoAssessoria : 0;
+    
+    const newInversoes = {
+      items,
+      custoAssessoria,
+      status: "aprovado",
+      rejection_reason: null
+    };
 
-      const { error } = await supabase
-        .from("stock_proposals")
-        .update({
+    setSelectedSubmission((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        proposal: {
+          ...prev.proposal,
           inversoes: newInversoes
-        })
-        .eq("id", proposalId);
+        }
+      };
+    });
 
-      if (error) throw error;
-      toast({ title: "Inversões do plano aprovadas ✅" });
-
-      setSelectedSubmission((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          proposal: {
-            ...prev.proposal,
-            inversoes: newInversoes
-          }
-        };
-      });
-
-      await refetch();
-    } catch (err: any) {
-      console.error("Error approving inversions:", err);
-      toast({
-        title: "Erro ao aprovar inversões",
-        description: err.message,
-        variant: "destructive"
-      });
-    }
-  }, [refetch, toast]);
+    await approveInversoes(proposalId, currentInversoes);
+  }, [approveInversoes]);
 
   const handleOpenInversoesRejectDialog = useCallback((proposalId: string, currentInversoes: any) => {
     setRejectingProposalId(proposalId);
@@ -1074,52 +1057,34 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
   const handleConfirmRejectInversoes = useCallback(async () => {
     if (!rejectingProposalId) return;
-    try {
-      const currentInversoes = rejectingCurrentInversoes;
-      const items = Array.isArray(currentInversoes) ? currentInversoes : (currentInversoes?.items || []);
-      const custoAssessoria = typeof currentInversoes?.custoAssessoria === "number" ? currentInversoes.custoAssessoria : 0;
-      
-      const newInversoes = {
-        items,
-        custoAssessoria,
-        status: "reprovado",
-        rejection_reason: inversoesRejectReason
-      };
+    const currentInversoes = rejectingCurrentInversoes;
+    const items = Array.isArray(currentInversoes) ? currentInversoes : (currentInversoes?.items || []);
+    const custoAssessoria = typeof currentInversoes?.custoAssessoria === "number" ? currentInversoes.custoAssessoria : 0;
+    
+    const newInversoes = {
+      items,
+      custoAssessoria,
+      status: "reprovado",
+      rejection_reason: inversoesRejectReason
+    };
 
-      const { error } = await supabase
-        .from("stock_proposals")
-        .update({
+    setSelectedSubmission((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        proposal: {
+          ...prev.proposal,
           inversoes: newInversoes
-        })
-        .eq("id", rejectingProposalId);
+        }
+      };
+    });
 
-      if (error) throw error;
-      toast({ title: "Inversões do plano reprovadas ❌" });
-
-      setSelectedSubmission((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          proposal: {
-            ...prev.proposal,
-            inversoes: newInversoes
-          }
-        };
-      });
-      setInversoesRejectDialogOpen(false);
-      setRejectingProposalId(null);
-      setRejectingCurrentInversoes(null);
-      setInversoesRejectReason("");
-      await refetch();
-    } catch (err: any) {
-      console.error("Error reproving inversions:", err);
-      toast({
-        title: "Erro ao reprovar inversões",
-        description: err.message,
-        variant: "destructive"
-      });
-    }
-  }, [rejectingProposalId, rejectingCurrentInversoes, inversoesRejectReason, refetch, toast]);
+    setInversoesRejectDialogOpen(false);
+    await rejectInversoes(rejectingProposalId, rejectingCurrentInversoes, inversoesRejectReason);
+    setRejectingProposalId(null);
+    setRejectingCurrentInversoes(null);
+    setInversoesRejectReason("");
+  }, [rejectingProposalId, rejectingCurrentInversoes, inversoesRejectReason, rejectInversoes]);
 
   // ─── Loading state ────────────────────────────────────────────
   if (loading) {

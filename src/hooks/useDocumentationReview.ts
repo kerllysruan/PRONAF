@@ -571,6 +571,70 @@ export function useDocumentationReview() {
     }
   }, [user, toast, fetchSubmissions]);
 
+  const approveInversoes = useCallback(async (proposalId: string, currentInversoes: any) => {
+    try {
+      const items = Array.isArray(currentInversoes) ? currentInversoes : (currentInversoes?.items || []);
+      const custoAssessoria = typeof currentInversoes?.custoAssessoria === "number" ? currentInversoes.custoAssessoria : 0;
+      
+      const newInversoes = {
+        items,
+        custoAssessoria,
+        status: "aprovado",
+        rejection_reason: null
+      };
+
+      const { error } = await supabase
+        .from("stock_proposals")
+        .update({
+          inversoes: newInversoes
+        })
+        .eq("id", proposalId);
+
+      if (error) throw error;
+      toast({ title: "Inversões do plano aprovadas ✅" });
+      await fetchSubmissions(true);
+    } catch (err: any) {
+      console.error("Error approving inversions:", err);
+      toast({
+        title: "Erro ao aprovar inversões",
+        description: err.message,
+        variant: "destructive"
+      });
+    }
+  }, [toast, fetchSubmissions]);
+
+  const rejectInversoes = useCallback(async (proposalId: string, currentInversoes: any, reason: string) => {
+    try {
+      const items = Array.isArray(currentInversoes) ? currentInversoes : (currentInversoes?.items || []);
+      const custoAssessoria = typeof currentInversoes?.custoAssessoria === "number" ? currentInversoes.custoAssessoria : 0;
+      
+      const newInversoes = {
+        items,
+        custoAssessoria,
+        status: "reprovado",
+        rejection_reason: reason
+      };
+
+      const { error } = await supabase
+        .from("stock_proposals")
+        .update({
+          inversoes: newInversoes
+        })
+        .eq("id", proposalId);
+
+      if (error) throw error;
+      toast({ title: "Inversões do plano reprovadas ❌" });
+      await fetchSubmissions(true);
+    } catch (err: any) {
+      console.error("Error reproving inversions:", err);
+      toast({
+        title: "Erro ao reprovar inversões",
+        description: err.message,
+        variant: "destructive"
+      });
+    }
+  }, [toast, fetchSubmissions]);
+
   /**
    * Revert the proposal to its previous status (before documentation flow).
    * Deletes files, token, and restores original status.
@@ -973,6 +1037,8 @@ export function useDocumentationReview() {
     rejectDocument,
     updateGedId,
     approveProposal,
+    approveInversoes,
+    rejectInversoes,
     sendToCentral,
     revertProposal,
     downloadFile,
