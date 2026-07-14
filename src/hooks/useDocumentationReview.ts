@@ -150,8 +150,8 @@ export function useDocumentationReview() {
         .from("documentation_files")
         .select("*")
         .in("token_id", tokenIds)
-        .order("document_type", { ascending: true })
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(0, 4999);
 
       if (filesError) throw filesError;
 
