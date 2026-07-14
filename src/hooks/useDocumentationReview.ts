@@ -1196,6 +1196,88 @@ export function useDocumentationReview() {
     }
   }, [toast]);
 
+  const dispenseDocument = useCallback(async (
+    tokenId: string,
+    stockProposalId: string,
+    docType: string,
+    dispense: boolean
+  ) => {
+    try {
+      const { data: records } = await supabase
+        .from("documentation_files")
+        .select("id, file_path")
+        .eq("token_id", tokenId)
+        .eq("document_type", docType)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const existing = records && records.length > 0 ? records[0] : null;
+
+      if (dispense) {
+        if (existing) {
+          const { error } = await supabase
+            .from("documentation_files")
+            .update({
+              file_name: "DISPENSADO PELO ANALISTA",
+              file_path: "dispensado",
+              file_size: 0,
+              status: "aprovado",
+              rejection_reason: null,
+              reviewed_at: new Date().toISOString(),
+              reviewed_by: user?.id,
+              created_at: new Date().toISOString(),
+            })
+            .eq("id", existing.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("documentation_files")
+            .insert({
+              token_id: tokenId,
+              stock_proposal_id: stockProposalId,
+              file_name: "DISPENSADO PELO ANALISTA",
+              file_path: "dispensado",
+              file_size: 0,
+              document_type: docType,
+              status: "aprovado",
+              reviewed_at: new Date().toISOString(),
+              reviewed_by: user?.id,
+              created_at: new Date().toISOString(),
+            });
+          if (error) throw error;
+        }
+      } else {
+        if (existing) {
+          const { error } = await supabase
+            .from("documentation_files")
+            .update({
+              file_name: "Pendente de envio",
+              file_path: "habilitado",
+              file_size: 0,
+              status: "pendente",
+              rejection_reason: null,
+              reviewed_at: new Date().toISOString(),
+              reviewed_by: user?.id,
+              created_at: new Date().toISOString(),
+            })
+            .eq("id", existing.id);
+          if (error) throw error;
+        }
+      }
+
+      toast({ title: dispense ? "Documento dispensado ✅" : "Dispensa desfeita 🔄" });
+      await fetchSubmissions(true);
+      return true;
+    } catch (err: any) {
+      console.error("Error dispensing document:", err);
+      toast({
+        title: "Erro ao dispensar",
+        description: err.message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [user, toast, fetchSubmissions]);
+
   const refetchAll = useCallback(async () => {
     await fetchSubmissions();
     await fetchAuthorizedProposals();
@@ -1207,6 +1289,7 @@ export function useDocumentationReview() {
     loading,
     approveDocument,
     rejectDocument,
+    dispenseDocument,
     updateGedId,
     approveProposal,
     approveInversoes,

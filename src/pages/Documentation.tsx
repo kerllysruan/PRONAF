@@ -67,6 +67,18 @@ import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+const DISPENSABLE_DOCS = [
+  "ficha_cadastro_esposa",
+  "rg_esposa",
+  "certidao_casamento",
+  "procuracao",
+  "rg_procurador",
+  "titulo_dominio",
+  "car_individual",
+  "car_coletivo",
+  "certidao_obito",
+];
+
 export default function Documentation() {
   const {
     submissions,
@@ -74,6 +86,7 @@ export default function Documentation() {
     loading,
     approveDocument,
     rejectDocument,
+    dispenseDocument,
     updateGedId,
     approveProposal,
     approveInversoes,
@@ -2149,16 +2162,53 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                </Button>
                              )}
                              {status !== "reprovado" && (
-                               <Button
-                                 variant="destructive"
-                                 size="sm"
-                                 className="gap-1 rounded-xl text-[11px] font-bold h-8 shadow-sm"
-                                 onClick={() => handleOpenRejectDialog(file.id)}
-                               >
-                                 <ThumbsDown className="h-3.5 w-3.5" />
-                                 {isDispensado ? "Reprovar Dispensa" : "Reprovar"}
-                               </Button>
-                             )}
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  className="gap-1 rounded-xl text-[11px] font-bold h-8 shadow-sm"
+                                  onClick={() => handleOpenRejectDialog(file.id)}
+                                >
+                                  <ThumbsDown className="h-3.5 w-3.5" />
+                                  {isDispensado ? "Reprovar Dispensa" : "Reprovar"}
+                                </Button>
+                              )}
+                              {DISPENSABLE_DOCS.includes(file.document_type) && (
+                                isDispensado ? (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50"
+                                    onClick={() => dispenseDocument(sub.token.id, sub.proposal.id, file.document_type, false)}
+                                  >
+                                    <Undo2 className="h-3.5 w-3.5" />
+                                    Desfazer Dispensa
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-1 rounded-xl text-[11px] font-bold h-8 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                    onClick={() => {
+                                      if (file.document_type === "car_individual" || file.document_type === "car_coletivo") {
+                                        const otherKey = file.document_type === "car_individual" ? "car_coletivo" : "car_individual";
+                                        const otherFile = sub.files.find(f => f.document_type === otherKey);
+                                        if (otherFile?.file_path === "dispensado") {
+                                          toast({
+                                            title: "Operação não permitida ⚠️",
+                                            description: "Você não pode dispensar ambos os CARs. É necessário fornecer ao menos um (CAR Individual ou CAR Coletivo)!",
+                                            variant: "destructive"
+                                          });
+                                          return;
+                                        }
+                                      }
+                                      dispenseDocument(sub.token.id, sub.proposal.id, file.document_type, true);
+                                    }}
+                                  >
+                                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                                    Dispensar
+                                  </Button>
+                                )
+                              )}
                            </div>
                         </CardContent>
                       </Card>
