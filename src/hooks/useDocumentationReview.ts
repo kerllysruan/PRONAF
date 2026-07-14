@@ -125,10 +125,22 @@ export function useDocumentationReview() {
       if (filesError) throw filesError;
 
       const filesByToken = new Map<string, DocumentationFile[]>();
+      const rawFilesByToken = new Map<string, any[]>();
       (allFiles || []).forEach((f: any) => {
-        const list = filesByToken.get(f.token_id) || [];
-        list.push(f as DocumentationFile);
-        filesByToken.set(f.token_id, list);
+        const list = rawFilesByToken.get(f.token_id) || [];
+        list.push(f);
+        rawFilesByToken.set(f.token_id, list);
+      });
+
+      rawFilesByToken.forEach((filesList, tokenId) => {
+        const typeMap = new Map<string, DocumentationFile>();
+        filesList.forEach((f) => {
+          const existing = typeMap.get(f.document_type);
+          if (!existing || new Date(f.created_at).getTime() > new Date(existing.created_at).getTime()) {
+            typeMap.set(f.document_type, f as DocumentationFile);
+          }
+        });
+        filesByToken.set(tokenId, Array.from(typeMap.values()));
       });
 
       const result: SubmittedProposal[] = filteredTokens.map((t: any) => {
