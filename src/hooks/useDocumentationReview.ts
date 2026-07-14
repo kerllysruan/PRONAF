@@ -485,6 +485,7 @@ export function useDocumentationReview() {
       }
 
       toast({ title: "Documento aprovado ✅" });
+      await new Promise(resolve => setTimeout(resolve, 250));
       await fetchSubmissions(true);
     } catch (err: any) {
       console.error("Error approving document:", err);
@@ -585,6 +586,7 @@ export function useDocumentationReview() {
       }
 
       toast({ title: "Documento reprovado ❌", description: "O link foi reaberto para reenvio." });
+      await new Promise(resolve => setTimeout(resolve, 250));
       await fetchSubmissions(true);
     } catch (err: any) {
       console.error("Error rejecting document:", err);
@@ -1365,6 +1367,7 @@ export function useDocumentationReview() {
         })
       );
 
+      await new Promise(resolve => setTimeout(resolve, 250));
       await fetchSubmissions(true);
       return true;
     } catch (err: any) {
