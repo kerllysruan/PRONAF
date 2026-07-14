@@ -927,6 +927,41 @@ export default function DocumentationSubmit() {
                           <p className="text-indigo-600 text-[10px] truncate max-w-full px-2">
                             {dbFile?.file_name}
                           </p>
+                          {(!tokenData?.documents_submitted) && dbFile?.file_path !== "dispensado" && dbFile?.file_path !== "preenchido" && (
+                            <button
+                              type="button"
+                              disabled={enablingDoc === doc.key}
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (tokenData && enablingDoc !== doc.key) {
+                                  setEnablingDoc(doc.key);
+                                  try {
+                                    const ok = await dispenseDocument(tokenData.id, tokenData.stock_proposal_id, doc.key, false);
+                                    if (ok) {
+                                      const refreshedFiles = await getFilesForToken(tokenData.id);
+                                      setFiles(refreshedFiles);
+                                    }
+                                  } finally {
+                                    setEnablingDoc(null);
+                                  }
+                                }
+                              }}
+                              className="mt-3 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-700 text-[10px] font-bold active:scale-95 transition-all duration-200 disabled:opacity-50"
+                            >
+                              {enablingDoc === doc.key ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  Removendo...
+                                </>
+                              ) : (
+                                <>
+                                  <RotateCcw className="h-3 w-3" />
+                                  Habilitar Reenvio / Remover
+                                </>
+                              )}
+                            </button>
+                          )}
                         </>
                       ) : (
                         <>
