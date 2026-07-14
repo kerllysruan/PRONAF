@@ -994,7 +994,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
       item.producer_cpf || "---",
       item.projetista?.toUpperCase() || "N/A",
       item.municipio || "---",
-      item.status_docs,
+      "", // Deixamos em branco para desenhar o badge customizado no didDrawCell
       formatCurrency(Number(item.estimated_value) || 0),
       item.link ? "" : "—",
     ]);
@@ -1015,6 +1015,40 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
       },
       alternateRowStyles: { fillColor: [248, 250, 252] },
       didDrawCell: (data: any) => {
+        // Desenhar badge visual na coluna STATUS DOCUMENTAÇÃO (index 5)
+        if (data.section === "body" && data.column.index === 5) {
+          const item = filtered[data.row.index];
+          const status = item?.status_docs || "";
+          
+          const badgeW = 32;
+          const badgeH = 5.2;
+          const badgeX = data.cell.x + (data.cell.width - badgeW) / 2;
+          const badgeY = data.cell.y + (data.cell.height - badgeH) / 2;
+
+          let bgColor = [241, 245, 249]; // Slate 100
+          let textColor = [71, 85, 105]; // Slate 600
+
+          if (status === "APROVADA") {
+            bgColor = [220, 252, 231]; // Emerald 100
+            textColor = [21, 128, 61];  // Emerald 700
+          } else if (status === "REPROVADA") {
+            bgColor = [254, 226, 226]; // Red 100
+            textColor = [185, 28, 28];  // Red 700
+          } else if (status === "PENDENTE") {
+            bgColor = [254, 243, 199]; // Amber 100
+            textColor = [180, 83, 9];   // Amber 700
+          }
+
+          // Salvar cor anterior do doc
+          doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+          doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 1.2, 1.2, "F");
+
+          doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+          doc.setFontSize(4.8);
+          doc.setFont("helvetica", "bold");
+          doc.text(status, badgeX + badgeW / 2, badgeY + badgeH / 2 + 1.6, { align: "center" });
+        }
+
         // Draw a visible button in the AÇÃO column
         if (data.section === "body" && data.column.index === 7) {
           const item = filtered[data.row.index];
