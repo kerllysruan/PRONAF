@@ -372,6 +372,7 @@ export function useDocumentationReview() {
 
   /**
    * Approve a single document file.
+   */
   const approveDocument = useCallback(async (fileId: string, tokenId?: string) => {
     try {
       let activeTokenId = "";
