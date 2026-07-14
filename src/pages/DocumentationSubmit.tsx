@@ -1399,19 +1399,8 @@ export default function DocumentationSubmit() {
                       Custos de Assessoria da Operação
                     </p>
                     <div className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-                      {/* Quantidade (Fixa) */}
-                      <div className="col-span-3 md:col-span-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Qtd.</label>
-                        <input
-                          type="number"
-                          value="1"
-                          disabled
-                          className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-slate-400 cursor-not-allowed focus:outline-none"
-                        />
-                      </div>
-
                       {/* Nome / Descrição (Fixo) */}
-                      <div className="col-span-5 md:col-span-6">
+                      <div className="col-span-8 md:col-span-8">
                         <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Item / Inversão</label>
                         <input
                           type="text"

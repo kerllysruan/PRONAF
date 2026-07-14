@@ -2636,29 +2636,8 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       {/* Campo de Custo Assessoria */}
                       {custo > 0 && (
                         <div className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm mt-3">
-                          <div className="col-span-2 md:col-span-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Quant.</label>
-                            <input
-                              type="number"
-                              value={1}
-                              disabled
-                              className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
-                            />
-                          </div>
-
-                          {/* Unidade */}
-                          <div className="col-span-3 md:col-span-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Unid.</label>
-                            <input
-                              type="text"
-                              value="UNID"
-                              disabled
-                              className="w-full px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
-                            />
-                          </div>
-
                           {/* Nome / Descrição */}
-                          <div className="col-span-4 md:col-span-6">
+                          <div className="col-span-9 md:col-span-9">
                             <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Item / Inversão</label>
                             <input
                               type="text"
