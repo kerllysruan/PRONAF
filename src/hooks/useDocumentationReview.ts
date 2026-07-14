@@ -150,13 +150,7 @@ export function useDocumentationReview() {
 
         grouped.forEach((fileList, docType) => {
           const sorted = [...fileList].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-          
-          let selectedFile = sorted[0];
-          if (!(sorted[0].file_path === "habilitado" && sorted[0].status === "pendente")) {
-            const realFile = sorted.find(f => f.file_path && f.file_path !== "habilitado");
-            if (realFile) selectedFile = realFile;
-          }
-
+          const selectedFile = sorted[0];
           const isDispensado = selectedFile.file_path === "dispensado" || selectedFile.file_path === "preenchido";
           const currentStatus = isDispensado ? "aprovado" : selectedFile.status;
           typeMap.set(docType, { status: currentStatus, isDispensado, created_at: selectedFile.created_at });
@@ -378,8 +372,7 @@ export function useDocumentationReview() {
 
   /**
    * Approve a single document file.
-   */
-  const approveDocument = useCallback(async (fileId: string) => {
+  const approveDocument = useCallback(async (fileId: string, tokenId?: string) => {
     try {
       let activeTokenId = "";
       if (fileId.startsWith("temp_")) {
@@ -387,13 +380,10 @@ export function useDocumentationReview() {
         let submissionId: string | null = null;
         let proposalId: string | null = null;
         
-        for (const sub of submissions) {
-          const isTarget = !sub.files.some(f => f.document_type === documentType);
-          if (isTarget) {
-            submissionId = sub.token.id;
-            proposalId = sub.proposal?.id || null;
-            break;
-          }
+        const targetSub = submissions.find(s => s.token.id === tokenId);
+        if (targetSub) {
+          submissionId = targetSub.token.id;
+          proposalId = targetSub.proposal?.id || null;
         }
 
         if (!submissionId || !proposalId) {
@@ -495,13 +485,10 @@ export function useDocumentationReview() {
         let submissionId: string | null = null;
         let proposalId: string | null = null;
         
-        for (const sub of submissions) {
-          const isTarget = !sub.files.some(f => f.document_type === documentType);
-          if (isTarget) {
-            submissionId = sub.token.id;
-            proposalId = sub.proposal?.id || null;
-            break;
-          }
+        const targetSub = submissions.find(s => s.token.id === tokenId);
+        if (targetSub) {
+          submissionId = targetSub.token.id;
+          proposalId = targetSub.proposal?.id || null;
         }
 
         if (!submissionId || !proposalId) {

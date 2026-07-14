@@ -280,14 +280,7 @@ export default function DocumentationSubmit() {
 
     grouped.forEach((fileList, docType) => {
       const sorted = [...fileList].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      
-      let selectedFile = sorted[0];
-      if (!(sorted[0].file_path === "habilitado" && sorted[0].status === "pendente")) {
-        const realFile = sorted.find(f => f.file_path && f.file_path !== "habilitado");
-        if (realFile) selectedFile = realFile;
-      }
-      
-      map.set(docType, selectedFile);
+      map.set(docType, sorted[0]);
     });
 
     const result: Record<string, DocumentationFile> = {};

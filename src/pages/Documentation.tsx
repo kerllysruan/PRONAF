@@ -1849,16 +1849,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
           grouped.forEach((fileList, docType) => {
             const sorted = [...fileList].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-            if (sorted[0].file_path === "habilitado" && sorted[0].status === "pendente") {
-              bestByType.set(docType, sorted[0]);
-              return;
-            }
-            const realFile = sorted.find(f => f.file_path && f.file_path !== "habilitado");
-            if (realFile) {
-              bestByType.set(docType, realFile);
-            } else {
-              bestByType.set(docType, sorted[0]);
-            }
+            bestByType.set(docType, sorted[0]);
           });
 
           // Ensure all current required documents exist (even as virtual pendente cards)
