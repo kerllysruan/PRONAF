@@ -1265,6 +1265,106 @@ export function useDocumentationReview() {
       }
 
       toast({ title: dispense ? "Documento dispensado ✅" : "Dispensa desfeita 🔄" });
+
+      // Optimistic update of the local state submissions to reflect instantly on the screen
+      setSubmissions((prev) =>
+        prev.map((sub) => {
+          if (sub.token.id !== tokenId) return sub;
+
+          let updatedFiles = [...sub.files];
+          const existingFileIdx = updatedFiles.findIndex(f => f.document_type === docType);
+
+          const mockFile = {
+            id: existingFileIdx >= 0 ? updatedFiles[existingFileIdx].id : `disp_${docType}_${Date.now()}`,
+            token_id: tokenId,
+            stock_proposal_id: stockProposalId,
+            file_name: dispense ? "DISPENSADO PELO ANALISTA" : "Pendente de envio",
+            file_path: dispense ? "dispensado" : "habilitado",
+            file_size: 0,
+            document_type: docType,
+            status: dispense ? "aprovado" : "pendente",
+            rejection_reason: null,
+            reviewed_at: new Date().toISOString(),
+            reviewed_by: user?.id,
+            created_at: new Date().toISOString(),
+            ged_id: existingFileIdx >= 0 ? updatedFiles[existingFileIdx].ged_id : null
+          } as DocumentationFile;
+
+          if (existingFileIdx >= 0) {
+            updatedFiles[existingFileIdx] = mockFile;
+          } else {
+            updatedFiles.push(mockFile);
+          }
+
+          const requiredKeys = DOCUMENTATION_REQUIRED.map(d => d.key);
+          const typeMap = new Map<string, { status: string; isDispensado: boolean; created_at: string }>();
+          
+          updatedFiles.forEach((f) => {
+            if (!requiredKeys.includes(f.document_type)) return;
+            const isDisp = f.file_path === "dispensado" || f.file_path === "preenchido";
+            const statusVal = isDisp ? "aprovado" : f.status;
+            
+            const existingInMap = typeMap.get(f.document_type);
+            if (!existingInMap || new Date(f.created_at).getTime() > new Date(existingInMap.created_at).getTime()) {
+              typeMap.set(f.document_type, { status: statusVal, isDispensado: isDisp, created_at: f.created_at });
+            }
+          });
+
+          let approved = 0;
+          let rejected = 0;
+          let pending = 0;
+          let dispensedCount = 0;
+
+          let invValida = false;
+          const estimatedVal = Number(sub.proposal?.estimated_value) || 0;
+          const invData = sub.proposal?.inversoes;
+          if (invData) {
+            let totalInv = 0;
+            if (Array.isArray(invData)) {
+              totalInv = invData.reduce((acc: number, item: any) => acc + (Number(item.valor) || 0), 0);
+            } else if (typeof invData === "object") {
+              const obj = invData as any;
+              const items = Array.isArray(obj.items) ? obj.items : [];
+              const custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
+              totalInv = items.reduce((acc: number, item: any) => acc + (Number(item.valor) || 0), 0) + custo;
+            }
+            invValida = (Math.abs(totalInv - estimatedVal) < 0.01) && (invData as any)?.status === "aprovado";
+          }
+
+          if (invValida) {
+            approved = 1;
+          } else {
+            pending = 1;
+          }
+
+          requiredKeys.forEach((key) => {
+            const fileInfo = typeMap.get(key);
+            if (!fileInfo) {
+              pending++;
+            } else if (fileInfo.isDispensado) {
+              dispensedCount++;
+            } else if (fileInfo.status === "aprovado") {
+              approved++;
+            } else if (fileInfo.status === "reprovado") {
+              rejected++;
+            } else {
+              pending++;
+            }
+          });
+
+          const totalFiles = requiredKeys.length + 1 - dispensedCount;
+
+          return {
+            ...sub,
+            files: updatedFiles,
+            approvedCount: approved,
+            rejectedCount: rejected,
+            pendingCount: pending,
+            totalFiles
+          };
+        })
+      );
+
       await fetchSubmissions(true);
       return true;
     } catch (err: any) {
