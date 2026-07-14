@@ -187,12 +187,15 @@ export function useDocumentationReview() {
         let approved = invValida ? 1 : 0;
         let rejected = 0;
         let pending = invValida ? 0 : 1;
+        let dispensedCount = 0;
 
         requiredKeys.forEach((key) => {
           const fileInfo = typeMap.get(key);
           if (!fileInfo) {
             pending++;
-          } else if (fileInfo.isDispensado || fileInfo.status === "aprovado") {
+          } else if (fileInfo.isDispensado) {
+            dispensedCount++;
+          } else if (fileInfo.status === "aprovado") {
             approved++;
           } else if (fileInfo.status === "reprovado") {
             rejected++;
@@ -201,7 +204,7 @@ export function useDocumentationReview() {
           }
         });
 
-        const totalFiles = requiredKeys.length + 1;
+        const totalFiles = requiredKeys.length + 1 - dispensedCount;
 
         return {
           token: {
@@ -528,6 +531,14 @@ export function useDocumentationReview() {
         if (error) throw error;
         activeFileId = newFile.id;
       } else {
+        const { data: currentFile } = await supabase
+          .from("documentation_files")
+          .select("file_path")
+          .eq("id", fileId)
+          .maybeSingle();
+
+        const isDisp = currentFile?.file_path === "dispensado";
+
         const { error: fileError } = await supabase
           .from("documentation_files")
           .update({
@@ -535,6 +546,7 @@ export function useDocumentationReview() {
             rejection_reason: reason || "Documento reprovado",
             reviewed_at: new Date().toISOString(),
             reviewed_by: user?.id,
+            ...(isDisp ? { file_path: "habilitado", file_name: "Pendente de envio" } : {})
           })
           .eq("id", fileId);
 

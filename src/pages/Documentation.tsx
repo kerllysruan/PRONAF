@@ -2148,7 +2148,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                  Aprovar
                                </Button>
                              )}
-                             {!isDispensado && status !== "reprovado" && (
+                             {status !== "reprovado" && (
                                <Button
                                  variant="destructive"
                                  size="sm"
@@ -2156,7 +2156,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                  onClick={() => handleOpenRejectDialog(file.id)}
                                >
                                  <ThumbsDown className="h-3.5 w-3.5" />
-                                 Reprovar
+                                 {isDispensado ? "Reprovar Dispensa" : "Reprovar"}
                                </Button>
                              )}
                            </div>
