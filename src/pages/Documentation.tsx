@@ -2142,7 +2142,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                <Button
                                  size="sm"
                                  className="gap-1 rounded-xl text-[11px] font-bold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                                 onClick={() => approveDocument(file.id)}
+                                 onClick={() => approveDocument(file.id, sub.token.id)}
                                >
                                  <ThumbsUp className="h-3.5 w-3.5" />
                                  Aprovar
