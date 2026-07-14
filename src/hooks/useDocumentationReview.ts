@@ -120,7 +120,8 @@ export function useDocumentationReview() {
         .from("documentation_files")
         .select("*")
         .in("token_id", tokenIds)
-        .order("document_type", { ascending: true });
+        .order("document_type", { ascending: true })
+        .order("created_at", { ascending: false });
 
       if (filesError) throw filesError;
 
@@ -135,9 +136,15 @@ export function useDocumentationReview() {
       rawFilesByToken.forEach((filesList, tokenId) => {
         const typeMap = new Map<string, DocumentationFile>();
         filesList.forEach((f) => {
+          // Normalize: if file_path is "dispensado" or "preenchido", force status to "aprovado"
+          const isDispPath = f.file_path === "dispensado" || f.file_path === "preenchido";
+          const normalizedFile = isDispPath
+            ? { ...f, status: "aprovado" }
+            : f;
+
           const existing = typeMap.get(f.document_type);
           if (!existing || new Date(f.created_at).getTime() > new Date(existing.created_at).getTime()) {
-            typeMap.set(f.document_type, f as DocumentationFile);
+            typeMap.set(f.document_type, normalizedFile as DocumentationFile);
           }
         });
         filesByToken.set(tokenId, Array.from(typeMap.values()));

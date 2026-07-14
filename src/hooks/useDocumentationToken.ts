@@ -473,6 +473,7 @@ export function useDocumentationToken() {
               status: "aprovado",
               rejection_reason: null,
               reviewed_at: new Date().toISOString(),
+              created_at: new Date().toISOString(),
             })
             .eq("id", existing.id);
           if (error) throw error;

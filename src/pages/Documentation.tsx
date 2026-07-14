@@ -1957,7 +1957,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   {filtered.map((file) => {
                     const status = file.status as DocFileStatus;
                     const isVirtual = file.id.startsWith("temp_");
-                    const isDispensado = file.file_path === "dispensado";
+                    const isDispensado = file.file_path === "dispensado" || file.file_path === "preenchido";
                     const isCarCard = file.document_type === "car_individual" || file.document_type === "car_coletivo";
                     let cardBorder = "border-slate-200 dark:border-slate-800";
                     let badgeColor = "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
