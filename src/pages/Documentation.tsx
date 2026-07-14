@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useDocumentationReview, SubmittedProposal, AuthorizedProposal } from "@/hooks/useDocumentationReview";
+import { useDocumentationReview, SubmittedProposal, AuthorizedProposal, parseSafeDate } from "@/hooks/useDocumentationReview";
 import {
   getDocLabel,
   DOC_STATUS_COLORS,
@@ -1861,7 +1861,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
           });
 
           grouped.forEach((fileList, docType) => {
-            const sorted = [...fileList].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            const sorted = [...fileList].sort((a, b) => parseSafeDate(b.created_at) - parseSafeDate(a.created_at));
             bestByType.set(docType, sorted[0]);
           });
 

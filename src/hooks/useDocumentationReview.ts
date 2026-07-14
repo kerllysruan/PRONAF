@@ -12,6 +12,36 @@ import {
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
+/**
+ * Resilient date parser that handles microsecond timestamp fractions from PostgreSQL correctly in all browsers.
+ */
+export function parseSafeDate(dateStr: string | null | undefined): number {
+  if (!dateStr) return 0;
+  try {
+    const dotIdx = dateStr.indexOf('.');
+    if (dotIdx !== -1) {
+      const plusOrMinusIdx = dateStr.indexOf('+', dotIdx) !== -1 
+        ? dateStr.indexOf('+', dotIdx) 
+        : dateStr.indexOf('-', dotIdx);
+        
+      if (plusOrMinusIdx !== -1) {
+        const fraction = dateStr.substring(dotIdx + 1, plusOrMinusIdx);
+        const truncatedFraction = fraction.substring(0, 3).padEnd(3, '0');
+        const timezone = dateStr.substring(plusOrMinusIdx);
+        dateStr = dateStr.substring(0, dotIdx + 1) + truncatedFraction + timezone;
+      } else if (dateStr.endsWith('Z')) {
+        const fraction = dateStr.substring(dotIdx + 1, dateStr.length - 1);
+        const truncatedFraction = fraction.substring(0, 3).padEnd(3, '0');
+        dateStr = dateStr.substring(0, dotIdx + 1) + truncatedFraction + 'Z';
+      }
+    }
+    const parsed = new Date(dateStr).getTime();
+    return isNaN(parsed) ? 0 : parsed;
+  } catch {
+    return 0;
+  }
+}
+
 export interface SubmittedProposal {
   token: DocumentationToken;
   proposal: {
@@ -125,9 +155,17 @@ export function useDocumentationReview() {
 
       if (filesError) throw filesError;
 
+      // Sort files manually to guarantee sorting consistency across environments
+      const sortedFiles = [...(allFiles || [])].sort((a, b) => {
+        if (a.document_type !== b.document_type) {
+          return a.document_type.localeCompare(b.document_type);
+        }
+        return parseSafeDate(b.created_at) - parseSafeDate(a.created_at);
+      });
+
       const filesByToken = new Map<string, DocumentationFile[]>();
       const rawFilesByToken = new Map<string, any[]>();
-      (allFiles || []).forEach((f: any) => {
+      sortedFiles.forEach((f: any) => {
         const list = rawFilesByToken.get(f.token_id) || [];
         list.push(f);
         rawFilesByToken.set(f.token_id, list);
@@ -143,7 +181,7 @@ export function useDocumentationReview() {
             : f;
 
           const existing = typeMap.get(f.document_type);
-          if (!existing || new Date(f.created_at).getTime() > new Date(existing.created_at).getTime()) {
+          if (!existing || parseSafeDate(f.created_at) > parseSafeDate(existing.created_at)) {
             typeMap.set(f.document_type, normalizedFile as DocumentationFile);
           }
         });
@@ -168,7 +206,7 @@ export function useDocumentationReview() {
         });
 
         grouped.forEach((fileList, docType) => {
-          const sorted = [...fileList].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          const sorted = [...fileList].sort((a, b) => parseSafeDate(b.created_at) - parseSafeDate(a.created_at));
           const selectedFile = sorted[0];
           const isDispensado = selectedFile.file_path === "dispensado" || selectedFile.file_path === "preenchido";
           const currentStatus = isDispensado ? "aprovado" : selectedFile.status;
@@ -1307,7 +1345,7 @@ export function useDocumentationReview() {
             const statusVal = isDisp ? "aprovado" : f.status;
             
             const existingInMap = typeMap.get(f.document_type);
-            if (!existingInMap || new Date(f.created_at).getTime() > new Date(existingInMap.created_at).getTime()) {
+            if (!existingInMap || parseSafeDate(f.created_at) > parseSafeDate(existingInMap.created_at)) {
               typeMap.set(f.document_type, { status: statusVal, isDispensado: isDisp, created_at: f.created_at });
             }
           });
