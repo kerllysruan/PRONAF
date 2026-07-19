@@ -4486,7 +4486,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                 variant="outline"
                                 className="text-[10px] px-2 py-0.5 font-extrabold rounded-md bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/45 dark:text-blue-200 dark:border-blue-800 animate-pulse shadow-sm"
                               >
-                                Em Tramitação
+                                Enviado para Central
                               </Badge>
                             ) : !allOk || hasRejects ? (
                               <Badge
@@ -4642,7 +4642,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                             </Badge>
                           ) : sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
                             <Badge variant="outline" className="text-[9px] font-bold bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/45 dark:text-blue-200 dark:border-blue-800 animate-pulse">
-                              Em Tramitação
+                              Enviado para Central
                             </Badge>
                           ) : !allOk || hasRejects ? (
                             <Badge variant="outline" className="text-[9px] bg-amber-50 text-amber-700 border-amber-200">
