@@ -181,6 +181,7 @@ export default function Documentation() {
     approveAllDocuments,
     rejectAllDocuments,
     saveAgencyGedId,
+    completeProposal,
     refetch,
   } = useDocumentationReview();
 
@@ -1329,6 +1330,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
   // ─── Detail View ──────────────────────────────────────────────
   if (selectedSubmission) {
     const sub = selectedSubmission;
+    const isReadOnly = sub.proposal.status === "CONCLUÍDO" || sub.proposal.status === "CONCLUIDO";
     const approvedPct =
       sub.totalFiles > 0
         ? Math.round((sub.approvedCount / sub.totalFiles) * 100)
@@ -1385,7 +1387,16 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         : "Em Análise"}
                     </Badge>
                   </div>
-                  {sub.proposal.status === "ENVIADO PARA CENTRAL" && (
+                  {isReadOnly ? (
+                    <div className="flex">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800 animate-pulse"
+                      >
+                        Proposta Concluída
+                      </Badge>
+                    </div>
+                  ) : sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
                     <div className="flex">
                       <Badge
                         variant="outline"
@@ -1394,7 +1405,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         Enviado para Central
                       </Badge>
                     </div>
-                  )}
+                  ) : null}
                 </div>
                 
                 {/* Meta Grid clean & highly readable */}
@@ -1851,7 +1862,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               <Button
                 size="sm"
                 className="gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4"
-                disabled={!allApproved}
+                disabled={!allApproved || isReadOnly}
                 onClick={handleApproveProposal}
               >
                 <ShieldCheck className="h-4 w-4" />
@@ -1861,12 +1872,23 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               <Button
                 size="sm"
                 className="gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-4"
-                disabled={sub.proposal.status === "ENVIADO PARA CENTRAL"}
+                disabled={sub.proposal.status === "ENVIADO PARA CENTRAL" || isReadOnly}
                 onClick={handleSendToCentral}
               >
                 <Send className="h-4 w-4" />
                 Confirmar Envio Central
               </Button>
+
+              {!isReadOnly && (
+                <Button
+                  size="sm"
+                  className="gap-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 shadow-md transition-all hover:scale-105"
+                  onClick={() => completeProposal(sub.proposal.id)}
+                >
+                  <CheckCircle2 className="h-4 w-4 animate-bounce" />
+                  Proposta Concluída
+                </Button>
+              )}
 
               <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
 
@@ -1901,6 +1923,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 variant="outline"
                 size="sm"
                 className="gap-1.5 rounded-xl text-amber-700 border-amber-200 hover:bg-amber-50"
+                disabled={isReadOnly}
                 onClick={() => setRevertDialogOpen(true)}
               >
                 <Undo2 className="h-4 w-4" />
@@ -1910,7 +1933,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
           </div>
 
           {/* Sub-bar for batch decisions - closer to documents grid */}
-          {sub.files.length > 0 && (
+          {sub.files.length > 0 && !isReadOnly && (
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-muted/40 rounded-2xl p-3 border border-border/40 text-xs gap-2">
               <span className="font-semibold text-slate-700 dark:text-slate-300">
                 Decisões em Massa:
@@ -2213,6 +2236,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                      : "Ex: GED-001"
                                  }
                                  maxLength={80}
+                                 disabled={isReadOnly}
                                  className="w-full h-8 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-mono font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-center"
                                  onBlur={(e) => {
                                     const val = e.target.value.trim();
@@ -2292,20 +2316,22 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                </Button>
                              )}
                               {!isDispensado && status !== "aprovado" && (
-                               <Button
-                                 size="sm"
-                                 className="gap-1 rounded-xl text-[11px] font-bold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                                 onClick={() => approveDocument(file.id, sub.token.id)}
-                               >
-                                 <ThumbsUp className="h-3.5 w-3.5" />
-                                 Aprovar
-                               </Button>
-                             )}
-                             {status !== "reprovado" && (
+                                <Button
+                                  size="sm"
+                                  className="gap-1 rounded-xl text-[11px] font-bold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                                  disabled={isReadOnly}
+                                  onClick={() => approveDocument(file.id, sub.token.id)}
+                                >
+                                  <ThumbsUp className="h-3.5 w-3.5" />
+                                  Aprovar
+                                </Button>
+                              )}
+                              {status !== "reprovado" && (
                                 <Button
                                   variant="destructive"
                                   size="sm"
                                   className="gap-1 rounded-xl text-[11px] font-bold h-8 shadow-sm"
+                                  disabled={isReadOnly}
                                   onClick={() => handleOpenRejectDialog(file.id)}
                                 >
                                   <ThumbsDown className="h-3.5 w-3.5" />
@@ -2318,6 +2344,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     variant="outline"
                                     size="sm"
                                     className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50"
+                                    disabled={isReadOnly}
                                     onClick={() => dispenseDocument(sub.token.id, sub.proposal.id, file.document_type, false)}
                                   >
                                     <Undo2 className="h-3.5 w-3.5" />
@@ -2328,6 +2355,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     variant="outline"
                                     size="sm"
                                     className="gap-1 rounded-xl text-[11px] font-bold h-8 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                    disabled={isReadOnly}
                                     onClick={() => {
                                       if (file.document_type === "car_individual" || file.document_type === "car_coletivo") {
                                         const otherKey = file.document_type === "car_individual" ? "car_coletivo" : "car_individual";
@@ -2548,6 +2576,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                 </span>
                                 <Select
                                   value={existingFile?.ged_id === "NAO" ? "nao" : (existingFile?.ged_id && existingFile.ged_id !== "") ? "sim" : ""}
+                                  disabled={isReadOnly}
                                   onValueChange={(val) => {
                                     if (val === "nao") {
                                       saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "NAO", existingFile?.id);
@@ -2556,7 +2585,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     }
                                   }}
                                 >
-                                  <SelectTrigger className="h-8 w-28 rounded-xl text-xs font-semibold focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 bg-background border-border/60">
+                                  <SelectTrigger className="h-8 w-28 rounded-xl text-xs font-semibold focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 bg-background border-border/60" disabled={isReadOnly}>
                                     <SelectValue placeholder="Selecione..." />
                                   </SelectTrigger>
                                   <SelectContent className="rounded-xl">
@@ -2576,6 +2605,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     defaultValue={existingFile.ged_id === "SIM" ? "" : existingFile.ged_id}
                                     placeholder="Ex: Agência Maracaçumé (MA)"
                                     maxLength={80}
+                                    disabled={isReadOnly}
                                     className="w-full h-8 rounded-lg border border-border/60 bg-background px-3 text-xs font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all font-sans"
                                     onBlur={(e) => {
                                       const val = e.target.value.trim();
@@ -2603,6 +2633,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   defaultValue={socioZip}
                                   placeholder="Ex: GED-001"
                                   maxLength={40}
+                                  disabled={isReadOnly}
                                   className="w-full h-7 rounded-lg border border-border/50 bg-background/80 px-2.5 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition-all shadow-sm"
                                   onBlur={(e) => {
                                     const val = e.target.value.trim();
@@ -2626,6 +2657,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   defaultValue={socioNormal}
                                   placeholder="Ex: GED-001"
                                   maxLength={40}
+                                  disabled={isReadOnly}
                                   className="w-full h-7 rounded-lg border border-border/50 bg-background/80 px-2.5 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition-all shadow-sm"
                                   onBlur={(e) => {
                                     const val = e.target.value.trim();
@@ -2659,6 +2691,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                       variant="ghost"
                                       size="sm"
                                       className="h-6 px-2 text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-950/20 rounded-lg ml-auto font-semibold shrink-0 transition-colors duration-200"
+                                      disabled={isReadOnly}
                                       onClick={() => {
                                         const newParts = [socioZip, socioNormal].filter(Boolean);
                                         saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, newParts.join(' | '), existingFile?.id);
@@ -2672,6 +2705,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     variant="outline"
                                     size="sm"
                                     className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200/70 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center transition-all duration-200 hover:shadow-sm"
+                                    disabled={isReadOnly}
                                     onClick={() => {
                                       const now = new Date();
                                       const dateStr = now.toLocaleDateString("pt-BR");
@@ -2698,6 +2732,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   defaultValue={gedVal}
                                   placeholder="Ex: GED-001"
                                   maxLength={40}
+                                  disabled={isReadOnly}
                                   className="flex-1 h-7 rounded-lg border border-border/50 bg-background/80 px-2.5 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition-all shadow-sm"
                                   onBlur={(e) => {
                                     const val = e.target.value.trim();
@@ -2727,6 +2762,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                       variant="ghost"
                                       size="sm"
                                       className="h-6 px-2 text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-950/20 rounded-lg ml-auto font-semibold shrink-0 transition-colors duration-200"
+                                      disabled={isReadOnly}
                                       onClick={() => {
                                         saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, gedVal, existingFile?.id);
                                       }}
@@ -2739,6 +2775,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     variant="outline"
                                     size="sm"
                                     className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200/70 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center transition-all duration-200 hover:shadow-sm"
+                                    disabled={isReadOnly}
                                     onClick={() => {
                                       const now = new Date();
                                       const dateStr = now.toLocaleDateString("pt-BR");
@@ -2771,6 +2808,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     variant="ghost"
                                     size="sm"
                                     className="h-6 px-2 text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-950/20 rounded-lg ml-auto font-semibold shrink-0 transition-colors duration-200"
+                                    disabled={isReadOnly}
                                     onClick={() => {
                                       saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "", existingFile?.id);
                                     }}
@@ -2783,6 +2821,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   variant="outline"
                                   size="sm"
                                   className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200/70 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center transition-all duration-200 hover:shadow-sm"
+                                  disabled={isReadOnly}
                                   onClick={() => {
                                      if (doc.key === "checklist_documentos_responsabilidade_agencia") {
                                        const missingGed = [];
@@ -2860,6 +2899,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                 defaultValue={existingFile?.ged_id ?? ""}
                                 placeholder="Ex: GED-001"
                                 maxLength={40}
+                                disabled={isReadOnly}
                                 className="flex-1 h-7 rounded-lg border border-border/50 bg-background/80 px-2.5 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition-all shadow-sm"
                                 onBlur={(e) => {
                                   const val = e.target.value.trim();
@@ -3181,6 +3221,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                             <Button
                               size="sm"
                               className="gap-1 rounded-xl text-[11px] font-bold h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                              disabled={isReadOnly}
                               onClick={() => handleApproveInversoes(sub.proposal.id, sub.proposal.inversoes)}
                             >
                               <ThumbsUp className="h-3.5 w-3.5" />
@@ -3192,6 +3233,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                               variant="destructive"
                               size="sm"
                               className="gap-1 rounded-xl text-[11px] font-bold h-8 shadow-sm"
+                              disabled={isReadOnly}
                               onClick={() => handleOpenInversoesRejectDialog(sub.proposal.id, sub.proposal.inversoes)}
                             >
                               <ThumbsDown className="h-3.5 w-3.5" />

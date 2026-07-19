@@ -1427,6 +1427,33 @@ export function useDocumentationReview() {
     }
   }, [user, toast, fetchSubmissions]);
 
+  const completeProposal = useCallback(async (stockProposalId: string) => {
+    try {
+      const { error } = await supabase
+        .from("stock_proposals")
+        .update({
+          status: "CONCLUÍDO"
+        })
+        .eq("id", stockProposalId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Proposta Concluída! 🎉",
+        description: "A proposta foi marcada como concluída e arquivada.",
+      });
+
+      await fetchSubmissions(true);
+    } catch (err: any) {
+      console.error("Error completing proposal:", err);
+      toast({
+        title: "Erro ao concluir proposta",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  }, [toast, fetchSubmissions]);
+
   const refetchAll = useCallback(async () => {
     await fetchSubmissions();
     await fetchAuthorizedProposals();
@@ -1451,6 +1478,7 @@ export function useDocumentationReview() {
     approveAllDocuments,
     rejectAllDocuments,
     saveAgencyGedId,
+    completeProposal,
     refetch: refetchAll,
   };
 }
