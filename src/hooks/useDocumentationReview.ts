@@ -214,7 +214,11 @@ export function useDocumentationReview() {
           typeMap.set(docType, { status: currentStatus, isDispensado, isHabilitado, created_at: selectedFile.created_at });
         });
 
-        let invValida = false;
+        let approved = 0;
+        let rejected = 0;
+        let pending = 0;
+        let dispensedCount = 0;
+
         const estimatedVal = Number(t.stock_proposals?.estimated_value) || 0;
         const invData = t.stock_proposals?.inversoes;
         if (invData) {
@@ -227,13 +231,15 @@ export function useDocumentationReview() {
             const custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
             totalInv = items.reduce((acc: number, item: any) => acc + (Number(item.valor) || 0), 0) + custo;
           }
-          invValida = (Math.abs(totalInv - estimatedVal) < 0.01) && (invData as any)?.status === "aprovado";
+          const isInvValida = (Math.abs(totalInv - estimatedVal) < 0.01) && (invData as any)?.status === "aprovado";
+          if (isInvValida) {
+            approved = 1;
+          } else if ((invData as any)?.status === "reprovado") {
+            rejected = 1;
+          } else if ((invData as any)?.status === "pendente") {
+            pending = 1;
+          }
         }
-
-        let approved = invValida ? 1 : 0;
-        let rejected = 0;
-        let pending = invValida ? 0 : 1;
-        let dispensedCount = 0;
 
         requiredKeys.forEach((key) => {
           const fileInfo = typeMap.get(key);
@@ -1357,7 +1363,6 @@ export function useDocumentationReview() {
           let pending = 0;
           let dispensedCount = 0;
 
-          let invValida = false;
           const estimatedVal = Number(sub.proposal?.estimated_value) || 0;
           const invData = sub.proposal?.inversoes;
           if (invData) {
@@ -1370,13 +1375,14 @@ export function useDocumentationReview() {
               const custo = typeof obj.custoAssessoria === "number" ? obj.custoAssessoria : 0;
               totalInv = items.reduce((acc: number, item: any) => acc + (Number(item.valor) || 0), 0) + custo;
             }
-            invValida = (Math.abs(totalInv - estimatedVal) < 0.01) && (invData as any)?.status === "aprovado";
-          }
-
-          if (invValida) {
-            approved = 1;
-          } else {
-            pending = 1;
+            const isInvValida = (Math.abs(totalInv - estimatedVal) < 0.01) && (invData as any)?.status === "aprovado";
+            if (isInvValida) {
+              approved = 1;
+            } else if ((invData as any)?.status === "reprovado") {
+              rejected = 1;
+            } else if ((invData as any)?.status === "pendente") {
+              pending = 1;
+            }
           }
 
           requiredKeys.forEach((key) => {
