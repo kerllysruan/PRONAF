@@ -2308,7 +2308,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           f.file_path !== 'habilitado' && 
                           !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                         );
-                        const hasRequiredAndApprovedGedFilled = approvedFiles.length > 0 && approvedFiles.every(f => !!f.ged_id && f.ged_id.trim() !== "");
+                        const hasRequiredAndApprovedGedFilled = approvedFiles.length > 0 && approvedFiles.every(f => {
+                          const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+                          if (isCar) {
+                            const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
+                            return !!carGedId && carGedId.trim() !== "";
+                          }
+                          return !!f.ged_id && f.ged_id.trim() !== "";
+                        });
                         return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && hasRequiredAndApprovedGedFilled;
                       }
                       if (doc.key === "consulta_historico_operacao_pronaf") {
@@ -2449,7 +2456,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                          f.file_path !== 'habilitado' && 
                                          !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                                        );
-                                       const missingGed = approvedFiles.filter(f => !f.ged_id || f.ged_id.trim() === "");
+                                       const missingGed = approvedFiles.filter(f => {
+                                         const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+                                         if (isCar) {
+                                           const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
+                                           return !carGedId || carGedId.trim() === "";
+                                         }
+                                         return !f.ged_id || f.ged_id.trim() === "";
+                                       });
                                        if (missingGed.length > 0) {
                                          toast({
                                            title: "Erro ao confirmar Check List ⚠️",
