@@ -98,6 +98,7 @@ function getAgencyCompletedCount(sub: any) {
         f.file_path !== 'dispensado' && 
         f.file_path !== 'preenchido' && 
         f.file_path !== 'habilitado' && 
+        f.document_type !== "cadastro_atividade_plano" &&
         !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
       );
       for (const f of approvedProducerFiles) {
@@ -2491,6 +2492,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           f.file_path !== 'dispensado' &&
                           f.file_path !== 'preenchido' &&
                           f.file_path !== 'habilitado' &&
+                          f.document_type !== "cadastro_atividade_plano" &&
                           !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                         );
                         for (const f of approvedProducerFiles) {
@@ -2835,6 +2837,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                          f.file_path !== 'dispensado' && 
                                          f.file_path !== 'preenchido' && 
                                          f.file_path !== 'habilitado' && 
+                                         f.document_type !== "cadastro_atividade_plano" &&
                                          !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                                        );
                                        for (const f of approvedProducerFiles) {
