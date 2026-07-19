@@ -2280,7 +2280,6 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
           const renderAgencyGrid = () => {
             const CONFIRMATION_ACTIVITY_KEYS = [
-              "parecer_gerencial",
               "consulta_s400",
               "registro_visita_gerencial",
               "avaliacao_risco",
@@ -2302,11 +2301,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     const isComplete = (() => {
                       if (doc.key === "checklist_documentos_responsabilidade_agencia") {
                         const approvedFiles = sub.files.filter(f => 
-                          (f.status === 'aprovado' || f.document_type === 'consulta_extrator_sicor') && 
+                          (f.status === 'aprovado' || f.document_type === 'consulta_extrator_sicor' || f.document_type === 'parecer_gerencial') && 
                           f.file_path !== 'dispensado' && 
                           f.file_path !== 'preenchido' && 
                           f.file_path !== 'habilitado' && 
-                          (!AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type) || f.document_type === 'consulta_extrator_sicor')
+                          (!AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type) || f.document_type === 'consulta_extrator_sicor' || f.document_type === 'parecer_gerencial')
                         );
                         const hasRequiredAndApprovedGedFilled = approvedFiles.length > 0 && approvedFiles.every(f => {
                           const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
@@ -2450,11 +2449,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   onClick={() => {
                                      if (doc.key === "checklist_documentos_responsabilidade_agencia") {
                                        const approvedFiles = sub.files.filter(f => 
-                                         (f.status === 'aprovado' || f.document_type === 'consulta_extrator_sicor') && 
+                                         (f.status === 'aprovado' || f.document_type === 'consulta_extrator_sicor' || f.document_type === 'parecer_gerencial') && 
                                          f.file_path !== 'dispensado' && 
                                          f.file_path !== 'preenchido' && 
                                          f.file_path !== 'habilitado' && 
-                                         (!AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type) || f.document_type === 'consulta_extrator_sicor')
+                                         (!AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type) || f.document_type === 'consulta_extrator_sicor' || f.document_type === 'parecer_gerencial')
                                        );
                                        const missingGed = approvedFiles.filter(f => {
                                          const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
