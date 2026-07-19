@@ -118,6 +118,11 @@ function getAgencyCompletedCount(sub: any) {
       if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
         missingGed.push("consulta_extrator_sicor");
       }
+      const historicoFile = sub.files.find((f: any) => f.document_type === "consulta_historico_operacao_pronaf");
+      const historicoGed = historicoFile?.ged_id || "";
+      if (historicoGed.trim() === "" || historicoGed === "SIM") {
+        missingGed.push("consulta_historico_operacao_pronaf");
+      }
       const parecerFile = sub.files.find((f: any) => f.document_type === "parecer_gerencial");
       const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
       if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
@@ -2849,6 +2854,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                        const [sicorGed, sicorConfirm] = sicorFile?.ged_id ? (sicorFile.ged_id.includes(' | ') ? sicorFile.ged_id.split(' | ') : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, ''])) : ['', ''];
                                        if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
                                          missingGed.push("consulta_extrator_sicor");
+                                       }
+                                       const historicoFile = sub.files.find(f => f.document_type === "consulta_historico_operacao_pronaf");
+                                       const historicoGed = historicoFile?.ged_id || "";
+                                       if (historicoGed.trim() === "" || historicoGed === "SIM") {
+                                         missingGed.push("consulta_historico_operacao_pronaf");
                                        }
                                        const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
                                        const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
