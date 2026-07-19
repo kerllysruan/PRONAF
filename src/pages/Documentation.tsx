@@ -2280,7 +2280,6 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
           const renderAgencyGrid = () => {
             const CONFIRMATION_ACTIVITY_KEYS = [
-              "consulta_extrator_sicor",
               "consulta_s400",
               "registro_visita_gerencial",
               "avaliacao_risco",
@@ -2290,39 +2289,51 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
             const agencyDocsCompletedCount = AGENCY_DOCUMENTATION.filter((doc) => {
               const existingFile = sub.files.find((f) => f.document_type === doc.key);
+                    const isDualCard = doc.key === "consulta_extrator_sicor" || doc.key === "parecer_gerencial";
+                    const [gedVal, confirmVal] = isDualCard && existingFile?.ged_id 
+                      ? (existingFile.ged_id.includes(' | ') 
+                          ? existingFile.ged_id.split(' | ') 
+                          : (existingFile.ged_id.startsWith('CONFIRMADO') 
+                              ? ['', existingFile.ged_id] 
+                              : [existingFile.ged_id, '']
+                            )
+                        )
+                      : ['', ''];
               if (doc.key === "checklist_documentos_responsabilidade_agencia") {
-                const missingGed = [];
-                const approvedProducerFiles = sub.files.filter(f => 
-                  f.status === 'aprovado' && 
-                  f.file_path !== 'dispensado' && 
-                  f.file_path !== 'preenchido' && 
-                  f.file_path !== 'habilitado' && 
-                  !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
-                );
-                for (const f of approvedProducerFiles) {
-                  const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
-                  if (isCar) {
-                    const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
-                    if (!carGedId || carGedId.trim() === "") {
-                      missingGed.push(f.document_type);
-                    }
-                  } else {
-                    if (!f.ged_id || f.ged_id.trim() === "") {
-                      missingGed.push(f.document_type);
-                    }
-                  }
-                }
-                const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
-                if (!sicorFile || !sicorFile.ged_id || sicorFile.ged_id.trim() === "") {
-                  missingGed.push("consulta_extrator_sicor");
-                }
-                const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
-                if (!parecerFile || !parecerFile.ged_id || parecerFile.ged_id.trim() === "") {
-                  missingGed.push("parecer_gerencial");
-                }
-                return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
-              }
-              if (doc.key === "consulta_historico_operacao_pronaf") {
+                        const missingGed = [];
+                        const approvedProducerFiles = sub.files.filter(f => 
+                          f.status === 'aprovado' && 
+                          f.file_path !== 'dispensado' && 
+                          f.file_path !== 'preenchido' && 
+                          f.file_path !== 'habilitado' && 
+                          !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
+                        );
+                        for (const f of approvedProducerFiles) {
+                          const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+                          if (isCar) {
+                            const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
+                            if (!carGedId || carGedId.trim() === "") {
+                              missingGed.push(f.document_type);
+                            }
+                          } else {
+                            if (!f.ged_id || f.ged_id.trim() === "") {
+                              missingGed.push(f.document_type);
+                            }
+                          }
+                        }
+                        const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
+                        const [sicorGed, sicorConfirm] = sicorFile?.ged_id ? (sicorFile.ged_id.includes(' | ') ? sicorFile.ged_id.split(' | ') : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, ''])) : ['', ''];
+                        if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
+                          missingGed.push("consulta_extrator_sicor");
+                        }
+                        const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
+                        const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
+                        if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
+                          missingGed.push("parecer_gerencial");
+                        }
+                        return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
+                      }
+                      if (doc.key === "consulta_historico_operacao_pronaf") {
                 return !!existingFile?.ged_id && existingFile.ged_id !== "";
               }
               if (CONFIRMATION_ACTIVITY_KEYS.includes(doc.key)) {
@@ -2452,55 +2463,120 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
                           {doc.key === "consulta_historico_operacao_pronaf" ? (
                             <div className="pt-1">
-                              <div className="space-y-2.5">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
-                                    Histórico PRONAF A?
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                                  Histórico PRONAF A?
+                                </span>
+                                <Select
+                                  value={existingFile?.ged_id === "NAO" ? "nao" : (existingFile?.ged_id && existingFile.ged_id !== "") ? "sim" : ""}
+                                  onValueChange={(val) => {
+                                    if (val === "nao") {
+                                      saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "NAO", existingFile?.id);
+                                    } else {
+                                      saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "SIM", existingFile?.id);
+                                    }
+                                  }}
+                                >
+                                  <SelectTrigger className="h-8 w-28 rounded-xl text-xs font-semibold focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 bg-background border-border/60">
+                                    <SelectValue placeholder="Selecione..." />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-xl">
+                                    <SelectItem value="sim">SIM</SelectItem>
+                                    <SelectItem value="nao">NÃO</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              
+                              {existingFile?.ged_id && existingFile.ged_id !== "NAO" && (
+                                <div className="flex flex-col gap-1.5 pt-1 animate-fade-in">
+                                  <span className="text-[9.5px] font-black uppercase tracking-wider text-muted-foreground leading-tight">
+                                    INSERIR AGÊNCIA DE HISTÓRICO PRONAF A:
                                   </span>
-                                  <Select
-                                    value={existingFile?.ged_id === "NAO" ? "nao" : (existingFile?.ged_id && existingFile.ged_id !== "") ? "sim" : ""}
-                                    onValueChange={(val) => {
-                                      if (val === "nao") {
-                                        saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "NAO", existingFile?.id);
+                                  <input
+                                    type="text"
+                                    defaultValue={existingFile.ged_id === "SIM" ? "" : existingFile.ged_id}
+                                    placeholder="Ex: Agência Maracaçumé (MA)"
+                                    maxLength={80}
+                                    className="w-full h-8 rounded-lg border border-border/60 bg-background px-3 text-xs font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all font-sans"
+                                    onBlur={(e) => {
+                                      const val = e.target.value.trim();
+                                      if (val) {
+                                        saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, val, existingFile?.id);
                                       } else {
                                         saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "SIM", existingFile?.id);
                                       }
                                     }}
-                                  >
-                                    <SelectTrigger className="h-8 w-28 rounded-xl text-xs font-semibold focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 bg-background border-border/60">
-                                      <SelectValue placeholder="Selecione..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="rounded-xl">
-                                      <SelectItem value="sim">SIM</SelectItem>
-                                      <SelectItem value="nao">NÃO</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                    }}
+                                  />
                                 </div>
-                                
-                                {existingFile?.ged_id && existingFile.ged_id !== "NAO" && (
-                                  <div className="flex flex-col gap-1.5 pt-1 animate-fade-in">
-                                    <span className="text-[9.5px] font-black uppercase tracking-wider text-muted-foreground leading-tight">
-                                      INSERIR AGÊNCIA DE HISTÓRICO PRONAF A:
-                                    </span>
-                                    <input
-                                      type="text"
-                                      defaultValue={existingFile.ged_id === "SIM" ? "" : existingFile.ged_id}
-                                      placeholder="Ex: Agência Maracaçumé (MA)"
-                                      maxLength={80}
-                                      className="w-full h-8 rounded-lg border border-border/60 bg-background px-3 text-xs font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all font-sans"
-                                      onBlur={(e) => {
-                                        const val = e.target.value.trim();
-                                        if (val) {
-                                          saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, val, existingFile?.id);
-                                        } else {
-                                          saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "SIM", existingFile?.id);
-                                        }
+                              )}
+                            </div>
+                          ) : isDualCard ? (
+                            <div className="space-y-2 pt-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                                  ID-GED:
+                                </span>
+                                <input
+                                  type="text"
+                                  defaultValue={gedVal}
+                                  placeholder="Ex: GED-001"
+                                  maxLength={40}
+                                  className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all"
+                                  onBlur={(e) => {
+                                    const val = e.target.value.trim();
+                                    if (val !== gedVal) {
+                                      const newVal = confirmVal ? val + " | " + confirmVal : val;
+                                      saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, newVal, existingFile?.id);
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                  }}
+                                />
+                              </div>
+                              <div>
+                                {confirmVal.startsWith("CONFIRMADO") ? (
+                                  <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900/50 rounded-xl p-2.5">
+                                    <div className="min-w-0">
+                                      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                        Atividade Confirmada
+                                      </p>
+                                      <p className="text-[9px] text-emerald-600/80 dark:text-emerald-500 font-medium leading-none mt-0.5 truncate">
+                                        {confirmVal.replace("CONFIRMADO - ", "")}
+                                      </p>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 px-2 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg ml-auto font-bold shrink-0"
+                                      onClick={() => {
+                                        saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, gedVal, existingFile?.id);
                                       }}
-                                      onKeyDown={(e) => {
-                                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                                      }}
-                                    />
+                                    >
+                                      Desfazer
+                                    </Button>
                                   </div>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center"
+                                    onClick={() => {
+                                      const now = new Date();
+                                      const dateStr = now.toLocaleDateString("pt-BR");
+                                      const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                                      const newConfirmVal = "CONFIRMADO - " + dateStr + " às " + timeStr;
+                                      const newVal = gedVal ? gedVal + " | " + newConfirmVal : newConfirmVal;
+                                      saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, newVal, existingFile?.id);
+                                    }}
+                                  >
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                    Confirmar Realização
+                                  </Button>
                                 )}
                               </div>
                             </div>
@@ -2557,17 +2633,19 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                          }
                                        }
                                        const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
-                                       if (!sicorFile || !sicorFile.ged_id || !sicorFile.ged_id.startsWith("CONFIRMADO")) {
+                                       const [sicorGed, sicorConfirm] = sicorFile?.ged_id ? (sicorFile.ged_id.includes(' | ') ? sicorFile.ged_id.split(' | ') : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, ''])) : ['', ''];
+                                       if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
                                          missingGed.push("consulta_extrator_sicor");
                                        }
                                        const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
-                                       if (!parecerFile || !parecerFile.ged_id || parecerFile.ged_id.trim() === "") {
+                                       const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
+                                       if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
                                          missingGed.push("parecer_gerencial");
                                        }
                                        if (missingGed.length > 0) {
                                          toast({
                                            title: "Erro ao confirmar Check List ⚠️",
-                                           description: `Os seguintes documentos aprovados estão sem ID-GED: ${missingGed.map(docType => getDocLabel(docType)).join(", ")}.`,
+                                           description: "Os seguintes documentos aprovados estão sem ID-GED: " + missingGed.map(docType => getDocLabel(docType)).join(", ") + ".",
                                            variant: "destructive"
                                          });
                                          return;
@@ -2576,7 +2654,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                      const now = new Date();
                                      const dateStr = now.toLocaleDateString("pt-BR");
                                      const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-                                     const val = `CONFIRMADO - ${dateStr} às ${timeStr}`;
+                                     const val = "CONFIRMADO - " + dateStr + " às " + timeStr;
                                      saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, val, existingFile?.id);
                                    }}
                                 >
