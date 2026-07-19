@@ -2382,6 +2382,16 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {AGENCY_DOCUMENTATION.map((doc) => {
                     const existingFile = sub.files.find((f) => f.document_type === doc.key);
+                    const isDualCard = doc.key === "consulta_extrator_sicor" || doc.key === "parecer_gerencial";
+                    const [gedVal, confirmVal] = isDualCard && existingFile?.ged_id 
+                      ? (existingFile.ged_id.includes(' | ') 
+                          ? existingFile.ged_id.split(' | ') 
+                          : (existingFile.ged_id.startsWith('CONFIRMADO') 
+                              ? ['', existingFile.ged_id] 
+                              : [existingFile.ged_id, '']
+                            )
+                        )
+                      : ['', ''];
                     const isComplete = (() => {
                       if (doc.key === "checklist_documentos_responsabilidade_agencia") {
                         const missingGed = [];
