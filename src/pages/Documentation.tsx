@@ -3947,6 +3947,9 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         Status Proposta
                       </TableHead>
                       <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                        Docs Agência (7)
+                      </TableHead>
+                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                         Município
                       </TableHead>
                       <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right pr-6">
@@ -4038,6 +4041,42 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                 Todos os Documentos Aprovados - Aguardando Envio à Central
                               </Badge>
                             )}
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const agencyDocsCompletedCount = AGENCY_DOCUMENTATION.filter((doc) => {
+                                const existingFile = sub.files.find((f) => f.document_type === doc.key);
+                                const CONFIRMATION_ACTIVITY_KEYS = [
+                                  "parecer_gerencial",
+                                  "consulta_s400",
+                                  "registro_visita_gerencial",
+                                  "avaliacao_risco",
+                                  "consulta_restricoes_serasa"
+                                ];
+                                if (doc.key === "consulta_historico_operacao_pronaf") {
+                                  return !!existingFile?.ged_id && existingFile.ged_id !== "";
+                                }
+                                if (CONFIRMATION_ACTIVITY_KEYS.includes(doc.key)) {
+                                  return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO");
+                                }
+                                return !!existingFile?.ged_id && existingFile.ged_id.trim() !== "";
+                              }).length;
+
+                              const isComplete = agencyDocsCompletedCount === AGENCY_DOCUMENTATION.length;
+
+                              return (
+                                <Badge
+                                  variant="outline"
+                                  className={`text-[10px] px-2 py-0.5 font-semibold rounded-md ${
+                                    isComplete
+                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                                      : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
+                                  }`}
+                                >
+                                  {isComplete ? "Completa" : `${agencyDocsCompletedCount}/${AGENCY_DOCUMENTATION.length} Concluídos`}
+                                </Badge>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell>
                             <p className="text-sm text-muted-foreground">
@@ -4146,7 +4185,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       </div>
 
                       <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/20">
-                        <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           {sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
                             <Badge variant="outline" className="text-[9px] bg-blue-50 text-blue-700 border-blue-200">
                               Enviado para Central
@@ -4160,6 +4199,41 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                               Apto para Envio
                             </Badge>
                           )}
+
+                          {(() => {
+                            const agencyDocsCompletedCount = AGENCY_DOCUMENTATION.filter((doc) => {
+                              const existingFile = sub.files.find((f) => f.document_type === doc.key);
+                              const CONFIRMATION_ACTIVITY_KEYS = [
+                                "parecer_gerencial",
+                                "consulta_s400",
+                                "registro_visita_gerencial",
+                                "avaliacao_risco",
+                                "consulta_restricoes_serasa"
+                              ];
+                              if (doc.key === "consulta_historico_operacao_pronaf") {
+                                return !!existingFile?.ged_id && existingFile.ged_id !== "";
+                              }
+                              if (CONFIRMATION_ACTIVITY_KEYS.includes(doc.key)) {
+                                return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO");
+                              }
+                              return !!existingFile?.ged_id && existingFile.ged_id.trim() !== "";
+                            }).length;
+
+                            const isComplete = agencyDocsCompletedCount === AGENCY_DOCUMENTATION.length;
+
+                            return (
+                              <Badge
+                                variant="outline"
+                                className={`text-[9px] font-bold ${
+                                  isComplete
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                                    : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
+                                }`}
+                              >
+                                Agência: {isComplete ? "Completa" : `${agencyDocsCompletedCount}/${AGENCY_DOCUMENTATION.length}`}
+                              </Badge>
+                            );
+                          })()}
                         </div>
 
                         <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
