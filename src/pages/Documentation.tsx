@@ -2300,22 +2300,36 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     const existingFile = sub.files.find((f) => f.document_type === doc.key);
                     const isComplete = (() => {
                       if (doc.key === "checklist_documentos_responsabilidade_agencia") {
-                        const approvedFiles = sub.files.filter(f => 
-                          (f.status === 'aprovado' || f.document_type === 'consulta_extrator_sicor' || f.document_type === 'parecer_gerencial') && 
+                        const missingGed = [];
+                        const approvedProducerFiles = sub.files.filter(f => 
+                          f.status === 'aprovado' && 
                           f.file_path !== 'dispensado' && 
                           f.file_path !== 'preenchido' && 
                           f.file_path !== 'habilitado' && 
-                          (!AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type) || f.document_type === 'consulta_extrator_sicor' || f.document_type === 'parecer_gerencial')
+                          !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                         );
-                        const hasRequiredAndApprovedGedFilled = approvedFiles.length > 0 && approvedFiles.every(f => {
+                        for (const f of approvedProducerFiles) {
                           const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
                           if (isCar) {
                             const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
-                            return !!carGedId && carGedId.trim() !== "";
+                            if (!carGedId || carGedId.trim() === "") {
+                              missingGed.push(f.document_type);
+                            }
+                          } else {
+                            if (!f.ged_id || f.ged_id.trim() === "") {
+                              missingGed.push(f.document_type);
+                            }
                           }
-                          return !!f.ged_id && f.ged_id.trim() !== "";
-                        });
-                        return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && hasRequiredAndApprovedGedFilled;
+                        }
+                        const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
+                        if (!sicorFile || !sicorFile.ged_id || sicorFile.ged_id.trim() === "") {
+                          missingGed.push("consulta_extrator_sicor");
+                        }
+                        const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
+                        if (!parecerFile || !parecerFile.ged_id || parecerFile.ged_id.trim() === "") {
+                          missingGed.push("parecer_gerencial");
+                        }
+                        return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
                       }
                       if (doc.key === "consulta_historico_operacao_pronaf") {
                         return !!existingFile?.ged_id && existingFile.ged_id !== "";
@@ -2448,21 +2462,35 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center"
                                   onClick={() => {
                                      if (doc.key === "checklist_documentos_responsabilidade_agencia") {
-                                       const approvedFiles = sub.files.filter(f => 
-                                         (f.status === 'aprovado' || f.document_type === 'consulta_extrator_sicor' || f.document_type === 'parecer_gerencial') && 
+                                       const missingGed = [];
+                                       const approvedProducerFiles = sub.files.filter(f => 
+                                         f.status === 'aprovado' && 
                                          f.file_path !== 'dispensado' && 
                                          f.file_path !== 'preenchido' && 
                                          f.file_path !== 'habilitado' && 
-                                         (!AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type) || f.document_type === 'consulta_extrator_sicor' || f.document_type === 'parecer_gerencial')
+                                         !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                                        );
-                                       const missingGed = approvedFiles.filter(f => {
+                                       for (const f of approvedProducerFiles) {
                                          const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
                                          if (isCar) {
                                            const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
-                                           return !carGedId || carGedId.trim() === "";
+                                           if (!carGedId || carGedId.trim() === "") {
+                                             missingGed.push(f.document_type);
+                                           }
+                                         } else {
+                                           if (!f.ged_id || f.ged_id.trim() === "") {
+                                             missingGed.push(f.document_type);
+                                           }
                                          }
-                                         return !f.ged_id || f.ged_id.trim() === "";
-                                       });
+                                       }
+                                       const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
+                                       if (!sicorFile || !sicorFile.ged_id || sicorFile.ged_id.trim() === "") {
+                                         missingGed.push("consulta_extrator_sicor");
+                                       }
+                                       const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
+                                       if (!parecerFile || !parecerFile.ged_id || parecerFile.ged_id.trim() === "") {
+                                         missingGed.push("parecer_gerencial");
+                                       }
                                        if (missingGed.length > 0) {
                                          toast({
                                            title: "Erro ao confirmar Check List ⚠️",
