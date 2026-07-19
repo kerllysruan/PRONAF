@@ -2280,6 +2280,8 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
           const renderAgencyGrid = () => {
             const CONFIRMATION_ACTIVITY_KEYS = [
+              "consulta_extrator_sicor",
+              "parecer_gerencial",
               "consulta_s400",
               "registro_visita_gerencial",
               "avaliacao_risco",
@@ -2394,11 +2396,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           }
                         }
                         const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
-                        if (!sicorFile || !sicorFile.ged_id || sicorFile.ged_id.trim() === "") {
+                        if (!sicorFile || !sicorFile.ged_id || !sicorFile.ged_id.startsWith("CONFIRMADO")) {
                           missingGed.push("consulta_extrator_sicor");
                         }
                         const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
-                        if (!parecerFile || !parecerFile.ged_id || parecerFile.ged_id.trim() === "") {
+                        if (!parecerFile || !parecerFile.ged_id || !parecerFile.ged_id.startsWith("CONFIRMADO")) {
                           missingGed.push("parecer_gerencial");
                         }
                         return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
@@ -2556,11 +2558,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                          }
                                        }
                                        const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
-                                       if (!sicorFile || !sicorFile.ged_id || sicorFile.ged_id.trim() === "") {
+                                       if (!sicorFile || !sicorFile.ged_id || !sicorFile.ged_id.startsWith("CONFIRMADO")) {
                                          missingGed.push("consulta_extrator_sicor");
                                        }
                                        const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
-                                       if (!parecerFile || !parecerFile.ged_id || parecerFile.ged_id.trim() === "") {
+                                       if (!parecerFile || !parecerFile.ged_id || !parecerFile.ged_id.startsWith("CONFIRMADO")) {
                                          missingGed.push("parecer_gerencial");
                                        }
                                        if (missingGed.length > 0) {
