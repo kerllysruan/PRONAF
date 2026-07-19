@@ -106,6 +106,7 @@ export const AGENCY_DOCUMENTATION: { key: string; label: string }[] = [
   { key: "consulta_restricoes_serasa", label: "CONSULTA RESTRIÇÕES SERASA" },
   { key: "avaliacao_risco", label: "AVALIAÇÃO RISCO" },
   { key: "registro_visita_gerencial", label: "REGISTRO VISITA GERENCIAL" },
+  { key: "checklist_documentos_responsabilidade_agencia", label: "CHECK LIST DOCUMENTOS DE RESPONSABILIDADE DA AGÊNCIA" },
 ];
 
 export const DOC_STATUS_LABELS: Record<DocFileStatus, string> = {

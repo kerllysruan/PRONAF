@@ -2276,7 +2276,8 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               "consulta_s400",
               "registro_visita_gerencial",
               "avaliacao_risco",
-              "consulta_restricoes_serasa"
+              "consulta_restricoes_serasa",
+              "checklist_documentos_responsabilidade_agencia"
             ];
 
             return (
@@ -2291,6 +2292,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   {AGENCY_DOCUMENTATION.map((doc) => {
                     const existingFile = sub.files.find((f) => f.document_type === doc.key);
                     const isComplete = (() => {
+                      if (doc.key === "checklist_documentos_responsabilidade_agencia") {
+                        const approvedFiles = sub.files.filter(f => f.status === 'aprovado' && !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type));
+                        const hasRequiredAndApprovedGedFilled = approvedFiles.length > 0 && approvedFiles.every(f => !!f.ged_id && f.ged_id.trim() !== "");
+                        return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && hasRequiredAndApprovedGedFilled;
+                      }
                       if (doc.key === "consulta_historico_operacao_pronaf") {
                         return !!existingFile?.ged_id && existingFile.ged_id !== "";
                       }
@@ -2421,12 +2427,24 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   size="sm"
                                   className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center"
                                   onClick={() => {
-                                    const now = new Date();
-                                    const dateStr = now.toLocaleDateString("pt-BR");
-                                    const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-                                    const val = `CONFIRMADO - ${dateStr} às ${timeStr}`;
-                                    saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, val, existingFile?.id);
-                                  }}
+                                     if (doc.key === "checklist_documentos_responsabilidade_agencia") {
+                                       const approvedFiles = sub.files.filter(f => f.status === 'aprovado' && !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type));
+                                       const missingGed = approvedFiles.filter(f => !f.ged_id || f.ged_id.trim() === "");
+                                       if (missingGed.length > 0) {
+                                         toast({
+                                           title: "Erro ao confirmar Check List ⚠️",
+                                           description: `Os seguintes documentos aprovados estão sem ID-GED: ${missingGed.map(f => getDocLabel(f.document_type)).join(", ")}.`,
+                                           variant: "destructive"
+                                         });
+                                         return;
+                                       }
+                                     }
+                                     const now = new Date();
+                                     const dateStr = now.toLocaleDateString("pt-BR");
+                                     const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                                     const val = `CONFIRMADO - ${dateStr} às ${timeStr}`;
+                                     saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, val, existingFile?.id);
+                                   }}
                                 >
                                   <CheckCircle2 className="h-3.5 w-3.5" />
                                   Confirmar Realização
