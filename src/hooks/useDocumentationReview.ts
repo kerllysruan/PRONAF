@@ -193,7 +193,7 @@ export function useDocumentationReview() {
 
         // Group files by document_type and pick the latest/most-favorable status per type
         // This prevents double-counting when multiple files exist for the same doc type
-        const typeMap = new Map<string, { status: string; isDispensado: boolean; created_at: string }>();
+        const typeMap = new Map<string, { status: string; isDispensado: boolean; isHabilitado: boolean; created_at: string }>();
         const requiredKeys = DOCUMENTATION_REQUIRED.map(d => d.key);
         
         // Group files by type
@@ -209,8 +209,9 @@ export function useDocumentationReview() {
           const sorted = [...fileList].sort((a, b) => parseSafeDate(b.created_at) - parseSafeDate(a.created_at));
           const selectedFile = sorted[0];
           const isDispensado = selectedFile.file_path === "dispensado" || selectedFile.file_path === "preenchido";
+          const isHabilitado = selectedFile.file_path === "habilitado";
           const currentStatus = isDispensado ? "aprovado" : selectedFile.status;
-          typeMap.set(docType, { status: currentStatus, isDispensado, created_at: selectedFile.created_at });
+          typeMap.set(docType, { status: currentStatus, isDispensado, isHabilitado, created_at: selectedFile.created_at });
         });
 
         let invValida = false;
@@ -236,15 +237,15 @@ export function useDocumentationReview() {
 
         requiredKeys.forEach((key) => {
           const fileInfo = typeMap.get(key);
-          if (!fileInfo) {
-            pending++;
+          if (!fileInfo || fileInfo.isHabilitado) {
+            // Not uploaded or reset - does not count as pending review
           } else if (fileInfo.isDispensado) {
             dispensedCount++;
           } else if (fileInfo.status === "aprovado") {
             approved++;
           } else if (fileInfo.status === "reprovado") {
             rejected++;
-          } else {
+          } else if (fileInfo.status === "pendente") {
             pending++;
           }
         });
@@ -1337,16 +1338,17 @@ export function useDocumentationReview() {
           }
 
           const requiredKeys = DOCUMENTATION_REQUIRED.map(d => d.key);
-          const typeMap = new Map<string, { status: string; isDispensado: boolean; created_at: string }>();
+          const typeMap = new Map<string, { status: string; isDispensado: boolean; isHabilitado: boolean; created_at: string }>();
           
           updatedFiles.forEach((f) => {
             if (!requiredKeys.includes(f.document_type)) return;
             const isDisp = f.file_path === "dispensado" || f.file_path === "preenchido";
+            const isHab = f.file_path === "habilitado";
             const statusVal = isDisp ? "aprovado" : f.status;
             
             const existingInMap = typeMap.get(f.document_type);
             if (!existingInMap || parseSafeDate(f.created_at) > parseSafeDate(existingInMap.created_at)) {
-              typeMap.set(f.document_type, { status: statusVal, isDispensado: isDisp, created_at: f.created_at });
+              typeMap.set(f.document_type, { status: statusVal, isDispensado: isDisp, isHabilitado: isHab, created_at: f.created_at });
             }
           });
 
@@ -1379,15 +1381,15 @@ export function useDocumentationReview() {
 
           requiredKeys.forEach((key) => {
             const fileInfo = typeMap.get(key);
-            if (!fileInfo) {
-              pending++;
+            if (!fileInfo || fileInfo.isHabilitado) {
+              // Not uploaded or reset
             } else if (fileInfo.isDispensado) {
               dispensedCount++;
             } else if (fileInfo.status === "aprovado") {
               approved++;
             } else if (fileInfo.status === "reprovado") {
               rejected++;
-            } else {
+            } else if (fileInfo.status === "pendente") {
               pending++;
             }
           });
