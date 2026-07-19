@@ -2287,6 +2287,51 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               "checklist_documentos_responsabilidade_agencia"
             ];
 
+            const agencyDocsCompletedCount = AGENCY_DOCUMENTATION.filter((doc) => {
+              const existingFile = sub.files.find((f) => f.document_type === doc.key);
+              if (doc.key === "checklist_documentos_responsabilidade_agencia") {
+                const missingGed = [];
+                const approvedProducerFiles = sub.files.filter(f => 
+                  f.status === 'aprovado' && 
+                  f.file_path !== 'dispensado' && 
+                  f.file_path !== 'preenchido' && 
+                  f.file_path !== 'habilitado' && 
+                  !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
+                );
+                for (const f of approvedProducerFiles) {
+                  const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+                  if (isCar) {
+                    const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
+                    if (!carGedId || carGedId.trim() === "") {
+                      missingGed.push(f.document_type);
+                    }
+                  } else {
+                    if (!f.ged_id || f.ged_id.trim() === "") {
+                      missingGed.push(f.document_type);
+                    }
+                  }
+                }
+                const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
+                if (!sicorFile || !sicorFile.ged_id || sicorFile.ged_id.trim() === "") {
+                  missingGed.push("consulta_extrator_sicor");
+                }
+                const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
+                if (!parecerFile || !parecerFile.ged_id || parecerFile.ged_id.trim() === "") {
+                  missingGed.push("parecer_gerencial");
+                }
+                return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
+              }
+              if (doc.key === "consulta_historico_operacao_pronaf") {
+                return !!existingFile?.ged_id && existingFile.ged_id !== "";
+              }
+              if (CONFIRMATION_ACTIVITY_KEYS.includes(doc.key)) {
+                return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO");
+              }
+              return !!existingFile?.ged_id && existingFile.ged_id.trim() !== "";
+            }).length;
+
+            const agencyPct = Math.round((agencyDocsCompletedCount / AGENCY_DOCUMENTATION.length) * 100);
+
             return (
               <div className="space-y-4 pt-2 animate-fade-in">
                 <div className="flex items-center gap-2 border-b border-border/40 pb-2.5">
@@ -2295,6 +2340,33 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     DOCUMENTOS DE RESPONSABILIDADE DA AGÊNCIA ({AGENCY_DOCUMENTATION.length})
                   </h3>
                 </div>
+                
+                {/* Agency Progress Card */}
+                <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-indigo-500/5 border-indigo-500/10 mb-2">
+                  <CardContent className="py-4 px-5 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">
+                          Progresso das Atividades da Agência
+                        </p>
+                        <p className="font-heading font-extrabold text-lg mt-0.5">
+                          {agencyDocsCompletedCount}
+                          <span className="text-muted-foreground font-medium text-xs">
+                            /{AGENCY_DOCUMENTATION.length}
+                          </span>{" "}
+                          <span className="text-xs font-medium text-muted-foreground">concluídas</span>
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-heading font-extrabold text-xl text-indigo-600 dark:text-indigo-400">
+                          {agencyPct}%
+                        </span>
+                      </div>
+                    </div>
+                    <Progress value={agencyPct} className="h-2 rounded-full bg-indigo-100 dark:bg-indigo-950/40" />
+                  </CardContent>
+                </Card>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {AGENCY_DOCUMENTATION.map((doc) => {
                     const existingFile = sub.files.find((f) => f.document_type === doc.key);
