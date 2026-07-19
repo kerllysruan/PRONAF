@@ -2289,51 +2289,66 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
             const agencyDocsCompletedCount = AGENCY_DOCUMENTATION.filter((doc) => {
               const existingFile = sub.files.find((f) => f.document_type === doc.key);
-                    const isDualCard = doc.key === "consulta_extrator_sicor" || doc.key === "parecer_gerencial";
-                    const [gedVal, confirmVal] = isDualCard && existingFile?.ged_id 
-                      ? (existingFile.ged_id.includes(' | ') 
-                          ? existingFile.ged_id.split(' | ') 
-                          : (existingFile.ged_id.startsWith('CONFIRMADO') 
-                              ? ['', existingFile.ged_id] 
-                              : [existingFile.ged_id, '']
-                            )
-                        )
-                      : ['', ''];
               if (doc.key === "checklist_documentos_responsabilidade_agencia") {
-                        const missingGed = [];
-                        const approvedProducerFiles = sub.files.filter(f => 
-                          f.status === 'aprovado' && 
-                          f.file_path !== 'dispensado' && 
-                          f.file_path !== 'preenchido' && 
-                          f.file_path !== 'habilitado' && 
-                          !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
-                        );
-                        for (const f of approvedProducerFiles) {
-                          const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
-                          if (isCar) {
-                            const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
-                            if (!carGedId || carGedId.trim() === "") {
-                              missingGed.push(f.document_type);
-                            }
-                          } else {
-                            if (!f.ged_id || f.ged_id.trim() === "") {
-                              missingGed.push(f.document_type);
-                            }
-                          }
-                        }
-                        const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
-                        const [sicorGed, sicorConfirm] = sicorFile?.ged_id ? (sicorFile.ged_id.includes(' | ') ? sicorFile.ged_id.split(' | ') : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, ''])) : ['', ''];
-                        if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
-                          missingGed.push("consulta_extrator_sicor");
-                        }
-                        const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
-                        const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
-                        if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
-                          missingGed.push("parecer_gerencial");
-                        }
-                        return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
-                      }
-                      if (doc.key === "consulta_historico_operacao_pronaf") {
+                const missingGed = [];
+                const approvedProducerFiles = sub.files.filter(f => 
+                  f.status === 'aprovado' && 
+                  f.file_path !== 'dispensado' && 
+                  f.file_path !== 'preenchido' && 
+                  f.file_path !== 'habilitado' && 
+                  !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
+                );
+                for (const f of approvedProducerFiles) {
+                  const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+                  if (isCar) {
+                    const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
+                    if (!carGedId || carGedId.trim() === "") {
+                      missingGed.push(f.document_type);
+                    }
+                  } else {
+                    if (!f.ged_id || f.ged_id.trim() === "") {
+                      missingGed.push(f.document_type);
+                    }
+                  }
+                }
+                const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
+                const [sicorGed, sicorConfirm] = sicorFile?.ged_id ? (sicorFile.ged_id.includes(' | ') ? sicorFile.ged_id.split(' | ') : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, ''])) : ['', ''];
+                if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
+                  missingGed.push("consulta_extrator_sicor");
+                }
+                const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
+                const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
+                if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
+                  missingGed.push("parecer_gerencial");
+                }
+                const socioFile = sub.files.find(f => f.document_type === "cert_socio_ambiental");
+                const [socioZipVal, socioNormalVal, socioConfirmVal] = (() => {
+                  if (!socioFile?.ged_id) return ['', '', ''];
+                  const parts = socioFile.ged_id.split(' | ');
+                  const hasConfirm = parts[parts.length - 1]?.startsWith('CONFIRMADO');
+                  const confirm = hasConfirm ? parts[parts.length - 1] : '';
+                  const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
+                  const normal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
+                  return [zip, normal, confirm];
+                })();
+                if (socioZipVal.trim() === "" || socioNormalVal.trim() === "" || !socioConfirmVal.startsWith("CONFIRMADO")) {
+                  missingGed.push("cert_socio_ambiental");
+                }
+                return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
+              }
+              if (doc.key === "cert_socio_ambiental") {
+                const parts = (existingFile?.ged_id || '').split(' | ');
+                const hasConfirm = parts[parts.length - 1]?.startsWith('CONFIRMADO');
+                const confirm = hasConfirm ? parts[parts.length - 1] : '';
+                const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
+                const normal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
+                return zip.trim() !== "" && normal.trim() !== "" && confirm.startsWith("CONFIRMADO");
+              }
+              if (doc.key === "consulta_extrator_sicor" || doc.key === "parecer_gerencial") {
+                const [gedVal, confirmVal] = existingFile?.ged_id ? (existingFile.ged_id.includes(' | ') ? existingFile.ged_id.split(' | ') : (existingFile.ged_id.startsWith('CONFIRMADO') ? ['', existingFile.ged_id] : [existingFile.ged_id, ''])) : ['', ''];
+                return gedVal.trim() !== "" && confirmVal.startsWith("CONFIRMADO");
+              }
+              if (doc.key === "consulta_historico_operacao_pronaf") {
                 return !!existingFile?.ged_id && existingFile.ged_id !== "";
               }
               if (CONFIRMATION_ACTIVITY_KEYS.includes(doc.key)) {
@@ -2383,6 +2398,16 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   {AGENCY_DOCUMENTATION.map((doc) => {
                     const existingFile = sub.files.find((f) => f.document_type === doc.key);
                     const isDualCard = doc.key === "consulta_extrator_sicor" || doc.key === "parecer_gerencial";
+                    const isSocioAmbiental = doc.key === "cert_socio_ambiental";
+                    const [socioZip, socioNormal, socioConfirm] = (() => {
+                      if (!isSocioAmbiental || !existingFile?.ged_id) return ['', '', ''];
+                      const parts = existingFile.ged_id.split(' | ');
+                      const hasConfirm = parts[parts.length - 1]?.startsWith('CONFIRMADO');
+                      const confirm = hasConfirm ? parts[parts.length - 1] : '';
+                      const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
+                      const normal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
+                      return [zip, normal, confirm];
+                    })();
                     const [gedVal, confirmVal] = isDualCard && existingFile?.ged_id 
                       ? (existingFile.ged_id.includes(' | ') 
                           ? existingFile.ged_id.split(' | ') 
@@ -2416,12 +2441,27 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           }
                         }
                         const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
-                        if (!sicorFile || !sicorFile.ged_id || !sicorFile.ged_id.startsWith("CONFIRMADO")) {
+                        const [sicorGed, sicorConfirm] = sicorFile?.ged_id ? (sicorFile.ged_id.includes(' | ') ? sicorFile.ged_id.split(' | ') : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, ''])) : ['', ''];
+                        if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
                           missingGed.push("consulta_extrator_sicor");
                         }
                         const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
-                        if (!parecerFile || !parecerFile.ged_id || parecerFile.ged_id.trim() === "") {
+                        const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
+                        if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
                           missingGed.push("parecer_gerencial");
+                        }
+                        const socioFile = sub.files.find(f => f.document_type === "cert_socio_ambiental");
+                        const [socioZipVal, socioNormalVal, socioConfirmVal] = (() => {
+                          if (!socioFile?.ged_id) return ['', '', ''];
+                          const parts = socioFile.ged_id.split(' | ');
+                          const hasConfirm = parts[parts.length - 1]?.startsWith('CONFIRMADO');
+                          const confirm = hasConfirm ? parts[parts.length - 1] : '';
+                          const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
+                          const normal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
+                          return [zip, normal, confirm];
+                        })();
+                        if (socioZipVal.trim() === "" || socioNormalVal.trim() === "" || !socioConfirmVal.startsWith("CONFIRMADO")) {
+                          missingGed.push("cert_socio_ambiental");
                         }
                         return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
                       }
@@ -2522,6 +2562,101 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   />
                                 </div>
                               )}
+                            </div>
+                          ) : isSocioAmbiental ? (
+                            <div className="space-y-2 pt-1">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                                  ID - GED CERT. SOCIO AMBIENTAL .ZIP:
+                                </span>
+                                <input
+                                  type="text"
+                                  defaultValue={socioZip}
+                                  placeholder="Ex: GED-001"
+                                  maxLength={40}
+                                  className="w-full h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all"
+                                  onBlur={(e) => {
+                                    const val = e.target.value.trim();
+                                    if (val !== socioZip) {
+                                      const newParts = [val, socioNormal];
+                                      if (socioConfirm) newParts.push(socioConfirm);
+                                      saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, newParts.join(' | '), existingFile?.id);
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                  }}
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+                                  ID - GED CERT. SOCIO AMBIENTAL:
+                                </span>
+                                <input
+                                  type="text"
+                                  defaultValue={socioNormal}
+                                  placeholder="Ex: GED-001"
+                                  maxLength={40}
+                                  className="w-full h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all"
+                                  onBlur={(e) => {
+                                    const val = e.target.value.trim();
+                                    if (val !== socioNormal) {
+                                      const newParts = [socioZip, val];
+                                      if (socioConfirm) newParts.push(socioConfirm);
+                                      saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, newParts.join(' | '), existingFile?.id);
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                                  }}
+                                />
+                              </div>
+                              <div className="text-[9px] text-slate-500/90 font-medium px-1 bg-slate-50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/40 rounded-lg p-1.5 leading-normal">
+                                Reter o comprovante da consulta de conformidade socioambiental e a certidão do IBAMA no CPF do proponente e de seu cônjuge, se houver, bem como para o imóvel objeto da garantia e da atividade financiada.
+                              </div>
+                              <div>
+                                {socioConfirm.startsWith("CONFIRMADO") ? (
+                                  <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900/50 rounded-xl p-2.5">
+                                    <div className="min-w-0">
+                                      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                                        Atividade Confirmada
+                                      </p>
+                                      <p className="text-[9px] text-emerald-600/80 dark:text-emerald-500 font-medium leading-none mt-0.5 truncate">
+                                        {socioConfirm.replace("CONFIRMADO - ", "")}
+                                      </p>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 px-2 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg ml-auto font-bold shrink-0"
+                                      onClick={() => {
+                                        const newParts = [socioZip, socioNormal].filter(Boolean);
+                                        saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, newParts.join(' | '), existingFile?.id);
+                                      }}
+                                    >
+                                      Desfazer
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center"
+                                    onClick={() => {
+                                      const now = new Date();
+                                      const dateStr = now.toLocaleDateString("pt-BR");
+                                      const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                                      const newConfirmVal = "CONFIRMADO - " + dateStr + " às " + timeStr;
+                                      const newParts = [socioZip, socioNormal, newConfirmVal];
+                                      saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, newParts.join(' | '), existingFile?.id);
+                                    }}
+                                  >
+                                    <CheckCircle2 className="h-3.5 w-3.5" />
+                                    Confirmar Atividade
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                           ) : isDualCard ? (
                             <div className="space-y-2 pt-1">
@@ -2651,6 +2786,19 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                        const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
                                        if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
                                          missingGed.push("parecer_gerencial");
+                                       }
+                                       const socioFile = sub.files.find(f => f.document_type === "cert_socio_ambiental");
+                                       const [socioZipVal, socioNormalVal, socioConfirmVal] = (() => {
+                                         if (!socioFile?.ged_id) return ['', '', ''];
+                                         const parts = socioFile.ged_id.split(' | ');
+                                         const hasConfirm = parts[parts.length - 1]?.startsWith('CONFIRMADO');
+                                         const confirm = hasConfirm ? parts[parts.length - 1] : '';
+                                         const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
+                                         const normal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
+                                         return [zip, normal, confirm];
+                                       })();
+                                       if (socioZipVal.trim() === "" || socioNormalVal.trim() === "" || !socioConfirmVal.startsWith("CONFIRMADO")) {
+                                         missingGed.push("cert_socio_ambiental");
                                        }
                                        if (missingGed.length > 0) {
                                          toast({
