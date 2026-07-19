@@ -1383,13 +1383,13 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   {carIndividualFile?.ged_id && (
                     <div>
                       <span className="text-muted-foreground/70">CAR Individual:</span>{" "}
-                      <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{carIndividualFile.ged_id}</span>
+                      <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{carIndividualFile.ged_id.split(' | ')[0]}</span>
                     </div>
                   )}
                   {carColetivoFile?.ged_id && (
                     <div>
                       <span className="text-muted-foreground/70">CAR Coletivo:</span>{" "}
-                      <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{carColetivoFile.ged_id}</span>
+                      <span className="font-mono font-semibold text-slate-800 dark:text-slate-200">{carColetivoFile.ged_id.split(' | ')[0]}</span>
                     </div>
                   )}
                 </div>
@@ -2023,6 +2023,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     const isVirtual = file.id.startsWith("temp_");
                     const isDispensado = file.file_path === "dispensado" || file.file_path === "preenchido";
                     const isCarCard = file.document_type === "car_individual" || file.document_type === "car_coletivo";
+                    const [carNumber, carGedId] = isCarCard && file.ged_id ? (file.ged_id.includes(' | ') ? file.ged_id.split(' | ') : [file.ged_id, '']) : ['', ''];
                     let cardBorder = "border-slate-200 dark:border-slate-800";
                     let badgeColor = "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
                     let badgeLabel = "Não enviado";
@@ -2093,10 +2094,10 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                    <p className="text-[11px] font-bold text-indigo-700 break-words">{(sub.proposal.localizacao || "").toUpperCase()}</p>
                                  </div>
                                )}
-                               {file.file_name && (
+                               {carNumber && (
                                  <div className="bg-sky-50/60 border border-sky-100 rounded-2xl p-2.5 text-center">
                                    <span className="text-[9px] font-black uppercase tracking-widest text-sky-400 block mb-0.5">Número do CAR</span>
-                                   <p className="text-[11px] font-bold text-sky-700 break-all leading-relaxed">{file.file_name.replace(/\.pdf$/i, "")}</p>
+                                   <p className="text-[11px] font-bold text-sky-700 break-all leading-relaxed">{carNumber}</p>
                                  </div>
                                )}
                              </div>
@@ -2124,7 +2125,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block ml-1">ID-GED</label>
                                <input
                                  type="text"
-                                 defaultValue={file.ged_id ?? ""}
+                                 defaultValue={isCarCard ? carGedId : (file.ged_id ?? "")}
                                  placeholder={
                                    socioAmbientalKeys.includes(file.document_type)
                                      ? "INSERIR ID - CERT. SOCIO AMBIENTAL ZIP"
@@ -2133,18 +2134,25 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                  maxLength={80}
                                  className="w-full h-8 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-mono font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-center"
                                  onBlur={(e) => {
-                                   const val = e.target.value.trim();
-                                   if (val !== (file.ged_id ?? "")) {
-                                     updateGedId(file.id, val);
-                                   }
-                                 }}
-                                 onKeyDown={(e) => {
+                                    const val = e.target.value.trim();
+                                    if (isCarCard) {
+                                      const newVal = val ? `${carNumber} | ${val}` : carNumber;
+                                      if (newVal !== (file.ged_id ?? "")) {
+                                        updateGedId(file.id, newVal);
+                                      }
+                                    } else {
+                                      if (val !== (file.ged_id ?? "")) {
+                                        updateGedId(file.id, val);
+                                      }
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                                  }}
                                />
-                               {file.ged_id && (
+                               {(isCarCard ? carGedId : file.ged_id) && (
                                  <div className="mt-1 px-1 bg-slate-100/60 rounded border border-slate-200/50 py-0.5 text-center">
-                                   <p className="text-[9px] font-mono break-all text-slate-500 leading-normal select-all font-bold" title="Clique duas vezes para selecionar tudo">{file.ged_id}</p>
+                                   <p className="text-[9px] font-mono break-all text-slate-500 leading-normal select-all font-bold" title="Clique duas vezes para selecionar tudo">{isCarCard ? carGedId : file.ged_id}</p>
                                  </div>
                                )}
                              </div>
