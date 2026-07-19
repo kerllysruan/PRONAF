@@ -2361,36 +2361,56 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
             return (
               <div className="space-y-4 pt-2 animate-fade-in">
-                <div className="flex items-center gap-2 border-b border-border/40 pb-2.5">
-                  <Building className="h-5 w-5 text-indigo-500" />
+                <div className="flex items-center gap-2.5 border-b border-border/30 pb-3">
+                  <div className="p-1.5 rounded-lg bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-200/30 dark:border-indigo-800/30">
+                    <Building className="h-4.5 w-4.5 text-indigo-500" />
+                  </div>
                   <h3 className="font-heading font-extrabold text-sm tracking-wider text-slate-800 dark:text-slate-200 uppercase">
-                    DOCUMENTOS DE RESPONSABILIDADE DA AGÊNCIA ({AGENCY_DOCUMENTATION.length})
+                    DOCUMENTOS DE RESPONSABILIDADE DA AGÊNCIA <span className="text-indigo-500/80">({AGENCY_DOCUMENTATION.length})</span>
                   </h3>
                 </div>
                 
                 {/* Agency Progress Card */}
-                <Card className="border-border/40 shadow-premium rounded-3xl overflow-hidden bg-indigo-500/5 border-indigo-500/10 mb-2">
-                  <CardContent className="py-4 px-5 space-y-2">
+                <Card className="border-border/30 shadow-premium rounded-3xl overflow-hidden bg-gradient-to-br from-indigo-500/[0.06] via-violet-500/[0.03] to-transparent border-indigo-500/15 mb-2 relative">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-indigo-400/[0.08] to-transparent rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none" />
+                  <CardContent className="py-4 px-5 space-y-3 relative">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">
-                          Progresso das Atividades da Agência
-                        </p>
-                        <p className="font-heading font-extrabold text-lg mt-0.5">
-                          {agencyDocsCompletedCount}
-                          <span className="text-muted-foreground font-medium text-xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                          <p className="text-[10px] font-black uppercase tracking-[0.15em] text-indigo-600 dark:text-indigo-400">
+                            Progresso das Atividades da Agência
+                          </p>
+                        </div>
+                        <p className="font-heading font-extrabold text-xl mt-0.5 flex items-baseline gap-1">
+                          <span className="bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent">{agencyDocsCompletedCount}</span>
+                          <span className="text-muted-foreground/70 font-semibold text-xs">
                             /{AGENCY_DOCUMENTATION.length}
-                          </span>{" "}
-                          <span className="text-xs font-medium text-muted-foreground">concluídas</span>
+                          </span>
+                          <span className="text-[11px] font-semibold text-muted-foreground/60 ml-0.5">concluídas</span>
                         </p>
                       </div>
-                      <div className="text-right">
-                        <span className="font-heading font-extrabold text-xl text-indigo-600 dark:text-indigo-400">
+                      <div className="text-right flex flex-col items-end gap-0.5">
+                        <span className="font-heading font-black text-2xl bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400 bg-clip-text text-transparent leading-none">
                           {agencyPct}%
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground/50">
+                          {agencyPct === 100 ? "Completo" : "Em andamento"}
                         </span>
                       </div>
                     </div>
-                    <Progress value={agencyPct} className="h-2 rounded-full bg-indigo-100 dark:bg-indigo-950/40" />
+                    <div className="relative">
+                      <div className="h-2.5 rounded-full bg-indigo-100/80 dark:bg-indigo-950/40 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-600 transition-all duration-700 ease-out relative"
+                          style={{ width: agencyPct + "%" }}
+                        >
+                          {agencyPct > 10 && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 animate-pulse" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
@@ -2419,51 +2439,47 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       : ['', ''];
                     const isComplete = (() => {
                       if (doc.key === "checklist_documentos_responsabilidade_agencia") {
-                        const missingGed = [];
-                        const approvedProducerFiles = sub.files.filter(f => 
-                          f.status === 'aprovado' && 
-                          f.file_path !== 'dispensado' && 
-                          f.file_path !== 'preenchido' && 
-                          f.file_path !== 'habilitado' && 
+                        const missingGed: string[] = [];
+                        const approvedProducerFiles = sub.files.filter(f =>
+                          f.status === 'aprovado' &&
+                          f.file_path !== 'dispensado' &&
+                          f.file_path !== 'preenchido' &&
+                          f.file_path !== 'habilitado' &&
                           !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                         );
                         for (const f of approvedProducerFiles) {
                           const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
                           if (isCar) {
                             const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
-                            if (!carGedId || carGedId.trim() === "") {
-                              missingGed.push(f.document_type);
-                            }
+                            if (!carGedId || carGedId.trim() === "") missingGed.push(f.document_type);
                           } else {
-                            if (!f.ged_id || f.ged_id.trim() === "") {
-                              missingGed.push(f.document_type);
-                            }
+                            if (!f.ged_id || f.ged_id.trim() === "") missingGed.push(f.document_type);
                           }
                         }
                         const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
                         const [sicorGed, sicorConfirm] = sicorFile?.ged_id ? (sicorFile.ged_id.includes(' | ') ? sicorFile.ged_id.split(' | ') : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, ''])) : ['', ''];
-                        if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
-                          missingGed.push("consulta_extrator_sicor");
-                        }
+                        if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) missingGed.push("consulta_extrator_sicor");
                         const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
                         const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
-                        if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
-                          missingGed.push("parecer_gerencial");
-                        }
-                        const socioFile = sub.files.find(f => f.document_type === "cert_socio_ambiental");
-                        const [socioZipVal, socioNormalVal, socioConfirmVal] = (() => {
-                          if (!socioFile?.ged_id) return ['', '', ''];
-                          const parts = socioFile.ged_id.split(' | ');
-                          const hasConfirm = parts[parts.length - 1]?.startsWith('CONFIRMADO');
-                          const confirm = hasConfirm ? parts[parts.length - 1] : '';
-                          const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
-                          const normal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
-                          return [zip, normal, confirm];
+                        if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) missingGed.push("parecer_gerencial");
+                        const socioFileC = sub.files.find(f => f.document_type === "cert_socio_ambiental");
+                        const [socioZipV, socioNormalV, socioConfirmV] = (() => {
+                          if (!socioFileC?.ged_id) return ['', '', ''];
+                          const parts = socioFileC.ged_id.split(' | ');
+                          const hasC = parts[parts.length - 1]?.startsWith('CONFIRMADO');
+                          const cVal = hasC ? parts[parts.length - 1] : '';
+                          const zVal = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
+                          const nVal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
+                          return [zVal, nVal, cVal];
                         })();
-                        if (socioZipVal.trim() === "" || socioNormalVal.trim() === "" || !socioConfirmVal.startsWith("CONFIRMADO")) {
-                          missingGed.push("cert_socio_ambiental");
-                        }
+                        if (socioZipV.trim() === "" || socioNormalV.trim() === "" || !socioConfirmV.startsWith("CONFIRMADO")) missingGed.push("cert_socio_ambiental");
                         return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
+                      }
+                      if (isSocioAmbiental) {
+                        return socioZip.trim() !== "" && socioNormal.trim() !== "" && socioConfirm.startsWith("CONFIRMADO");
+                      }
+                      if (isDualCard) {
+                        return gedVal.trim() !== "" && confirmVal.startsWith("CONFIRMADO");
                       }
                       if (doc.key === "consulta_historico_operacao_pronaf") {
                         return !!existingFile?.ged_id && existingFile.ged_id !== "";
@@ -2477,16 +2493,16 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     return (
                       <Card
                         key={doc.key}
-                        className={`shadow-premium rounded-3xl overflow-hidden backdrop-blur-sm transition-all duration-300 hover:shadow-lg group border-l-4 ${
+                        className={`shadow-premium rounded-2xl overflow-hidden backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 group border-l-[3px] ${
                           isComplete
-                            ? "bg-emerald-50/10 border-border/40 border-l-emerald-500"
-                            : "bg-amber-50/5 border-border/40 border-l-amber-500"
+                            ? "bg-gradient-to-br from-emerald-50/20 via-white to-white dark:from-emerald-950/10 dark:via-background dark:to-background border-border/30 border-l-emerald-500"
+                            : "bg-gradient-to-br from-amber-50/10 via-white to-white dark:from-amber-950/5 dark:via-background dark:to-background border-border/30 border-l-amber-400"
                         }`}
                       >
                         <CardContent className="p-5 space-y-4">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
-                              <FileText className={`h-5 w-5 shrink-0 ${isComplete ? "text-emerald-500" : "text-amber-500"}`} />
+                              <FileText className={`h-4.5 w-4.5 shrink-0 transition-colors duration-300 ${isComplete ? "text-emerald-500 drop-shadow-sm" : "text-amber-400"}`} />
                               <p className="font-heading font-bold text-sm leading-tight text-slate-800 dark:text-slate-200">
                                 {doc.label}
                               </p>
@@ -2496,15 +2512,15 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                 variant="outline"
                                 className={`text-[10px] font-bold ${
                                   isComplete
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
-                                    : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 shadow-sm shadow-emerald-100/50"
+                                    : "bg-amber-50/80 text-amber-600 border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 shadow-sm shadow-amber-100/50"
                                 }`}
                               >
                                 {isComplete ? "COMPLETA" : "PENDENTE"}
                               </Badge>
                               <Badge
                                 variant="outline"
-                                className="text-[10px] bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800"
+                                className="text-[10px] bg-indigo-50/80 text-indigo-600 border-indigo-200/60 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800 shadow-sm shadow-indigo-100/50"
                               >
                                 Agência
                               </Badge>
@@ -2574,7 +2590,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   defaultValue={socioZip}
                                   placeholder="Ex: GED-001"
                                   maxLength={40}
-                                  className="w-full h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all"
+                                  className="w-full h-7 rounded-lg border border-border/50 bg-background/80 px-2.5 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition-all shadow-sm"
                                   onBlur={(e) => {
                                     const val = e.target.value.trim();
                                     if (val !== socioZip) {
@@ -2597,7 +2613,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   defaultValue={socioNormal}
                                   placeholder="Ex: GED-001"
                                   maxLength={40}
-                                  className="w-full h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all"
+                                  className="w-full h-7 rounded-lg border border-border/50 bg-background/80 px-2.5 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition-all shadow-sm"
                                   onBlur={(e) => {
                                     const val = e.target.value.trim();
                                     if (val !== socioNormal) {
@@ -2611,12 +2627,12 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   }}
                                 />
                               </div>
-                              <div className="text-[9px] text-slate-500/90 font-medium px-1 bg-slate-50 dark:bg-slate-900/30 border border-slate-100 dark:border-slate-800/40 rounded-lg p-1.5 leading-normal">
+                              <div className="text-[9px] text-slate-500/80 font-medium px-2 bg-slate-50/80 dark:bg-slate-900/20 border border-slate-100/60 dark:border-slate-800/30 rounded-lg p-2 leading-relaxed italic">
                                 Reter o comprovante da consulta de conformidade socioambiental e a certidão do IBAMA no CPF do proponente e de seu cônjuge, se houver, bem como para o imóvel objeto da garantia e da atividade financiada.
                               </div>
                               <div>
                                 {socioConfirm.startsWith("CONFIRMADO") ? (
-                                  <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900/50 rounded-xl p-2.5">
+                                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-50 to-emerald-50/50 dark:from-emerald-950/15 dark:to-emerald-950/5 border border-emerald-200/60 dark:border-emerald-900/40 rounded-xl p-2.5 shadow-sm shadow-emerald-100/30">
                                     <div className="min-w-0">
                                       <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                                         <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
@@ -2629,7 +2645,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-6 px-2 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg ml-auto font-bold shrink-0"
+                                      className="h-6 px-2 text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-950/20 rounded-lg ml-auto font-semibold shrink-0 transition-colors duration-200"
                                       onClick={() => {
                                         const newParts = [socioZip, socioNormal].filter(Boolean);
                                         saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, newParts.join(' | '), existingFile?.id);
@@ -2642,7 +2658,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center"
+                                    className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200/70 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center transition-all duration-200 hover:shadow-sm"
                                     onClick={() => {
                                       const now = new Date();
                                       const dateStr = now.toLocaleDateString("pt-BR");
@@ -2669,7 +2685,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   defaultValue={gedVal}
                                   placeholder="Ex: GED-001"
                                   maxLength={40}
-                                  className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all"
+                                  className="flex-1 h-7 rounded-lg border border-border/50 bg-background/80 px-2.5 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition-all shadow-sm"
                                   onBlur={(e) => {
                                     const val = e.target.value.trim();
                                     if (val !== gedVal) {
@@ -2684,7 +2700,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                               </div>
                               <div>
                                 {confirmVal.startsWith("CONFIRMADO") ? (
-                                  <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900/50 rounded-xl p-2.5">
+                                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-50 to-emerald-50/50 dark:from-emerald-950/15 dark:to-emerald-950/5 border border-emerald-200/60 dark:border-emerald-900/40 rounded-xl p-2.5 shadow-sm shadow-emerald-100/30">
                                     <div className="min-w-0">
                                       <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                                         <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
@@ -2697,7 +2713,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-6 px-2 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg ml-auto font-bold shrink-0"
+                                      className="h-6 px-2 text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-950/20 rounded-lg ml-auto font-semibold shrink-0 transition-colors duration-200"
                                       onClick={() => {
                                         saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, gedVal, existingFile?.id);
                                       }}
@@ -2709,7 +2725,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center"
+                                    className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200/70 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center transition-all duration-200 hover:shadow-sm"
                                     onClick={() => {
                                       const now = new Date();
                                       const dateStr = now.toLocaleDateString("pt-BR");
@@ -2728,7 +2744,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           ) : CONFIRMATION_ACTIVITY_KEYS.includes(doc.key) ? (
                             <div className="pt-1">
                               {existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") ? (
-                                <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/10 border border-emerald-200 dark:border-emerald-900/50 rounded-xl p-2.5">
+                                <div className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-50 to-emerald-50/50 dark:from-emerald-950/15 dark:to-emerald-950/5 border border-emerald-200/60 dark:border-emerald-900/40 rounded-xl p-2.5 shadow-sm shadow-emerald-100/30">
                                   <div className="min-w-0">
                                     <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                                       <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
@@ -2741,7 +2757,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-6 px-2 text-[10px] text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg ml-auto font-bold shrink-0"
+                                    className="h-6 px-2 text-[10px] text-red-400 hover:text-red-600 hover:bg-red-50/80 dark:hover:bg-red-950/20 rounded-lg ml-auto font-semibold shrink-0 transition-colors duration-200"
                                     onClick={() => {
                                       saveAgencyGedId(sub.token.id, sub.proposal.id, doc.key, "", existingFile?.id);
                                     }}
@@ -2753,7 +2769,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center"
+                                  className="w-full gap-1.5 rounded-xl text-xs h-8 border-emerald-200/70 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 dark:border-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-950/20 font-bold justify-center transition-all duration-200 hover:shadow-sm"
                                   onClick={() => {
                                      if (doc.key === "checklist_documentos_responsabilidade_agencia") {
                                        const missingGed = [];
@@ -2831,7 +2847,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                 defaultValue={existingFile?.ged_id ?? ""}
                                 placeholder="Ex: GED-001"
                                 maxLength={40}
-                                className="flex-1 h-7 rounded-lg border border-border/60 bg-background px-2 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-indigo-400 focus:border-indigo-500 transition-all"
+                                className="flex-1 h-7 rounded-lg border border-border/50 bg-background/80 px-2.5 text-xs font-mono font-semibold text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition-all shadow-sm"
                                 onBlur={(e) => {
                                   const val = e.target.value.trim();
                                   const currentGed = existingFile?.ged_id ?? "";
