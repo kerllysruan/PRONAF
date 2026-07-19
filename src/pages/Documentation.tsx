@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useDocumentationReview, SubmittedProposal, AuthorizedProposal, parseSafeDate } from "@/hooks/useDocumentationReview";
+import { useAgency } from "@/contexts/AgencyContext";
 import {
   getDocLabel,
   DOC_STATUS_COLORS,
@@ -103,6 +104,22 @@ export default function Documentation() {
   } = useDocumentationReview();
 
   const { toast } = useToast();
+  const { selectedAgencyId, agencies } = useAgency();
+
+  const pendingTasksCount = useMemo(() => {
+    const pendingSubmissions = submissions.filter(
+      (s) => s.proposal.status !== "ENVIADO PARA CENTRAL"
+    ).length;
+    const pendingAuthorized = authorizedProposals.length;
+    return pendingSubmissions + pendingAuthorized;
+  }, [submissions, authorizedProposals]);
+
+  const allConcluded = pendingTasksCount === 0;
+
+  const currentAgencyName = useMemo(() => {
+    if (selectedAgencyId === "all") return "Todas as Agências";
+    return agencies.find((a) => a.id === selectedAgencyId)?.name || "Agência";
+  }, [selectedAgencyId, agencies]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubmission, setSelectedSubmission] = useState<SubmittedProposal | null>(null);
@@ -3536,7 +3553,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   d.setFontSize(6.5);
                   d.setTextColor(148, 163, 184);
                   d.text(`Gerado em ${dateStr}  ·  Proponente: ${sub.proposal.producer_name}`, 14, H - 3.5);
-d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
+                  d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
 
                   const safeName = (sub.proposal.producer_name || "Produtor")
                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -3603,6 +3620,51 @@ d.text(`PRONAF - Parecer Gerencial`, W - 14, H - 3.5, { align: "right" });
           </Button>
         </div>
       </div>
+
+      {/* ── Agency Task Status Banner ──────────────────────────── */}
+      <Card className={`border-border/40 shadow-premium rounded-3xl overflow-hidden backdrop-blur-sm ${
+        allConcluded 
+          ? "bg-emerald-500/10 border-emerald-500/20" 
+          : "bg-amber-500/10 border-amber-500/20"
+      }`}>
+        <CardContent className="py-4 px-5 flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center justify-center h-10 w-10 rounded-xl ${
+              allConcluded ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/20 text-amber-600 dark:text-amber-400"
+            }`}>
+              {allConcluded ? (
+                <CheckCircle2 className="h-5 w-5" />
+              ) : (
+                <AlertTriangle className="h-5 w-5" />
+              )}
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Status da Agência ({currentAgencyName})
+              </p>
+              <h3 className="font-heading font-extrabold text-sm md:text-base leading-tight">
+                {allConcluded 
+                  ? "Todas as tarefas desta agência estão concluídas!" 
+                  : `Existem ${pendingTasksCount} tarefa(s) pendente(s) nesta agência.`
+                }
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {allConcluded 
+                  ? "Não há pendências de documentação ou envios pendentes para a Central." 
+                  : "Verifique a lista de propostas recebidas e autorizadas abaixo para concluir os envios."
+                }
+              </p>
+            </div>
+          </div>
+          <Badge className={`text-xs px-2.5 py-1 rounded-full font-bold ${
+            allConcluded 
+              ? "bg-emerald-500 text-white hover:bg-emerald-500" 
+              : "bg-amber-500 text-white hover:bg-amber-500"
+          }`}>
+            {allConcluded ? "Concluído" : "Pendentes"}
+          </Badge>
+        </CardContent>
+      </Card>
 
       {/* ── Report Dialog ─────────────────────────────────── */}
       <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
