@@ -2494,7 +2494,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                        if (missingGed.length > 0) {
                                          toast({
                                            title: "Erro ao confirmar Check List ⚠️",
-                                           description: `Os seguintes documentos aprovados estão sem ID-GED: ${missingGed.map(f => getDocLabel(f.document_type)).join(", ")}.`,
+                                           description: `Os seguintes documentos aprovados estão sem ID-GED: ${missingGed.map(docType => getDocLabel(docType)).join(", ")}.`,
                                            variant: "destructive"
                                          });
                                          return;
