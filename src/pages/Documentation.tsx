@@ -4474,12 +4474,19 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                             </div>
                           </TableCell>
                           <TableCell>
-                            {sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
+                            {sub.proposal.status === "CONCLUÍDO" || sub.proposal.status === "CONCLUIDO" ? (
                               <Badge
                                 variant="outline"
-                                className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-blue-50 text-blue-700 border-blue-200"
+                                className="text-[10px] px-2 py-0.5 font-extrabold rounded-md bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/45 dark:text-purple-200 dark:border-purple-800 shadow-sm"
                               >
-                                Enviado para Central
+                                Proposta Concluída
+                              </Badge>
+                            ) : sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] px-2 py-0.5 font-extrabold rounded-md bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/45 dark:text-blue-200 dark:border-blue-800 animate-pulse shadow-sm"
+                              >
+                                Em Tramitação
                               </Badge>
                             ) : !allOk || hasRejects ? (
                               <Badge
@@ -4629,9 +4636,13 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
                       <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/20">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          {sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
-                            <Badge variant="outline" className="text-[9px] bg-blue-50 text-blue-700 border-blue-200">
-                              Enviado para Central
+                          {sub.proposal.status === "CONCLUÍDO" || sub.proposal.status === "CONCLUIDO" ? (
+                            <Badge variant="outline" className="text-[9px] font-bold bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/45 dark:text-purple-200 dark:border-purple-800">
+                              Proposta Concluída
+                            </Badge>
+                          ) : sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
+                            <Badge variant="outline" className="text-[9px] font-bold bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/45 dark:text-blue-200 dark:border-blue-800 animate-pulse">
+                              Em Tramitação
                             </Badge>
                           ) : !allOk || hasRejects ? (
                             <Badge variant="outline" className="text-[9px] bg-amber-50 text-amber-700 border-amber-200">
