@@ -243,15 +243,15 @@ export function useDocumentationReview() {
 
         requiredKeys.forEach((key) => {
           const fileInfo = typeMap.get(key);
-          if (!fileInfo || fileInfo.isHabilitado) {
-            // Not uploaded or reset - does not count as pending review
+          if (!fileInfo) {
+            // Not uploaded
           } else if (fileInfo.isDispensado) {
             dispensedCount++;
-          } else if (fileInfo.status === "aprovado") {
+          } else if (fileInfo.status === "aprovado" && !fileInfo.isHabilitado) {
             approved++;
           } else if (fileInfo.status === "reprovado") {
             rejected++;
-          } else if (fileInfo.status === "pendente") {
+          } else if (fileInfo.status === "pendente" && !fileInfo.isHabilitado) {
             pending++;
           }
         });
@@ -1387,15 +1387,15 @@ export function useDocumentationReview() {
 
           requiredKeys.forEach((key) => {
             const fileInfo = typeMap.get(key);
-            if (!fileInfo || fileInfo.isHabilitado) {
-              // Not uploaded or reset
+            if (!fileInfo) {
+              // Not uploaded
             } else if (fileInfo.isDispensado) {
               dispensedCount++;
-            } else if (fileInfo.status === "aprovado") {
+            } else if (fileInfo.status === "aprovado" && !fileInfo.isHabilitado) {
               approved++;
             } else if (fileInfo.status === "reprovado") {
               rejected++;
-            } else if (fileInfo.status === "pendente") {
+            } else if (fileInfo.status === "pendente" && !fileInfo.isHabilitado) {
               pending++;
             }
           });
