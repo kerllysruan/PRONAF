@@ -2280,7 +2280,6 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
           const renderAgencyGrid = () => {
             const CONFIRMATION_ACTIVITY_KEYS = [
-              "consulta_extrator_sicor",
               "parecer_gerencial",
               "consulta_s400",
               "registro_visita_gerencial",
@@ -2396,7 +2395,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           }
                         }
                         const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
-                        if (!sicorFile || !sicorFile.ged_id || !sicorFile.ged_id.startsWith("CONFIRMADO")) {
+                        if (!sicorFile || !sicorFile.ged_id || sicorFile.ged_id.trim() === "") {
                           missingGed.push("consulta_extrator_sicor");
                         }
                         const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
@@ -2558,7 +2557,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                          }
                                        }
                                        const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
-                                       if (!sicorFile || !sicorFile.ged_id || !sicorFile.ged_id.startsWith("CONFIRMADO")) {
+                                       if (!sicorFile || !sicorFile.ged_id || sicorFile.ged_id.trim() === "") {
                                          missingGed.push("consulta_extrator_sicor");
                                        }
                                        const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
