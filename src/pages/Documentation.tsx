@@ -1872,7 +1872,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 onClick={handleApproveProposal}
               >
                 <ShieldCheck className="h-4 w-4" />
-                Aprovar Proposta
+                Confirmar Liberação Contrato
               </Button>
 
               <Button
