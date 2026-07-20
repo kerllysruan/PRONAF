@@ -1427,8 +1427,15 @@ export function useDocumentationReview() {
     }
   }, [user, toast, fetchSubmissions]);
 
-  const completeProposal = useCallback(async (stockProposalId: string) => {
+  const completeProposal = useCallback(async (stockProposalId: string, tokenId: string, currentStatus: string) => {
     try {
+      if (tokenId && currentStatus) {
+        await supabase
+          .from("documentation_tokens")
+          .update({ previous_status: currentStatus })
+          .eq("id", tokenId);
+      }
+
       const { error } = await supabase
         .from("stock_proposals")
         .update({
@@ -1448,6 +1455,34 @@ export function useDocumentationReview() {
       console.error("Error completing proposal:", err);
       toast({
         title: "Erro ao concluir proposta",
+        description: err.message,
+        variant: "destructive",
+      });
+    }
+  }, [toast, fetchSubmissions]);
+
+  const revertConclusion = useCallback(async (stockProposalId: string, tokenId: string, previousStatus: string) => {
+    try {
+      const targetStatus = previousStatus || "ENVIADO PARA CENTRAL";
+      const { error } = await supabase
+        .from("stock_proposals")
+        .update({
+          status: targetStatus
+        })
+        .eq("id", stockProposalId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Conclusão Revertida! 🔄",
+        description: `A proposta voltou para o status: ${targetStatus}`,
+      });
+
+      await fetchSubmissions(true);
+    } catch (err: any) {
+      console.error("Error reverting conclusion:", err);
+      toast({
+        title: "Erro ao reverter conclusão",
         description: err.message,
         variant: "destructive",
       });
@@ -1479,6 +1514,7 @@ export function useDocumentationReview() {
     rejectAllDocuments,
     saveAgencyGedId,
     completeProposal,
+    revertConclusion,
     refetch: refetchAll,
   };
 }

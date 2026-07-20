@@ -188,6 +188,7 @@ export default function Documentation() {
     rejectAllDocuments,
     saveAgencyGedId,
     completeProposal,
+    revertConclusion,
     refetch,
   } = useDocumentationReview();
 
@@ -1885,14 +1886,23 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 Confirmar Envio Central
               </Button>
 
-              {!isReadOnly && (
+              {!isReadOnly ? (
                 <Button
                   size="sm"
                   className="gap-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 shadow-md transition-all hover:scale-105"
-                  onClick={() => completeProposal(sub.proposal.id)}
+                  onClick={() => completeProposal(sub.proposal.id, sub.token.id, sub.proposal.status)}
                 >
                   <CheckCircle2 className="h-4 w-4 animate-bounce" />
                   Proposta Concluída
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  className="gap-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 shadow-md transition-all hover:scale-105"
+                  onClick={() => revertConclusion(sub.proposal.id, sub.token.id, sub.token.previous_status)}
+                >
+                  <Undo2 className="h-4 w-4" />
+                  Reverter Conclusão
                 </Button>
               )}
 
