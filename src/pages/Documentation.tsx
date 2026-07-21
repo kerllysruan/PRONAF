@@ -95,25 +95,13 @@ function getAgencyCompletedCount(sub: any) {
       const missingGed = [];
       const approvedProducerFiles = sub.files.filter((f: any) => 
         f.status === 'aprovado' && 
+        f.file_path !== 'dispensado' && 
         f.file_path !== 'preenchido' && 
         f.file_path !== 'habilitado' && 
         f.document_type !== "cadastro_atividade_plano" &&
         !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
       );
       for (const f of approvedProducerFiles) {
-        if (f.file_path === 'dispensado') {
-          // Dispensed docs with a GED ID stored are OK; only flag if specifically a CAR with no GED part
-          const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
-          if (isCar) {
-            const gedVal = f.ged_id || "";
-            // CAR dispensed stores ged_id as the CAR number itself - that's valid
-            if (gedVal.trim() === "") {
-              missingGed.push(f.document_type);
-            }
-          }
-          // Non-CAR dispensed docs don't need GED
-          continue;
-        }
         const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
         if (isCar) {
           const gedVal = f.ged_id || "";
@@ -348,11 +336,20 @@ export default function Documentation() {
     const propNomeImovel = (selectedSubmission.proposal.localizacao || "").toUpperCase();
     const propMunicipioImovel = (selectedSubmission.proposal.municipio || "").toUpperCase();
 
-    const carIndFile = selectedSubmission.files.find(f => f.document_type === "car_individual");
-    const propCarIndividual = carIndFile && carIndFile.ged_id ? carIndFile.ged_id : "";
+    const carIndFile = selectedSubmission.files.find(f => f.document_type === "car_individual" && f.file_path !== "habilitado");
+    const propCarIndividual = (() => {
+      if (!carIndFile?.ged_id) return "";
+      const gedVal = carIndFile.ged_id;
+      // CAR ged_id format: "CAR_NUMBER | GED_ID" — extract only the CAR number
+      return gedVal.includes(' | ') ? gedVal.split(' | ')[0] : gedVal;
+    })();
 
-    const carColFile = selectedSubmission.files.find(f => f.document_type === "car_coletivo");
-    const propCarColetivo = carColFile && carColFile.ged_id ? carColFile.ged_id : "";
+    const carColFile = selectedSubmission.files.find(f => f.document_type === "car_coletivo" && f.file_path !== "habilitado");
+    const propCarColetivo = (() => {
+      if (!carColFile?.ged_id) return "";
+      const gedVal = carColFile.ged_id;
+      return gedVal.includes(' | ') ? gedVal.split(' | ')[0] : gedVal;
+    })();
 
     // 2. Load draft if exists, but dynamically override empty fields with fresh proposal data
     if (saved) {
@@ -366,16 +363,17 @@ export default function Documentation() {
           setParecerAtividadePlano(propAtividade);
         }
 
-        if (draft.nomeImovel !== undefined) setParecerNomeImovel(draft.nomeImovel);
+        // For nome/municipio/car: prefer fresh data when draft value is empty
+        if (draft.nomeImovel && draft.nomeImovel.trim() !== "") setParecerNomeImovel(draft.nomeImovel);
         else setParecerNomeImovel(propNomeImovel);
 
-        if (draft.municipioImovel !== undefined) setParecerMunicipioImovel(draft.municipioImovel);
+        if (draft.municipioImovel && draft.municipioImovel.trim() !== "") setParecerMunicipioImovel(draft.municipioImovel);
         else setParecerMunicipioImovel(propMunicipioImovel);
 
-        if (draft.carIndividual !== undefined) setParecerCarIndividual(draft.carIndividual);
+        if (draft.carIndividual && draft.carIndividual.trim() !== "") setParecerCarIndividual(draft.carIndividual);
         else setParecerCarIndividual(propCarIndividual);
 
-        if (draft.carColetivo !== undefined) setParecerCarColetivo(draft.carColetivo);
+        if (draft.carColetivo && draft.carColetivo.trim() !== "") setParecerCarColetivo(draft.carColetivo);
         else setParecerCarColetivo(propCarColetivo);
 
         if (draft.numProjetoPA !== undefined) setParecerNumProjetoPA(draft.numProjetoPA);
@@ -2542,20 +2540,13 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         const missingGed: string[] = [];
                         const approvedProducerFiles = sub.files.filter(f =>
                           f.status === 'aprovado' &&
+                          f.file_path !== 'dispensado' &&
                           f.file_path !== 'preenchido' &&
                           f.file_path !== 'habilitado' &&
                           f.document_type !== "cadastro_atividade_plano" &&
                           !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                         );
                         for (const f of approvedProducerFiles) {
-                          if (f.file_path === 'dispensado') {
-                            const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
-                            if (isCar) {
-                              const gedVal = f.ged_id || "";
-                              if (gedVal.trim() === "") missingGed.push(f.document_type);
-                            }
-                            continue;
-                          }
                           const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
                           if (isCar) {
                             const gedVal = f.ged_id || "";
@@ -2900,20 +2891,13 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                        const missingGed: string[] = [];
                                        const approvedProducerFiles = sub.files.filter(f => 
                                          f.status === 'aprovado' && 
+                                         f.file_path !== 'dispensado' && 
                                          f.file_path !== 'preenchido' && 
                                          f.file_path !== 'habilitado' && 
                                          f.document_type !== "cadastro_atividade_plano" &&
                                          !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                                        );
                                        for (const f of approvedProducerFiles) {
-                                         if (f.file_path === 'dispensado') {
-                                           const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
-                                           if (isCar) {
-                                             const gedVal = f.ged_id || "";
-                                             if (gedVal.trim() === "") missingGed.push(f.document_type);
-                                           }
-                                           continue;
-                                         }
                                          const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
                                          if (isCar) {
                                            const gedVal = f.ged_id || "";
