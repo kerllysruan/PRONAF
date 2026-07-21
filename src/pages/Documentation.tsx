@@ -2175,6 +2175,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         // Active CAR: check for GED part after ' | '
                         return !!(carGedId && carGedId.trim() !== "");
                       }
+                      if (socioAmbientalKeys.includes(file.document_type)) {
+                        const socioFile = sub.files.find(f => f.document_type === "cert_socio_ambiental");
+                        const zipGed = socioFile?.ged_id ? socioFile.ged_id.split(' | ')[0] : "";
+                        return !!((file.ged_id && file.ged_id.trim() !== "") || (zipGed && zipGed.trim() !== ""));
+                      }
                       return !!(file.ged_id && file.ged_id.trim() !== "");
                     })();
 
@@ -2281,20 +2286,49 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                    DOC. DISPENSADO NÃO POSSUI / NÃO NECESSÁRIO
                                </span>
                              </div>
-                           ) : (
+                           ) : (() => {
+                             // For socioAmbiental cards (not DCAA), auto-fill GED from cert_socio_ambiental ZIP
+                             const isSocioAmbientalCard = socioAmbientalKeys.includes(file.document_type);
+                             const socioAmbientalZipGed = (() => {
+                               if (!isSocioAmbientalCard) return "";
+                               const socioFile = sub.files.find(f => f.document_type === "cert_socio_ambiental");
+                               if (!socioFile?.ged_id) return "";
+                               const parts = socioFile.ged_id.split(' | ');
+                               const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0].trim() : '';
+                               return zip;
+                             })();
+                             const effectiveGedValue = isCarCard
+                               ? carGedId
+                               : (file.ged_id && file.ged_id.trim() !== "")
+                                 ? file.ged_id
+                                 : (isSocioAmbientalCard ? socioAmbientalZipGed : "");
+
+                             return (
                              <div className="space-y-1 bg-slate-50 border border-slate-100 rounded-2xl p-2.5">
-                               <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block ml-1">ID-GED</label>
+                               <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block ml-1">
+                                 {isSocioAmbientalCard ? "ID-GED (CERT. SOCIO AMBIENTAL ZIP)" : "ID-GED"}
+                               </label>
                                <input
                                  type="text"
-                                 defaultValue={isCarCard ? carGedId : (file.ged_id ?? "")}
+                                 defaultValue={effectiveGedValue}
                                  placeholder={
-                                   socioAmbientalKeys.includes(file.document_type)
+                                   isSocioAmbientalCard
                                      ? "INSERIR ID - CERT. SOCIO AMBIENTAL ZIP"
                                      : "Ex: GED-001"
                                  }
                                  maxLength={80}
-                                 disabled={isReadOnly}
-                                 className="w-full h-8 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-mono font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-center"
+                                 disabled={isReadOnly || (isSocioAmbientalCard && !!socioAmbientalZipGed)}
+                                 className={`w-full h-8 rounded-xl border px-3 text-[10px] font-mono font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-center ${
+                                   isSocioAmbientalCard && socioAmbientalZipGed
+                                     ? "border-indigo-200 bg-indigo-50/50"
+                                     : "border-slate-200 bg-white"
+                                 }`}
+                                 ref={(el) => {
+                                   // Auto-save ZIP GED to this card if not yet persisted
+                                   if (el && isSocioAmbientalCard && socioAmbientalZipGed && (!file.ged_id || file.ged_id.trim() === "")) {
+                                     updateGedId(file.id, socioAmbientalZipGed);
+                                   }
+                                 }}
                                  onBlur={(e) => {
                                     const val = e.target.value.trim();
                                     if (isCarCard) {
@@ -2312,13 +2346,27 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                    if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                                  }}
                                />
-                               {(isCarCard ? carGedId : file.ged_id) && (
-                                 <div className="mt-1 px-1 bg-slate-100/60 rounded border border-slate-200/50 py-0.5 text-center">
-                                   <p className="text-[9px] font-mono break-all text-slate-500 leading-normal select-all font-bold" title="Clique duas vezes para selecionar tudo">{isCarCard ? carGedId : file.ged_id}</p>
+                               {(isCarCard ? carGedId : effectiveGedValue) && (
+                                 <div className={`mt-1 px-1 rounded border py-0.5 text-center ${
+                                   isSocioAmbientalCard && socioAmbientalZipGed
+                                     ? "bg-indigo-50/60 border-indigo-200/50"
+                                     : "bg-slate-100/60 border-slate-200/50"
+                                 }`}>
+                                   <p className={`text-[9px] font-mono break-all leading-normal select-all font-bold ${
+                                     isSocioAmbientalCard && socioAmbientalZipGed
+                                       ? "text-indigo-500"
+                                       : "text-slate-500"
+                                   }`} title="Clique duas vezes para selecionar tudo">
+                                     {isCarCard ? carGedId : effectiveGedValue}
+                                     {isSocioAmbientalCard && socioAmbientalZipGed && (
+                                       <span className="text-[8px] text-indigo-400 ml-1">(auto)</span>
+                                     )}
+                                   </p>
                                  </div>
                                )}
                              </div>
-                           ))}
+                             );
+                           })())}
 
                            <Separator className="opacity-50" />
 
