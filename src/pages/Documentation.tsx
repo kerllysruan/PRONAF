@@ -95,17 +95,36 @@ function getAgencyCompletedCount(sub: any) {
       const missingGed = [];
       const approvedProducerFiles = sub.files.filter((f: any) => 
         f.status === 'aprovado' && 
-        f.file_path !== 'dispensado' && 
         f.file_path !== 'preenchido' && 
         f.file_path !== 'habilitado' && 
         f.document_type !== "cadastro_atividade_plano" &&
         !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
       );
       for (const f of approvedProducerFiles) {
+        if (f.file_path === 'dispensado') {
+          // Dispensed docs with a GED ID stored are OK; only flag if specifically a CAR with no GED part
+          const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+          if (isCar) {
+            const gedVal = f.ged_id || "";
+            // CAR dispensed stores ged_id as the CAR number itself - that's valid
+            if (gedVal.trim() === "") {
+              missingGed.push(f.document_type);
+            }
+          }
+          // Non-CAR dispensed docs don't need GED
+          continue;
+        }
         const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
         if (isCar) {
-          const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
-          if (!carGedId || carGedId.trim() === "") {
+          const gedVal = f.ged_id || "";
+          if (gedVal.includes(' | ')) {
+            const parts = gedVal.split(' | ');
+            const carGedId = parts[1] || "";
+            if (carGedId.trim() === "") {
+              missingGed.push(f.document_type);
+            }
+          } else {
+            // No separator found - GED part is missing
             missingGed.push(f.document_type);
           }
         } else {
@@ -2144,6 +2163,23 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     const isDispensado = file.file_path === "dispensado" || file.file_path === "preenchido";
                     const isCarCard = file.document_type === "car_individual" || file.document_type === "car_coletivo";
                     const [carNumber, carGedId] = isCarCard && file.ged_id ? (file.ged_id.includes(' | ') ? file.ged_id.split(' | ') : [file.ged_id, '']) : ['', ''];
+
+                    // Determine if GED ID is filled
+                    const hasGedFilled = (() => {
+                      if (file.document_type === "cadastro_atividade_plano") return false; // No GED field
+                      if (isDispensado && !isCarCard) return false; // Dispensed non-CAR don't need GED
+                      if (isVirtual) return false;
+                      if (isCarCard) {
+                        if (isDispensado) {
+                          // Dispensed CAR with ged_id is OK
+                          return !!(file.ged_id && file.ged_id.trim() !== "");
+                        }
+                        // Active CAR: check for GED part after ' | '
+                        return !!(carGedId && carGedId.trim() !== "");
+                      }
+                      return !!(file.ged_id && file.ged_id.trim() !== "");
+                    })();
+
                     let cardBorder = "border-slate-200 dark:border-slate-800";
                     let badgeColor = "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
                     let badgeLabel = "Não enviado";
@@ -2176,9 +2212,16 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         className={`rounded-3xl overflow-hidden transition-all duration-300 hover:shadow-md bg-white dark:bg-slate-950 relative border-2 ${cardBorder}`}
                       >
                         <CardContent className="p-6 space-y-4 pt-8">
-                          {/* Top Right Mini Badge */}
-                          <div className={`absolute top-3 right-3 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${badgeColor}`}>
-                            {badgeLabel}
+                          {/* Top Right Mini Badges */}
+                          <div className="absolute top-2.5 right-3 flex flex-col items-end gap-1">
+                            <div className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                              {badgeLabel}
+                            </div>
+                            {hasGedFilled && file.document_type !== "cadastro_atividade_plano" && (
+                              <div className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900/50">
+                                ID - GED - OK ✔
+                              </div>
+                            )}
                           </div>
 
                           {/* Left Aligned Content Header mimicking DocumentationSubmit */}
@@ -2499,17 +2542,30 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         const missingGed: string[] = [];
                         const approvedProducerFiles = sub.files.filter(f =>
                           f.status === 'aprovado' &&
-                          f.file_path !== 'dispensado' &&
                           f.file_path !== 'preenchido' &&
                           f.file_path !== 'habilitado' &&
                           f.document_type !== "cadastro_atividade_plano" &&
                           !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                         );
                         for (const f of approvedProducerFiles) {
+                          if (f.file_path === 'dispensado') {
+                            const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+                            if (isCar) {
+                              const gedVal = f.ged_id || "";
+                              if (gedVal.trim() === "") missingGed.push(f.document_type);
+                            }
+                            continue;
+                          }
                           const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
                           if (isCar) {
-                            const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
-                            if (!carGedId || carGedId.trim() === "") missingGed.push(f.document_type);
+                            const gedVal = f.ged_id || "";
+                            if (gedVal.includes(' | ')) {
+                              const parts = gedVal.split(' | ');
+                              const carGedId = parts[1] || "";
+                              if (carGedId.trim() === "") missingGed.push(f.document_type);
+                            } else {
+                              missingGed.push(f.document_type);
+                            }
                           } else {
                             if (!f.ged_id || f.ged_id.trim() === "") missingGed.push(f.document_type);
                           }
@@ -2841,26 +2897,35 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   disabled={isReadOnly}
                                   onClick={() => {
                                      if (doc.key === "checklist_documentos_responsabilidade_agencia") {
-                                       const missingGed = [];
+                                       const missingGed: string[] = [];
                                        const approvedProducerFiles = sub.files.filter(f => 
                                          f.status === 'aprovado' && 
-                                         f.file_path !== 'dispensado' && 
                                          f.file_path !== 'preenchido' && 
                                          f.file_path !== 'habilitado' && 
                                          f.document_type !== "cadastro_atividade_plano" &&
                                          !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                                        );
                                        for (const f of approvedProducerFiles) {
+                                         if (f.file_path === 'dispensado') {
+                                           const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+                                           if (isCar) {
+                                             const gedVal = f.ged_id || "";
+                                             if (gedVal.trim() === "") missingGed.push(f.document_type);
+                                           }
+                                           continue;
+                                         }
                                          const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
                                          if (isCar) {
-                                           const [_, carGedId] = f.ged_id && f.ged_id.includes(' | ') ? f.ged_id.split(' | ') : ['', ''];
-                                           if (!carGedId || carGedId.trim() === "") {
+                                           const gedVal = f.ged_id || "";
+                                           if (gedVal.includes(' | ')) {
+                                             const parts = gedVal.split(' | ');
+                                             const carGedId = parts[1] || "";
+                                             if (carGedId.trim() === "") missingGed.push(f.document_type);
+                                           } else {
                                              missingGed.push(f.document_type);
                                            }
                                          } else {
-                                           if (!f.ged_id || f.ged_id.trim() === "") {
-                                             missingGed.push(f.document_type);
-                                           }
+                                           if (!f.ged_id || f.ged_id.trim() === "") missingGed.push(f.document_type);
                                          }
                                        }
                                        const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
