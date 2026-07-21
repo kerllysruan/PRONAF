@@ -139,7 +139,9 @@ export function useDocumentationReview() {
       }
 
       // Filter by agency if needed
+      // Ensure t.stock_proposals is not null (e.g. if the proposal was deleted or RLS restricts it)
       const filteredTokens = tokens.filter((t: any) => {
+        if (!t.stock_proposals) return false;
         if (effectiveAgencyId === "all") return true;
         return t.stock_proposals?.agency_id === effectiveAgencyId;
       });

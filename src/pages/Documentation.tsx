@@ -2310,7 +2310,8 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                </label>
                                <input
                                  type="text"
-                                 defaultValue={effectiveGedValue}
+                                 value={isSocioAmbientalCard && socioAmbientalZipGed ? socioAmbientalZipGed : undefined}
+                                 defaultValue={isSocioAmbientalCard && socioAmbientalZipGed ? undefined : (isCarCard ? carGedId : (file.ged_id ?? ""))}
                                  placeholder={
                                    isSocioAmbientalCard
                                      ? "INSERIR ID - CERT. SOCIO AMBIENTAL ZIP"
@@ -2325,9 +2326,6 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                  }`}
                                  ref={(el) => {
                                    // Auto-save ZIP GED to this card if not yet persisted
-                                   if (el && isSocioAmbientalCard && socioAmbientalZipGed && (!file.ged_id || file.ged_id.trim() === "")) {
-                                     updateGedId(file.id, socioAmbientalZipGed);
-                                   }
                                  }}
                                  onBlur={(e) => {
                                     const val = e.target.value.trim();
