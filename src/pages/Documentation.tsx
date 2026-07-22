@@ -80,6 +80,25 @@ const DISPENSABLE_DOCS = [
   "certidao_obito",
 ];
 
+// Returns ZIP GED from cert_socio_ambiental file (shared by all socioAmbiental declaration cards)
+function getSocioAmbientalZipGed(files: any[]): string {
+  const certFile = files.find((f: any) => f.document_type === "cert_socio_ambiental");
+  if (!certFile?.ged_id) return "";
+  const parts = certFile.ged_id.split(' | ');
+  const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0].trim() : '';
+  return zip;
+}
+
+// Keys of declaration cards that inherit GED from cert_socio_ambiental ZIP
+const SOCIO_AMBIENTAL_DECL_KEYS = [
+  "declaracao_suporte_hidrico",
+  "autorizacao_desmatamento_queima",
+  "declaracao_regularidade_ambiental",
+  "declaracao_recomposicao_reserva_car",
+  "declaracao_nao_desmatamento",
+  "declaracao_anexo_128"
+];
+
 function getAgencyCompletedCount(sub: any) {
   const CONFIRMATION_ACTIVITY_KEYS = [
     "consulta_s400",
@@ -92,17 +111,20 @@ function getAgencyCompletedCount(sub: any) {
   return AGENCY_DOCUMENTATION.filter((doc) => {
     const existingFile = sub.files.find((f: any) => f.document_type === doc.key);
     if (doc.key === "checklist_documentos_responsabilidade_agencia") {
-      const missingGed = [];
+      const missingGed: string[] = [];
       const approvedProducerFiles = sub.files.filter((f: any) => 
         f.status === 'aprovado' && 
         f.file_path !== 'dispensado' && 
         f.file_path !== 'preenchido' && 
         f.file_path !== 'habilitado' && 
         f.document_type !== "cadastro_atividade_plano" &&
-        !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
+        !AGENCY_DOCUMENTATION.some((ad: any) => ad.key === f.document_type)
       );
+      // Resolve ZIP GED from cert_socio_ambiental once (shared by all socioAmbiental declaration cards)
+      const certSocioZipGed = getSocioAmbientalZipGed(sub.files);
       for (const f of approvedProducerFiles) {
         const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+        const isSocioAmbientalDecl = SOCIO_AMBIENTAL_DECL_KEYS.includes(f.document_type);
         if (isCar) {
           const gedVal = f.ged_id || "";
           if (gedVal.includes(' | ')) {
@@ -115,6 +137,12 @@ function getAgencyCompletedCount(sub: any) {
             // No separator found - GED part is missing
             missingGed.push(f.document_type);
           }
+        } else if (isSocioAmbientalDecl) {
+          // Effective GED = own ged_id OR ZIP inherited from cert_socio_ambiental
+          const effectiveGed = (f.ged_id && f.ged_id.trim() !== "")
+            ? f.ged_id.trim()
+            : certSocioZipGed;
+          if (effectiveGed === "") missingGed.push(f.document_type);
         } else {
           if (!f.ged_id || f.ged_id.trim() === "") {
             missingGed.push(f.document_type);
@@ -2163,6 +2191,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     const [carNumber, carGedId] = isCarCard && file.ged_id ? (file.ged_id.includes(' | ') ? file.ged_id.split(' | ') : [file.ged_id, '']) : ['', ''];
 
                     // Determine if GED ID is filled
+                    // For socioAmbiental declaration cards, GED is considered filled if the card has its own
+                    // ged_id OR if the cert_socio_ambiental card has a ZIP GED (shared/inherited).
+                    const _certSocioZipGed = socioAmbientalKeys.includes(file.document_type)
+                      ? getSocioAmbientalZipGed(sub.files)
+                      : "";
                     const hasGedFilled = (() => {
                       if (file.document_type === "cadastro_atividade_plano") return false; // No GED field
                       if (isDispensado && !isCarCard) return false; // Dispensed non-CAR don't need GED
@@ -2176,9 +2209,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         return !!(carGedId && carGedId.trim() !== "");
                       }
                       if (socioAmbientalKeys.includes(file.document_type)) {
-                        const socioFile = sub.files.find(f => f.document_type === "cert_socio_ambiental");
-                        const zipGed = socioFile?.ged_id ? socioFile.ged_id.split(' | ')[0] : "";
-                        return !!((file.ged_id && file.ged_id.trim() !== "") || (zipGed && zipGed.trim() !== ""));
+                        // Effective GED = own ged_id OR ZIP inherited from cert_socio_ambiental
+                        const effectiveGed = (file.ged_id && file.ged_id.trim() !== "")
+                          ? file.ged_id.trim()
+                          : _certSocioZipGed;
+                        return effectiveGed !== "";
                       }
                       return !!(file.ged_id && file.ged_id.trim() !== "");
                     })();
@@ -2592,8 +2627,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           f.document_type !== "cadastro_atividade_plano" &&
                           !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
                         );
+                        // Resolve ZIP GED from cert_socio_ambiental (shared by all socioAmbiental cards)
+                        const _checklistCertSocioZip = getSocioAmbientalZipGed(sub.files);
                         for (const f of approvedProducerFiles) {
                           const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+                          const isSocioAmbDecl = SOCIO_AMBIENTAL_DECL_KEYS.includes(f.document_type);
                           if (isCar) {
                             const gedVal = f.ged_id || "";
                             if (gedVal.includes(' | ')) {
@@ -2603,6 +2641,12 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                             } else {
                               missingGed.push(f.document_type);
                             }
+                          } else if (isSocioAmbDecl) {
+                            // Effective GED = own ged_id OR ZIP inherited from cert_socio_ambiental
+                            const effectiveGed = (f.ged_id && f.ged_id.trim() !== "")
+                              ? f.ged_id.trim()
+                              : _checklistCertSocioZip;
+                            if (effectiveGed === "") missingGed.push(f.document_type);
                           } else {
                             if (!f.ged_id || f.ged_id.trim() === "") missingGed.push(f.document_type);
                           }
