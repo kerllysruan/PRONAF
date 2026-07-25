@@ -238,22 +238,24 @@ export function useDocumentationReview() {
             approved = 1;
           } else if ((invData as any)?.status === "reprovado") {
             rejected = 1;
-          } else if ((invData as any)?.status === "pendente") {
+          } else {
             pending = 1;
           }
+        } else {
+          pending = 1;
         }
 
         requiredKeys.forEach((key) => {
           const fileInfo = typeMap.get(key);
-          if (!fileInfo) {
-            // Not uploaded
+          if (!fileInfo || fileInfo.isHabilitado) {
+            pending++;
           } else if (fileInfo.isDispensado) {
             dispensedCount++;
-          } else if (fileInfo.status === "aprovado" && !fileInfo.isHabilitado) {
+          } else if (fileInfo.status === "aprovado") {
             approved++;
           } else if (fileInfo.status === "reprovado") {
             rejected++;
-          } else if (fileInfo.status === "pendente" && !fileInfo.isHabilitado) {
+          } else if (fileInfo.status === "pendente") {
             pending++;
           }
         });
