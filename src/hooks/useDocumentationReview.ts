@@ -177,7 +177,7 @@ export function useDocumentationReview() {
         const typeMap = new Map<string, DocumentationFile>();
         filesList.forEach((f) => {
           // Normalize: if file_path is "dispensado" or "preenchido", force status to "aprovado"
-          const isDispPath = f.file_path === "dispensado" || f.file_path === "preenchido";
+          const isDispPath = f.file_path === "dispensado";
           const normalizedFile = isDispPath
             ? { ...f, status: "aprovado" }
             : f;
@@ -213,7 +213,7 @@ export function useDocumentationReview() {
           const isDispensado = selectedFile.file_path === "dispensado";
           const isPreenchido = selectedFile.file_path === "preenchido";
           const isHabilitado = selectedFile.file_path === "habilitado";
-          const currentStatus = (isDispensado || isPreenchido) ? "aprovado" : selectedFile.status;
+          const currentStatus = isDispensado ? "aprovado" : selectedFile.status;
           typeMap.set(docType, { status: currentStatus, isDispensado, isHabilitado, created_at: selectedFile.created_at });
         });
 

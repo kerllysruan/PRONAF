@@ -2232,6 +2232,10 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       cardBorder = "border-slate-200 dark:border-slate-800";
                       badgeColor = "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
                       badgeLabel = "Dispensado 🚫";
+                    } else if (status === "reprovado") {
+                      cardBorder = "border-rose-300 dark:border-rose-900/60";
+                      badgeColor = "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50";
+                      badgeLabel = "Reprovado ❌";
                     } else if (isPreenchido || status === "aprovado") {
                       cardBorder = "border-emerald-300 dark:border-emerald-900/60";
                       badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50";
@@ -2244,10 +2248,6 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       cardBorder = "border-orange-400 dark:border-orange-900/60";
                       badgeColor = "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/50";
                       badgeLabel = "Aguard. Reenvio ⏳";
-                    } else if (status === "reprovado") {
-                      cardBorder = "border-rose-300 dark:border-rose-900/60";
-                      badgeColor = "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50";
-                      badgeLabel = "Reprovado ❌";
                     } else if (isPendingResubmission) {
                       cardBorder = "border-violet-300 dark:border-violet-900/60";
                       badgeColor = "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900/50";
