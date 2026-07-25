@@ -210,9 +210,10 @@ export function useDocumentationReview() {
         grouped.forEach((fileList, docType) => {
           const sorted = [...fileList].sort((a, b) => parseSafeDate(b.created_at) - parseSafeDate(a.created_at));
           const selectedFile = sorted[0];
-          const isDispensado = selectedFile.file_path === "dispensado" || selectedFile.file_path === "preenchido";
+          const isDispensado = selectedFile.file_path === "dispensado";
+          const isPreenchido = selectedFile.file_path === "preenchido";
           const isHabilitado = selectedFile.file_path === "habilitado";
-          const currentStatus = isDispensado ? "aprovado" : selectedFile.status;
+          const currentStatus = (isDispensado || isPreenchido) ? "aprovado" : selectedFile.status;
           typeMap.set(docType, { status: currentStatus, isDispensado, isHabilitado, created_at: selectedFile.created_at });
         });
 

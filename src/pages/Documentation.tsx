@@ -2185,8 +2185,8 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filtered.map((file) => {
                     const status = file.status as DocFileStatus;
-                    const isVirtual = file.id.startsWith("temp_");
-                    const isDispensado = file.file_path === "dispensado" || file.file_path === "preenchido";
+                    const isDispensado = file.file_path === "dispensado";
+                    const isPreenchido = file.file_path === "preenchido";
                     const isCarCard = file.document_type === "car_individual" || file.document_type === "car_coletivo";
                     const [carNumber, carGedId] = isCarCard && file.ged_id ? (file.ged_id.includes(' | ') ? file.ged_id.split(' | ') : [file.ged_id, '']) : ['', ''];
 
@@ -2231,14 +2231,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       cardBorder = "border-slate-200 dark:border-slate-800";
                       badgeColor = "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
                       badgeLabel = "Dispensado 🚫";
+                    } else if (isPreenchido || status === "aprovado") {
+                      cardBorder = "border-emerald-300 dark:border-emerald-900/60";
+                      badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50";
+                      badgeLabel = isPreenchido ? "Preenchido ✅" : "Aprovado ✅";
                     } else if (isVirtual) {
                       cardBorder = "border-amber-200 dark:border-amber-900/40";
                       badgeColor = "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50";
                       badgeLabel = "Pendente ⏳";
-                    } else if (status === "aprovado") {
-                      cardBorder = "border-emerald-300 dark:border-emerald-900/60";
-                      badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50";
-                      badgeLabel = "Aprovado ✅";
                     } else if (isRejectedAwaitingResend) {
                       cardBorder = "border-orange-400 dark:border-orange-900/60";
                       badgeColor = "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/50";
