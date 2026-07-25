@@ -338,40 +338,39 @@ export function useDocumentationToken() {
         }
 
         const fileExt = file.name.split(".").pop() || "pdf";
-        const filePath = `documentation/${tokenStr}/${docType}.${fileExt}`;
+        // Use a timestamp-versioned path for resubmissions so the old rejected
+        // file stays in storage and the analista can still view it during review.
+        const timestamp = Date.now();
+        const filePath = `documentation/${tokenStr}/${docType}_v${timestamp}.${fileExt}`;
 
         // Check if file record already exists for this token and document type
         const { data: existing } = await supabase
           .from("documentation_files")
-          .select("id, file_path")
+          .select("id, file_path, status")
           .eq("token_id", tokenId)
           .eq("document_type", docType)
           .maybeSingle();
 
-        if (existing) {
-          // If the path is different, delete the old file to save space
-          if (existing.file_path !== filePath && existing.file_path !== "dispensado" && existing.file_path !== "preenchido") {
-            await supabase.storage
-              .from("proposals_documents")
-              .remove([existing.file_path]);
-          }
-        }
+        // Save old rejected file path so analista can still access it
+        // We do NOT delete the old rejected file from storage
 
         // Read the file content into an ArrayBuffer before uploading.
         const buffer = await file.arrayBuffer();
         const blob = new Blob([buffer], { type: file.type || "application/pdf" });
 
-        // Upload new file (overwrite)
+        // Upload new file (does NOT overwrite old rejected file — different path)
         const { error: uploadError } = await supabase.storage
           .from("proposals_documents")
-          .upload(filePath, blob, { upsert: true });
+          .upload(filePath, blob, { upsert: false });
 
         if (uploadError) throw uploadError;
 
         const carNumber = carNumbersMap?.[docType];
 
         if (existing) {
-          // Update file record
+          // Update file record with new file path and reset status to pendente
+          // Keep rejection_reason visible for the analista (set to a history note)
+          const prevReason = existing.status === "reprovado" ? null : null;
           const { error: dbError } = await supabase
             .from("documentation_files")
             .update({
@@ -379,7 +378,7 @@ export function useDocumentationToken() {
               file_path: filePath,
               file_size: file.size,
               status: "pendente",
-              rejection_reason: null,
+              rejection_reason: prevReason,
               reviewed_at: null,
               reviewed_by: null,
               ...(carNumber ? { ged_id: carNumber } : {}),

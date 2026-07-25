@@ -825,6 +825,8 @@ export default function DocumentationSubmit() {
               const isApproved = !needsUpload && dbFile?.status === "aprovado";
               const isPending  = !needsUpload && dbFile?.status === "pendente";
               const isRejected = dbFile?.status === "reprovado";
+              // When rejected + new file selected: we're in "replacing" mode
+              const isReplacingRejected = isRejected && !!selected;
 
               return (
                 <div
@@ -836,8 +838,10 @@ export default function DocumentationSubmit() {
                       ? "border-emerald-200 bg-emerald-50/80"
                       : isPending
                       ? "border-amber-200 bg-amber-50/80"
+                      : isReplacingRejected
+                      ? "border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-500/5"
                       : isRejected
-                      ? "border-rose-200 bg-rose-50/80"
+                      ? "border-rose-400 bg-rose-50/80 shadow-sm shadow-rose-200"
                       : selected
                       ? "border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-500/5"
                       : "border-dashed border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/10"
@@ -847,6 +851,55 @@ export default function DocumentationSubmit() {
                   onMouseEnter={(!isApproved && !isPending) ? () => setHoveredDocKey(doc.key) : undefined}
                   onMouseLeave={(!isApproved && !isPending) ? () => setHoveredDocKey(null) : undefined}
                 >
+                  {/* ── Rejection Banner (always shown when rejected) ─── */}
+                  {isRejected && (
+                    <div className={`px-4 py-2.5 flex items-start gap-2.5 ${
+                      isReplacingRejected
+                        ? "bg-indigo-600 text-white"
+                        : "bg-rose-600 text-white"
+                    }`}>
+                      <div className="flex-shrink-0 mt-0.5">
+                        {isReplacingRejected ? (
+                          <FileCheck className="h-4 w-4" />
+                        ) : (
+                          <XCircle className="h-4 w-4" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-extrabold uppercase tracking-wider leading-tight">
+                          {isReplacingRejected ? "✅ Novo arquivo selecionado — pronto para enviar" : "❌ DOCUMENTO REPROVADO — Reenvio necessário"}
+                        </p>
+                        {dbFile?.rejection_reason && !isReplacingRejected && (
+                          <p className="text-[10px] mt-0.5 opacity-90 leading-snug">
+                            <span className="font-bold">Motivo:</span> {dbFile.rejection_reason}
+                          </p>
+                        )}
+                        {isReplacingRejected && (
+                          <p className="text-[10px] mt-0.5 opacity-90 leading-snug truncate">
+                            Substituindo: <span className="font-semibold">{dbFile?.file_name || "arquivo anterior"}</span>
+                          </p>
+                        )}
+                      </div>
+                      {isReplacingRejected && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleFileSelect(doc.key, null); }}
+                          className="flex-shrink-0 p-1 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+                          title="Cancelar seleção"
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {/* ── Rejection Reason (shown below banner when rejected+selecting) ─── */}
+                  {isReplacingRejected && dbFile?.rejection_reason && (
+                    <div className="px-4 py-2 bg-rose-50 border-b border-rose-200">
+                      <p className="text-[10px] text-rose-700 leading-snug">
+                        <span className="font-bold">Motivo da reprovação:</span> {dbFile.rejection_reason}
+                      </p>
+                    </div>
+                  )}
                   {isApproved ? (
                     <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center">
                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${dbFile?.file_path === 'dispensado' ? 'bg-slate-200 border border-slate-300' : 'bg-emerald-100 border border-emerald-200'}`}>
@@ -1034,14 +1087,20 @@ export default function DocumentationSubmit() {
 
                                 {selected ? (
                                   <>
-                                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-3">
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-2">
                                       <FileCheck className="h-6 w-6 text-indigo-600" />
                                     </div>
                                     <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                                     </p>
-                                    <p className="text-indigo-600 text-[10px] truncate max-w-full px-2">
-                                      {selected.name}
-                                    </p>
+                                    <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-1.5 text-center max-w-full">
+                                      <p className="text-[9px] font-black uppercase tracking-wider text-indigo-400 mb-0.5">Novo arquivo</p>
+                                      <p className="text-indigo-700 text-[10px] font-bold truncate max-w-full">
+                                        {selected.name}
+                                      </p>
+                                      <p className="text-[9px] text-indigo-400 mt-0.5">
+                                        {(selected.size / 1024).toFixed(0)} KB
+                                      </p>
+                                    </div>
                                     <button
                                       type="button"
                                       onClick={(e) => {
@@ -1052,14 +1111,18 @@ export default function DocumentationSubmit() {
                                       className="mt-2 text-[10px] text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1"
                                     >
                                       <XCircle className="h-3 w-3" />
-                                      Remover
+                                      Cancelar
                                     </button>
                                   </>
                                 ) : (
                                   <>
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mb-3 group-hover:bg-indigo-50 group-hover:border-indigo-200 transition-all duration-300">
+                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-all duration-300 ${
+                                      isRejected
+                                        ? "bg-rose-100 border border-rose-300 animate-pulse"
+                                        : "bg-slate-100 border border-slate-200 group-hover:bg-indigo-50 group-hover:border-indigo-200"
+                                    }`}>
                                       {isRejected ? (
-                                        <XCircle className="h-5 w-5 text-rose-500" />
+                                        <XCircle className="h-5 w-5 text-rose-600" />
                                       ) : (
                                         <Upload className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                                       )}
@@ -1067,9 +1130,17 @@ export default function DocumentationSubmit() {
                                     <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                                     </p>
                                     {isRejected ? (
-                                      <p className="text-rose-600 text-[10px] text-center px-2 truncate max-w-full font-semibold">
-                                        Reprovado: {dbFile.rejection_reason || "Reenviar"}
-                                      </p>
+                                      <>
+                                        {dbFile?.file_name && dbFile.file_name !== "Pendente de envio" && (
+                                          <div className="bg-rose-100 border border-rose-200 rounded-lg px-2 py-1 text-center mb-1">
+                                            <p className="text-[9px] font-bold text-rose-500 uppercase tracking-wider">Arquivo reprovado</p>
+                                            <p className="text-rose-700 text-[10px] font-semibold truncate">{dbFile.file_name}</p>
+                                          </div>
+                                        )}
+                                        <p className="text-rose-500 text-[10px] text-center font-bold animate-pulse">
+                                          👆 Clique para enviar novo arquivo
+                                        </p>
+                                      </>
                                     ) : (
                                       <p className="text-slate-400 text-[10px]">
                                         Clique, arraste ou cole (Ctrl+V)
@@ -1431,7 +1502,6 @@ export default function DocumentationSubmit() {
                           />
                         </div>
                       </div>
-
                       {/* Coluna de Ações vazia apenas para manter o alinhamento de 12 colunas */}
                       <div className="col-span-1" />
                     </div>
@@ -1474,17 +1544,77 @@ export default function DocumentationSubmit() {
               .filter(([key, status]) => status !== "ready" && !(key in selectedFiles))
               .length;
 
+            // Count rejected docs that still need replacement
+            const rejectedStillNeeded = Object.entries(perDocStatus)
+              .filter(([key, status]) => status === "rejected" && !(key in selectedFiles))
+              .length;
+
             return (
               <div className="flex flex-col items-center gap-3 pt-4 pb-4">
-                {docsStillNeeded > 0 && (
+                {/* Alert for rejected docs still needing replacement */}
+                {rejectedStillNeeded > 0 && (
+                  <div className="w-full max-w-lg bg-rose-50 border border-rose-300 rounded-2xl p-4 mb-1">
+                    <p className="text-rose-800 text-xs font-bold tracking-wide mb-2">
+                      ❌ {rejectedStillNeeded} documento{rejectedStillNeeded > 1 ? "s" : ""} reprovado{rejectedStillNeeded > 1 ? "s" : ""} aguardando substituição:
+                    </p>
+                    <div className="space-y-1">
+                      {Object.entries(perDocStatus)
+                        .filter(([key, status]) => status === "rejected" && !(key in selectedFiles))
+                        .map(([key]) => {
+                          const docDef = DOCUMENTATION_REQUIRED.find(d => d.key === key);
+                          const dbFile = dbFilesMap[key];
+                          return (
+                            <div key={key} className="flex items-start gap-2 bg-white rounded-xl px-3 py-2 border border-rose-200">
+                              <XCircle className="h-3 w-3 text-rose-500 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-bold text-rose-700 truncate">{docDef?.label || key}</p>
+                                {dbFile?.rejection_reason && (
+                                  <p className="text-[9px] text-rose-500">{dbFile.rejection_reason}</p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+                {docsStillNeeded > 0 && docsStillNeeded !== rejectedStillNeeded && (
                   <p className="text-amber-800 text-xs font-bold tracking-wide bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl mb-1 shadow-sm">
-                    ⚠️ Selecione todos os {docsStillNeeded} documentos obrigatórios pendentes para habilitar o envio.
+                    ⚠️ {docsStillNeeded - rejectedStillNeeded} documento{(docsStillNeeded - rejectedStillNeeded) > 1 ? "s" : ""} faltante{(docsStillNeeded - rejectedStillNeeded) > 1 ? "s" : ""} ainda precisam ser selecionados.
                   </p>
                 )}
                 {!isInversõesValidadas && (
                   <p className="text-rose-800 text-xs font-bold tracking-wide bg-rose-50 border border-rose-200 px-4 py-2 rounded-xl mb-1 shadow-sm">
                     ⚠️ A soma das inversões ({formatCurrency(totalInversoes)}) não é igual ao valor proposto da operação ({formatCurrency(estimatedValue)}). Ajuste os valores no grid para habilitar o envio.
                   </p>
+                )}
+                {/* Summary of rejected docs being replaced */}
+                {hasRejections && selectedCount > 0 && (
+                  <div className="w-full max-w-lg bg-indigo-50 border border-indigo-200 rounded-2xl p-4 mb-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500 mb-2">
+                      📋 Resumo do Reenvio ({selectedCount} arquivo{selectedCount > 1 ? "s" : ""})
+                    </p>
+                    <div className="space-y-1.5">
+                      {Object.entries(selectedFiles).map(([key, file]) => {
+                        const docDef = DOCUMENTATION_REQUIRED.find(d => d.key === key);
+                        const dbFileEntry = dbFilesMap[key];
+                        const wasRejected = dbFileEntry?.status === "reprovado";
+                        if (!docDef) return null;
+                        return (
+                          <div key={key} className="flex items-start gap-2 bg-white rounded-xl px-3 py-2 border border-indigo-100">
+                            <FileCheck className="h-3.5 w-3.5 text-indigo-500 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[10px] font-bold text-slate-700 truncate">{docDef.label}</p>
+                              {wasRejected && (
+                                <p className="text-[9px] text-rose-500 font-semibold">↻ Substituindo arquivo reprovado</p>
+                              )}
+                              <p className="text-[9px] text-indigo-500 truncate">{file.name}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
                 <Button
                   onClick={hasRejections ? handleResubmit : handleSubmit}
@@ -1504,7 +1634,7 @@ export default function DocumentationSubmit() {
                   ) : (
                     <>
                       <Send className="h-5 w-5 mr-2" />
-                      {hasRejections ? "Reenviar Documentos" : "Enviar Documentação"}
+                      {hasRejections ? "Reenviar Documentos Reprovados" : "Enviar Documentação"}
                       {selectedCount > 0 && (
                         <Badge className="ml-2 bg-white/20 text-white border-0 rounded-full text-xs">
                           {selectedCount}

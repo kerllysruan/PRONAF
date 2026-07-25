@@ -2222,6 +2222,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     let badgeColor = "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
                     let badgeLabel = "Não enviado";
                     
+                    // Detect: file was rejected and user hasn't sent a new one yet
+                    const isRejectedAwaitingResend = status === "reprovado" && file.file_path === "habilitado";
+                    // Detect: file is pending but was previously reviewed (possible resubmission)
+                    const isPendingResubmission = status === "pendente" && !!file.reviewed_at;
+
                     if (isDispensado) {
                       cardBorder = "border-slate-200 dark:border-slate-800";
                       badgeColor = "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800";
@@ -2234,10 +2239,18 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       cardBorder = "border-emerald-300 dark:border-emerald-900/60";
                       badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50";
                       badgeLabel = "Aprovado ✅";
+                    } else if (isRejectedAwaitingResend) {
+                      cardBorder = "border-orange-400 dark:border-orange-900/60";
+                      badgeColor = "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-900/50";
+                      badgeLabel = "Aguard. Reenvio ⏳";
                     } else if (status === "reprovado") {
                       cardBorder = "border-rose-300 dark:border-rose-900/60";
                       badgeColor = "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-900/50";
                       badgeLabel = "Reprovado ❌";
+                    } else if (isPendingResubmission) {
+                      cardBorder = "border-violet-300 dark:border-violet-900/60";
+                      badgeColor = "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900/50";
+                      badgeLabel = "Reenvio ↻";
                     } else {
                       cardBorder = "border-amber-300 dark:border-amber-900/60";
                       badgeColor = "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50";
@@ -2279,10 +2292,37 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
                           {/* Rejection Reason Alert */}
                           {status === "reprovado" && file.rejection_reason && (
-                            <div className="bg-rose-100/60 border border-rose-200 rounded-2xl p-3">
-                              <p className="text-xs text-rose-800 leading-relaxed">
-                                <span className="font-bold">Motivo:</span> {file.rejection_reason}
-                              </p>
+                            <div className="bg-rose-100/80 border border-rose-300 rounded-2xl p-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <XCircle className="h-3.5 w-3.5 text-rose-600 flex-shrink-0" />
+                                <span className="text-[10px] font-black uppercase tracking-wider text-rose-700">Motivo da Reprovação</span>
+                              </div>
+                              <p className="text-xs text-rose-800 leading-relaxed font-medium">{file.rejection_reason}</p>
+                            </div>
+                          )}
+
+                          {/* Awaiting Resend Alert */}
+                          {isRejectedAwaitingResend && (
+                            <div className="bg-orange-50 border border-orange-300 rounded-2xl p-3">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-3.5 w-3.5 text-orange-500 flex-shrink-0 animate-pulse" />
+                                <p className="text-[10px] font-black uppercase tracking-wider text-orange-700">Aguardando novo envio pelo proponente</p>
+                              </div>
+                              {file.rejection_reason && (
+                                <p className="text-xs text-orange-700 mt-1 leading-relaxed">
+                                  <span className="font-bold">Motivo informado:</span> {file.rejection_reason}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Resubmission indicator */}
+                          {isPendingResubmission && (
+                            <div className="bg-violet-50 border border-violet-200 rounded-2xl p-2.5">
+                              <div className="flex items-center gap-2">
+                                <RefreshCw className="h-3 w-3 text-violet-500 flex-shrink-0" />
+                                <p className="text-[10px] font-bold text-violet-600">Reenvio — Analisar novo arquivo</p>
+                              </div>
                             </div>
                           )}
 
