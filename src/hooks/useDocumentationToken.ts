@@ -262,10 +262,10 @@ export function useDocumentationToken() {
 
       if (updateError) throw updateError;
 
-      // Update proposal status to documentacao_pendente
+      // Update proposal status to DOCUMENTAÇÃO PENDENTE
       const { error: proposalError } = await supabase
         .from("stock_proposals")
-        .update({ status: "documentacao_pendente" })
+        .update({ status: "DOCUMENTAÇÃO PENDENTE" })
         .eq("id", stockProposalId);
 
       if (proposalError) throw proposalError;

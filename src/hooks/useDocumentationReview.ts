@@ -80,10 +80,15 @@ export interface AuthorizedProposal {
   token: string | null; // null = token being generated
 }
 
-// Statuses that trigger auto-appearance on the Documentação page
+// Statuses that trigger auto-appearance on the Documentação page (awaiting docs)
 const AUTORIZADO_STATUSES = [
   "AUTORIZADO ENVIO PARA CENTRAL",
   "AUTORIZADO ENVIO CENTRAL",
+  "DOCUMENTAÇÃO PENDENTE",
+  "DOCUMENTAÇÃO COM PENDÊNCIA",
+  "documentacao_pendente",
+  "em_analise",
+  "AGUARDANDO ENTREVISTA",
 ];
 
 /**
