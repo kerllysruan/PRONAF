@@ -41,6 +41,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useStockProposals } from "@/hooks/useStockProposals";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 
 const PAGE_SIZE = 10;
 
@@ -618,6 +619,13 @@ export default function Proposals() {
             Propostas <span className="text-emerald-600">Concluídas</span>
           </h1>
           <p className="text-sm text-slate-500 font-medium">Relatório detalhado de propostas finalizadas e contratos assinados.</p>
+          <button
+            onClick={() => navigate('/estoque')}
+            className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-indigo-600 hover:text-indigo-800 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-lg font-semibold transition-colors"
+          >
+            <Box className="h-3 w-3" />
+            Ver propostas em Estoque →
+          </button>
         </div>
       </div>
 

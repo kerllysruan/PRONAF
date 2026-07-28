@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { AgencyProvider } from "@/contexts/AgencyContext";
+import { AppDataProvider } from "@/contexts/AppDataContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Dashboard from "./pages/Dashboard";
@@ -91,7 +92,9 @@ const App = () => {
           <BrowserRouter>
             <AuthProvider>
               <AgencyProvider>
-                <AppRoutes />
+                <AppDataProvider>
+                  <AppRoutes />
+                </AppDataProvider>
               </AgencyProvider>
             </AuthProvider>
           </BrowserRouter>

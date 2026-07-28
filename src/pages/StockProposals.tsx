@@ -28,6 +28,9 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import { ChartTooltip } from "@/components/ChartTooltip";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { ProposalFlowTimeline } from "@/components/shared/ProposalFlowTimeline";
+import { useAppData } from "@/contexts/AppDataContext";
 
 // ─── CSV parser (Force Refresh) ────────────────────────────────
 function parseCSVLine(line: string): string[] {
@@ -1178,10 +1181,13 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
               Controle de propostas prontas para envio à central
             </p>
             {concludedProposals.length > 0 && (
-              <div className="mt-2 flex items-center gap-2 text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg px-3 py-1.5 w-fit font-semibold">
+              <button
+                onClick={() => navigate('/propostas')}
+                className="mt-2 flex items-center gap-2 text-xs bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-3 py-1.5 w-fit font-semibold hover:bg-emerald-100 transition-colors cursor-pointer"
+              >
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                {concludedProposals.length} proposta{concludedProposals.length > 1 ? 's' : ''} concluída{concludedProposals.length > 1 ? 's' : ''} — disponível em <strong className="ml-1">Gestão de Propostas</strong>
-              </div>
+                {concludedProposals.length} proposta{concludedProposals.length > 1 ? 's' : ''} concluída{concludedProposals.length > 1 ? 's' : ''} — ver em <strong className="ml-1">Gestão de Propostas</strong> →
+              </button>
             )}
           </div>
         </div>
@@ -2304,9 +2310,15 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                           <td className="p-3 align-top">
                             <div className="flex flex-col gap-1">
                               <span className="text-[9px] text-slate-400 font-bold uppercase block mb-0.5 tracking-wider">Status</span>
-                              <Badge variant="outline" className={`text-[10px] font-bold ${getStatusStyle(p.status)} border w-fit`}>
-                                {formatStatus(p.status)}
-                              </Badge>
+                              <StatusBadge status={p.status} variant="pill" showTooltip showEmoji />
+                              {(p.status || '').toUpperCase() === 'AUTORIZADO ENVIO CENTRAL' && (
+                                <button
+                                  onClick={() => navigate('/documentacao')}
+                                  className="text-[9px] text-blue-600 hover:text-blue-800 font-bold underline underline-offset-2 mt-1 flex items-center gap-0.5"
+                                >
+                                  <Link2 className="h-2.5 w-2.5" /> Ver em Documentação
+                                </button>
+                              )}
                             </div>
                           </td>
                           <td className="p-3 text-center align-top min-w-[100px]">
@@ -2428,9 +2440,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                               {p.status && (
-                                <Badge variant="outline" className={`text-[9px] font-bold ${getStatusStyle(p.status)} border`}>
-                                  {formatStatus(p.status)}
-                                </Badge>
+                                <StatusBadge status={p.status} variant="compact" showEmoji />
                               )}
                               {p.municipio && (
                                 <span className="text-[10px] text-slate-500 flex items-center gap-1">
@@ -2601,13 +2611,21 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                     <User className="h-3.5 w-3.5 text-muted-foreground/75" /> {viewingDetailProposal?.producer_cpf || '---'}
                   </span>
                   <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <Badge variant="outline" className={`text-[10px] px-2 py-0.5 rounded-md font-semibold ${getStatusStyle(viewingDetailProposal?.status || '')}`}>
-                    {formatStatus(viewingDetailProposal?.status) || 'ESTOQUE'}
-                  </Badge>
+                  <StatusBadge status={viewingDetailProposal?.status} variant="pill" showEmoji showTooltip />
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Pipeline Timeline */}
+          {viewingDetailProposal?.status && (
+            <div className="px-6 pt-2 pb-0">
+              <div className="bg-slate-50/80 rounded-2xl border border-slate-200/60 p-4">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Jornada da Proposta</p>
+                <ProposalFlowTimeline currentStatus={viewingDetailProposal.status} />
+              </div>
+            </div>
+          )}
 
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

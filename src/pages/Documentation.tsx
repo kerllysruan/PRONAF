@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDocumentationReview, SubmittedProposal, AuthorizedProposal, parseSafeDate } from "@/hooks/useDocumentationReview";
 import { useAgency } from "@/contexts/AgencyContext";
 import {
@@ -67,6 +68,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { ProposalFlowTimeline } from "@/components/shared/ProposalFlowTimeline";
 
 const DISPENSABLE_DOCS = [
   "ficha_cadastro_esposa",
@@ -229,6 +232,7 @@ export default function Documentation() {
 
   const { toast } = useToast();
   const { selectedAgencyId, agencies } = useAgency();
+  const navigate = useNavigate();
 
   const pendingTasksCount = useMemo(() => {
     const pendingSubmissions = submissions.filter(
@@ -4245,23 +4249,38 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
       {/* ── Header ───────────────────────────────────────────── */}
       <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center h-11 w-11 rounded-2xl bg-primary/10">
-            <FileCheck className="h-6 w-6 text-primary" />
+          <div className="flex items-center justify-center h-11 w-11 rounded-2xl bg-violet-500/10">
+            <FileCheck className="h-6 w-6 text-violet-600" />
           </div>
           <div>
-            <h1 className="font-heading font-extrabold text-2xl md:text-3xl leading-tight">
-              Documentação
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-heading font-extrabold text-2xl md:text-3xl leading-tight">
+                Documentação
+              </h1>
+              {pendingTasksCount > 0 && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 border border-amber-200 animate-pulse">
+                  {pendingTasksCount} pendente{pendingTasksCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">
               Gestão de conformidade e análise documental
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-2 md:mt-0">
+        <div className="flex items-center gap-2 mt-2 md:mt-0 flex-wrap">
+          {/* Cross-page link to Estoque */}
+          <button
+            onClick={() => navigate('/estoque')}
+            className="flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-xl font-semibold transition-colors"
+          >
+            <Link2 className="h-3.5 w-3.5" />
+            Ver Estoque
+          </button>
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 rounded-xl bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
+            className="gap-2 rounded-xl bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100"
             onClick={() => {
               setReportFilterProjetista("all");
               setReportFilterPrograma("all");
@@ -4280,6 +4299,37 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
             <RefreshCw className="h-4 w-4" />
             Atualizar
           </Button>
+        </div>
+      </div>
+
+      {/* ── Pipeline Stats Mini Bar ─────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white/80 backdrop-blur-xl border border-amber-200/60 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+          <div className="h-9 w-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center shrink-0">
+            <Clock className="h-4 w-4 text-amber-600" />
+          </div>
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Aguardando Envio</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{authorizedProposals.length}</p>
+          </div>
+        </div>
+        <div className="bg-white/80 backdrop-blur-xl border border-indigo-200/60 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+          <div className="h-9 w-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+            <ClipboardList className="h-4 w-4 text-indigo-600" />
+          </div>
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Em Análise</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{submissions.filter(s => s.proposal.status !== 'ENVIADO PARA CENTRAL').length}</p>
+          </div>
+        </div>
+        <div className="bg-white/80 backdrop-blur-xl border border-emerald-200/60 rounded-2xl p-3 flex items-center gap-3 shadow-sm">
+          <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+            <Send className="h-4 w-4 text-emerald-600" />
+          </div>
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Enviado Central</p>
+            <p className="text-xl font-black text-slate-900 leading-none">{submissions.filter(s => s.proposal.status === 'ENVIADO PARA CENTRAL').length}</p>
+          </div>
         </div>
       </div>
 
