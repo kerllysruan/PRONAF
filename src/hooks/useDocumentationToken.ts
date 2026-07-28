@@ -157,9 +157,9 @@ export function useDocumentationToken() {
                 file_name: "atividade_plano_preenchida",
                 file_path: "preenchido",
                 file_size: 0,
-                status: "aprovado",
+                status: "pendente",
                 rejection_reason: null,
-                reviewed_at: new Date().toISOString(),
+                reviewed_at: null,
                 reviewed_by: null,
               })
               .eq("id", existing.id);
@@ -173,7 +173,7 @@ export function useDocumentationToken() {
                 file_path: "preenchido",
                 file_size: 0,
                 document_type: docType,
-                status: "aprovado",
+                status: "pendente",
               });
           }
           continue;
@@ -315,9 +315,9 @@ export function useDocumentationToken() {
                 file_name: "atividade_plano_preenchida",
                 file_path: "preenchido",
                 file_size: 0,
-                status: "aprovado",
+                status: "pendente",
                 rejection_reason: null,
-                reviewed_at: new Date().toISOString(),
+                reviewed_at: null,
                 reviewed_by: null,
               })
               .eq("id", existing.id);
@@ -331,7 +331,7 @@ export function useDocumentationToken() {
                 file_path: "preenchido",
                 file_size: 0,
                 document_type: docType,
-                status: "aprovado",
+                status: "pendente",
               });
           }
           continue;
