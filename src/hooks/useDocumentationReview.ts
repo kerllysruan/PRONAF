@@ -146,14 +146,23 @@ export function useDocumentationReview() {
         return t.stock_proposals?.agency_id === effectiveAgencyId;
       });
 
-      // Fetch all files for these tokens
-      const tokenIds = filteredTokens.map((t: any) => t.id);
-      const { data: allFiles, error: filesError } = await supabase
+      // Fetch all files for these tokens and stock proposals
+      const tokenIds = filteredTokens.map((t: any) => t.id).filter(Boolean);
+      const stockProposalIds = filteredTokens.map((t: any) => t.stock_proposal_id).filter(Boolean);
+
+      let filesQuery = supabase
         .from("documentation_files")
         .select("*")
-        .in("token_id", tokenIds)
         .order("created_at", { ascending: false })
         .range(0, 4999);
+
+      if (tokenIds.length > 0 && stockProposalIds.length > 0) {
+        filesQuery = filesQuery.or(`token_id.in.(${tokenIds.join(",")}),stock_proposal_id.in.(${stockProposalIds.join(",")})`);
+      } else if (tokenIds.length > 0) {
+        filesQuery = filesQuery.in("token_id", tokenIds);
+      }
+
+      const { data: allFiles, error: filesError } = await filesQuery;
 
       if (filesError) throw filesError;
 
@@ -166,17 +175,14 @@ export function useDocumentationReview() {
       });
 
       const filesByToken = new Map<string, DocumentationFile[]>();
-      const rawFilesByToken = new Map<string, any[]>();
-      sortedFiles.forEach((f: any) => {
-        const list = rawFilesByToken.get(f.token_id) || [];
-        list.push(f);
-        rawFilesByToken.set(f.token_id, list);
-      });
 
-      rawFilesByToken.forEach((filesList, tokenId) => {
+      filteredTokens.forEach((t: any) => {
+        const matchingFiles = sortedFiles.filter(
+          (f: any) => f.token_id === t.id || (f.stock_proposal_id && f.stock_proposal_id === t.stock_proposal_id)
+        );
+
         const typeMap = new Map<string, DocumentationFile>();
-        filesList.forEach((f) => {
-          // Normalize: if file_path is "dispensado" or "preenchido", force status to "aprovado"
+        matchingFiles.forEach((f: any) => {
           const isDispPath = f.file_path === "dispensado";
           const normalizedFile = isDispPath
             ? { ...f, status: "aprovado" }
@@ -187,7 +193,7 @@ export function useDocumentationReview() {
             typeMap.set(f.document_type, normalizedFile as DocumentationFile);
           }
         });
-        filesByToken.set(tokenId, Array.from(typeMap.values()));
+        filesByToken.set(t.id, Array.from(typeMap.values()));
       });
 
       const result: SubmittedProposal[] = filteredTokens.map((t: any) => {

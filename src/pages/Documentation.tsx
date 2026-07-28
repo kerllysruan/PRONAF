@@ -2189,11 +2189,36 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filtered.map((file) => {
                     const status = file.status as DocFileStatus;
-                    const isVirtual = file.id.startsWith("temp_");
-                    const isDispensado = file.file_path === "dispensado";
-                    const isPreenchido = file.file_path === "preenchido";
-                    const isCarCard = file.document_type === "car_individual" || file.document_type === "car_coletivo";
-                    const [carNumber, carGedId] = isCarCard && file.ged_id ? (file.ged_id.includes(' | ') ? file.ged_id.split(' | ') : [file.ged_id, '']) : ['', ''];
+                    const isDirectFile = !file.id.startsWith("temp_") && file.file_path !== "dispensado" && file.file_path !== "preenchido" && file.file_path !== "habilitado";
+
+                    const realProposalFiles = sub.files.filter(f => {
+                      const isVirt = f.file_path === "preenchido" || f.file_path === "dispensado" || f.file_path === "habilitado" || f.id.startsWith("temp_");
+                      return !isVirt && f.file_path;
+                    });
+
+                    const categoryFallbackFile = (() => {
+                      if (isDirectFile) return file;
+                      if (PLANO_INVESTIMENTO_KEYS.includes(file.document_type)) {
+                        const planoMatch = realProposalFiles.find(f => 
+                          PLANO_INVESTIMENTO_KEYS.includes(f.document_type) ||
+                          f.document_type.toLowerCase().includes("plano") ||
+                          f.document_type.toLowerCase().includes("orcamento")
+                        );
+                        if (planoMatch) return planoMatch;
+                      }
+                      if (socioAmbientalKeys.includes(file.document_type) || DECLARACOES_AMBIENTAIS_KEYS.includes(file.document_type)) {
+                        const envMatch = realProposalFiles.find(f => 
+                          f.document_type === "cert_socio_ambiental" ||
+                          f.document_type === "dcaa" ||
+                          DECLARACOES_AMBIENTAIS_KEYS.includes(f.document_type)
+                        );
+                        if (envMatch) return envMatch;
+                      }
+                      return realProposalFiles[0] || null;
+                    })();
+
+                    const effectiveFile = isDirectFile ? file : categoryFallbackFile;
+                    const isVirtualCard = isVirtual && !effectiveFile;
 
                     // Determine if GED ID is filled
                     // For socioAmbiental declaration cards, GED is considered filled if the card has its own
@@ -2204,7 +2229,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     const hasGedFilled = (() => {
                       if (file.document_type === "cadastro_atividade_plano") return false; // No GED field
                       if (isDispensado && !isCarCard) return false; // Dispensed non-CAR don't need GED
-                      if (isVirtual) return false;
+                      if (isVirtualCard) return false;
                       if (isCarCard) {
                         if (isDispensado) {
                           // Dispensed CAR with ged_id is OK
@@ -2458,28 +2483,13 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                variant="outline"
                                size="sm"
                                className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50"
-                               disabled={pdfLoading || isVirtual || (
-                                 file.document_type === "cadastro_atividade_plano" &&
-                                 !sub.files.find((f) => {
-                                   const type = f.document_type.toLowerCase();
-                                   const isVirt = f.file_path === "preenchido" || f.file_path === "dispensado" || f.file_path === "habilitado";
-                                   if (isVirt) return false;
-                                   return type === "plano_assinado" || type === "plano_eletronico" || type.includes("plano");
-                                 })
-                               )}
+                               disabled={pdfLoading || isVirtualCard}
                                onClick={() => {
-                                 if (file.document_type === "cadastro_atividade_plano") {
-                                   const planoAssinadoFile = sub.files.find((f) => {
-                                     const type = f.document_type.toLowerCase();
-                                     const isVirt = f.file_path === "preenchido" || f.file_path === "dispensado" || f.file_path === "habilitado";
-                                     if (isVirt) return false;
-                                     return type === "plano_assinado" || type === "plano_eletronico" || type.includes("plano");
-                                   });
-                                   if (planoAssinadoFile) {
-                                     handleViewPdf(planoAssinadoFile.file_path, planoAssinadoFile.file_name);
-                                   }
-                                 } else {
-                                   handleViewPdf(file.file_path, file.file_name);
+                                 const targetFile = file.document_type === "cadastro_atividade_plano"
+                                   ? (realProposalFiles.find(f => f.document_type.toLowerCase().includes("plano")) || effectiveFile)
+                                   : effectiveFile;
+                                 if (targetFile) {
+                                   handleViewPdf(targetFile.file_path, targetFile.file_name);
                                  }
                                }}
                              >
@@ -2495,8 +2505,12 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                  variant="outline"
                                  size="sm"
                                  className="gap-1 rounded-xl text-[11px] font-bold h-8 border-slate-200 text-slate-600 hover:bg-slate-50"
-                                 disabled={isVirtual}
-                                 onClick={() => downloadFile(file.file_path, file.file_name)}
+                                 disabled={isVirtualCard}
+                                 onClick={() => {
+                                   if (effectiveFile) {
+                                     downloadFile(effectiveFile.file_path, effectiveFile.file_name);
+                                   }
+                                 }}
                                >
                                  <Download className="h-3.5 w-3.5" />
                                  Baixar
