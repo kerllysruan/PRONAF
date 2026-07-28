@@ -414,7 +414,7 @@ function AccessControl() {
           <div>
             <h1 className="text-3xl font-extrabold font-heading text-foreground tracking-tight">Controle de Acesso</h1>
             <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-primary" />
               Gestão de usuários, permissões e níveis de segurança
             </p>
           </div>
@@ -538,7 +538,7 @@ function AccessControl() {
                               {user.display_name}
                             </p>
                             {isCurrent && (
-                              <Badge className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-primary/20 animate-pulse">
+                              <Badge className="text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-primary/20">
                                 Você
                               </Badge>
                             )}

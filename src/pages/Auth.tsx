@@ -56,14 +56,14 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-primary/10 via-background to-accent/5 p-4 overflow-hidden relative">
       {/* Background blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/20 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: "2s" }} />
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/20 blur-[120px] rounded-full" />
 
       <div className="w-full max-w-md space-y-8 animate-fade-in relative z-10">
         {/* Logo */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-primary text-primary-foreground shadow-[0_20px_50px_rgba(59,130,246,0.3)] transform transition-transform hover:scale-105 duration-500">
-            <Wheat className="h-10 w-10 animate-bounce" style={{ animationDuration: "3s" }} />
+            <Wheat className="h-10 w-10" />
           </div>
           <div>
             <h1 className="text-4xl font-black font-heading text-foreground tracking-tighter">PRONAF</h1>

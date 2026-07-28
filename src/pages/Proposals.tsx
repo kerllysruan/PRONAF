@@ -920,7 +920,7 @@ export default function Proposals() {
                       <td className="py-5">
                         <div className="text-[11px] font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg w-fit border border-slate-200/60 shadow-sm">{p.credit_program || '---'}</div>
                         <div className="text-[9px] text-indigo-600 font-black uppercase mt-1.5 tracking-widest flex items-center gap-1">
-                           <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                           <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
                            {p.displayDesigner}
                         </div>
                       </td>

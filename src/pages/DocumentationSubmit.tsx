@@ -634,7 +634,7 @@ export default function DocumentationSubmit() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 animate-fade-in">
           <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-indigo-500/10 blur-xl animate-pulse" />
+            <div className="absolute inset-0 rounded-full bg-indigo-500/10 blur-xl" />
             <Loader2 className="h-12 w-12 text-indigo-600 animate-spin relative z-10" />
           </div>
           <p className="text-slate-600 text-sm font-medium tracking-wide">
@@ -1118,7 +1118,7 @@ export default function DocumentationSubmit() {
                                   <>
                                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-all duration-300 ${
                                       isRejected
-                                        ? "bg-rose-100 border border-rose-300 animate-pulse"
+                                        ? "bg-rose-100 border border-rose-300"
                                         : "bg-slate-100 border border-slate-200 group-hover:bg-indigo-50 group-hover:border-indigo-200"
                                     }`}>
                                       {isRejected ? (
@@ -1137,7 +1137,7 @@ export default function DocumentationSubmit() {
                                             <p className="text-rose-700 text-[10px] font-semibold truncate">{dbFile.file_name}</p>
                                           </div>
                                         )}
-                                        <p className="text-rose-500 text-[10px] text-center font-bold animate-pulse">
+                                        <p className="text-rose-500 text-[10px] text-center font-bold">
                                           👆 Clique para enviar novo arquivo
                                         </p>
                                       </>

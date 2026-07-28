@@ -121,7 +121,7 @@ export function ProposalFlowTimeline({
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                   ) : isActive ? (
                     <div
-                      className="h-2.5 w-2.5 rounded-full animate-pulse"
+                      className="h-2.5 w-2.5 rounded-full"
                       style={{ backgroundColor: cfg.hex }}
                     />
                   ) : (

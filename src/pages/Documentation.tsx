@@ -1447,7 +1447,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     <div className="flex">
                       <Badge
                         variant="outline"
-                        className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800 animate-pulse"
+                        className="text-[10px] px-2 py-0.5 font-semibold rounded-md bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800"
                       >
                         Proposta Concluída
                       </Badge>
@@ -2344,7 +2344,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           {isRejectedAwaitingResend && (
                             <div className="bg-orange-50 border border-orange-300 rounded-2xl p-3">
                               <div className="flex items-center gap-2">
-                                <Clock className="h-3.5 w-3.5 text-orange-500 flex-shrink-0 animate-pulse" />
+                                <Clock className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
                                 <p className="text-[10px] font-black uppercase tracking-wider text-orange-700">Aguardando novo envio pelo proponente</p>
                               </div>
                               {file.rejection_reason && (
@@ -2645,7 +2645,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     <div className="flex items-center justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-1.5">
-                          <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                          <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
                           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-indigo-600 dark:text-indigo-400">
                             Progresso das Atividades da Agência
                           </p>
@@ -2674,7 +2674,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           style={{ width: agencyPct + "%" }}
                         >
                           {agencyPct > 10 && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 animate-pulse" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0" />
                           )}
                         </div>
                       </div>
@@ -4108,7 +4108,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               <div className="lg:col-span-7 bg-slate-50 dark:bg-slate-900 flex flex-col overflow-hidden max-h-[40vh] lg:max-h-[none]">
                 <div className="p-4 border-b border-border/40 flex items-center justify-between bg-white dark:bg-slate-950 shrink-0">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                    <span className="h-2 w-2 rounded-full bg-indigo-500" />
                     Pré-visualização do Parecer (Tempo Real)
                   </span>
                   <Button
@@ -4302,7 +4302,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 Documentação
               </h1>
               {pendingTasksCount > 0 && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 border border-amber-200 animate-pulse">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-700 border border-amber-200">
                   {pendingTasksCount} pendente{pendingTasksCount > 1 ? 's' : ''}
                 </span>
               )}
@@ -4781,7 +4781,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                             ) : sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
                               <Badge
                                 variant="outline"
-                                className="text-[10px] px-2 py-0.5 font-extrabold rounded-md bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/45 dark:text-blue-200 dark:border-blue-800 animate-pulse shadow-sm"
+                                className="text-[10px] px-2 py-0.5 font-extrabold rounded-md bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/45 dark:text-blue-200 dark:border-blue-800 shadow-sm"
                               >
                                 Enviado para Central
                               </Badge>
@@ -4938,7 +4938,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                               Proposta Concluída
                             </Badge>
                           ) : sub.proposal.status === "ENVIADO PARA CENTRAL" ? (
-                            <Badge variant="outline" className="text-[9px] font-bold bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/45 dark:text-blue-200 dark:border-blue-800 animate-pulse">
+                            <Badge variant="outline" className="text-[9px] font-bold bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/45 dark:text-blue-200 dark:border-blue-800">
                               Enviado para Central
                             </Badge>
                           ) : !allOk || hasRejects ? (

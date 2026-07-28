@@ -1177,7 +1177,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
               Propostas em Estoque
             </h1>
             <p className="text-sm text-muted-foreground font-medium flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
               Controle de propostas prontas para envio à central
             </p>
             {concludedProposals.length > 0 && (
@@ -1361,7 +1361,7 @@ Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. �
                 </div>
               </div>
               {isImporting && (
-                <div className="flex items-center justify-center gap-3 p-4 bg-indigo-50 rounded-lg animate-pulse">
+                <div className="flex items-center justify-center gap-3 p-4 bg-indigo-50 rounded-lg">
                   <Loader2 className="h-5 w-5 text-indigo-600 animate-spin" />
                   <span className="text-sm font-bold text-indigo-900">Processando arquivo...</span>
                 </div>
