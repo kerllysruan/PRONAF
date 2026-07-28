@@ -2189,7 +2189,12 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filtered.map((file) => {
                     const status = file.status as DocFileStatus;
-                    const isDirectFile = !file.id.startsWith("temp_") && file.file_path !== "dispensado" && file.file_path !== "preenchido" && file.file_path !== "habilitado";
+                    const isVirtual = file.id.startsWith("temp_");
+                    const isDispensado = file.file_path === "dispensado";
+                    const isPreenchido = file.file_path === "preenchido";
+                    const isCarCard = file.document_type === "car_individual" || file.document_type === "car_coletivo";
+                    const [carNumber, carGedId] = isCarCard && file.ged_id ? (file.ged_id.includes(' | ') ? file.ged_id.split(' | ') : [file.ged_id, '']) : ['', ''];
+                    const isDirectFile = !isVirtual && !isDispensado && !isPreenchido && file.file_path !== "habilitado";
 
                     const realProposalFiles = sub.files.filter(f => {
                       const isVirt = f.file_path === "preenchido" || f.file_path === "dispensado" || f.file_path === "habilitado" || f.id.startsWith("temp_");
