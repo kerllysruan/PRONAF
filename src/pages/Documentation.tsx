@@ -102,6 +102,94 @@ const SOCIO_AMBIENTAL_DECL_KEYS = [
   "declaracao_anexo_128"
 ];
 
+/**
+ * Consolidated function: checks all GED IDs across a submission.
+ * Returns an array of document_type keys that are missing GED IDs.
+ * Used by getAgencyCompletedCount, isComplete, and Check List confirmation.
+ */
+function checkMissingGedIds(sub: any): string[] {
+  const missingGed: string[] = [];
+
+  // 1. Check approved producer files
+  const approvedProducerFiles = sub.files.filter((f: any) =>
+    f.status === 'aprovado' &&
+    f.file_path !== 'dispensado' &&
+    f.file_path !== 'preenchido' &&
+    f.file_path !== 'habilitado' &&
+    f.document_type !== "cadastro_atividade_plano" &&
+    !AGENCY_DOCUMENTATION.some((ad: any) => ad.key === f.document_type)
+  );
+
+  // Resolve ZIP GED from cert_socio_ambiental once
+  const certSocioZipGed = getSocioAmbientalZipGed(sub.files);
+
+  for (const f of approvedProducerFiles) {
+    const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
+    const isSocioAmbientalDecl = SOCIO_AMBIENTAL_DECL_KEYS.includes(f.document_type);
+
+    if (isCar) {
+      const gedVal = f.ged_id || "";
+      if (gedVal.includes(' | ')) {
+        const parts = gedVal.split(' | ');
+        const carGedId = parts[1] || "";
+        if (carGedId.trim() === "") missingGed.push(f.document_type);
+      } else {
+        missingGed.push(f.document_type);
+      }
+    } else if (isSocioAmbientalDecl) {
+      const effectiveGed = (f.ged_id && f.ged_id.trim() !== "")
+        ? f.ged_id.trim()
+        : certSocioZipGed;
+      if (effectiveGed === "") missingGed.push(f.document_type);
+    } else {
+      if (!f.ged_id || f.ged_id.trim() === "") missingGed.push(f.document_type);
+    }
+  }
+
+  // 2. Check mandatory agency documents
+  const sicorFile = sub.files.find((f: any) => f.document_type === "consulta_extrator_sicor");
+  const [sicorGed, sicorConfirm] = sicorFile?.ged_id
+    ? (sicorFile.ged_id.includes(' | ')
+      ? sicorFile.ged_id.split(' | ')
+      : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, '']))
+    : ['', ''];
+  if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
+    missingGed.push("consulta_extrator_sicor");
+  }
+
+  const historicoFile = sub.files.find((f: any) => f.document_type === "consulta_historico_operacao_pronaf");
+  const historicoGed = historicoFile?.ged_id || "";
+  if (historicoGed.trim() === "" || historicoGed === "SIM") {
+    missingGed.push("consulta_historico_operacao_pronaf");
+  }
+
+  const parecerFile = sub.files.find((f: any) => f.document_type === "parecer_gerencial");
+  const [parecerGed, parecerConfirm] = parecerFile?.ged_id
+    ? (parecerFile.ged_id.includes(' | ')
+      ? parecerFile.ged_id.split(' | ')
+      : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, '']))
+    : ['', ''];
+  if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
+    missingGed.push("parecer_gerencial");
+  }
+
+  const socioFile = sub.files.find((f: any) => f.document_type === "cert_socio_ambiental");
+  const [socioZipVal, socioNormalVal, socioConfirmVal] = (() => {
+    if (!socioFile?.ged_id) return ['', '', ''];
+    const parts = socioFile.ged_id.split(' | ');
+    const hasConfirm = parts[parts.length - 1]?.startsWith('CONFIRMADO');
+    const confirm = hasConfirm ? parts[parts.length - 1] : '';
+    const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
+    const normal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
+    return [zip, normal, confirm];
+  })();
+  if (socioZipVal.trim() === "" || socioNormalVal.trim() === "" || !socioConfirmVal.startsWith("CONFIRMADO")) {
+    missingGed.push("cert_socio_ambiental");
+  }
+
+  return missingGed;
+}
+
 function getAgencyCompletedCount(sub: any) {
   const CONFIRMATION_ACTIVITY_KEYS = [
     "consulta_s400",
@@ -114,72 +202,7 @@ function getAgencyCompletedCount(sub: any) {
   return AGENCY_DOCUMENTATION.filter((doc) => {
     const existingFile = sub.files.find((f: any) => f.document_type === doc.key);
     if (doc.key === "checklist_documentos_responsabilidade_agencia") {
-      const missingGed: string[] = [];
-      const approvedProducerFiles = sub.files.filter((f: any) => 
-        f.status === 'aprovado' && 
-        f.file_path !== 'dispensado' && 
-        f.file_path !== 'preenchido' && 
-        f.file_path !== 'habilitado' && 
-        f.document_type !== "cadastro_atividade_plano" &&
-        !AGENCY_DOCUMENTATION.some((ad: any) => ad.key === f.document_type)
-      );
-      // Resolve ZIP GED from cert_socio_ambiental once (shared by all socioAmbiental declaration cards)
-      const certSocioZipGed = getSocioAmbientalZipGed(sub.files);
-      for (const f of approvedProducerFiles) {
-        const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
-        const isSocioAmbientalDecl = SOCIO_AMBIENTAL_DECL_KEYS.includes(f.document_type);
-        if (isCar) {
-          const gedVal = f.ged_id || "";
-          if (gedVal.includes(' | ')) {
-            const parts = gedVal.split(' | ');
-            const carGedId = parts[1] || "";
-            if (carGedId.trim() === "") {
-              missingGed.push(f.document_type);
-            }
-          } else {
-            // No separator found - GED part is missing
-            missingGed.push(f.document_type);
-          }
-        } else if (isSocioAmbientalDecl) {
-          // Effective GED = own ged_id OR ZIP inherited from cert_socio_ambiental
-          const effectiveGed = (f.ged_id && f.ged_id.trim() !== "")
-            ? f.ged_id.trim()
-            : certSocioZipGed;
-          if (effectiveGed === "") missingGed.push(f.document_type);
-        } else {
-          if (!f.ged_id || f.ged_id.trim() === "") {
-            missingGed.push(f.document_type);
-          }
-        }
-      }
-      const sicorFile = sub.files.find((f: any) => f.document_type === "consulta_extrator_sicor");
-      const [sicorGed, sicorConfirm] = sicorFile?.ged_id ? (sicorFile.ged_id.includes(' | ') ? sicorFile.ged_id.split(' | ') : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, ''])) : ['', ''];
-      if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
-        missingGed.push("consulta_extrator_sicor");
-      }
-      const historicoFile = sub.files.find((f: any) => f.document_type === "consulta_historico_operacao_pronaf");
-      const historicoGed = historicoFile?.ged_id || "";
-      if (historicoGed.trim() === "" || historicoGed === "SIM") {
-        missingGed.push("consulta_historico_operacao_pronaf");
-      }
-      const parecerFile = sub.files.find((f: any) => f.document_type === "parecer_gerencial");
-      const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
-      if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
-        missingGed.push("parecer_gerencial");
-      }
-      const socioFile = sub.files.find((f: any) => f.document_type === "cert_socio_ambiental");
-      const [socioZipVal, socioNormalVal, socioConfirmVal] = (() => {
-        if (!socioFile?.ged_id) return ['', '', ''];
-        const parts = socioFile.ged_id.split(' | ');
-        const hasConfirm = parts[parts.length - 1]?.startsWith('CONFIRMADO');
-        const confirm = hasConfirm ? parts[parts.length - 1] : '';
-        const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
-        const normal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
-        return [zip, normal, confirm];
-      })();
-      if (socioZipVal.trim() === "" || socioNormalVal.trim() === "" || !socioConfirmVal.startsWith("CONFIRMADO")) {
-        missingGed.push("cert_socio_ambiental");
-      }
+      const missingGed = checkMissingGedIds(sub);
       return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
     }
     if (doc.key === "cert_socio_ambiental") {
@@ -2417,6 +2440,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                  ? file.ged_id
                                  : (isSocioAmbientalCard ? socioAmbientalZipGed : "");
 
+                             // Auto-persist inherited ZIP GED to this card if not yet saved in DB
+                             if (isSocioAmbientalCard && socioAmbientalZipGed && (!file.ged_id || file.ged_id.trim() === "")) {
+                               setTimeout(() => updateGedId(file.id, socioAmbientalZipGed, sub.token.id, sub.proposal?.id), 0);
+                             }
+
                              return (
                              <div className="space-y-1 bg-slate-50 border border-slate-100 rounded-2xl p-2.5">
                                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400 block ml-1">
@@ -2446,11 +2474,11 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                     if (isCarCard) {
                                       const newVal = val ? `${carNumber} | ${val}` : carNumber;
                                       if (newVal !== (file.ged_id ?? "")) {
-                                        updateGedId(file.id, newVal);
+                                        updateGedId(file.id, newVal, sub.token.id, sub.proposal?.id);
                                       }
                                     } else {
                                       if (val !== (file.ged_id ?? "")) {
-                                        updateGedId(file.id, val);
+                                        updateGedId(file.id, val, sub.token.id, sub.proposal?.id);
                                       }
                                     }
                                   }}
@@ -2707,56 +2735,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       : ['', ''];
                     const isComplete = (() => {
                       if (doc.key === "checklist_documentos_responsabilidade_agencia") {
-                        const missingGed: string[] = [];
-                        const approvedProducerFiles = sub.files.filter(f =>
-                          f.status === 'aprovado' &&
-                          f.file_path !== 'dispensado' &&
-                          f.file_path !== 'preenchido' &&
-                          f.file_path !== 'habilitado' &&
-                          f.document_type !== "cadastro_atividade_plano" &&
-                          !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
-                        );
-                        // Resolve ZIP GED from cert_socio_ambiental (shared by all socioAmbiental cards)
-                        const _checklistCertSocioZip = getSocioAmbientalZipGed(sub.files);
-                        for (const f of approvedProducerFiles) {
-                          const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
-                          const isSocioAmbDecl = SOCIO_AMBIENTAL_DECL_KEYS.includes(f.document_type);
-                          if (isCar) {
-                            const gedVal = f.ged_id || "";
-                            if (gedVal.includes(' | ')) {
-                              const parts = gedVal.split(' | ');
-                              const carGedId = parts[1] || "";
-                              if (carGedId.trim() === "") missingGed.push(f.document_type);
-                            } else {
-                              missingGed.push(f.document_type);
-                            }
-                          } else if (isSocioAmbDecl) {
-                            // Effective GED = own ged_id OR ZIP inherited from cert_socio_ambiental
-                            const effectiveGed = (f.ged_id && f.ged_id.trim() !== "")
-                              ? f.ged_id.trim()
-                              : _checklistCertSocioZip;
-                            if (effectiveGed === "") missingGed.push(f.document_type);
-                          } else {
-                            if (!f.ged_id || f.ged_id.trim() === "") missingGed.push(f.document_type);
-                          }
-                        }
-                        const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
-                        const [sicorGed, sicorConfirm] = sicorFile?.ged_id ? (sicorFile.ged_id.includes(' | ') ? sicorFile.ged_id.split(' | ') : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, ''])) : ['', ''];
-                        if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) missingGed.push("consulta_extrator_sicor");
-                        const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
-                        const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
-                        if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) missingGed.push("parecer_gerencial");
-                        const socioFileC = sub.files.find(f => f.document_type === "cert_socio_ambiental");
-                        const [socioZipV, socioNormalV, socioConfirmV] = (() => {
-                          if (!socioFileC?.ged_id) return ['', '', ''];
-                          const parts = socioFileC.ged_id.split(' | ');
-                          const hasC = parts[parts.length - 1]?.startsWith('CONFIRMADO');
-                          const cVal = hasC ? parts[parts.length - 1] : '';
-                          const zVal = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
-                          const nVal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
-                          return [zVal, nVal, cVal];
-                        })();
-                        if (socioZipV.trim() === "" || socioNormalV.trim() === "" || !socioConfirmV.startsWith("CONFIRMADO")) missingGed.push("cert_socio_ambiental");
+                        const missingGed = checkMissingGedIds(sub);
                         return !!existingFile?.ged_id && existingFile.ged_id.startsWith("CONFIRMADO") && missingGed.length === 0;
                       }
                       if (isSocioAmbiental) {
@@ -3067,58 +3046,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   disabled={isReadOnly}
                                   onClick={() => {
                                      if (doc.key === "checklist_documentos_responsabilidade_agencia") {
-                                       const missingGed: string[] = [];
-                                       const approvedProducerFiles = sub.files.filter(f => 
-                                         f.status === 'aprovado' && 
-                                         f.file_path !== 'dispensado' && 
-                                         f.file_path !== 'preenchido' && 
-                                         f.file_path !== 'habilitado' && 
-                                         f.document_type !== "cadastro_atividade_plano" &&
-                                         !AGENCY_DOCUMENTATION.some(ad => ad.key === f.document_type)
-                                       );
-                                       for (const f of approvedProducerFiles) {
-                                         const isCar = f.document_type === "car_individual" || f.document_type === "car_coletivo";
-                                         if (isCar) {
-                                           const gedVal = f.ged_id || "";
-                                           if (gedVal.includes(' | ')) {
-                                             const parts = gedVal.split(' | ');
-                                             const carGedId = parts[1] || "";
-                                             if (carGedId.trim() === "") missingGed.push(f.document_type);
-                                           } else {
-                                             missingGed.push(f.document_type);
-                                           }
-                                         } else {
-                                           if (!f.ged_id || f.ged_id.trim() === "") missingGed.push(f.document_type);
-                                         }
-                                       }
-                                       const sicorFile = sub.files.find(f => f.document_type === "consulta_extrator_sicor");
-                                       const [sicorGed, sicorConfirm] = sicorFile?.ged_id ? (sicorFile.ged_id.includes(' | ') ? sicorFile.ged_id.split(' | ') : (sicorFile.ged_id.startsWith('CONFIRMADO') ? ['', sicorFile.ged_id] : [sicorFile.ged_id, ''])) : ['', ''];
-                                       if (sicorGed.trim() === "" || !sicorConfirm.startsWith("CONFIRMADO")) {
-                                         missingGed.push("consulta_extrator_sicor");
-                                       }
-                                       const historicoFile = sub.files.find(f => f.document_type === "consulta_historico_operacao_pronaf");
-                                       const historicoGed = historicoFile?.ged_id || "";
-                                       if (historicoGed.trim() === "" || historicoGed === "SIM") {
-                                         missingGed.push("consulta_historico_operacao_pronaf");
-                                       }
-                                       const parecerFile = sub.files.find(f => f.document_type === "parecer_gerencial");
-                                       const [parecerGed, parecerConfirm] = parecerFile?.ged_id ? (parecerFile.ged_id.includes(' | ') ? parecerFile.ged_id.split(' | ') : (parecerFile.ged_id.startsWith('CONFIRMADO') ? ['', parecerFile.ged_id] : [parecerFile.ged_id, ''])) : ['', ''];
-                                       if (parecerGed.trim() === "" || !parecerConfirm.startsWith("CONFIRMADO")) {
-                                         missingGed.push("parecer_gerencial");
-                                       }
-                                       const socioFile = sub.files.find(f => f.document_type === "cert_socio_ambiental");
-                                       const [socioZipVal, socioNormalVal, socioConfirmVal] = (() => {
-                                         if (!socioFile?.ged_id) return ['', '', ''];
-                                         const parts = socioFile.ged_id.split(' | ');
-                                         const hasConfirm = parts[parts.length - 1]?.startsWith('CONFIRMADO');
-                                         const confirm = hasConfirm ? parts[parts.length - 1] : '';
-                                         const zip = parts[0] && !parts[0].startsWith('CONFIRMADO') ? parts[0] : '';
-                                         const normal = parts[1] && !parts[1].startsWith('CONFIRMADO') ? parts[1] : '';
-                                         return [zip, normal, confirm];
-                                       })();
-                                       if (socioZipVal.trim() === "" || socioNormalVal.trim() === "" || !socioConfirmVal.startsWith("CONFIRMADO")) {
-                                         missingGed.push("cert_socio_ambiental");
-                                       }
+                                       const missingGed = checkMissingGedIds(sub);
                                        if (missingGed.length > 0) {
                                          toast({
                                            title: "Erro ao confirmar Check List ⚠️",

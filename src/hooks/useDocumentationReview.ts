@@ -663,23 +663,26 @@ export function useDocumentationReview() {
    * Save a GED identifier for a specific documentation file.
    * The GED ID is assigned by the authenticated reviewer (not auto-generated).
    */
-  const updateGedId = useCallback(async (fileId: string, gedId: string) => {
+  const updateGedId = useCallback(async (fileId: string, gedId: string, tokenId?: string, proposalId?: string) => {
     try {
       if (fileId.startsWith("temp_")) {
         const documentType = fileId.substring(5);
-        let submissionId: string | null = null;
-        let proposalId: string | null = null;
+        let submissionId: string | null = tokenId || null;
+        let propId: string | null = proposalId || null;
         
-        for (const sub of submissions) {
-          const isTarget = !sub.files.some(f => f.document_type === documentType);
-          if (isTarget) {
-            submissionId = sub.token.id;
-            proposalId = sub.proposal?.id || null;
-            break;
+        // If tokenId/proposalId not provided, try to find the right submission
+        if (!submissionId || !propId) {
+          for (const sub of submissions) {
+            const hasDoc = sub.files.some(f => f.document_type === documentType && !f.id.startsWith("temp_"));
+            if (!hasDoc) {
+              submissionId = sub.token.id;
+              propId = sub.proposal?.id || null;
+              break;
+            }
           }
         }
 
-        if (!submissionId || !proposalId) {
+        if (!submissionId || !propId) {
           throw new Error("Não foi possível encontrar a proposta correspondente.");
         }
 
@@ -687,7 +690,7 @@ export function useDocumentationReview() {
           .from("documentation_files")
           .insert({
             token_id: submissionId,
-            stock_proposal_id: proposalId,
+            stock_proposal_id: propId,
             file_name: "Pendente de envio",
             file_path: "habilitado",
             file_size: 0,
