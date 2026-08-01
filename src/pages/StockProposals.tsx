@@ -322,10 +322,8 @@ export default function StockProposals() {
     municipio: "",
     localizacao: "",
     linha_credito: "",
-    notes: "",
     projetista: "",
-    serasa: "NAO",
-    pendencias: ""
+    status: "AGUARDANDO ENTREVISTA"
   };
 
   const [formData, setFormData] = useState<Partial<StockProposal>>(() => {
@@ -644,19 +642,12 @@ export default function StockProposals() {
     const newProposal: InsertStockProposal = {
       producer_name: formData.producer_name!,
       producer_cpf: formData.producer_cpf || null,
-      credit_program: automatedLinha,
+      credit_program: formData.credit_program || formData.linha_credito || null,
       estimated_value: formData.estimated_value || 0,
-      notes: formData.notes || null,
-      status: "novo",
-      pendencias: null,
-      serasa: null,
-      cliente_renovacao: formData.cliente_renovacao || null,
-      ano_contrato: null,
-      agencia_cadastro: null,
+      status: formData.status || "AGUARDANDO ENTREVISTA",
       municipio: formData.municipio || null,
-      linha_credito: automatedLinha,
+      linha_credito: formData.credit_program || formData.linha_credito || null,
       localizacao: formData.localizacao || null,
-      observacoes_extra: null,
       projetista: formData.projetista || null,
       order_index: proposals.length > 0 ? proposals.map(p => p.order_index).reduce((a, b) => Math.max(a, b), 0) + 1 : 1,
     };
@@ -664,37 +655,23 @@ export default function StockProposals() {
     if (res) {
       localStorage.removeItem('stock_proposal_new_draft');
       setIsDialogOpen(false);
-      setFormData({ producer_name: "", producer_cpf: "", credit_program: "", estimated_value: 0, municipio: "", localizacao: "", linha_credito: "", notes: "", projetista: "", serasa: "NAO", pendencias: "" });
+      setFormData(DEFAULT_FORM_DATA);
     }
     setIsSubmitting(false);
   };
 
   const openEditDialog = (proposal: StockProposal) => {
-    let currentStatus = proposal.status;
-    if (!currentStatus) {
-      const normSerasa = (proposal.serasa || "").trim().toUpperCase();
-      if (normSerasa === "SIM") currentStatus = "RESTRIÇÃO";
-      else if (normSerasa === "NAO" || normSerasa === "NÃO") currentStatus = "AGUARDANDO ENTREVISTA";
-      else currentStatus = "novo";
-    }
-
     setEditingProposal(proposal);
     setEditFormData({
       producer_name: proposal.producer_name,
       producer_cpf: proposal.producer_cpf,
-      credit_program: proposal.credit_program,
+      credit_program: proposal.credit_program || proposal.linha_credito,
       estimated_value: proposal.estimated_value,
       municipio: proposal.municipio,
       localizacao: proposal.localizacao,
-      linha_credito: proposal.linha_credito,
-      status: currentStatus,
-      pendencias: proposal.pendencias,
-      serasa: proposal.serasa,
-      notes: proposal.notes,
+      linha_credito: proposal.linha_credito || proposal.credit_program,
+      status: proposal.status || "AGUARDANDO ENTREVISTA",
       projetista: proposal.projetista,
-      central: proposal.central,
-      central_date: formatToBRDate(proposal.central_date),
-      documentation_approved_date: formatToBRDate(proposal.documentation_approved_date)
     });
     setIsEditDialogOpen(true);
   };
@@ -1646,39 +1623,6 @@ export default function StockProposals() {
               </div>
 
               <div className="space-y-1">
-                <Label htmlFor="edit-central" className="text-[10px] font-bold uppercase text-slate-500">Central de Análise</Label>
-                <Input
-                  id="edit-central"
-                  className="h-9 text-sm"
-                  value={editFormData.central || ""}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, central: e.target.value }))}
-                  placeholder="Nome da Central"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="edit-central-date" className="text-[10px] font-bold uppercase text-slate-500">Data Entrada Central</Label>
-                <Input
-                  id="edit-central-date"
-                  className="h-9 text-sm"
-                  value={editFormData.central_date || ""}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, central_date: e.target.value }))}
-                  placeholder="Ex: DD/MM/AAAA"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="edit-doc-approved-date" className="text-[10px] font-bold uppercase text-slate-500">Data Aprovação Documentos</Label>
-                <Input
-                  id="edit-doc-approved-date"
-                  className="h-9 text-sm"
-                  value={editFormData.documentation_approved_date || ""}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, documentation_approved_date: e.target.value }))}
-                  placeholder="Ex: DD/MM/AAAA"
-                />
-              </div>
-
-              <div className="space-y-1">
                 <Label htmlFor="edit-status" className="text-[10px] font-bold uppercase text-slate-500">Status Atual</Label>
                 <Select
                   value={editFormData.status || ""}
@@ -1695,14 +1639,14 @@ export default function StockProposals() {
                 </Select>
               </div>
 
-              <div className="space-y-1 md:col-span-2">
+              <div className="space-y-1 md:col-span-3">
                 <Label htmlFor="edit-pendencias" className="text-[10px] font-bold uppercase text-slate-500">Pendências / Observações</Label>
                 <textarea
                   id="edit-pendencias"
                   rows={2}
-                  value={editFormData.pendencias || ""}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, pendencias: e.target.value }))}
-                  placeholder="Descreva as pendências relevantes..."
+                  value={editFormData.pendencias || editFormData.notes || ""}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, pendencias: e.target.value, notes: e.target.value }))}
+                  placeholder="Descreva as pendências ou observações relevantes..."
                   className="flex min-h-[40px] max-h-[80px] w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
@@ -2661,37 +2605,7 @@ export default function StockProposals() {
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <Box className="h-3.5 w-3.5" /> Dados do Sistema
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Origem</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.originator || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Data de Entrada</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.entry_date ? format(parseISO(viewingDetailProposal.entry_date), 'dd/MM/yyyy') : '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Último Analista</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.last_analyst || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Central de Análise</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.central || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Data Entrada Central</span>
-                      <span className="text-xs font-bold text-slate-700">{formatToBRDate(viewingDetailProposal?.central_date) || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Data Aprovação Documentos</span>
-                      <span className="text-xs font-bold text-slate-700">{formatToBRDate(viewingDetailProposal?.documentation_approved_date) || '---'}</span>
-                    </div>
-                  </div>
-                </div>
+
               </div>
 
               <div className="space-y-6">
