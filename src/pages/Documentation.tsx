@@ -771,6 +771,21 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
     );
   }, [submissions, searchTerm, pageFilterProjetista, filterStatus]);
 
+  // Split submissions into active in-progress vs concluded
+  const activeSubmissions = useMemo(() => {
+    return filteredSubmissions.filter((s) => {
+      const st = (s.proposal.status || "").trim().toUpperCase();
+      return st !== "CONCLUÍDO" && st !== "CONCLUIDO";
+    });
+  }, [filteredSubmissions]);
+
+  const concludedSubmissions = useMemo(() => {
+    return filteredSubmissions.filter((s) => {
+      const st = (s.proposal.status || "").trim().toUpperCase();
+      return st === "CONCLUÍDO" || st === "CONCLUIDO";
+    });
+  }, [filteredSubmissions]);
+
   // ─── Filtered authorized proposals ────────────────────────────
   const filteredAuthorized = useMemo(() => {
     const normalizeName = (name: string | null | undefined) => {
@@ -4623,20 +4638,20 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
         <CardHeader className="pb-3 px-6 pt-5">
           <CardTitle className="font-heading font-extrabold text-lg flex items-center gap-2">
             <ClipboardList className="h-5 w-5 text-primary" />
-            Propostas Recebidas
+            Propostas Recebidas (Em Análise)
             <Badge variant="secondary" className="ml-2 font-mono text-xs">
-              {filteredSubmissions.length}
+              {activeSubmissions.length}
             </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="px-0 pb-0">
-          {filteredSubmissions.length === 0 ? (
+          {activeSubmissions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <FileCheck className="h-12 w-12 mb-3 opacity-40" />
               <p className="font-medium">
                 {searchTerm.trim()
                   ? "Nenhuma proposta encontrada com os termos pesquisados."
-                  : "Nenhuma documentação recebida até o momento."}
+                  : "Nenhuma documentação em análise até o momento."}
               </p>
             </div>
           ) : (
@@ -4673,7 +4688,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredSubmissions.map((sub) => {
+                    {activeSubmissions.map((sub) => {
                       const pct =
                         sub.totalFiles > 0
                           ? Math.round((sub.approvedCount / sub.totalFiles) * 100)
@@ -4856,7 +4871,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
               {/* Mobile View */}
               <div className="block md:hidden divide-y divide-border/30">
-                {filteredSubmissions.map((sub) => {
+                {activeSubmissions.map((sub) => {
                   const pct =
                     sub.totalFiles > 0
                       ? Math.round((sub.approvedCount / sub.totalFiles) * 100)
@@ -5024,6 +5039,228 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
           )}
         </CardContent>
       </Card>
+
+      {/* ── Table: Propostas Concluídas (Grid Separado) ────────────────────────────── */}
+      {concludedSubmissions.length > 0 && (
+        <Card className="border-emerald-200/80 shadow-premium rounded-3xl overflow-hidden bg-card/50 backdrop-blur-sm border-t-4 border-t-emerald-500">
+          <CardHeader className="pb-3 px-6 pt-5 bg-emerald-50/50 border-b border-emerald-100">
+            <CardTitle className="font-heading font-extrabold text-lg flex items-center justify-between">
+              <div className="flex items-center gap-2.5 text-emerald-950">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                <span>Propostas Concluídas</span>
+                <Badge variant="outline" className="ml-2 font-mono text-xs bg-emerald-100 text-emerald-800 border-emerald-300 font-bold px-2.5 py-0.5 rounded-full">
+                  {concludedSubmissions.length}
+                </Badge>
+              </div>
+              <span className="text-xs font-semibold text-emerald-700 hidden sm:inline">
+                Propostas totalmente finalizadas e aprovadas
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-0 pb-0">
+            {/* Desktop View */}
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-emerald-100 bg-emerald-50/30">
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-emerald-900 pl-6">
+                      Produtor
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-emerald-900">
+                      Valor / Programa
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-emerald-900">
+                      Projetista
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-emerald-900">
+                      Status Docs
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-emerald-900">
+                      Status Proposta
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-emerald-900">
+                      Docs Agência ({AGENCY_DOCUMENTATION.length})
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-emerald-900">
+                      Município
+                    </TableHead>
+                    <TableHead className="text-[10px] font-black uppercase tracking-widest text-emerald-900 text-right pr-6">
+                      Ações
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {concludedSubmissions.map((sub) => {
+                    const pct =
+                      sub.totalFiles > 0
+                        ? Math.round((sub.approvedCount / sub.totalFiles) * 100)
+                        : 0;
+
+                    return (
+                      <TableRow
+                        key={sub.token.id}
+                        className="cursor-pointer transition-all duration-300 hover:bg-emerald-50/60 border-emerald-100/60"
+                        onClick={() => setSelectedSubmission(sub)}
+                      >
+                        <TableCell className="pl-6 py-4">
+                          <div>
+                            <p className="font-semibold text-sm leading-tight text-slate-900 dark:text-slate-100">
+                              {sub.proposal.producer_name}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5 font-mono">
+                              {sub.proposal.producer_cpf || "—"}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-bold text-sm text-emerald-700 dark:text-emerald-400">
+                              {sub.proposal.estimated_value ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+                            </p>
+                            <p className="text-[10.5px] font-medium text-slate-700 dark:text-slate-300 mt-0.5 leading-tight">
+                              {sub.proposal.credit_program || sub.proposal.linha_credito || "—"}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm text-muted-foreground">
+                            {sub.proposal.projetista || "—"}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1.5 min-w-[140px]">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] bg-emerald-100 text-emerald-700 border-emerald-200 font-bold"
+                            >
+                              {sub.approvedCount}/{sub.totalFiles} aprovados
+                            </Badge>
+                            <Progress value={pct} className="h-1.5 rounded-full bg-emerald-200" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] px-2.5 py-1 font-extrabold rounded-full bg-emerald-600 text-white border-emerald-700 shadow-sm gap-1"
+                          >
+                            <CheckCircle2 className="h-3 w-3" /> Proposta Concluída
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const agencyDocsCompletedCount = getAgencyCompletedCount(sub);
+                            const isComplete = agencyDocsCompletedCount === AGENCY_DOCUMENTATION.length;
+                            return (
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] px-2 py-0.5 font-semibold rounded-md ${
+                                  isComplete
+                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                    : "bg-amber-50 text-amber-700 border-amber-200"
+                                }`}
+                              >
+                                {isComplete ? "Completa" : `${agencyDocsCompletedCount}/${AGENCY_DOCUMENTATION.length} Concluídos`}
+                              </Badge>
+                            );
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm text-muted-foreground">
+                            {sub.proposal.municipio || "—"}
+                          </p>
+                        </TableCell>
+                        <TableCell className="text-right pr-6">
+                          <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100/60"
+                              title="Copiar Status para WhatsApp"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const msg = generateWppStatusMessage({
+                                  producerName: sub.proposal.producer_name,
+                                  producerCpf: sub.proposal.producer_cpf,
+                                  creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
+                                  estimatedValue: sub.proposal.estimated_value,
+                                  municipio: sub.proposal.municipio,
+                                  projetista: sub.proposal.projetista,
+                                  proposalStatus: sub.proposal.status,
+                                  token: sub.token.token,
+                                  files: sub.files,
+                                  inversoes: sub.proposal.inversoes,
+                                });
+                                navigator.clipboard.writeText(msg).then(() => {
+                                  toast({
+                                    title: "Status copiado! 📋",
+                                    description: "Mensagem copiada para a área de transferência. Cole no WhatsApp.",
+                                  });
+                                });
+                              }}
+                            >
+                              <MessageSquareText className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100/60"
+                              title="Copiar Link de Envio"
+                              onClick={async () => {
+                                const url = `${window.location.origin}/enviar-documentacao?token=${sub.token.token}`;
+                                await navigator.clipboard.writeText(url);
+                                toast({
+                                  title: "Link copiado! 📋",
+                                  description: "O link de envio foi copiado para sua área de transferência.",
+                                });
+                              }}
+                            >
+                              <Link2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl h-8 w-8 text-slate-500 hover:text-slate-700"
+                              title="Visualizar Detalhes"
+                              onClick={() => setSelectedSubmission(sub)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile View */}
+            <div className="block md:hidden divide-y divide-emerald-100">
+              {concludedSubmissions.map((sub) => (
+                <div
+                  key={sub.token.id}
+                  className="p-5 space-y-4 hover:bg-emerald-50/50 transition-colors cursor-pointer"
+                  onClick={() => setSelectedSubmission(sub)}
+                >
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-sm text-slate-950 dark:text-slate-50 leading-tight truncate">
+                        {sub.proposal.producer_name}
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-0.5 font-mono">
+                        {sub.proposal.producer_cpf || "—"}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="bg-emerald-600 text-white border-emerald-700 text-[10px] font-bold">
+                      Concluída
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Aguardando Documentação Table ─────────────────────── */}
       {filteredAuthorized.length > 0 && (
