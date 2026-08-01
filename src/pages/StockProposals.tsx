@@ -2222,24 +2222,23 @@ export default function StockProposals() {
                             </div>
                           </td>
                           <td className="p-3 align-top min-w-[150px]">
-                            <div className="flex flex-col gap-2.5">
-                              <div className="flex items-center justify-between gap-3 min-h-[20px]">
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center justify-between gap-2">
                                 <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Restrição</span>
                                 {restriction ? (
-                                  <Badge variant="outline" className="bg-red-100 text-red-700 border-red-200 gap-1 rounded-full text-[10px] uppercase shadow-sm px-2">
-                                    <XCircle className="h-3 w-3" /> SIM
+                                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 gap-1 rounded-full text-[10px] font-bold uppercase shadow-sm px-2.5 py-0.5">
+                                    <XCircle className="h-3 w-3 text-red-600" /> SIM
                                   </Badge>
                                 ) : (
-                                  <span className="flex items-center justify-center gap-1.5">
-                                    {getSerasaIcon(p.serasa)}
-                                    <span className="text-xs font-semibold">{getSerasaLabel(p.serasa)}</span>
-                                  </span>
+                                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1 rounded-full text-[10px] font-bold uppercase shadow-sm px-2.5 py-0.5">
+                                    <CheckCircle2 className="h-3 w-3 text-emerald-600" /> NÃO
+                                  </Badge>
                                 )}
                               </div>
-                              <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-2 min-h-[28px]">
-                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Programa de Crédito</span>
-                                <span className="text-[10px] font-semibold bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 border border-slate-200 shadow-sm truncate max-w-[120px]" title={`${p.credit_program || ''} ${p.ano_contrato || ''}`.trim()}>
-                                  {p.credit_program || ''} {p.ano_contrato || ''}
+                              <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-1.5">
+                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Programa</span>
+                                <span className="text-[10px] font-semibold bg-slate-100 px-1.5 py-0.5 rounded text-slate-700 border border-slate-200 shadow-sm truncate max-w-[120px]" title={p.credit_program || ''}>
+                                  {p.credit_program || '---'}
                                 </span>
                               </div>
                             </div>
@@ -2439,7 +2438,7 @@ export default function StockProposals() {
                           </div>
                           <div className="flex justify-between text-xs">
                             <span className="text-slate-500">Programa de Crédito</span>
-                            <span className="text-slate-700">{p.credit_program || ''} {p.ano_contrato ? `(${p.ano_contrato})` : ''}</span>
+                            <span className="text-slate-700 font-medium">{p.credit_program || '---'}</span>
                           </div>
                           {p.agencia_cadastro && (
                             <div className="flex justify-between text-xs">
@@ -2533,32 +2532,39 @@ export default function StockProposals() {
         </CardContent>
       </Card>
 
-      {/* ─── Premium Detail Dialog ─── */}
+      {/* ─── Executive Premium Detail Dialog ─── */}
       <Dialog open={!!viewingDetailProposal} onOpenChange={() => setViewingDetailProposal(null)}>
-        <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border border-border/50 shadow-2xl">
-          <div className="bg-card p-5 border-b border-border/40 text-foreground relative overflow-hidden">
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/20">
-                <FileText className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              <div>
-                <h2 className="text-base md:text-lg font-bold leading-tight">{viewingDetailProposal?.producer_name}</h2>
-                <div className="flex flex-wrap items-center gap-2.5 mt-1 text-xs text-muted-foreground font-medium">
-                  <span className="flex items-center gap-1">
-                    <User className="h-3.5 w-3.5 text-muted-foreground/75" /> {viewingDetailProposal?.producer_cpf || '---'}
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <StatusBadge status={viewingDetailProposal?.status} variant="pill" showEmoji showTooltip />
+        <DialogContent className="sm:max-w-[800px] max-h-[92vh] overflow-y-auto rounded-3xl p-0 border border-slate-200/80 shadow-2xl bg-white">
+          {/* Top Banner */}
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
+                  <User className="h-7 w-7 text-indigo-300" />
+                </div>
+                <div>
+                  <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">{viewingDetailProposal?.producer_name}</h2>
+                  <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-indigo-200 font-medium">
+                    <span>🆔 CPF: <strong className="text-white font-mono">{viewingDetailProposal?.producer_cpf || '---'}</strong></span>
+                    <span>•</span>
+                    <span>📍 {viewingDetailProposal?.municipio || '---'}</span>
+                    <span>•</span>
+                    <span>👷 {viewingDetailProposal?.projetista || '---'}</span>
+                  </div>
                 </div>
               </div>
+              <StatusBadge status={viewingDetailProposal?.status} variant="pill" showEmoji />
             </div>
           </div>
 
           {/* Pipeline Timeline */}
           {viewingDetailProposal?.status && (
-            <div className="px-6 pt-2 pb-0">
-              <div className="bg-slate-50/80 rounded-2xl border border-slate-200/60 p-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Jornada da Proposta</p>
+            <div className="px-6 pt-5 pb-1">
+              <div className="bg-slate-50/90 rounded-2xl border border-slate-200/70 p-4 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
+                  <TrendingUp className="h-3.5 w-3.5 text-indigo-500" /> Jornada da Proposta
+                </p>
                 <ProposalFlowTimeline currentStatus={viewingDetailProposal.status} />
               </div>
             </div>
@@ -2566,92 +2572,92 @@ export default function StockProposals() {
 
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-5">
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <Landmark className="h-3.5 w-3.5" /> Informações Financeiras
+              <div className="space-y-6">
+                {/* Financeiro */}
+                <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Landmark className="h-3.5 w-3.5 text-indigo-500" /> Informações Financeiras
                   </h4>
-                  <div className="space-y-4">
-                    <div className="bg-muted/40 p-4 rounded-xl border border-border/40">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Valor Estimado</p>
-                      <p className="text-xl font-bold text-slate-900 dark:text-slate-50">
-                        {viewingDetailProposal?.estimated_value ? formatCurrency(Number(viewingDetailProposal.estimated_value)) : '---'}
-                      </p>
+                  <div className="bg-indigo-50/60 p-4 rounded-xl border border-indigo-100/80">
+                    <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1">Valor Estimado</p>
+                    <p className="text-2xl font-black text-indigo-950 font-heading">
+                      {viewingDetailProposal?.estimated_value ? formatCurrency(Number(viewingDetailProposal.estimated_value)) : 'R$ 0,00'}
+                    </p>
+                  </div>
+                  <div className="space-y-2 pt-1">
+                    <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                      <span className="text-xs text-slate-500 font-medium">Programa de Crédito</span>
+                      <span className="text-xs font-bold text-slate-800">{viewingDetailProposal?.credit_program || '---'}</span>
                     </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Programa de Crédito</p>
-                      <p className="text-sm font-semibold text-slate-700">{viewingDetailProposal?.credit_program || '---'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Linha de Crédito</p>
-                      <p className="text-sm font-semibold text-indigo-600">{viewingDetailProposal?.linha_credito || '---'}</p>
+                    <div className="flex justify-between items-center py-1.5">
+                      <span className="text-xs text-slate-500 font-medium">Linha de Crédito</span>
+                      <span className="text-xs font-bold text-indigo-600">{viewingDetailProposal?.linha_credito || viewingDetailProposal?.credit_program || '---'}</span>
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <MapPin className="h-3.5 w-3.5" /> Localização e Equipe
+                {/* Localização e Equipe */}
+                <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm space-y-3">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5 text-indigo-500" /> Localização & Projetista
                   </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Município</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.municipio || '---'}</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                      <span className="text-xs text-slate-500 font-medium">Município</span>
+                      <span className="text-xs font-bold text-slate-800">{viewingDetailProposal?.municipio || '---'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Projetista</span>
+                    <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                      <span className="text-xs text-slate-500 font-medium">Projetista</span>
                       <span className="text-xs font-bold text-indigo-600">{viewingDetailProposal?.projetista || '---'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Localização</span>
-                      <span className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{viewingDetailProposal?.localizacao || viewingDetailProposal?.producer_address || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Telefone</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.producer_phone || '---'}</span>
+                    <div className="flex justify-between items-start py-1.5">
+                      <span className="text-xs text-slate-500 font-medium">Localização / Imóvel</span>
+                      <span className="text-xs font-bold text-slate-800 text-right max-w-[220px] break-words">{viewingDetailProposal?.localizacao || '---'}</span>
                     </div>
                   </div>
                 </div>
-
-
               </div>
 
               <div className="space-y-6">
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Status e Restrições
+                {/* Status e Restrição */}
+                <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm space-y-3">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" /> Status & Restrição Cadastral
                   </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Serasa</span>
-                      <Badge variant={viewingDetailProposal?.serasa === 'SIM' ? 'destructive' : 'outline'} className="text-[9px] h-5">
-                        {viewingDetailProposal?.serasa || 'NÃO'}
-                      </Badge>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                      <span className="text-xs font-medium text-slate-500">Restrição SERASA</span>
+                      {viewingDetailProposal?.serasa === 'SIM' ? (
+                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 font-bold gap-1 px-3 py-1 text-xs rounded-full shadow-sm">
+                          <XCircle className="h-3.5 w-3.5 text-red-600" /> Restrito (SIM)
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-bold gap-1 px-3 py-1 text-xs rounded-full shadow-sm">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Sem Restrição (NÃO)
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Ano Contrato</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.ano_contrato || '---'}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Status</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.status || '---'}</span>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-xs font-medium text-slate-500">Status Atual</span>
+                      <StatusBadge status={viewingDetailProposal?.status} variant="compact" showEmoji />
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <Calendar className="h-3.5 w-3.5" /> Data e Hora de Movimentação
+                {/* Movimentação */}
+                <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm space-y-3">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 text-indigo-500" /> Data e Hora de Movimentação
                   </h4>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Última Movimentação</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                      <span className="text-xs text-slate-500 font-medium">Última Movimentação</span>
                       <span className="text-xs font-bold text-emerald-600 font-mono">
                         {formatToBRDate(viewingDetailProposal?.updated_at || viewingDetailProposal?.created_at)}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Data de Cadastro</span>
+                    <div className="flex justify-between items-center py-1.5">
+                      <span className="text-xs text-slate-500 font-medium">Data de Cadastro</span>
                       <span className="text-xs font-bold text-slate-700 font-mono">
                         {formatToBRDate(viewingDetailProposal?.created_at)}
                       </span>
@@ -2659,11 +2665,12 @@ export default function StockProposals() {
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <FileText className="h-3.5 w-3.5" /> Notas e Pendências
+                {/* Notas */}
+                <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm space-y-2">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <FileText className="h-3.5 w-3.5 text-indigo-500" /> Notas e Pendências
                   </h4>
-                  <div className="bg-slate-50 rounded-2xl p-4 text-xs text-slate-600 leading-relaxed min-h-[100px] border border-slate-100 italic whitespace-pre-wrap">
+                  <div className="bg-slate-50 rounded-xl p-3.5 text-xs text-slate-600 leading-relaxed border border-slate-200/60 italic whitespace-pre-wrap">
                     {viewingDetailProposal?.pendencias || viewingDetailProposal?.notes || 'Sem observações adicionais para esta proposta do estoque.'}
                   </div>
                 </div>
@@ -2671,8 +2678,19 @@ export default function StockProposals() {
             </div>
           </div>
 
-          <DialogFooter className="bg-slate-50/80 p-6 border-t border-slate-100 flex justify-end items-center rounded-b-3xl">
-            <Button variant="outline" onClick={() => setViewingDetailProposal(null)} className="rounded-xl font-bold text-xs h-10 border-slate-200">
+          <DialogFooter className="bg-slate-50 p-5 border-t border-slate-200/80 flex justify-between items-center rounded-b-3xl">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const current = viewingDetailProposal;
+                setViewingDetailProposal(null);
+                if (current) openEditDialog(current);
+              }}
+              className="rounded-xl font-bold text-xs h-10 border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-1.5"
+            >
+              <Edit2 className="h-3.5 w-3.5" /> Editar Proposta
+            </Button>
+            <Button variant="default" onClick={() => setViewingDetailProposal(null)} className="rounded-xl font-bold text-xs h-10 px-6 bg-slate-900 hover:bg-slate-800 text-white">
               Fechar Detalhes
             </Button>
           </DialogFooter>
