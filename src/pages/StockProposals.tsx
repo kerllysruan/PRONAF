@@ -28,6 +28,7 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import { ChartTooltip } from "@/components/ChartTooltip";
+import { generateWppStatusMessage } from "@/utils/wppMessage";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ProposalFlowTimeline } from "@/components/shared/ProposalFlowTimeline";
 import { useAppData } from "@/contexts/AppDataContext";
@@ -259,37 +260,21 @@ export default function StockProposals() {
   const copyDocumentationLinkAndText = useCallback(async (p: StockProposal) => {
     const token = await generateToken(p.id, p.original_csv_status || p.status);
     if (token) {
-      const url = `${window.location.origin}/enviar-documentacao?token=${token}`;
-      const projetistaName = p.projetista || "Projetista";
-      const producerName = p.producer_name || "—";
-      const creditProgram = p.credit_program || "—";
-      const municipio = p.municipio || "—";
-      const valueFormatted = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(p.estimated_value) || 0);
-
-      const message = `🌾 SUPER GESTÃO — PORTAL DO PRODUTOR 🌾
-
-Olá, ${projetistaName}! Tudo bem?
-
-Foi liberado o link para o envio da documentação obrigatória do produtor abaixo. Por favor, acesse o link seguro para anexar os arquivos:
-
-📋 DADOS DA PROPOSTA:
-• Produtor: ${producerName}
-• Programa/Linha: ${creditProgram}
-• Município: ${municipio}
-• Valor: ${valueFormatted}
-
-🔗 LINK DE ACESSO SEGURO:
-${url}
-
----
-💡 Dica: Ao abrir o link, você pode anexar os arquivos arrastando-os para os cards ou simplesmente copiando e colando (Ctrl+V) no respectivo documento!
-
-Se precisar de qualquer auxílio ou ajuste, estamos à inteira disposição. 🚀`;
+      const message = generateWppStatusMessage({
+        producerName: p.producer_name,
+        producerCpf: p.producer_cpf,
+        creditProgram: p.credit_program || p.linha_credito,
+        estimatedValue: p.estimated_value,
+        municipio: p.municipio,
+        projetista: p.projetista,
+        proposalStatus: p.status,
+        token: token,
+      });
 
       await navigator.clipboard.writeText(message);
       toast({ 
-        title: "Mensagem copiada com sucesso! 📋", 
-        description: "O texto limpo e o link de envio já estão na sua área de transferência. Agora é só colar no WhatsApp do projetista." 
+        title: "Status copiado com sucesso! 📋", 
+        description: "A mensagem formatada com a data e o link de envio já está na sua área de transferência. Cole no WhatsApp." 
       });
     }
   }, [generateToken, toast]);

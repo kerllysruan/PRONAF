@@ -10,6 +10,7 @@ import {
   DocFileStatus,
   AGENCY_DOCUMENTATION,
 } from "@/types/documentation";
+import { generateWppStatusMessage } from "@/utils/wppMessage";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,7 @@ import {
   Link2,
   Send,
   Clock,
+  MessageSquareText,
   FileBarChart,
   Building,
 } from "lucide-react";
@@ -1926,7 +1928,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   const initialAct = (upperAct.includes("PRONAF") || upperAct.includes("368") || upperAct.includes("699") || upperAct.includes("GRUPO"))
                     ? ""
                     : sourceAct;
-                   const hasCarInd = !!carIndividualFile?.ged_id;
+                  const hasCarInd = !!carIndividualFile?.ged_id;
                   const hasCarCol = !!carColetivoFile?.ged_id;
                   setParecerUtilizaCarIndividual(hasCarInd ? "SIM" : "NÃO");
 
@@ -1936,6 +1938,35 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               >
                 <FileText className="h-4 w-4" />
                 Parecer Gerencial
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 rounded-xl text-green-700 border-green-200 hover:bg-green-50 font-bold px-4"
+                onClick={() => {
+                  const msg = generateWppStatusMessage({
+                    producerName: sub.proposal.producer_name,
+                    producerCpf: sub.proposal.producer_cpf,
+                    creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
+                    estimatedValue: sub.proposal.estimated_value,
+                    municipio: sub.proposal.municipio,
+                    projetista: sub.proposal.projetista,
+                    proposalStatus: sub.proposal.status,
+                    token: sub.token.token,
+                    files: sub.files,
+                    inversoes: sub.proposal.inversoes,
+                  });
+                  navigator.clipboard.writeText(msg).then(() => {
+                    toast({
+                      title: "Status copiado! 📋",
+                      description: "Mensagem copiada para a área de transferência. Cole no WhatsApp.",
+                    });
+                  });
+                }}
+              >
+                <MessageSquareText className="h-4 w-4" />
+                Copiar Status (WPP)
               </Button>
 
               <Button
@@ -4763,6 +4794,35 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="rounded-xl h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                title="Copiar Status para WhatsApp"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const msg = generateWppStatusMessage({
+                                    producerName: sub.proposal.producer_name,
+                                    producerCpf: sub.proposal.producer_cpf,
+                                    creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
+                                    estimatedValue: sub.proposal.estimated_value,
+                                    municipio: sub.proposal.municipio,
+                                    projetista: sub.proposal.projetista,
+                                    proposalStatus: sub.proposal.status,
+                                    token: sub.token.token,
+                                    files: sub.files,
+                                    inversoes: sub.proposal.inversoes,
+                                  });
+                                  navigator.clipboard.writeText(msg).then(() => {
+                                    toast({
+                                      title: "Status copiado! 📋",
+                                      description: "Mensagem copiada para a área de transferência. Cole no WhatsApp.",
+                                    });
+                                  });
+                                }}
+                              >
+                                <MessageSquareText className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="rounded-xl h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                 title="Copiar Link de Envio"
                                 onClick={async () => {
@@ -4903,6 +4963,35 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           <Button
                             variant="outline"
                             size="sm"
+                            className="h-8 rounded-lg text-xs font-semibold gap-1 px-2 border-green-200 text-green-700 hover:bg-green-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const msg = generateWppStatusMessage({
+                                producerName: sub.proposal.producer_name,
+                                producerCpf: sub.proposal.producer_cpf,
+                                creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
+                                estimatedValue: sub.proposal.estimated_value,
+                                municipio: sub.proposal.municipio,
+                                projetista: sub.proposal.projetista,
+                                proposalStatus: sub.proposal.status,
+                                token: sub.token.token,
+                                files: sub.files,
+                                inversoes: sub.proposal.inversoes,
+                              });
+                              navigator.clipboard.writeText(msg).then(() => {
+                                toast({
+                                  title: "Status copiado! 📋",
+                                  description: "Mensagem copiada para a área de transferência. Cole no WhatsApp.",
+                                });
+                              });
+                            }}
+                          >
+                            <MessageSquareText className="h-3.5 w-3.5" />
+                            WPP
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="h-8 rounded-lg text-xs font-semibold gap-1 px-2 border-border/80 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                             onClick={async () => {
                               const url = `${window.location.origin}/enviar-documentacao?token=${sub.token.token}`;
@@ -5009,22 +5098,51 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                       </TableCell>
                       <TableCell className="text-right pr-6">
                         {p.token ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="rounded-xl h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                            title="Copiar Link de Envio"
-                            onClick={async () => {
-                              const url = `${window.location.origin}/enviar-documentacao?token=${p.token}`;
-                              await navigator.clipboard.writeText(url);
-                              toast({
-                                title: "Link copiado! 📋",
-                                description: "Link da página de envio copiado.",
-                              });
-                            }}
-                          >
-                            <Link2 className="h-4 w-4" />
-                          </Button>
+                          <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              title="Copiar Status para WhatsApp"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const msg = generateWppStatusMessage({
+                                  producerName: p.producer_name,
+                                  producerCpf: p.producer_cpf,
+                                  creditProgram: p.credit_program || p.linha_credito,
+                                  estimatedValue: p.estimated_value,
+                                  municipio: p.municipio,
+                                  projetista: p.projetista,
+                                  proposalStatus: p.status,
+                                  token: p.token,
+                                });
+                                navigator.clipboard.writeText(msg).then(() => {
+                                  toast({
+                                    title: "Status copiado! 📋",
+                                    description: "Mensagem copiada para a área de transferência. Cole no WhatsApp.",
+                                  });
+                                });
+                              }}
+                            >
+                              <MessageSquareText className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                              title="Copiar Link de Envio"
+                              onClick={async () => {
+                                const url = `${window.location.origin}/enviar-documentacao?token=${p.token}`;
+                                await navigator.clipboard.writeText(url);
+                                toast({
+                                  title: "Link copiado! 📋",
+                                  description: "Link da página de envio copiado.",
+                                });
+                              }}
+                            >
+                              <Link2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         ) : (
                           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground inline-block" />
                         )}
