@@ -31,9 +31,11 @@ export function generateWppStatusMessage(params: WppMessageParams): string {
   const municipio = params.municipio || "—";
   const projetista = params.projetista || "—";
 
-  const linkEnvio = params.token
+  const rawLink = params.token
     ? `${window.location.origin}/enviar-documentacao?token=${params.token}`
     : "";
+  // Strip protocol (https:// or http://) to prevent WhatsApp from generating a top link-preview box
+  const linkEnvio = rawLink.replace(/^https?:\/\//i, "");
 
   const now = new Date();
   const dataHoje = now.toLocaleDateString("pt-BR", {
