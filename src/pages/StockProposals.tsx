@@ -176,8 +176,16 @@ function parseFlexibleDate(dateStr: string | null | undefined): number {
 }
 
 function formatToBRDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return "";
+  if (!dateStr) return "—";
   const clean = dateStr.trim();
+  try {
+    const d = new Date(clean);
+    if (!isNaN(d.getTime())) {
+      const dataStr = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+      const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      return `${dataStr} às ${horaStr}`;
+    }
+  } catch {}
   if (clean.includes('-')) {
     const parts = clean.split(' ')[0].split('-');
     if (parts.length === 3) {
@@ -2625,8 +2633,28 @@ export default function StockProposals() {
                       <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.ano_contrato || '---'}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Status CSV</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.original_csv_status || '---'}</span>
+                      <span className="text-xs text-slate-500">Status</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingDetailProposal?.status || '---'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                    <Calendar className="h-3.5 w-3.5" /> Data e Hora de Movimentação
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Última Movimentação</span>
+                      <span className="text-xs font-bold text-emerald-600 font-mono">
+                        {formatToBRDate(viewingDetailProposal?.updated_at || viewingDetailProposal?.created_at)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                      <span className="text-xs text-slate-500">Data de Cadastro</span>
+                      <span className="text-xs font-bold text-slate-700 font-mono">
+                        {formatToBRDate(viewingDetailProposal?.created_at)}
+                      </span>
                     </div>
                   </div>
                 </div>

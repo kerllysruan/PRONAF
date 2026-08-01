@@ -43,6 +43,11 @@ export function generateWppStatusMessage(params: WppMessageParams): string {
     month: "2-digit",
     year: "numeric",
   });
+  const horaHoje = now.toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const dataHoraFormatada = `${dataHoje} às ${horaHoje}`;
 
   const files = params.files || [];
 
@@ -108,7 +113,7 @@ export function generateWppStatusMessage(params: WppMessageParams): string {
   // ── Always start with Header & Proposal Info ──
   let msg = `📋 *PRONAF - STATUS DA PROPOSTA*\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-  msg += `📅 *Data:* ${dataHoje}\n\n`;
+  msg += `📅 *Data:* ${dataHoraFormatada}\n\n`;
   msg += `👤 *Proponente:* ${nome}\n`;
   msg += `🆔 *CPF:* ${cpf}\n`;
   msg += `🏦 *Programa:* ${programa}\n`;
@@ -122,27 +127,27 @@ export function generateWppStatusMessage(params: WppMessageParams): string {
   const proposalStatus = (params.proposalStatus || "").toUpperCase();
 
   if (proposalStatus === "CONCLUÍDO" || proposalStatus === "CONCLUIDO") {
-    msg += `✅ Em *${dataHoje}*, a proposta encontra-se *CONCLUÍDA*.\n\n`;
+    msg += `✅ Em *${dataHoraFormatada}*, a proposta encontra-se *CONCLUÍDA*.\n\n`;
     if (totalDocs > 0) {
       msg += `📊 *Documentação:* ${totalAprovados}/${totalDocs} documentos aprovados.\n\n`;
     }
     msg += `A proposta foi finalizada com sucesso. Caso necessite de mais informações, entre em contato com a agência.`;
   } else if (proposalStatus === "ENVIADO PARA CENTRAL") {
-    msg += `📤 Em *${dataHoje}*, a proposta encontra-se *ENVIADA PARA A CENTRAL* e em fase de análise.\n\n`;
+    msg += `📤 Em *${dataHoraFormatada}*, a proposta encontra-se *ENVIADA PARA A CENTRAL* e em fase de análise.\n\n`;
     if (totalDocs > 0) {
       msg += `📊 *Documentação:* ${totalAprovados}/${totalDocs} documentos aprovados.\n\n`;
     }
     msg += `Aguarde a análise e acompanhe o andamento pelo link abaixo:\n`;
     if (linkEnvio) msg += `🔗 ${linkEnvio}`;
   } else if (pendentes.length === 0 && reprovados.length === 0 && !isInversoesReprovadas) {
-    msg += `✅ Em *${dataHoje}*, a proposta encontra-se *em andamento e análise*.\n\n`;
+    msg += `✅ Em *${dataHoraFormatada}*, a proposta encontra-se *em andamento e análise*.\n\n`;
     if (totalDocs > 0) {
       msg += `📊 *Documentação:* ${totalAprovados}/${totalDocs} documentos aprovados. ✅ *Todos os documentos foram aprovados!*\n\n`;
     }
     msg += `Nenhuma pendência documental. Aguarde o processamento da proposta e acompanhe o andamento pelo link abaixo:\n`;
     if (linkEnvio) msg += `🔗 ${linkEnvio}`;
   } else {
-    msg += `⚠️ Em *${dataHoje}*, a proposta encontra-se *em andamento e análise* com pendências/reprovações.\n\n`;
+    msg += `⚠️ Em *${dataHoraFormatada}*, a proposta encontra-se *em andamento e análise* com pendências/reprovações.\n\n`;
     if (totalDocs > 0) {
       msg += `📊 *Progresso:* ${totalAprovados}/${totalDocs} documentos aprovados | ${pendentes.length} pendente(s) | ${reprovados.length} reprovado(s)\n\n`;
     }
