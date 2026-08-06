@@ -7,6 +7,7 @@ import {
   Box,
   Share2,
   Wheat,
+  UserCheck,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -28,6 +29,7 @@ const menuItems = [
   { title: "Propostas Concluídas", url: "/propostas", icon: FileText, permission: "can_view_proposals", badge: "concluded" as string },
   { title: "Estoque", url: "/estoque", icon: Box, permission: "can_view_proposals", badge: "stock" as string },
   { title: "Troca de Arquivos", url: "/troca-arquivos", icon: Share2, permission: "can_view_proposals", badge: null as string | null },
+  { title: "Projetistas", url: "/projetistas", icon: UserCheck, permission: "can_view_proposals", badge: null as string | null },
   { title: "Documentação", url: "/documentacao", icon: FolderCheck, permission: "can_view_documentation", badge: "doc" as string },
   { title: "Controle de Acesso", url: "/controle-acesso", icon: Shield, permission: "can_view_access_control", badge: null as string | null },
   { title: "Gestão de Agências", url: "/admin/agencies", icon: Building2, permission: "can_manage_agencies", badge: null as string | null },

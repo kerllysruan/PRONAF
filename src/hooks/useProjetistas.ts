@@ -1,25 +1,26 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useProjetistasControl } from "@/hooks/useProjetistasControl";
 
 // Projetistas originais (sempre mantidos como fallback)
 const PROJETISTAS_FIXOS = ["NEY MEDEIROS", "JAIRO SANTANA", "CLEDSON CLOVIS", "JAILSON", "OLIVEIRA"];
 
 /**
- * Hook que retorna a lista de projetistas:
- *  - Sempre inclui os nomes fixos originais
+ * Hook que retorna a lista de projetistas ativos:
+ *  - Inclui projetistas cadastrados no Controle de Projetistas
  *  - Busca dinamicamente usuários com role "projetista" da mesma agência
  *  - Mescla ambos sem duplicatas
  */
 export function useProjetistas() {
   const { agencyId, isDeveloper } = useAuth();
+  const { projetistas: managedProjetistas } = useProjetistasControl();
   const [dynamicProjetistas, setDynamicProjetistas] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProjetistas = async () => {
       try {
-        // Buscar perfis que têm role "projetista"
         const { data: roles } = await supabase
           .from("user_roles")
           .select("user_id")
@@ -32,13 +33,11 @@ export function useProjetistas() {
 
         const userIds = roles.map(r => r.user_id);
 
-        // Buscar display_name desses projetistas
         let query = supabase
           .from("profiles")
           .select("display_name, agency_id")
           .in("user_id", userIds);
 
-        // Se não for dev, filtrar pela agência atual
         if (!isDeveloper && agencyId) {
           query = query.eq("agency_id", agencyId);
         }
@@ -59,7 +58,6 @@ export function useProjetistas() {
 
     fetchProjetistas();
 
-    // Escutar alterações em profiles e user_roles para atualizar automaticamente
     const ch1 = supabase.channel('projetistas-profiles')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, fetchProjetistas)
       .subscribe();
@@ -73,9 +71,12 @@ export function useProjetistas() {
     };
   }, [agencyId, isDeveloper]);
 
-  // Mesclar fixos + dinâmicos sem duplicatas, case-insensitive
   const projetistas = useMemo(() => {
-    const allNames = [...PROJETISTAS_FIXOS, ...dynamicProjetistas];
+    const activeManagedNames = managedProjetistas
+      .filter((p) => p.status === "ativo")
+      .map((p) => p.name);
+
+    const allNames = [...PROJETISTAS_FIXOS, ...activeManagedNames, ...dynamicProjetistas];
     const uniqueSet = new Map<string, string>();
     allNames.forEach(name => {
       const key = name.toUpperCase().trim();
@@ -84,7 +85,7 @@ export function useProjetistas() {
       }
     });
     return Array.from(uniqueSet.values()).sort((a, b) => a.localeCompare(b));
-  }, [dynamicProjetistas]);
+  }, [managedProjetistas, dynamicProjetistas]);
 
   return { projetistas, loading, PROJETISTAS_FIXOS };
 }
