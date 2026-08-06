@@ -30,6 +30,7 @@ import {
 import { ChartTooltip } from "@/components/ChartTooltip";
 import { generateWppStatusMessage } from "@/utils/wppMessage";
 import { generateVisitaGerencialText } from "@/utils/visitaGerencial";
+import { useProjetistasControl } from "@/hooks/useProjetistasControl";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ProposalFlowTimeline } from "@/components/shared/ProposalFlowTimeline";
 import { useAppData } from "@/contexts/AppDataContext";
@@ -288,12 +289,19 @@ export default function StockProposals() {
     }
   }, [generateToken, toast]);
 
+  const { projetistas: registeredProjetistasList } = useProjetistasControl();
+
   const copyVisitaGerencialText = useCallback((p: StockProposal) => {
+    const matched = registeredProjetistasList.find(
+      (proj) => proj.name.toUpperCase().trim() === (p.projetista || "").toUpperCase().trim()
+    );
     const text = generateVisitaGerencialText({
       producerName: p.producer_name,
       producerCpf: p.producer_cpf,
       creditProgram: p.credit_program || p.linha_credito,
       projetista: p.projetista,
+      projetistaCpf: matched?.cpf,
+      projetistaCreaCfta: matched?.crea_cfta,
       estimatedValue: p.estimated_value,
       municipio: p.municipio,
       localizacao: p.localizacao || p.municipio,
@@ -304,7 +312,7 @@ export default function StockProposals() {
         description: "Texto de 6 linhas copiado para a área de transferência.",
       });
     });
-  }, [toast]);
+  }, [toast, registeredProjetistasList]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(() => {
     return localStorage.getItem('stock_proposal_new_open') === 'true';

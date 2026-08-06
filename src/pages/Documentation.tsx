@@ -12,6 +12,7 @@ import {
 } from "@/types/documentation";
 import { generateWppStatusMessage } from "@/utils/wppMessage";
 import { generateVisitaGerencialText } from "@/utils/visitaGerencial";
+import { useProjetistasControl } from "@/hooks/useProjetistasControl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -260,7 +261,18 @@ export default function Documentation() {
 
   const { toast } = useToast();
   const { selectedAgencyId, agencies } = useAgency();
+  const { projetistas: registeredProjetistas } = useProjetistasControl();
   const navigate = useNavigate();
+
+  const getProjetistaData = useCallback((name?: string | null) => {
+    if (!name) return { cpf: "", crea_cfta: "" };
+    const target = name.toUpperCase().trim();
+    const found = registeredProjetistas.find((p) => p.name.toUpperCase().trim() === target);
+    return {
+      cpf: found?.cpf || "",
+      crea_cfta: found?.crea_cfta || "",
+    };
+  }, [registeredProjetistas]);
 
   const pendingTasksCount = useMemo(() => {
     const pendingSubmissions = submissions.filter(
@@ -1974,11 +1986,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   const initialLoc = sub.proposal.localizacao || sub.proposal.municipio || "";
                   setVisitaLocalizacao(initialLoc);
                   
+                  const projData = getProjetistaData(sub.proposal.projetista);
                   const text = generateVisitaGerencialText({
                     producerName: sub.proposal.producer_name,
                     producerCpf: sub.proposal.producer_cpf,
                     creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
                     projetista: sub.proposal.projetista,
+                    projetistaCpf: projData.cpf,
+                    projetistaCreaCfta: projData.crea_cfta,
                     estimatedValue: sub.proposal.estimated_value,
                     municipio: sub.proposal.municipio,
                     localizacao: initialLoc,
@@ -4317,7 +4332,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
 
             <div className="p-6 space-y-4 overflow-y-auto max-h-[65vh]">
               {/* Resumo dos dados utilizados */}
-              <div className="grid grid-cols-3 gap-3 bg-muted/40 p-3.5 rounded-xl text-xs border border-border/50">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-muted/40 p-3.5 rounded-xl text-xs border border-border/50">
                 <div>
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block">Proponente</span>
                   <strong className="text-foreground font-semibold truncate block">{sub?.proposal.producer_name || "—"}</strong>
@@ -4331,8 +4346,18 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                   </strong>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Programa de Crédito</span>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Programa</span>
                   <strong className="text-foreground font-semibold truncate block">{sub?.proposal.credit_program || sub?.proposal.linha_credito || "—"}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Projetista</span>
+                  <strong className="text-foreground font-semibold truncate block">{sub?.proposal.projetista || "—"}</strong>
+                  {sub?.proposal.projetista && (
+                    <span className="text-[9px] text-teal-600 dark:text-teal-400 block font-mono truncate">
+                      {getProjetistaData(sub.proposal.projetista).cpf ? `CPF ${getProjetistaData(sub.proposal.projetista).cpf}` : ""}
+                      {getProjetistaData(sub.proposal.projetista).crea_cfta ? ` | ${getProjetistaData(sub.proposal.projetista).crea_cfta}` : ""}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -4353,6 +4378,8 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     producerCpf: sub.proposal.producer_cpf,
                     creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
                     projetista: sub.proposal.projetista,
+                    projetistaCpf: getProjetistaData(sub.proposal.projetista).cpf,
+                    projetistaCreaCfta: getProjetistaData(sub.proposal.projetista).crea_cfta,
                     estimatedValue: sub.proposal.estimated_value,
                     municipio: sub.proposal.municipio,
                   }) : ""}
@@ -4382,11 +4409,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                 className="gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-6 shadow-md"
                 onClick={() => {
                   if (!sub) return;
+                  const projData = getProjetistaData(sub.proposal.projetista);
                   const text = generateVisitaGerencialText({
                     producerName: sub.proposal.producer_name,
                     producerCpf: sub.proposal.producer_cpf,
                     creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
                     projetista: sub.proposal.projetista,
+                    projetistaCpf: projData.cpf,
+                    projetistaCreaCfta: projData.crea_cfta,
                     estimatedValue: sub.proposal.estimated_value,
                     municipio: sub.proposal.municipio,
                   });
@@ -4963,11 +4993,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                   setSelectedSubmission(sub);
                                   const initialLoc = sub.proposal.localizacao || sub.proposal.municipio || "";
                                   setVisitaLocalizacao(initialLoc);
+                                  const projData = getProjetistaData(sub.proposal.projetista);
                                   const text = generateVisitaGerencialText({
                                     producerName: sub.proposal.producer_name,
                                     producerCpf: sub.proposal.producer_cpf,
                                     creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
                                     projetista: sub.proposal.projetista,
+                                    projetistaCpf: projData.cpf,
+                                    projetistaCreaCfta: projData.crea_cfta,
                                     estimatedValue: sub.proposal.estimated_value,
                                     municipio: sub.proposal.municipio,
                                     localizacao: initialLoc,
@@ -5359,11 +5392,14 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                                 setSelectedSubmission(sub);
                                 const initialLoc = sub.proposal.localizacao || sub.proposal.municipio || "";
                                 setVisitaLocalizacao(initialLoc);
+                                const projData = getProjetistaData(sub.proposal.projetista);
                                 const text = generateVisitaGerencialText({
                                   producerName: sub.proposal.producer_name,
                                   producerCpf: sub.proposal.producer_cpf,
                                   creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
                                   projetista: sub.proposal.projetista,
+                                  projetistaCpf: projData.cpf,
+                                  projetistaCreaCfta: projData.crea_cfta,
                                   estimatedValue: sub.proposal.estimated_value,
                                   municipio: sub.proposal.municipio,
                                   localizacao: initialLoc,
