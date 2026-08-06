@@ -11,6 +11,7 @@ import {
   AGENCY_DOCUMENTATION,
 } from "@/types/documentation";
 import { generateWppStatusMessage } from "@/utils/wppMessage";
+import { generateVisitaGerencialText } from "@/utils/visitaGerencial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,8 @@ import {
   MessageSquareText,
   FileBarChart,
   Building,
+  MapPin,
+  Copy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
@@ -334,6 +337,13 @@ export default function Documentation() {
   const [parecerAgenciaHistorico, setParecerAgenciaHistorico] = useState("");
   const [parecerUtilizaCarIndividual, setParecerUtilizaCarIndividual] = useState("SIM");
   const [parecerGeneroProponente, setParecerGeneroProponente] = useState("MASCULINO");
+
+  // Visita Gerencial State
+  const [visitaGerencialDialogOpen, setVisitaGerencialDialogOpen] = useState(false);
+  const [visitaParecerObs, setVisitaParecerObs] = useState(
+    "Visita gerencial realizada in loco no imóvel rural com parecer favorável, confirmando enquadramento, viabilidade da proposta e regularidade documental."
+  );
+  const [visitaLocalizacao, setVisitaLocalizacao] = useState("");
 
   // Keep selectedSubmission in sync when submissions array updates (after approve/reject)
   useEffect(() => {
@@ -1953,6 +1963,40 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
               >
                 <FileText className="h-4 w-4" />
                 Parecer Gerencial
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 rounded-xl text-teal-700 border-teal-200 hover:bg-teal-50 dark:text-teal-400 dark:border-teal-800 dark:hover:bg-teal-950/50 font-bold px-4"
+                onClick={() => {
+                  setSelectedSubmission(sub);
+                  const initialLoc = sub.proposal.localizacao || sub.proposal.municipio || "";
+                  setVisitaLocalizacao(initialLoc);
+                  
+                  const text = generateVisitaGerencialText({
+                    producerName: sub.proposal.producer_name,
+                    producerCpf: sub.proposal.producer_cpf,
+                    creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
+                    projetista: sub.proposal.projetista,
+                    estimatedValue: sub.proposal.estimated_value,
+                    municipio: sub.proposal.municipio,
+                    localizacao: initialLoc,
+                    parecerObs: visitaParecerObs,
+                  });
+
+                  navigator.clipboard.writeText(text).then(() => {
+                    toast({
+                      title: "Visita Gerencial copiada! 📋",
+                      description: "Texto de 6 linhas copiado para a área de transferência.",
+                    });
+                  });
+
+                  setVisitaGerencialDialogOpen(true);
+                }}
+              >
+                <MapPin className="h-4 w-4 text-teal-600" />
+                Visita Gerencial
               </Button>
 
               <Button
@@ -4257,6 +4301,109 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* ── Visita Gerencial Dialog ────────────────────────────── */}
+        <Dialog open={visitaGerencialDialogOpen} onOpenChange={setVisitaGerencialDialogOpen}>
+          <DialogContent className="max-w-2xl w-[95vw] rounded-2xl max-h-[90vh] overflow-hidden p-0 flex flex-col">
+            <DialogHeader className="p-6 pb-4 border-b border-border/40 shrink-0 bg-teal-50/40 dark:bg-teal-950/20">
+              <DialogTitle className="font-heading font-extrabold flex items-center gap-2 text-teal-700 dark:text-teal-400 text-lg">
+                <MapPin className="h-5 w-5 text-teal-600" />
+                Visita Gerencial — Texto para o Sistema
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                Texto de 6 linhas gerado automaticamente com os dados da proposta. Clique em <strong>Copiar</strong> e cole no sistema de Visita Gerencial.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="p-6 space-y-4 overflow-y-auto max-h-[65vh]">
+              {/* Resumo dos dados utilizados */}
+              <div className="grid grid-cols-3 gap-3 bg-muted/40 p-3.5 rounded-xl text-xs border border-border/50">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Proponente</span>
+                  <strong className="text-foreground font-semibold truncate block">{sub?.proposal.producer_name || "—"}</strong>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Valor</span>
+                  <strong className="text-foreground font-semibold block">
+                    {sub?.proposal.estimated_value
+                      ? sub.proposal.estimated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                      : "—"}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">Programa de Crédito</span>
+                  <strong className="text-foreground font-semibold truncate block">{sub?.proposal.credit_program || sub?.proposal.linha_credito || "—"}</strong>
+                </div>
+              </div>
+
+              {/* Texto de 6 Linhas Gerado */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-extrabold text-teal-800 dark:text-teal-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <ClipboardCheck className="h-4 w-4 text-teal-600" />
+                    Texto Gerado (6 Linhas):
+                  </label>
+                  <Badge variant="outline" className="text-[10px] font-mono text-teal-700 bg-teal-50 border-teal-200">
+                    Pronto para colar
+                  </Badge>
+                </div>
+                <Textarea
+                  value={sub ? generateVisitaGerencialText({
+                    producerName: sub.proposal.producer_name,
+                    producerCpf: sub.proposal.producer_cpf,
+                    creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
+                    projetista: sub.proposal.projetista,
+                    estimatedValue: sub.proposal.estimated_value,
+                    municipio: sub.proposal.municipio,
+                  }) : ""}
+                  onChange={() => {}}
+                  rows={8}
+                  readOnly
+                  className="font-mono text-xs p-3.5 bg-slate-950 text-slate-100 rounded-xl border-teal-500/30 focus-visible:ring-teal-500 leading-relaxed select-all resize-none"
+                />
+                <p className="text-[10px] text-muted-foreground italic">
+                  💡 Clique no campo de texto acima para selecionar todo o conteúdo, ou use o botão <strong>Copiar</strong> abaixo.
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter className="p-4 border-t border-border/40 bg-muted/20 flex flex-row items-center justify-between sm:justify-between gap-2 shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-xl text-xs"
+                onClick={() => setVisitaGerencialDialogOpen(false)}
+              >
+                Fechar
+              </Button>
+
+              <Button
+                size="sm"
+                className="gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-6 shadow-md"
+                onClick={() => {
+                  if (!sub) return;
+                  const text = generateVisitaGerencialText({
+                    producerName: sub.proposal.producer_name,
+                    producerCpf: sub.proposal.producer_cpf,
+                    creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
+                    projetista: sub.proposal.projetista,
+                    estimatedValue: sub.proposal.estimated_value,
+                    municipio: sub.proposal.municipio,
+                  });
+                  navigator.clipboard.writeText(text).then(() => {
+                    toast({
+                      title: "Texto copiado! 📋",
+                      description: "Cole no sistema de Visita Gerencial.",
+                    });
+                  });
+                }}
+              >
+                <Copy className="h-4 w-4" />
+                Copiar Texto da Visita
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -4809,6 +4956,37 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="rounded-xl h-8 w-8 text-teal-600 hover:text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950/50"
+                                title="Copiar Visita Gerencial (6 Linhas)"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedSubmission(sub);
+                                  const initialLoc = sub.proposal.localizacao || sub.proposal.municipio || "";
+                                  setVisitaLocalizacao(initialLoc);
+                                  const text = generateVisitaGerencialText({
+                                    producerName: sub.proposal.producer_name,
+                                    producerCpf: sub.proposal.producer_cpf,
+                                    creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
+                                    projetista: sub.proposal.projetista,
+                                    estimatedValue: sub.proposal.estimated_value,
+                                    municipio: sub.proposal.municipio,
+                                    localizacao: initialLoc,
+                                    parecerObs: visitaParecerObs,
+                                  });
+                                  navigator.clipboard.writeText(text).then(() => {
+                                    toast({
+                                      title: "Visita Gerencial copiada! 📋",
+                                      description: "Texto de 6 linhas copiado para a área de transferência.",
+                                    });
+                                  });
+                                  setVisitaGerencialDialogOpen(true);
+                                }}
+                              >
+                                <MapPin className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
                                 className="rounded-xl h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
                                 title="Copiar Status para WhatsApp"
                                 onClick={(e) => {
@@ -5171,6 +5349,37 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                         </TableCell>
                         <TableCell className="text-right pr-6">
                           <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="rounded-xl h-8 w-8 text-teal-600 hover:text-teal-700 hover:bg-teal-100/60 dark:text-teal-400"
+                              title="Copiar Visita Gerencial (6 Linhas)"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedSubmission(sub);
+                                const initialLoc = sub.proposal.localizacao || sub.proposal.municipio || "";
+                                setVisitaLocalizacao(initialLoc);
+                                const text = generateVisitaGerencialText({
+                                  producerName: sub.proposal.producer_name,
+                                  producerCpf: sub.proposal.producer_cpf,
+                                  creditProgram: sub.proposal.credit_program || sub.proposal.linha_credito,
+                                  projetista: sub.proposal.projetista,
+                                  estimatedValue: sub.proposal.estimated_value,
+                                  municipio: sub.proposal.municipio,
+                                  localizacao: initialLoc,
+                                  parecerObs: visitaParecerObs,
+                                });
+                                navigator.clipboard.writeText(text).then(() => {
+                                  toast({
+                                    title: "Visita Gerencial copiada! 📋",
+                                    description: "Texto de 6 linhas copiado para a área de transferência.",
+                                  });
+                                });
+                                setVisitaGerencialDialogOpen(true);
+                              }}
+                            >
+                              <MapPin className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"

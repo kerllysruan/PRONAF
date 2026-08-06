@@ -29,6 +29,7 @@ import {
 } from "recharts";
 import { ChartTooltip } from "@/components/ChartTooltip";
 import { generateWppStatusMessage } from "@/utils/wppMessage";
+import { generateVisitaGerencialText } from "@/utils/visitaGerencial";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ProposalFlowTimeline } from "@/components/shared/ProposalFlowTimeline";
 import { useAppData } from "@/contexts/AppDataContext";
@@ -286,6 +287,24 @@ export default function StockProposals() {
       });
     }
   }, [generateToken, toast]);
+
+  const copyVisitaGerencialText = useCallback((p: StockProposal) => {
+    const text = generateVisitaGerencialText({
+      producerName: p.producer_name,
+      producerCpf: p.producer_cpf,
+      creditProgram: p.credit_program || p.linha_credito,
+      projetista: p.projetista,
+      estimatedValue: p.estimated_value,
+      municipio: p.municipio,
+      localizacao: p.localizacao || p.municipio,
+    });
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Visita Gerencial copiada! 📋",
+        description: "Texto de 6 linhas copiado para a área de transferência.",
+      });
+    });
+  }, [toast]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(() => {
     return localStorage.getItem('stock_proposal_new_open') === 'true';
@@ -2303,15 +2322,25 @@ export default function StockProposals() {
                                 </Button>
                               )}
                               {(p.status || '').toUpperCase().includes("AUTORIZADO") && (
-                                <Button
-                                  variant="outline" size="icon"
-                                  className="h-8 w-8 text-emerald-600 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 hover:text-emerald-700 transition-colors shadow-sm"
-                                  title="Link Documentação"
-                                  disabled={tokenLoading}
-                                  onClick={() => copyDocumentationLinkAndText(p)}
-                                >
-                                  <Link2 className="h-3.5 w-3.5" />
-                                </Button>
+                                <>
+                                  <Button
+                                    variant="outline" size="icon"
+                                    className="h-8 w-8 text-emerald-600 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 hover:text-emerald-700 transition-colors shadow-sm"
+                                    title="Link Documentação"
+                                    disabled={tokenLoading}
+                                    onClick={() => copyDocumentationLinkAndText(p)}
+                                  >
+                                    <Link2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="outline" size="icon"
+                                    className="h-8 w-8 text-teal-600 border-teal-200 bg-teal-50/50 hover:bg-teal-100 hover:text-teal-700 transition-colors shadow-sm"
+                                    title="Copiar Visita Gerencial (6 Linhas)"
+                                    onClick={() => copyVisitaGerencialText(p)}
+                                  >
+                                    <MapPin className="h-3.5 w-3.5" />
+                                  </Button>
+                                </>
                               )}
                               {(p.status || '').toUpperCase() === "ENVIADO PARA CENTRAL" && (
                                 <Button
