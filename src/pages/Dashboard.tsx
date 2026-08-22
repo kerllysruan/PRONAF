@@ -1063,12 +1063,7 @@ export default function Dashboard() {
               <Activity className="h-4 w-4 text-emerald-600" />
               Alimentação de Dados Integrada em Tempo Real
             </h2>
-            <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200/60 uppercase tracking-wider">
-              Conexão Ativa
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200/60 uppercase t          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* 1. Módulo Propostas */}
             <Link
               to="/propostas"
@@ -1083,7 +1078,7 @@ export default function Dashboard() {
                     Propostas de Crédito
                   </h3>
                   <p className="text-xs text-slate-300 mt-1.5 font-medium leading-relaxed">
-                    {stats.concluidasTotal} propostas concluídas · <span className="text-emerald-400 font-bold">{formatCompact(stats.valorAprovado)}</span> aprovados
+                    {stats.concluidasTotal} propostas concluídas · <span className="text-emerald-400 font-bold">{formatCurrency(stats.valorAprovado)}</span> aprovados
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center text-amber-300 group-hover:scale-110 group-hover:rotate-3 transition-all shadow-md">
@@ -1110,7 +1105,7 @@ export default function Dashboard() {
                     Estoque de Propostas
                   </h3>
                   <p className="text-xs text-slate-300 mt-1.5 font-medium leading-relaxed">
-                    {stats.estoqueAtivo} em pipeline · <span className="text-indigo-300 font-bold">{formatCompact(stats.estoqueValor)}</span> estimado
+                    {stats.estoqueAtivo} em pipeline · <span className="text-indigo-300 font-bold">{formatCurrency(stats.estoqueValor)}</span> estimado
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-indigo-400/15 border border-indigo-400/40 flex items-center justify-center text-indigo-300 group-hover:scale-110 group-hover:rotate-3 transition-all shadow-md">
@@ -1153,13 +1148,106 @@ export default function Dashboard() {
         </div>
 
       {/* ============================================= */}
-      {/* KPI ROW 1 — MÓDULO ESTOQUE (/estoque) */}
+      {/* KPI ROW 1 — TOTAL GERAL DO SISTEMA (TODAS AS PROPOSTAS) */}
       {/* ============================================= */}
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+            Consolidado Geral da Plataforma (Todas as Propostas)
+          </h3>
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200/50">
+            {stats.totalGeral} propostas totais cadastradas
+          </span>
+        </div>
+
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {/* 1. Total de Propostas (Geral) */}
+          <Card className="group relative overflow-hidden border-2 border-slate-200 dark:border-slate-800 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-5 relative">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Total Propostas</p>
+                  <p className="text-3xl font-black font-heading text-foreground">{stats.totalGeral}</p>
+                  <Badge variant="secondary" className="mt-1.5 px-2.5 py-0.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[9px] font-black tracking-wider uppercase">
+                    TODAS AS PROPOSTAS
+                  </Badge>
+                </div>
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary transform group-hover:scale-110 group-hover:rotate-3 transition-all shadow-sm">
+                  <FileText className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 2. Volume Financeiro (Total Geral em R$) */}
+          <Card className="group relative overflow-hidden border-2 border-slate-200 dark:border-slate-800 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-5 relative">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Volume Financeiro</p>
+                  <p className="text-xl font-black font-heading text-foreground mt-0.5">{formatCurrency(stats.valorTotalGeral)}</p>
+                  <Badge variant="secondary" className="mt-1.5 px-2.5 py-0.5 rounded-lg bg-accent/10 text-accent border border-accent/20 text-[9px] font-black tracking-wider uppercase">
+                    <DollarSign className="h-2.5 w-2.5 mr-0.5 text-accent" /> TOTAL GERAL R$
+                  </Badge>
+                </div>
+                <div className="h-12 w-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent transform group-hover:scale-110 group-hover:rotate-6 transition-all shadow-sm">
+                  <DollarSign className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 3. Geral Concluídas */}
+          <Card className="group relative overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-5 relative">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Geral Concluídas</p>
+                  <p className="text-3xl font-black font-heading text-foreground">{stats.concluidasTotal}</p>
+                  <Badge variant="secondary" className="mt-1.5 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-200/50 text-[9px] font-black tracking-wider uppercase">
+                    {stats.taxaAprovacao}% TAXA APROVAÇÃO
+                  </Badge>
+                </div>
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">
+                  <Award className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 4. Volume Concluído Efetivo */}
+          <Card className="group relative overflow-hidden border-2 border-emerald-200 dark:border-emerald-900/60 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-950/30 dark:to-slate-900">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <CardContent className="p-5 relative">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Volume Concluído</p>
+                  <p className="text-xl font-black font-heading text-emerald-600 mt-0.5">{formatCurrency(stats.valorAprovado)}</p>
+                  <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-700 border border-emerald-300/50 text-[9px] font-black tracking-wider uppercase">
+                    LIBERADO R$
+                  </Badge>
+                </div>
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">
+                  <Banknote className="h-6 w-6" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ============================================= */}
+      {/* KPI ROW 2 — MÓDULO ESTOQUE (/estoque) */}
+      {/* ============================================= */}
+      <div className="space-y-2 pt-2">
+        <div className="flex items-center justify-between px-1">
           <h3 className="text-xs font-black uppercase tracking-widest text-indigo-950 dark:text-indigo-200 flex items-center gap-2">
             <Box className="h-3.5 w-3.5 text-indigo-600" />
-            Módulo Estoque de Propostas (supergestao.digital/estoque)
+            Detalhamento do Estoque de Propostas (supergestao.digital/estoque)
           </h3>
           <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded-full border border-indigo-200/50">
             {stats.estoqueAtivo} ativas · {stats.estoqueConcluido} concluídas
@@ -1193,7 +1281,7 @@ export default function Dashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Volume Estoque Ativo</p>
-                  <p className="text-2xl font-black font-heading text-foreground mt-0.5">{formatCompact(stats.estoqueValor)}</p>
+                  <p className="text-xl font-black font-heading text-foreground mt-0.5">{formatCurrency(stats.estoqueValor)}</p>
                   <Badge variant="secondary" className="mt-1.5 px-2.5 py-0.5 rounded-lg bg-violet-500/10 text-violet-700 border border-violet-200/50 text-[9px] font-black tracking-wider uppercase">
                     <CircleDollarSign className="h-2.5 w-2.5 mr-1 text-violet-600" /> APENAS ESTOQUE ATIVO
                   </Badge>
@@ -1230,8 +1318,8 @@ export default function Dashboard() {
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Volume Concluído</p>
-                  <p className="text-2xl font-black font-heading text-emerald-600 mt-0.5">{formatCompact(stats.estoqueValorConcluido)}</p>
+                  <p className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Volume Concluído Estoque</p>
+                  <p className="text-xl font-black font-heading text-emerald-600 mt-0.5">{formatCurrency(stats.estoqueValorConcluido)}</p>
                   <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-700 border border-emerald-300/50 text-[9px] font-black tracking-wider uppercase">
                     LIBERADO DO ESTOQUE
                   </Badge>
@@ -1239,6 +1327,11 @@ export default function Dashboard() {
                 <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">
                   <Banknote className="h-6 w-6" />
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>        </div>
               </div>
             </CardContent>
           </Card>
