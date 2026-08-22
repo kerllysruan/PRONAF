@@ -1063,7 +1063,12 @@ export default function Dashboard() {
               <Activity className="h-4 w-4 text-emerald-600" />
               Alimentação de Dados Integrada em Tempo Real
             </h2>
-            <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200/60 uppercase t          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200/60 uppercase tracking-wider">
+              Conexão Ativa
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* 1. Módulo Propostas */}
             <Link
               to="/propostas"
@@ -1327,11 +1332,6 @@ export default function Dashboard() {
                 <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">
                   <Banknote className="h-6 w-6" />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>        </div>
               </div>
             </CardContent>
           </Card>
@@ -1757,7 +1757,6 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
-      </div>
 
       {/* ============================================= */}
       {/* Hidden section for PDF Report Layout */}
