@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useLoadingExperience } from '@/hooks/useLoadingExperience';
 import { MEDIA_CONFIG } from '@/config/imageConfig';
 import { DataParticles } from './DataParticles';
@@ -9,17 +8,16 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { BrandReveal } from './BrandReveal';
 
 export interface LoadingExperienceProps {
-  duration?: number;
+  duration?: number; // Total duration in seconds (default 16s)
   onComplete?: () => void;
 }
 
 export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
-  duration = 15,
+  duration = 16,
   onComplete,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const isReducedMotion = useReducedMotion();
   const { progress, setProgress, currentMilestone } = useLoadingExperience(onComplete);
 
   const [activeScene, setActiveScene] = useState<number>(1);
@@ -30,149 +28,160 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   const [videoError, setVideoError] = useState<boolean>(false);
 
   useEffect(() => {
-    if (isReducedMotion) {
-      setProgress(100);
-      setShowBrand(true);
-      const timer = setTimeout(() => {
-        onComplete?.();
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         onComplete: () => {
           setIsFadingOut(true);
           setTimeout(() => {
             onComplete?.();
-          }, 900);
+          }, 1000);
         },
       });
 
-      const scene1Duration = duration * 0.15; // Dawn video flare (0 - 1.35s)
-      const scene2Duration = duration * 0.18; // Field camera pan (1.35 - 2.97s)
-      const scene3Duration = duration * 0.16; // Human & Harvest Cards (2.97 - 4.41s)
-      const scene4Duration = duration * 0.17; // SVG Data Network (4.41 - 5.94s)
-      const scene5Duration = duration * 0.12; // Data Gathering (5.94 - 7.02s)
-      const scene6Duration = duration * 0.12; // Meter 100% (7.02 - 8.1s)
-      const scene7Duration = duration * 0.10; // Brand Reveal (8.1 - 9.0s)
+      // Explicit Sequential Stage Durations (Total = ~16 seconds)
+      const scene1Dur = 2.5; // Amanhecer no Campo (0 - 2.5s)
+      const scene2Dur = 2.5; // O Campo & Drone View (2.5 - 5.0s)
+      const scene3Dur = 2.8; // Produtor e Produção (5.0 - 7.8s)
+      const scene4Dur = 2.5; // Conexão Tecnológica (7.8 - 10.3s)
+      const scene5Dur = 2.0; // Convergência de Dados (10.3 - 12.3s)
+      const scene6Dur = 2.2; // Medidor 100% (12.3 - 14.5s)
+      const scene7Dur = 2.0; // Revelação da Marca (14.5 - 16.5s)
 
       const progressObj = { value: 0 };
 
-      // SCENE 01 — AMANHECER CINEMATOGRÁFICO
-      tl.to('.video-lens-flare', {
-        opacity: 0.85,
-        scale: 1.2,
-        duration: scene1Duration,
-        ease: 'power2.inOut',
-        onStart: () => setActiveScene(1),
-      })
-      .to(progressObj, {
-        value: 20,
-        duration: scene1Duration,
-        onUpdate: () => setProgress(progressObj.value),
-      }, 0);
+      // SCENE 01 — AMANHECER (0s - 2.5s)
+      tl.call(() => setActiveScene(1))
+        .to('.video-lens-flare', {
+          opacity: 0.85,
+          scale: 1.25,
+          duration: scene1Dur,
+          ease: 'power2.inOut',
+        })
+        .to(
+          progressObj,
+          {
+            value: 20,
+            duration: scene1Dur,
+            onUpdate: () => setProgress(progressObj.value),
+          },
+          '<'
+        );
 
-      // SCENE 02 — O CAMPO (Drone Camera Zoom & Pan)
-      tl.to('.cinematic-video-bg', {
-        scale: 1.15,
-        opacity: 1,
-        filter: 'blur(0px) contrast(1.08) brightness(1.05)',
-        duration: scene2Duration,
-        ease: 'power2.out',
-        onStart: () => setActiveScene(2),
-      })
-      .to(progressObj, {
-        value: 40,
-        duration: scene2Duration,
-        onUpdate: () => setProgress(progressObj.value),
-      }, `-=${scene2Duration * 0.3}`);
+      // SCENE 02 — O CAMPO (2.5s - 5.0s)
+      tl.call(() => setActiveScene(2))
+        .to('.cinematic-video-bg', {
+          scale: 1.15,
+          opacity: 1,
+          filter: 'blur(0px) contrast(1.08) brightness(1.05)',
+          duration: scene2Dur,
+          ease: 'power2.out',
+        })
+        .to(
+          progressObj,
+          {
+            value: 40,
+            duration: scene2Dur,
+            onUpdate: () => setProgress(progressObj.value),
+          },
+          '<'
+        );
 
-      // SCENE 03 — PRODUTOR E PRODUÇÃO (Realistic Photorealistic Overlays)
-      tl.to('.realistic-producer-grid', {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        filter: 'blur(0px)',
-        duration: scene3Duration,
-        ease: 'power3.out',
-        onStart: () => setActiveScene(3),
-      })
-      .to(progressObj, {
-        value: 60,
-        duration: scene3Duration,
-        onUpdate: () => setProgress(progressObj.value),
-      }, `-=${scene3Duration * 0.2}`);
+      // SCENE 03 — PRODUTOR E PRODUÇÃO (5.0s - 7.8s)
+      tl.call(() => setActiveScene(3))
+        .to('.realistic-producer-grid', {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          filter: 'blur(0px)',
+          duration: scene3Dur,
+          ease: 'power3.out',
+        })
+        .to(
+          progressObj,
+          {
+            value: 60,
+            duration: scene3Dur,
+            onUpdate: () => setProgress(progressObj.value),
+          },
+          '<'
+        );
 
-      // SCENE 04 — A CONEXÃO TECNOLÓGICA
-      tl.to('.network-layer', {
-        opacity: 1,
-        duration: scene4Duration,
-        ease: 'power2.out',
-        onStart: () => setActiveScene(4),
-      })
-      .to(progressObj, {
-        value: 78,
-        duration: scene4Duration,
-        onUpdate: () => setProgress(progressObj.value),
-      }, `-=${scene4Duration * 0.3}`);
+      // SCENE 04 — A CONEXÃO TECNOLÓGICA (7.8s - 10.3s)
+      tl.call(() => setActiveScene(4))
+        .to('.network-layer', {
+          opacity: 1,
+          duration: scene4Dur,
+          ease: 'power2.out',
+        })
+        .to(
+          progressObj,
+          {
+            value: 78,
+            duration: scene4Dur,
+            onUpdate: () => setProgress(progressObj.value),
+          },
+          '<'
+        );
 
-      // SCENE 05 — OS DADOS SE ORGANIZAM
-      tl.to('.realistic-producer-grid', {
-        opacity: 0.12,
-        scale: 0.92,
-        filter: 'blur(4px)',
-        duration: scene5Duration * 0.7,
-      })
-      .call(() => {
-        setIsConverging(true);
-        setActiveScene(5);
-      })
-      .to(progressObj, {
-        value: 90,
-        duration: scene5Duration,
-        onUpdate: () => setProgress(progressObj.value),
-      });
-
-      // SCENE 06 — LOADING METER (0% -> 100%)
+      // SCENE 05 — OS DADOS SE ORGANIZAM (10.3s - 12.3s)
       tl.call(() => {
-        setShowIndicator(true);
-        setActiveScene(6);
-      })
-      .to(progressObj, {
-        value: 100,
-        duration: scene6Duration,
-        ease: 'power1.inOut',
-        onUpdate: () => setProgress(progressObj.value),
-      });
+          setIsConverging(true);
+          setActiveScene(5);
+        })
+        .to('.realistic-producer-grid', {
+          opacity: 0.12,
+          scale: 0.92,
+          filter: 'blur(4px)',
+          duration: scene5Dur,
+        })
+        .to(
+          progressObj,
+          {
+            value: 90,
+            duration: scene5Dur,
+            onUpdate: () => setProgress(progressObj.value),
+          },
+          '<'
+        );
 
-      // SCENE 07 — REVELAÇÃO DA MARCA (Realistic Light Burst & Brand Reveal)
+      // SCENE 06 — LOADING METER (12.3s - 14.5s)
       tl.call(() => {
-        setShowIndicator(false);
-        setShowBrand(true);
-        setActiveScene(7);
-      })
-      .to('.brand-glow-burst', {
-        scale: 2.8,
-        opacity: 0.75,
-        duration: 0.7,
-        ease: 'power2.out',
-      })
-      .to('.brand-glow-burst', {
-        opacity: 0,
-        duration: 0.8,
-      })
-      .to({}, { duration: scene7Duration });
+          setShowIndicator(true);
+          setActiveScene(6);
+        })
+        .to(progressObj, {
+          value: 100,
+          duration: scene6Dur,
+          ease: 'power1.inOut',
+          onUpdate: () => setProgress(progressObj.value),
+        });
+
+      // SCENE 07 — REVELAÇÃO DA MARCA SUPER GESTÃO (14.5s - 16.5s)
+      tl.call(() => {
+          setShowIndicator(false);
+          setShowBrand(true);
+          setActiveScene(7);
+        })
+        .to('.brand-glow-burst', {
+          scale: 3.0,
+          opacity: 0.8,
+          duration: 1.0,
+          ease: 'power2.out',
+        })
+        .to('.brand-glow-burst', {
+          opacity: 0,
+          duration: 1.0,
+        });
 
     }, containerRef);
 
     return () => ctx.revert();
-  }, [duration, isReducedMotion, onComplete, setProgress]);
+  }, [duration, onComplete, setProgress]);
 
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-700 ${
+      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-1000 ${
         isFadingOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
@@ -191,7 +200,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         </video>
       )}
 
-      {/* Photorealistic High-Res Fallback / Layer */}
+      {/* Photorealistic High-Res Fallback Layer */}
       <div
         className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ${
           videoError ? 'opacity-90 scale-105' : 'opacity-30 mix-blend-overlay'
@@ -207,7 +216,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
       <div className="video-lens-flare absolute -top-32 -left-32 w-[600px] h-[600px] bg-radial-flare pointer-events-none opacity-40 mix-blend-screen" />
 
       {/* Volumetric Fog & Sunlight Particles */}
-      <DataParticles intensity={activeScene >= 4 ? 'high' : 'medium'} reducedMotion={isReducedMotion} />
+      <DataParticles intensity={activeScene >= 4 ? 'high' : 'medium'} />
 
       {/* Scene 03 - Real Photorealistic Producer & Harvest Cards */}
       <div className="realistic-producer-grid absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transform translate-y-8 scale-95 filter blur-xs transition-all duration-700 z-15">
