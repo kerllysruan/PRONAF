@@ -63,11 +63,12 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
 
       const tl = gsap.timeline({
         onComplete: () => {
+          // At 100%: Show Brand Reveal and hold for 3.5 seconds for comfortable reading
           setShowBrandReveal(true);
           setTimeout(() => {
             setIsFadingOut(true);
-            setTimeout(() => onComplete?.(), 500);
-          }, 1000);
+            setTimeout(() => onComplete?.(), 600);
+          }, 3500);
         },
       });
 
@@ -97,7 +98,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         firstLayer.style.transform = 'scale(1)';
         firstLayer.style.filter = 'blur(0px) brightness(1.08) saturate(1.3) contrast(1.12)';
       }
-      return; // Stop here! Do not run any GSAP entrance tweens on stage 0.
+      return; // Stop here! No entrance animation on stage 0.
     }
 
     // ── STAGES 1 TO 3: Gentle Crossfade Transitions ──
@@ -160,7 +161,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-600 ${
         isFadingOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
@@ -168,10 +169,10 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
       {Object.entries(MEDIA_CONFIG.images).map(([key, url], idx) => (
         <div
           key={key}
-          className={`bg-layer-${key} absolute inset-0 bg-cover bg-center opacity-0 pointer-events-none`}
+          className={`bg-layer-${key} absolute inset-0 bg-cover bg-center pointer-events-none`}
           style={{
             backgroundImage: `url(${url})`,
-            // Stage 0 starts 100% visible with zero transition
+            // Stage 0 starts 100% visible instantly with zero animation delay
             opacity: idx === 0 ? 0.95 : 0,
             filter: 'brightness(1.08) saturate(1.3) contrast(1.12)',
             willChange: 'opacity, transform',
