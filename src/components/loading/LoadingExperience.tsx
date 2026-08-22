@@ -10,20 +10,6 @@ export interface LoadingExperienceProps {
   onComplete?: () => void;
 }
 
-/*
- * DESIGN PHILOSOPHY — "Stillness, then Motion"
- * ─────────────────────────────────────────────
- * Stage 0: STATIC hero. Image + text appear clean and still.
- *          No animations, no particles, no effects. Pure elegance.
- *          The user reads the first message in total calm.
- *
- * Stages 1–3: Gentle crossfade transitions between images.
- *             Subtle Ken Burns drift gives life to the photography.
- *             Text fades in softly — no spring, no blur, no 3D.
- *
- * Brand Reveal: Clean fade to brand identity, then handover.
- */
-
 const STAGES = [
   {
     title: 'O CAMPO BRASILEIRO DESPERTA',
@@ -56,7 +42,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   const [activeStageIndex, setActiveStageIndex] = useState<number>(0);
   const [showBrandReveal, setShowBrandReveal] = useState<boolean>(false);
   const [isFadingOut, setIsFadingOut] = useState<boolean>(false);
-  const isFirstStage = useRef(true);
+  const isInitialRender = useRef(true);
 
   const updateProgress = useCallback((val: number) => {
     const clamped = Math.min(100, Math.max(0, Math.round(val)));
@@ -98,35 +84,25 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     return () => ctx.revert();
   }, [duration, onComplete, updateProgress]);
 
-  // ── IMAGE & TEXT TRANSITIONS ──
+  // ── STAGE TRANSITIONS ──
   useEffect(() => {
     const currentKey = STAGES[activeStageIndex].bgKey;
 
-    const ctx = gsap.context(() => {
-
-      if (isFirstStage.current) {
-        // ── STAGE 0: STATIC HERO — No animation, instant display ──
-        const firstLayer = containerRef.current?.querySelector(`.bg-layer-${currentKey}`) as HTMLElement;
-        if (firstLayer) {
-          gsap.set(firstLayer, {
-            opacity: 0.95,
-            scale: 1,
-            filter: 'blur(0px) brightness(1.08) saturate(1.3) contrast(1.12)',
-          });
-        }
-
-        // Text appears instantly — no motion, pure stillness
-        gsap.set('.stage-title-text', { opacity: 1, y: 0 });
-        gsap.set('.stage-subtitle-text', { opacity: 1, y: 0 });
-        gsap.set('.golden-line-glow', { opacity: 1, scaleX: 1 });
-
-        isFirstStage.current = false;
-        return;
+    // ── STAGE 0 (ENTRANCE): 100% STATIC — Zero transition, zero animation ──
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      const firstLayer = containerRef.current?.querySelector(`.bg-layer-${currentKey}`) as HTMLElement;
+      if (firstLayer) {
+        firstLayer.style.opacity = '0.95';
+        firstLayer.style.transform = 'scale(1)';
+        firstLayer.style.filter = 'blur(0px) brightness(1.08) saturate(1.3) contrast(1.12)';
       }
+      return; // Stop here! Do not run any GSAP entrance tweens on stage 0.
+    }
 
-      // ── STAGES 1–3: Gentle Crossfade Transitions ──
-
-      // Fade out all non-active images smoothly
+    // ── STAGES 1 TO 3: Gentle Crossfade Transitions ──
+    const ctx = gsap.context(() => {
+      // Fade out non-active images
       Object.keys(MEDIA_CONFIG.images).forEach((key) => {
         if (key !== currentKey) {
           gsap.to(`.bg-layer-${key}`, {
@@ -137,13 +113,14 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         }
       });
 
-      // Fade in active image with gentle Ken Burns drift
+      // Fade in active image
       const activeLayer = containerRef.current?.querySelector(`.bg-layer-${currentKey}`) as HTMLElement;
       if (activeLayer) {
-        gsap.fromTo(activeLayer,
+        gsap.fromTo(
+          activeLayer,
           {
             opacity: 0,
-            scale: 1.04,
+            scale: 1.03,
             filter: 'blur(0px) brightness(1.08) saturate(1.3) contrast(1.12)',
           },
           {
@@ -155,22 +132,24 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         );
       }
 
-      // ── TEXT: Soft fade-in only (no blur, no spring, no 3D) ──
+      // Soft text fade-in only for subsequent stages
       if (!showBrandReveal) {
-        gsap.fromTo('.stage-title-text',
-          { opacity: 0, y: 12 },
-          { opacity: 1, y: 0, duration: 0.8, delay: 0.3, ease: 'power2.out' }
+        gsap.fromTo(
+          '.stage-title-text',
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 0.8, delay: 0.2, ease: 'power2.out' }
         );
-        gsap.fromTo('.golden-line-glow',
+        gsap.fromTo(
+          '.golden-line-glow',
           { scaleX: 0, opacity: 0 },
-          { scaleX: 1, opacity: 1, duration: 0.6, delay: 0.5, ease: 'power2.out' }
+          { scaleX: 1, opacity: 1, duration: 0.6, delay: 0.4, ease: 'power2.out' }
         );
-        gsap.fromTo('.stage-subtitle-text',
-          { opacity: 0, y: 8 },
-          { opacity: 1, y: 0, duration: 0.7, delay: 0.6, ease: 'power2.out' }
+        gsap.fromTo(
+          '.stage-subtitle-text',
+          { opacity: 0, y: 6 },
+          { opacity: 1, y: 0, duration: 0.7, delay: 0.5, ease: 'power2.out' }
         );
       }
-
     }, containerRef);
 
     return () => ctx.revert();
@@ -186,23 +165,26 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
       }`}
     >
       {/* ── BACKGROUND IMAGE LAYERS ── */}
-      {Object.entries(MEDIA_CONFIG.images).map(([key, url]) => (
+      {Object.entries(MEDIA_CONFIG.images).map(([key, url], idx) => (
         <div
           key={key}
           className={`bg-layer-${key} absolute inset-0 bg-cover bg-center opacity-0 pointer-events-none`}
           style={{
             backgroundImage: `url(${url})`,
+            // Stage 0 starts 100% visible with zero transition
+            opacity: idx === 0 ? 0.95 : 0,
+            filter: 'brightness(1.08) saturate(1.3) contrast(1.12)',
             willChange: 'opacity, transform',
             transform: 'translateZ(0)',
           }}
         />
       ))}
 
-      {/* Ambient Vignette for Readability */}
+      {/* Ambient Overlay & Vignette for Text Contrast */}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/25 to-slate-950/50 pointer-events-none z-[1]" />
       <div className="absolute inset-0 bg-radial-vignette pointer-events-none opacity-60 z-[1]" />
 
-      {/* Subtle Particles (low intensity — not distracting) */}
+      {/* Subtle Dust Particles */}
       <DataParticles intensity={activeStageIndex === 0 ? 'low' : 'medium'} />
 
       {/* ── TOP HEADER BADGE ── */}
@@ -221,7 +203,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         </div>
       </div>
 
-      {/* ── CENTER: CLEAN TYPOGRAPHY ── */}
+      {/* ── CENTER: TYPOGRAPHY ── */}
       <div className="absolute inset-0 flex items-center justify-center z-20 px-6">
         {!showBrandReveal ? (
           <div className="flex flex-col items-center justify-center text-center space-y-4 max-w-4xl mx-auto">
@@ -254,7 +236,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         )}
       </div>
 
-      {/* ── BOTTOM: Progress Bar ── */}
+      {/* ── BOTTOM: Progress Bar Present from Frame 1 ── */}
       <div className="absolute bottom-8 inset-x-0 z-30 px-6">
         <LoadingIndicator progress={progress} stageLabel={currentStage.title} />
       </div>
