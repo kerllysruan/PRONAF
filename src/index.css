@@ -32,6 +32,32 @@
   animation: goldShimmer 6s ease infinite;
 }
 
+/* Remove focus rings, outline glow & autofill background highlights on auth inputs */
+input#matricula,
+input#password {
+  outline: none !important;
+  box-shadow: none !important;
+  caret-color: #fbbf24 !important;
+}
+
+input#matricula:focus,
+input#password:focus,
+input#matricula:focus-visible,
+input#password:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  ring: 0 !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px #020617 inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 
 
 @layer base {

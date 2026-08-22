@@ -111,7 +111,7 @@ export default function Auth() {
                     value={matricula}
                     onChange={(e) => setMatricula(e.target.value.toUpperCase())}
                     placeholder="Ex: F180227"
-                    className="pl-12 h-13 rounded-2xl border-amber-400/30 bg-slate-950/60 text-white placeholder:text-slate-400 focus:bg-slate-950/90 focus:border-amber-400 transition-all font-bold uppercase tracking-widest text-sm"
+                    className="pl-12 h-13 rounded-2xl border-amber-400/30 bg-slate-950/60 text-white placeholder:text-slate-400 focus:bg-slate-950/90 focus:border-amber-400/30 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus-visible:outline-none outline-none caret-amber-400 transition-all font-bold uppercase tracking-widest text-sm"
                     required
                     autoComplete="username"
                     autoFocus
@@ -132,7 +132,7 @@ export default function Auth() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="pl-12 h-13 rounded-2xl border-amber-400/30 bg-slate-950/60 text-white placeholder:text-slate-400 focus:bg-slate-950/90 focus:border-amber-400 transition-all font-bold text-sm"
+                    className="pl-12 h-13 rounded-2xl border-amber-400/30 bg-slate-950/60 text-white placeholder:text-slate-400 focus:bg-slate-950/90 focus:border-amber-400/30 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus-visible:outline-none outline-none caret-amber-400 transition-all font-bold text-sm"
                     minLength={6}
                     required
                     autoComplete="current-password"
