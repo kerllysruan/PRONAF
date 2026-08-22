@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-interface DataParticlesProps {
+interface RealisticAtmosphereProps {
   intensity?: 'low' | 'medium' | 'high';
   reducedMotion?: boolean;
 }
@@ -17,7 +17,15 @@ interface Particle {
   color: string;
 }
 
-export const DataParticles: React.FC<DataParticlesProps> = ({
+interface FogCloud {
+  x: number;
+  y: number;
+  radius: number;
+  vx: number;
+  alpha: number;
+}
+
+export const DataParticles: React.FC<RealisticAtmosphereProps> = ({
   intensity = 'medium',
   reducedMotion = false,
 }) => {
@@ -44,58 +52,84 @@ export const DataParticles: React.FC<DataParticlesProps> = ({
 
     window.addEventListener('resize', handleResize);
 
-    const particleCount =
-      intensity === 'low' ? 25 : intensity === 'medium' ? 50 : 85;
+    const particleCount = intensity === 'low' ? 30 : intensity === 'medium' ? 60 : 100;
 
-    const colors = [
-      'rgba(243, 229, 171, ', // Golden sunrise dust
-      'rgba(67, 189, 104, ',  // Fresh green light
-      'rgba(96, 165, 250, ',  // Subtle tech blue glow
-    ];
-
+    // Atmospheric sun dust & light specks
     const particles: Particle[] = Array.from({ length: particleCount }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      radius: Math.random() * 2 + 0.8,
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: -Math.random() * 0.5 - 0.1, // Gently floating upwards like sunrise mist
-      alpha: Math.random() * 0.6 + 0.1,
+      radius: Math.random() * 2.2 + 0.6,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: -Math.random() * 0.4 - 0.15, // Floating upward in morning thermal air currents
+      alpha: Math.random() * 0.5 + 0.1,
       maxAlpha: Math.random() * 0.7 + 0.2,
-      pulseSpeed: Math.random() * 0.02 + 0.005,
-      color: colors[Math.floor(Math.random() * colors.length)],
+      pulseSpeed: Math.random() * 0.015 + 0.004,
+      color: Math.random() > 0.4 ? 'rgba(255, 225, 150, ' : 'rgba(70, 200, 120, ',
+    }));
+
+    // Realistic Volumetric Fog / Mist clouds floating over lower field horizon
+    const fogCount = 8;
+    const fogClouds: FogCloud[] = Array.from({ length: fogCount }, () => ({
+      x: Math.random() * width,
+      y: height * 0.65 + Math.random() * (height * 0.3),
+      radius: Math.random() * 250 + 180,
+      vx: Math.random() * 0.3 + 0.1, // Gentle morning wind drift
+      alpha: Math.random() * 0.12 + 0.05,
     }));
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
+      // Render Realistic Volumetric Fog Layer
+      fogClouds.forEach((cloud) => {
+        cloud.x += cloud.vx;
+        if (cloud.x - cloud.radius > width) {
+          cloud.x = -cloud.radius;
+        }
+
+        const grad = ctx.createRadialGradient(
+          cloud.x,
+          cloud.y,
+          0,
+          cloud.x,
+          cloud.y,
+          cloud.radius
+        );
+        grad.addColorStop(0, `rgba(220, 240, 210, ${cloud.alpha})`);
+        grad.addColorStop(0.5, `rgba(180, 220, 190, ${cloud.alpha * 0.5})`);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cloud.x, cloud.y, cloud.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Render Sunlight Particles
       particles.forEach((p) => {
         p.x += p.vx;
         p.y += p.vy;
 
-        // Pulse alpha
         p.alpha += p.pulseSpeed;
-        if (p.alpha > p.maxAlpha || p.alpha < 0.1) {
+        if (p.alpha > p.maxAlpha || p.alpha < 0.08) {
           p.pulseSpeed = -p.pulseSpeed;
         }
 
-        // Reset if offscreen
         if (p.y < -10) {
           p.y = height + 10;
           p.x = Math.random() * width;
         }
-        if (p.x < -10) p.x = width + 10;
-        if (p.x > width + 10) p.x = -10;
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = `${p.color}${p.alpha})`;
         ctx.fill();
 
-        // Glow halo for larger particles
-        if (p.radius > 1.8) {
+        // Realistic Soft Lens Glow
+        if (p.radius > 1.6) {
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius * 2.5, 0, Math.PI * 2);
-          ctx.fillStyle = `${p.color}${p.alpha * 0.25})`;
+          ctx.arc(p.x, p.y, p.radius * 3, 0, Math.PI * 2);
+          ctx.fillStyle = `${p.color}${p.alpha * 0.2})`;
           ctx.fill();
         }
       });
@@ -116,7 +150,7 @@ export const DataParticles: React.FC<DataParticlesProps> = ({
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-10 w-full h-full opacity-80"
+      className="absolute inset-0 pointer-events-none z-10 w-full h-full mix-blend-screen opacity-90"
     />
   );
 };
