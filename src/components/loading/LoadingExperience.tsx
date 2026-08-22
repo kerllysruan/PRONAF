@@ -6,7 +6,7 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { BrandReveal } from './BrandReveal';
 
 export interface LoadingExperienceProps {
-  duration?: number; // 14s total timeline (3.5s per stage - optimal sweet spot)
+  duration?: number; // 14s optimal timeline (3.5s per stage)
   onComplete?: () => void;
 }
 
@@ -110,25 +110,48 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     return () => ctx.revert();
   }, [duration, onComplete, updateProgress]);
 
-  // Ultra-Smooth Stage Text Animation Reset
+  // GSAP GPU-Accelerated Camera Push & Focus-Rack Image Transitions
   useEffect(() => {
-    if (showBrandReveal) return;
+    const currentKey = STAGES[activeStageIndex].bgKey;
     const ctx = gsap.context(() => {
+      // Transition active image in with camera push & focus rack
       gsap.fromTo(
-        '.stage-title-text',
-        { y: 30, opacity: 0, filter: 'blur(10px)', scale: 0.97 },
-        { y: 0, opacity: 1, filter: 'blur(0px)', scale: 1, duration: 1.2, ease: 'sine.out' }
+        `.bg-layer-${currentKey}`,
+        { opacity: 0, scale: 1.12, filter: 'blur(8px) saturate(1.1)' },
+        { opacity: 0.95, scale: 1.02, filter: 'blur(0px) saturate(1.35)', duration: 1.6, ease: 'sine.inOut' }
       );
-      gsap.fromTo(
-        '.stage-subtitle-text',
-        { y: 18, opacity: 0, filter: 'blur(6px)' },
-        { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.0, delay: 0.2, ease: 'sine.out' }
-      );
-      gsap.fromTo(
-        '.golden-line-glow',
-        { scaleX: 0, opacity: 0 },
-        { scaleX: 1, opacity: 1, duration: 1.3, delay: 0.35, ease: 'sine.out' }
-      );
+
+      // Fade out non-active images
+      Object.keys(MEDIA_CONFIG.images).forEach((key) => {
+        if (key !== currentKey) {
+          gsap.to(`.bg-layer-${key}`, {
+            opacity: 0,
+            scale: 1.08,
+            filter: 'blur(6px)',
+            duration: 1.2,
+            ease: 'sine.inOut',
+          });
+        }
+      });
+
+      // Staggered text entrance
+      if (!showBrandReveal) {
+        gsap.fromTo(
+          '.stage-title-text',
+          { y: 30, opacity: 0, filter: 'blur(10px)', scale: 0.97 },
+          { y: 0, opacity: 1, filter: 'blur(0px)', scale: 1, duration: 1.2, ease: 'sine.out' }
+        );
+        gsap.fromTo(
+          '.stage-subtitle-text',
+          { y: 18, opacity: 0, filter: 'blur(6px)' },
+          { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.0, delay: 0.2, ease: 'sine.out' }
+        );
+        gsap.fromTo(
+          '.golden-line-glow',
+          { scaleX: 0, opacity: 0 },
+          { scaleX: 1, opacity: 1, duration: 1.3, delay: 0.35, ease: 'sine.out' }
+        );
+      }
     }, containerRef);
 
     return () => ctx.revert();
@@ -143,19 +166,16 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         isFadingOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {/* ── CINEMATIC BACKGROUND LAYERS WITH SILKY 1200ms CROSSFADE ── */}
+      {/* ── GPU-ACCELERATED GSAP CAMERA PUSH & FOCUS-RACK BACKGROUND LAYERS ── */}
       {Object.entries(MEDIA_CONFIG.images).map(([key, url]) => {
-        const isCurrentBg = currentStage.bgKey === key;
         return (
           <div
             key={key}
-            className={`absolute inset-0 bg-cover bg-center transition-all duration-[1200ms] ease-in-out transform filter saturate-[1.3] contrast-[1.12] brightness-[1.08] ${
-              isCurrentBg
-                ? 'opacity-95 scale-100 rotate-0 blur-none'
-                : 'opacity-0 scale-105 rotate-1 blur-sm pointer-events-none'
-            }`}
+            className={`bg-layer-${key} absolute inset-0 bg-cover bg-center opacity-0 filter contrast-[1.12] brightness-[1.08] pointer-events-none`}
             style={{
               backgroundImage: `url(${url})`,
+              willChange: 'opacity, transform, filter',
+              transform: 'translateZ(0)',
             }}
           />
         );
