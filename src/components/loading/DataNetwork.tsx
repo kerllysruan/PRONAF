@@ -9,20 +9,19 @@ export const DataNetwork: React.FC<DataNetworkProps> = ({
   opacity = 1,
   converging = false,
 }) => {
-  // Key node points in 1000x600 viewBox coordinate space
   const nodes = [
-    { id: 'produtor', x: 220, y: 380, label: 'Produtor' },
-    { id: 'propriedade', x: 180, y: 220, label: 'Propriedade' },
-    { id: 'producao', x: 380, y: 440, label: 'Produção' },
-    { id: 'informacao', x: 620, y: 420, label: 'Informações' },
-    { id: 'analise', x: 780, y: 260, label: 'Análise Inteligente' },
-    { id: 'oportunidade', x: 820, y: 380, label: 'Oportunidades' },
-    { id: 'credito', x: 500, y: 300, label: 'SUPER GESTÃO - PRONAF' }, // Center node
+    { id: 'produtor', x: 200, y: 360, label: 'PRODUTOR' },
+    { id: 'propriedade', x: 160, y: 200, label: 'PROPRIEDADE' },
+    { id: 'producao', x: 380, y: 450, label: 'PRODUÇÃO' },
+    { id: 'informacao', x: 640, y: 430, label: 'DADOS RURAIS' },
+    { id: 'analise', x: 800, y: 240, label: 'ANÁLISE INTELIGENTE' },
+    { id: 'oportunidade', x: 840, y: 390, label: 'OPORTUNIDADES' },
+    { id: 'supergestao', x: 500, y: 290, label: 'SUPER GESTÃO - PRONAF' },
   ];
 
   return (
     <div
-      className="absolute inset-0 pointer-events-none z-20 transition-opacity duration-700"
+      className="absolute inset-0 pointer-events-none z-20 transition-opacity duration-500"
       style={{ opacity }}
     >
       <svg
@@ -31,115 +30,107 @@ export const DataNetwork: React.FC<DataNetworkProps> = ({
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <linearGradient id="networkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#43bd68" stopOpacity="0.8" />
-            <stop offset="50%" stopColor="#d4af37" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.8" />
+          <linearGradient id="cyberGreenGold" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#43bd68" stopOpacity="0.95" />
+            <stop offset="50%" stopColor="#f59e0b" stopOpacity="1" />
+            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.9" />
           </linearGradient>
 
-          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
         </defs>
 
-        {/* Connecting Lines with animated dashes */}
-        <g className="data-network-lines" filter="url(#glow)">
-          {/* Main interconnected web */}
+        {/* Laser Network Connections */}
+        <g filter="url(#neonGlow)">
           <path
-            d="M 180 220 Q 200 300 220 380 Q 300 410 380 440 Q 440 370 500 300 Q 560 360 620 420 Q 700 340 780 260 Q 800 320 820 380"
+            d="M 160 200 Q 180 280 200 360 Q 290 410 380 450 Q 440 370 500 290 Q 570 360 640 430 Q 720 330 800 240 Q 820 310 840 390"
             fill="none"
-            stroke="url(#networkGradient)"
+            stroke="url(#cyberGreenGold)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+
+          <path
+            d="M 200 360 L 500 290 L 800 240"
+            fill="none"
+            stroke="#fbbf24"
             strokeWidth="2"
-            className="network-path-main"
+            strokeDasharray="8 8"
+            opacity="0.85"
           />
 
           <path
-            d="M 220 380 L 500 300 L 780 260"
-            fill="none"
-            stroke="#d4af37"
-            strokeWidth="1.5"
-            strokeDasharray="6 6"
-            className="network-path-dashed"
-            opacity="0.7"
-          />
-
-          <path
-            d="M 180 220 Q 340 180 500 300 Q 660 180 780 260"
+            d="M 160 200 Q 330 160 500 290 Q 670 160 800 240"
             fill="none"
             stroke="#60a5fa"
-            strokeWidth="1.5"
-            opacity="0.6"
-          />
-
-          <path
-            d="M 380 440 Q 500 370 620 420"
-            fill="none"
-            stroke="#43bd68"
-            strokeWidth="1.5"
-            opacity="0.7"
+            strokeWidth="1.75"
+            opacity="0.75"
           />
         </g>
 
-        {/* Dynamic Pulsing Data Nodes */}
-        <g className="data-network-nodes">
+        {/* Dynamic Glowing Nodes */}
+        <g>
           {nodes.map((node) => {
-            const isCenter = node.id === 'credito';
+            const isCenter = node.id === 'supergestao';
             return (
               <g
                 key={node.id}
-                className={`network-node-group node-${node.id}`}
                 transform={
                   converging && !isCenter
-                    ? `translate(${500 - node.x}, ${300 - node.y}) scale(0)`
+                    ? `translate(${500 - node.x}, ${290 - node.y}) scale(0)`
                     : 'translate(0,0)'
                 }
                 style={{
-                  transition: 'transform 1.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                  transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
               >
-                {/* Outer pulsing ring */}
+                {/* Pulse Ring */}
                 <circle
                   cx={node.x}
                   cy={node.y}
-                  r={isCenter ? 14 : 9}
+                  r={isCenter ? 16 : 10}
                   fill="none"
-                  stroke={isCenter ? '#d4af37' : '#43bd68'}
-                  strokeWidth="1.5"
-                  className="animate-ping opacity-40"
-                  style={{ animationDuration: '3s' }}
+                  stroke={isCenter ? '#f59e0b' : '#34d399'}
+                  strokeWidth="2"
+                  className="animate-ping opacity-50"
+                  style={{ animationDuration: '2s' }}
                 />
 
-                {/* Main node dot */}
+                {/* Core Node */}
                 <circle
                   cx={node.x}
                   cy={node.y}
-                  r={isCenter ? 8 : 5}
-                  fill={isCenter ? '#d4af37' : '#60a5fa'}
-                  filter="url(#glow)"
+                  r={isCenter ? 9 : 6}
+                  fill={isCenter ? '#fbbf24' : '#60a5fa'}
+                  filter="url(#neonGlow)"
                 />
 
-                {/* Node Label Badge */}
-                <g transform={`translate(${node.x}, ${node.y - 18})`}>
+                {/* Glassmorphic Node Badge */}
+                <g transform={`translate(${node.x}, ${node.y - 20})`}>
                   <rect
-                    x="-40"
-                    y="-12"
-                    width="80"
-                    height="18"
-                    rx="9"
-                    fill="rgba(7, 31, 18, 0.85)"
-                    stroke="rgba(212, 175, 55, 0.4)"
-                    strokeWidth="1"
+                    x="-50"
+                    y="-13"
+                    width="100"
+                    height="20"
+                    rx="10"
+                    fill="rgba(6, 30, 18, 0.9)"
+                    stroke="rgba(245, 158, 11, 0.6)"
+                    strokeWidth="1.2"
                   />
                   <text
                     x="0"
-                    y="0"
+                    y="1"
                     textAnchor="middle"
-                    fill="#f3e5ab"
-                    fontSize="9"
-                    fontWeight="600"
+                    fill="#fef3c7"
+                    fontSize="9.5"
+                    fontWeight="800"
                     fontFamily="sans-serif"
-                    letterSpacing="0.5px"
+                    letterSpacing="0.8px"
                   >
                     {node.label}
                   </text>
