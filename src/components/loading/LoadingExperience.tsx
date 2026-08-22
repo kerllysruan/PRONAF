@@ -5,11 +5,11 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { BrandReveal } from './BrandReveal';
 
 export interface LoadingExperienceProps {
-  duration?: number; // 16 seconds total for relaxed, natural reading speed
+  duration?: number; // 16 seconds for comfortable reading speed
   onComplete?: () => void;
 }
 
-// Interconnected narrative storytelling stages (each connected logically to the next)
+// Interconnected narrative storytelling stages
 const STAGES = [
   {
     title: 'O CAMPO BRASILEIRO DESPERTA',
@@ -47,7 +47,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     const clamped = Math.min(100, Math.max(0, Math.round(val)));
     setProgress(clamped);
 
-    // Smooth stage transitions aligned with progress percentage (4s per stage)
+    // Stage switching every 25% (4 seconds per stage)
     if (clamped < 25) {
       setActiveStageIndex(0);
     } else if (clamped < 50) {
@@ -60,7 +60,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   }, []);
 
   useEffect(() => {
-    // Preload background images into browser cache immediately
+    // Preload background images into browser memory on mount
     preloadCriticalAssets();
 
     const ctx = gsap.context(() => {
@@ -77,7 +77,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         },
       });
 
-      // Smooth progress counter over 16 seconds (4 seconds per narrative stage)
+      // Smooth progress counter over 16 seconds
       tl.to(progObj, {
         value: 100,
         duration: duration,
@@ -99,7 +99,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         isFadingOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {/* ── HIGH VISIBILITY VIVID BACKGROUND IMAGES ── */}
+      {/* ── HIGH-VISIBILITY BACKGROUND IMAGES WITH SMOOTH CROSSFADE ── */}
       {Object.entries(MEDIA_CONFIG.images).map(([key, url]) => {
         const isCurrentBg = currentStage.bgKey === key;
         return (
@@ -113,16 +113,16 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         );
       })}
 
-      {/* Light Ambient Vignette for Image Visibility & Text Contrast */}
-      <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/90 via-slate-950/40 to-slate-950/70 pointer-events-none" />
+      {/* Light Gradient Overlay for Image Visibility & Text Contrast (NO RECTANGLE BOXES) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-slate-950/70 pointer-events-none" />
       <div className="absolute inset-0 bg-radial-vignette pointer-events-none opacity-60" />
 
-      {/* Top Header Badge (Fixed, Clean, Zero Overlap) */}
+      {/* Top Header Label (Pure Text + Glowing Gold Dot, NO Dark Box) */}
       <div className="absolute top-6 inset-x-0 flex justify-center z-20 px-4">
-        <div className="inline-flex items-center space-x-2 px-5 py-2 rounded-full bg-emerald-950/80 border-2 border-amber-400/50 backdrop-blur-xl shadow-lg">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+        <div className="inline-flex items-center space-x-2.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_10px_rgba(251,191,36,0.8)]" />
           <span
-            className="text-xs font-black tracking-widest text-amber-200 uppercase"
+            className="text-xs font-black tracking-[0.25em] text-amber-300 uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]"
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
           >
             SUPER GESTÃO — PRONAF
@@ -130,34 +130,32 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         </div>
       </div>
 
-      {/* ── CENTER AREA: Interconnected Narrative Headlines ── */}
+      {/* ── CENTER AREA: PURE TYPOGRAPHY (NO GREEN BACKGROUND BOX) ── */}
       <div className="absolute inset-0 flex items-center justify-center z-20 px-6">
         {!showBrandReveal ? (
           <div
             key={activeStageIndex}
-            className="flex flex-col items-center justify-center text-center space-y-4 max-w-2xl mx-auto animate-fade-in"
+            className="flex flex-col items-center justify-center text-center space-y-5 max-w-3xl mx-auto animate-fade-in"
           >
-            {/* Stage Title */}
+            {/* Stage Title (Gold Gradient with Heavy Drop Shadow) */}
             <h2
-              className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-200 drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)]"
+              className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-200 drop-shadow-[0_6px_24px_rgba(0,0,0,0.98)]"
               style={{ fontFamily: "'Plus Jakarta Sans', 'Outfit', sans-serif" }}
             >
               {currentStage.title}
             </h2>
 
-            {/* Stage Subtitle */}
-            <div className="px-6 py-3 rounded-xl bg-emerald-950/85 border border-amber-400/40 backdrop-blur-md shadow-xl">
-              <p className="text-sm sm:text-lg font-bold text-amber-100 tracking-wide font-sans leading-relaxed">
-                {currentStage.subtitle}
-              </p>
-            </div>
+            {/* Subtitle (Pure High-Contrast Warm White Text, NO BOX BACKGROUND) */}
+            <p className="text-base sm:text-2xl font-medium text-slate-100 tracking-wide font-sans leading-relaxed max-w-2xl drop-shadow-[0_4px_16px_rgba(0,0,0,0.98)]">
+              {currentStage.subtitle}
+            </p>
           </div>
         ) : (
           <BrandReveal visible={showBrandReveal} />
         )}
       </div>
 
-      {/* ── BOTTOM AREA: Loading Bar Present from Entrance 0% ── */}
+      {/* ── BOTTOM AREA: Loading Bar Present from Frame 1 Entrance ── */}
       <div className="absolute bottom-8 inset-x-0 z-30 px-6">
         <LoadingIndicator
           progress={progress}
