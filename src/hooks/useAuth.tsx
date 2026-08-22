@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import { toast } from "@/hooks/use-toast";
 
 interface AuthContextType {
   user: User | null;
@@ -18,13 +19,17 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
-  signOut: async () => { },
+  signOut: async () => {},
   agencyId: null,
   role: null,
   isDeveloper: false,
   isAdmin: false,
   displayName: null,
 });
+
+// 30 Minutes Inactivity Timeout = 30 * 60 * 1000 ms
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+const SESSION_RESET_KEY = "pronaf_session_reset_v2";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -37,9 +42,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const userRef = useRef<User | null>(null);
   userRef.current = user;
 
+  const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ── 1. FORCE DISCONNECT PREVIOUS SESSIONS (LOGOFF DE SESSÕES ANTERIORES) ──
+  useEffect(() => {
+    if (!localStorage.getItem(SESSION_RESET_KEY)) {
+      supabase.auth.signOut().then(() => {
+        localStorage.setItem(SESSION_RESET_KEY, "true");
+      });
+    }
+  }, []);
+
+  // ── 2. 30-MINUTE INACTIVITY AUTO-LOGOUT ──
+  useEffect(() => {
+    if (!user) {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      return;
+    }
+
+    const handleInactivityLogout = async () => {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setAgencyId(null);
+      setRole(null);
+      setDisplayName(null);
+
+      toast({
+        title: "⏰ Sessão Expirada por Inatividade",
+        description: "Você esteve inativo por 30 minutos. Por favor, faça login novamente para continuar.",
+        variant: "destructive",
+      });
+    };
+
+    const resetInactivityTimer = () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = setTimeout(handleInactivityLogout, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    activityEvents.forEach((evt) => window.addEventListener(evt, resetInactivityTimer, { passive: true }));
+
+    // Start timer initially on login
+    resetInactivityTimer();
+
+    return () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      activityEvents.forEach((evt) => window.removeEventListener(evt, resetInactivityTimer));
+    };
+  }, [user]);
+
+  // ── 3. AUTH STATE & USER DATA FETCHING ──
   useEffect(() => {
     const fetchUserData = async (uid: string) => {
-      // Robust profile fetch: user_id is the preferred link, but id might be synced
       const { data: profile } = await supabase
         .from('profiles')
         .select('agency_id, display_name, full_name')
@@ -74,7 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (currentUser) {
             await fetchUserData(currentUser.id);
 
-            // Subscribe to role changes for the current user
             const roleChannel = supabase
               .channel(`user-role-${currentUser.id}`)
               .on(
@@ -128,6 +182,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
     setAgencyId(null);
     setRole(null);
     setDisplayName(null);
