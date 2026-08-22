@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Wheat, Lock, ArrowRight, Loader2, Fingerprint } from "lucide-react";
+import { MEDIA_CONFIG } from "@/config/imageConfig";
 
 export default function Auth() {
   const { toast } = useToast();
@@ -34,7 +35,6 @@ export default function Auth() {
       // 2. Autenticar com o email interno + senha
       const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) {
-        // Mensagem amigável sem expor o email interno
         if (signInError.message.toLowerCase().includes("invalid")) {
           throw new Error("Matrícula ou senha incorretos");
         }
@@ -54,48 +54,64 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-primary/10 via-background to-accent/5 p-4 overflow-hidden relative">
-      {/* Background blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/20 blur-[120px] rounded-full" />
+    <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden relative font-sans">
+      {/* ── BACKGROUND IMAGE: Same Sunrise Dawn Field Image from Animation Entrance ── */}
+      <div
+        className="absolute inset-0 bg-cover bg-center filter saturate-[1.3] contrast-[1.12] brightness-[1.08] transform scale-100 transition-all duration-1000"
+        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
+      />
+
+      {/* Dark Ambient Vignette Overlay for High Legibility */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/60 to-slate-950/80 pointer-events-none" />
 
       <div className="w-full max-w-md space-y-8 animate-fade-in relative z-10">
-        {/* Logo */}
-        <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-primary text-primary-foreground shadow-[0_20px_50px_rgba(59,130,246,0.3)] transform transition-transform hover:scale-105 duration-500">
-            <Wheat className="h-10 w-10" />
+        {/* Logo & Header */}
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-gradient-to-br from-emerald-900 to-emerald-950 border-2 border-amber-400/60 text-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.35)] transform transition-transform hover:scale-105 duration-500">
+            <Wheat className="h-10 w-10 text-amber-300" />
           </div>
           <div>
-            <h1 className="text-4xl font-black font-heading text-foreground tracking-tighter">PRONAF</h1>
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-primary/60 mt-1">Planner Profissional</p>
+            <h1
+              className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-200 uppercase tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]"
+              style={{ fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
+            >
+              SUPER GESTÃO
+            </h1>
+            <p className="text-xs font-extrabold uppercase tracking-[0.25em] text-amber-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] mt-1">
+              AGRICULTURA FAMILIAR — PRONAF
+            </p>
           </div>
         </div>
 
-        <Card className="rounded-[2.5rem] border-border/40 bg-card/40 backdrop-blur-xl shadow-premium overflow-hidden">
-          <CardHeader className="text-center pt-10 pb-4">
-            <CardTitle className="text-2xl font-black font-heading tracking-tight">
-              Bem-vindo de volta
+        {/* Login Form Glassmorphic Card */}
+        <Card className="rounded-[2.5rem] border-2 border-amber-400/30 bg-emerald-950/85 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.7)] overflow-hidden text-slate-100">
+          <CardHeader className="text-center pt-8 pb-3">
+            <CardTitle
+              className="text-2xl font-black tracking-tight text-amber-200 drop-shadow-sm"
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            >
+              Acesso ao Sistema
             </CardTitle>
-            <CardDescription className="font-medium text-muted-foreground">
-              Entre com sua matrícula e senha para continuar
+            <CardDescription className="font-medium text-emerald-200/90 text-xs sm:text-sm">
+              Informe sua matrícula e senha para entrar na plataforma
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="px-8 pb-10">
-            <form onSubmit={handleSubmit} className="space-y-5">
+          <CardContent className="px-8 pb-8">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Matrícula */}
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-amber-300 ml-1">
                   Matrícula
                 </Label>
                 <div className="relative group">
-                  <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-amber-400 group-focus-within:text-amber-300 transition-colors" />
                   <Input
                     id="matricula"
                     value={matricula}
                     onChange={(e) => setMatricula(e.target.value.toUpperCase())}
                     placeholder="Ex: F180227"
-                    className="pl-12 h-14 rounded-2xl border-border/40 bg-muted/10 focus:bg-white transition-all font-bold uppercase tracking-widest text-slate-900"
+                    className="pl-12 h-13 rounded-2xl border-amber-400/30 bg-slate-950/60 text-white placeholder:text-slate-400 focus:bg-slate-950/90 focus:border-amber-400 transition-all font-bold uppercase tracking-widest text-sm"
                     required
                     autoComplete="username"
                     autoFocus
@@ -104,19 +120,19 @@ export default function Auth() {
               </div>
 
               {/* Senha */}
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-amber-300 ml-1">
                   Senha
                 </Label>
                 <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-amber-400 group-focus-within:text-amber-300 transition-colors" />
                   <Input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="pl-12 h-14 rounded-2xl border-border/40 bg-muted/10 focus:bg-white transition-all font-bold"
+                    className="pl-12 h-13 rounded-2xl border-amber-400/30 bg-slate-950/60 text-white placeholder:text-slate-400 focus:bg-slate-950/90 focus:border-amber-400 transition-all font-bold text-sm"
                     minLength={6}
                     required
                     autoComplete="current-password"
@@ -126,28 +142,28 @@ export default function Auth() {
 
               <Button
                 type="submit"
-                className="w-full h-14 rounded-2xl bg-primary shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all font-black text-lg gap-3 mt-4"
+                className="w-full h-13 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-emerald-950 font-black text-base shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all gap-2 mt-3"
                 disabled={loading}
               >
                 {loading ? (
-                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <Loader2 className="h-6 w-6 animate-spin text-emerald-950" />
                 ) : (
                   <>
-                    <span>Acessar Plataforma</span>
+                    <span>Entrar na Plataforma</span>
                     <ArrowRight className="h-5 w-5" />
                   </>
                 )}
               </Button>
             </form>
 
-            <p className="mt-8 text-center text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">
-              Acesso restrito · Credenciais fornecidas pelo administrador
+            <p className="mt-6 text-center text-[10px] font-bold text-emerald-200/70 uppercase tracking-widest">
+              Acesso seguro · Credenciais gerenciadas pelo administrador
             </p>
           </CardContent>
         </Card>
 
-        <p className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40">
-          PRONAF © {new Date().getFullYear()} • Sistema Seguro
+        <p className="text-center text-[10px] font-black uppercase tracking-[0.2em] text-amber-200/80 drop-shadow-md">
+          SUPER GESTÃO PRONAF © {new Date().getFullYear()} • Sistema Seguro
         </p>
       </div>
     </div>

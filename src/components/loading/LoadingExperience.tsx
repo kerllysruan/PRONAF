@@ -74,12 +74,12 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
             setIsFadingOut(true);
             setTimeout(() => {
               onComplete?.();
-            }, 600);
+            }, 500);
           }, 1000);
         },
       });
 
-      // 1. Smooth Progress Counter over 14 seconds
+      // 1. Progress Counter over 14 seconds
       tl.to(progObj, {
         value: 100,
         duration: duration,
@@ -134,16 +134,16 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         }
       });
 
-      // Staggered text entrance
+      // State-of-the-Art Kinetic Typography Reveal
       if (!showBrandReveal) {
         gsap.fromTo(
           '.stage-title-text',
-          { y: 30, opacity: 0, filter: 'blur(10px)', scale: 0.97 },
+          { y: 35, opacity: 0, filter: 'blur(10px)', scale: 0.96 },
           { y: 0, opacity: 1, filter: 'blur(0px)', scale: 1, duration: 1.2, ease: 'sine.out' }
         );
         gsap.fromTo(
           '.stage-subtitle-text',
-          { y: 18, opacity: 0, filter: 'blur(6px)' },
+          { y: 20, opacity: 0, filter: 'blur(6px)' },
           { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.0, delay: 0.2, ease: 'sine.out' }
         );
         gsap.fromTo(
@@ -162,7 +162,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-600 ${
+      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-500 ${
         isFadingOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
@@ -210,13 +210,13 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         </div>
       </div>
 
-      {/* ── CENTER AREA: PROFESSIONAL SHADOW ENGINE & SUNBURST GOLD TYPOGRAPHY ── */}
+      {/* ── CENTER AREA: KINETIC SHIMMER TYPOGRAPHY & DUAL SHADOW ENGINE ── */}
       <div className="absolute inset-0 flex items-center justify-center z-20 px-6">
         {!showBrandReveal ? (
           <div className="flex flex-col items-center justify-center text-center space-y-5 max-w-4xl mx-auto">
-            {/* Stage Title (Outfit Ultra-Black Typography + Dual-Layer Shadow Engine) */}
+            {/* Stage Title (Liquid Gold Shimmer Typography + Dual-Layer Shadow Engine) */}
             <h2
-              className="stage-title-text text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-[0.06em] text-transparent bg-clip-text bg-gradient-to-r from-[#fffbeb] via-[#fcd34d] via-[#fbbf24] to-[#f59e0b]"
+              className="stage-title-text gold-shimmer-text text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-[0.06em] text-transparent bg-clip-text bg-gradient-to-r from-[#fffbeb] via-[#fcd34d] via-[#fbbf24] to-[#f59e0b]"
               style={{
                 fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
                 filter: 'drop-shadow(0px 8px 30px rgba(0, 0, 0, 0.98)) drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.95))',

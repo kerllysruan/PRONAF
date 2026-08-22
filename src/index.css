@@ -21,6 +21,17 @@
   background: radial-gradient(circle at 30% 30%, rgba(255, 220, 130, 0.6) 0%, rgba(70, 200, 120, 0.2) 40%, transparent 70%);
 }
 
+@keyframes goldShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gold-shimmer-text {
+  background-size: 200% auto;
+  animation: goldShimmer 6s ease infinite;
+}
+
 
 
 @layer base {
