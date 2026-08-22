@@ -9,16 +9,16 @@ export const BrandReveal: React.FC<BrandRevealProps> = ({ visible }) => {
   if (!visible) return null;
 
   return (
-    <div className="flex flex-col items-center justify-center text-center space-y-4 px-6 animate-fade-in max-w-3xl mx-auto">
-      {/* Golden Emblem Icon (Pure SVG, no dark box background) */}
-      <div className="relative mb-2">
-        <div className="absolute inset-0 bg-amber-400/30 rounded-full blur-3xl animate-pulse" />
+    <div className="flex flex-col items-center justify-center text-center space-y-5 px-6 animate-fade-in max-w-4xl mx-auto">
+      {/* Radiant Glowing Sunburst Emblem */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full blur-3xl opacity-70 animate-pulse" />
         <svg
-          className="relative w-16 h-16 sm:w-20 sm:h-20 text-amber-300 drop-shadow-[0_4px_20px_rgba(251,191,36,0.6)]"
+          className="relative w-20 h-20 sm:w-24 sm:h-24 text-amber-300 drop-shadow-[0_6px_25px_rgba(251,191,36,0.7)]"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.8"
+          strokeWidth="1.9"
           strokeLinecap="round"
           strokeLinejoin="round"
         >
@@ -27,23 +27,24 @@ export const BrandReveal: React.FC<BrandRevealProps> = ({ visible }) => {
         </svg>
       </div>
 
-      {/* Main Title: SUPER GESTÃO (Gold Metallic Gradient with Shadow) */}
+      {/* Main Brand Title (Ultra-Bold Sunburst Gold Gradient Typography) */}
       <h1
-        className="text-5xl sm:text-7xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-200 drop-shadow-[0_6px_24px_rgba(0,0,0,0.95)]"
-        style={{ fontFamily: "'Plus Jakarta Sans', 'Outfit', sans-serif" }}
+        className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-[0.06em] text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 via-yellow-200 to-emerald-200 drop-shadow-[0_10px_35px_rgba(0,0,0,0.98)]"
+        style={{ fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
       >
         {MEDIA_CONFIG.brand.title}
       </h1>
 
-      {/* Subtitle: AGRICULTURA FAMILIAR — PRONAF (Pure Gold Text, no box) */}
+      {/* Subtitle: AGRICULTURA FAMILIAR — PRONAF (Pure Glowing Gold Text) */}
       <p
-        className="text-sm sm:text-xl font-extrabold text-amber-300 tracking-[0.25em] uppercase font-sans drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]"
+        className="text-base sm:text-2xl font-black text-amber-300 tracking-[0.28em] uppercase font-sans drop-shadow-[0_4px_16px_rgba(0,0,0,0.98)]"
+        style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
       >
         {MEDIA_CONFIG.brand.subtitle}
       </p>
 
-      {/* Tagline: Pure warm off-white text */}
-      <p className="text-xs sm:text-base font-semibold text-slate-100 tracking-wider max-w-lg font-sans drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]">
+      {/* Tagline: Crisp Pure White Text with Contrast Shadow */}
+      <p className="text-sm sm:text-lg font-bold text-white tracking-widest max-w-xl font-sans drop-shadow-[0_4px_16px_rgba(0,0,0,0.98)]">
         {MEDIA_CONFIG.brand.tagline}
       </p>
     </div>

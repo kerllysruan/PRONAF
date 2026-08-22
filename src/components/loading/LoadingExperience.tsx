@@ -113,15 +113,15 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         );
       })}
 
-      {/* Ultra-Light Ambient Overlay for Full Image Brightness & Crisp Text Readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-slate-950/50 pointer-events-none" />
+      {/* Light Ambient Overlay for Image Visibility & Pure Text Contrast */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-slate-950/50 pointer-events-none" />
 
       {/* Radiant Golden Sun Flare Overlay for Extra Color Brightness */}
       <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-radial-flare pointer-events-none opacity-70 mix-blend-screen" />
 
       {/* Top Header Label (Pure Text + Glowing Gold Dot) */}
       <div className="absolute top-6 inset-x-0 flex justify-center z-20 px-4">
-        <div className="inline-flex items-center space-x-2.5">
+        <div className="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-slate-950/60 backdrop-blur-md border border-amber-400/40">
           <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_12px_rgba(251,191,36,0.9)]" />
           <span
             className="text-xs font-black tracking-[0.25em] text-amber-300 uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]"
@@ -132,23 +132,23 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         </div>
       </div>
 
-      {/* ── CENTER AREA: PURE TYPOGRAPHY WITH HIGH CONTRAST DROP SHADOWS ── */}
+      {/* ── CENTER AREA: OUTFIT / PLUS JAKARTA SANS ULTRA-BOLD TYPOGRAPHY ── */}
       <div className="absolute inset-0 flex items-center justify-center z-20 px-6">
         {!showBrandReveal ? (
           <div
             key={activeStageIndex}
-            className="flex flex-col items-center justify-center text-center space-y-5 max-w-3xl mx-auto animate-fade-in"
+            className="flex flex-col items-center justify-center text-center space-y-5 max-w-4xl mx-auto animate-fade-in"
           >
-            {/* Stage Title (Vivid Gold Gradient with Heavy Drop Shadow) */}
+            {/* Stage Title (Outfit / Plus Jakarta Sans Ultra-Bold Typography) */}
             <h2
-              className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-200 drop-shadow-[0_8px_30px_rgba(0,0,0,0.98)]"
-              style={{ fontFamily: "'Plus Jakarta Sans', 'Outfit', sans-serif" }}
+              className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-[0.06em] text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 via-yellow-200 to-emerald-200 drop-shadow-[0_10px_35px_rgba(0,0,0,0.98)]"
+              style={{ fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
             >
               {currentStage.title}
             </h2>
 
-            {/* Subtitle (Pure High-Contrast Warm White Text) */}
-            <p className="text-base sm:text-2xl font-semibold text-white tracking-wide font-sans leading-relaxed max-w-2xl drop-shadow-[0_4px_20px_rgba(0,0,0,0.98)]">
+            {/* Subtitle (Crisp Warm White Text with High Contrast Shadow) */}
+            <p className="text-base sm:text-2xl md:text-3xl font-bold text-slate-50 tracking-wide font-sans leading-relaxed max-w-3xl drop-shadow-[0_4px_20px_rgba(0,0,0,0.98)]">
               {currentStage.subtitle}
             </p>
           </div>
@@ -157,7 +157,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         )}
       </div>
 
-      {/* ── BOTTOM AREA: Loading Bar Present from Frame 1 Entrance ── */}
+      {/* ── BOTTOM AREA: Loading Bar Present from Entrance 0% ── */}
       <div className="absolute bottom-8 inset-x-0 z-30 px-6">
         <LoadingIndicator
           progress={progress}
