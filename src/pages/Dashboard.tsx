@@ -384,17 +384,23 @@ export default function Dashboard() {
   // =============================================
 
   const stats = useMemo(() => {
-    // 1. Esteira principal
-    const totalMain = filteredProposals.length;
-    const aprovadasMain = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").length;
-    const ativosMain = filteredProposals.filter((p) => !["nova", "aprovada", "negada", "contrato_liberado"].includes(p.status)).length;
+    // Helper to check if a main proposal is concluded
+    const isConcluidoMainStatus = (s: string) => s === "aprovada" || s === "contrato_liberado";
+
+    // 1. Esteira principal — STRICT SEPARATION OF ACTIVE VS CONCLUDED
+    const propostasAtivasMain = filteredProposals.filter(p => !isConcluidoMainStatus(p.status) && p.status !== "negada");
+    const totalMainAtivas = propostasAtivasMain.length;
+    const valorTotalMainAtivas = propostasAtivasMain.reduce((sum, p) => sum + Number(p.requested_value), 0);
+
+    const propostasConcluidasMain = filteredProposals.filter(p => isConcluidoMainStatus(p.status));
+    const aprovadasMain = propostasConcluidasMain.length;
+    const valorAprovadoMain = propostasConcluidasMain.reduce((sum, p) => sum + Number(p.requested_value), 0);
+
     const pendentesMain = filteredProposals.filter((p) => p.status === "documentacao_pendente").length;
     const novasMain = filteredProposals.filter((p) => p.status === "nova").length;
     const negadasMain = filteredProposals.filter((p) => p.status === "negada").length;
-    const valorTotalMain = filteredProposals.reduce((sum, p) => sum + Number(p.requested_value), 0);
-    const valorAprovadoMain = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").reduce((s, p) => s + Number(p.requested_value), 0);
 
-    // 2. Estoque (Pipeline) — Strictly filter ACTIVE stock proposals ONLY (exclusivo do estoque ativo)
+    // 2. Estoque (Pipeline) — STRICT SEPARATION OF ACTIVE VS CONCLUDED
     const isConcluidoStockStatus = (statusStr: string) => {
       const norm = (statusStr || '').toUpperCase().trim();
       return norm === 'CONCLUÍDO' || norm === 'CONCLUIDO' || norm === 'APROVADA' || norm === 'APROVADO' || norm === 'CONTRATO LIBERADO' || norm === 'FINALIZADO';
@@ -403,37 +409,46 @@ export default function Dashboard() {
     // Strictly active stock items (EXCLUDING any concluded item)
     const estoqueAtivoProposals = stockProposals.filter(p => !isConcluidoStockStatus(p.status));
     const estoqueAtivo = estoqueAtivoProposals.length;
-    const estoqueValor = estoqueAtivoProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
+    const estoqueValorAtivo = estoqueAtivoProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
     
-    // Concluded stock items
+    // Concluded stock items (SEPARATE & EXCLUSIVE)
     const estoqueConcluidoProposals = stockProposals.filter(p => isConcluidoStockStatus(p.status));
     const estoqueConcluido = estoqueConcluidoProposals.length;
     const estoqueValorConcluido = estoqueConcluidoProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
 
-    // 3. Totais Consolidados (Estoque Ativo + Esteira de Propostas)
-    const total = estoqueAtivo + totalMain;
-    const aprovadas = estoqueConcluido + aprovadasMain;
-    const ativos = estoqueAtivo + ativosMain;
-    const valorTotal = estoqueValor + valorTotalMain;
-    const valorAprovado = estoqueValorConcluido + valorAprovadoMain;
-    
-    const taxaAprovacao = total > 0 ? Math.round((aprovadas / total) * 100) : 0;
+    // 3. Totais Consolidados — STRICTLY SEPARATED (NÃO CONCLUÍDAS VS CONCLUÍDAS)
+    const totalAtivoGeral = estoqueAtivo + totalMainAtivas;
+    const valorAtivoGeral = estoqueValorAtivo + valorTotalMainAtivas;
+
+    const totalConcluidoGeral = estoqueConcluido + aprovadasMain;
+    const valorConcluidoGeral = estoqueValorConcluido + valorAprovadoMain;
+
+    const totalGeral = totalAtivoGeral + totalConcluidoGeral;
+    const taxaAprovacao = totalGeral > 0 ? Math.round((totalConcluidoGeral / totalGeral) * 100) : 0;
     
     return {
-      total,
-      aprovadas,
-      ativos,
+      total: totalAtivoGeral,
+      valorTotal: valorAtivoGeral,
+      aprovadas: totalConcluidoGeral,
+      valorAprovado: valorConcluidoGeral,
+      taxaAprovacao,
+
+      // Main Esteira breakdown
+      totalMainAtivas,
+      valorTotalMainAtivas,
+      aprovadasMain,
+      valorAprovadoMain,
       pendentes: pendentesMain,
       novas: novasMain,
       negadas: negadasMain,
-      valorTotal,
-      valorAprovado,
-      taxaAprovacao,
+
+      // Stock breakdown
       estoqueTotal: stockProposals.length,
       estoqueAtivo,
-      estoqueValor,
-      concluidasTotal: aprovadas,
-      estoqueConcluido
+      estoqueValor: estoqueValorAtivo,
+      estoqueConcluido,
+      estoqueValorConcluido,
+      concluidasTotal: totalConcluidoGeral,
     };
   }, [filteredProposals, stockProposals]);
 
@@ -1240,19 +1255,19 @@ export default function Dashboard() {
             Módulo Esteira de Crédito PRONAF (supergestao.digital/propostas)
           </h3>
           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200/50">
-            {stats.totalMain} propostas em análise
+            {stats.totalMainAtivas} propostas em análise
           </span>
         </div>
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {/* 1. Propostas na Esteira */}
+          {/* 1. Propostas Ativas na Esteira */}
           <Card className="group relative overflow-hidden border-2 border-slate-200/80 dark:border-slate-800 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Propostas na Esteira</p>
-                  <p className="text-3xl font-black font-heading text-foreground">{stats.totalMain}</p>
+                  <p className="text-3xl font-black font-heading text-foreground">{stats.totalMainAtivas}</p>
                   <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[9px] font-black">
                     +{stats.novasMain} NOVAS
                   </Badge>
@@ -1264,17 +1279,17 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* 2. Volume Financeiro na Esteira */}
+          {/* 2. Volume Financeiro na Esteira (EXCLUSIVO NÃO CONCLUÍDAS) */}
           <Card className="group relative overflow-hidden border-2 border-slate-200/80 dark:border-slate-800 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
             <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Volume da Esteira</p>
-                  <p className="text-2xl font-black font-heading text-foreground mt-0.5">{formatCompact(stats.valorTotalMain)}</p>
-                  <p className="text-[9px] font-black text-muted-foreground mt-1.5 flex items-center gap-1 uppercase tracking-wider">
-                    <DollarSign className="h-2.5 w-2.5 opacity-50" /> SOLICITADO NA ESTEIRA
-                  </p>
+                  <p className="text-2xl font-black font-heading text-foreground mt-0.5">{formatCompact(stats.valorTotalMainAtivas)}</p>
+                  <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 border border-amber-200/50 text-[9px] font-black tracking-wider uppercase">
+                    <DollarSign className="h-2.5 w-2.5 mr-0.5 text-amber-600" /> NÃO CONCLUÍDAS
+                  </Badge>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent transform group-hover:scale-110 group-hover:rotate-6 transition-all shadow-sm">
                   <DollarSign className="h-6 w-6" />
