@@ -1,0 +1,45 @@
+/* Design Tokens for Crédito Rural Platform */
+
+:root {
+  /* Color Palette - Crédito Rural */
+  --cr-green-deep: #071f12;
+  --cr-green-dark: #0f381f;
+  --cr-green-primary: #1b6335;
+  --cr-green-natural: #2e8b4a;
+  --cr-green-bright: #43bd68;
+
+  --cr-gold-primary: #d4af37;
+  --cr-gold-light: #f3e5ab;
+  --cr-gold-glow: rgba(212, 175, 55, 0.4);
+
+  --cr-blue-tech: #2563eb;
+  --cr-blue-light: #60a5fa;
+  --cr-blue-glow: rgba(37, 99, 235, 0.35);
+
+  --cr-earth-dark: #2a1e17;
+  --cr-earth-warm: #5c4033;
+  --cr-earth-light: #a88b77;
+
+  --cr-neutral-50: #f8fafc;
+  --cr-neutral-100: #f1f5f9;
+  --cr-neutral-200: #e2e8f0;
+  --cr-neutral-800: #1e293b;
+  --cr-neutral-900: #0f172a;
+  --cr-neutral-950: #050b14;
+
+  /* Glassmorphism */
+  --cr-glass-bg: rgba(7, 31, 18, 0.75);
+  --cr-glass-border: rgba(212, 175, 55, 0.2);
+  --cr-glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+  /* Typography */
+  --cr-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --cr-font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+
+  /* Transitions & Easings */
+  --cr-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --cr-ease-in-out-sine: cubic-bezier(0.37, 0, 0.63, 1);
+  --cr-transition-fast: 200ms var(--cr-ease-out-expo);
+  --cr-transition-normal: 400ms var(--cr-ease-out-expo);
+  --cr-transition-slow: 800ms var(--cr-ease-out-expo);
+}

@@ -1,8 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+@import "./styles/tokens.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.bg-radial-dawn {
+  background: radial-gradient(circle at 50% 100%, rgba(212, 175, 55, 0.35) 0%, rgba(30, 107, 54, 0.2) 45%, transparent 75%);
+}
+
+.bg-radial-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(243, 229, 171, 0.9) 0%, rgba(67, 189, 104, 0.4) 40%, transparent 70%);
+}
+
 
 @layer base {
   :root {
