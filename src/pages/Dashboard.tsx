@@ -384,51 +384,72 @@ export default function Dashboard() {
   // =============================================
 
   const stats = useMemo(() => {
+    // Helper to safely parse numeric values (handles strings, nulls, undefined, and BR formatting without NaN)
+    const safeParseNum = (val: any): number => {
+      if (val === null || val === undefined || val === '') return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      const str = String(val).trim();
+      let clean = str.replace(/[^\d.,]/g, '');
+      if (/^\d{1,3}(\.\d{3})*,\d{2}$/.test(clean)) {
+        clean = clean.replace(/\./g, '').replace(',', '.');
+      } else if (/^\d{1,3}(,\d{3})*\.\d{2}$/.test(clean)) {
+        clean = clean.replace(/,/g, '');
+      } else {
+        clean = clean.replace(/,/g, '.');
+      }
+      const parsed = parseFloat(clean);
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
     // Helper to check if a main proposal is concluded
     const isConcluidoMainStatus = (s: string) => s === "aprovada" || s === "contrato_liberado";
 
-    // 1. Esteira principal — STRICT SEPARATION OF ACTIVE VS CONCLUDED
+    // 1. Esteira principal
     const propostasAtivasMain = filteredProposals.filter(p => !isConcluidoMainStatus(p.status) && p.status !== "negada");
     const totalMainAtivas = propostasAtivasMain.length;
-    const valorTotalMainAtivas = propostasAtivasMain.reduce((sum, p) => sum + Number(p.requested_value), 0);
+    const valorTotalMainAtivas = propostasAtivasMain.reduce((sum, p) => sum + safeParseNum(p.requested_value), 0);
 
     const propostasConcluidasMain = filteredProposals.filter(p => isConcluidoMainStatus(p.status));
     const aprovadasMain = propostasConcluidasMain.length;
-    const valorAprovadoMain = propostasConcluidasMain.reduce((sum, p) => sum + Number(p.requested_value), 0);
+    const valorAprovadoMain = propostasConcluidasMain.reduce((sum, p) => sum + safeParseNum(p.requested_value), 0);
 
     const pendentesMain = filteredProposals.filter((p) => p.status === "documentacao_pendente").length;
     const novasMain = filteredProposals.filter((p) => p.status === "nova").length;
     const negadasMain = filteredProposals.filter((p) => p.status === "negada").length;
 
-    // 2. Estoque (Pipeline) — STRICT SEPARATION OF ACTIVE VS CONCLUDED
+    // 2. Estoque (Pipeline)
     const isConcluidoStockStatus = (statusStr: string) => {
       const norm = (statusStr || '').toUpperCase().trim();
       return norm === 'CONCLUÍDO' || norm === 'CONCLUIDO' || norm === 'APROVADA' || norm === 'APROVADO' || norm === 'CONTRATO LIBERADO' || norm === 'FINALIZADO';
     };
 
-    // Strictly active stock items (EXCLUDING any concluded item)
+    // Active stock items
     const estoqueAtivoProposals = stockProposals.filter(p => !isConcluidoStockStatus(p.status));
     const estoqueAtivo = estoqueAtivoProposals.length;
-    const estoqueValorAtivo = estoqueAtivoProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
+    const estoqueValorAtivo = estoqueAtivoProposals.reduce((sum, p) => sum + safeParseNum(p.estimated_value), 0);
     
-    // Concluded stock items (SEPARATE & EXCLUSIVE)
+    // Concluded stock items
     const estoqueConcluidoProposals = stockProposals.filter(p => isConcluidoStockStatus(p.status));
     const estoqueConcluido = estoqueConcluidoProposals.length;
-    const estoqueValorConcluido = estoqueConcluidoProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
+    const estoqueValorConcluido = estoqueConcluidoProposals.reduce((sum, p) => sum + safeParseNum(p.estimated_value), 0);
 
-    // 3. Totais Consolidados — STRICTLY SEPARATED (NÃO CONCLUÍDAS VS CONCLUÍDAS)
-    const totalAtivoGeral = estoqueAtivo + totalMainAtivas;
-    const valorAtivoGeral = estoqueValorAtivo + valorTotalMainAtivas;
+    // 3. TOTAIS GERAS ABSOLUTOS (TODAS AS PROPOSTAS DO SISTEMA - INCLUSIVE CONCLUÍDAS)
+    const totalPropostasSistema = stockProposals.length + filteredProposals.length;
+    const valorTotalSistema = stockProposals.reduce((sum, p) => sum + safeParseNum(p.estimated_value), 0) +
+                               filteredProposals.reduce((sum, p) => sum + safeParseNum(p.requested_value), 0);
 
     const totalConcluidoGeral = estoqueConcluido + aprovadasMain;
     const valorConcluidoGeral = estoqueValorConcluido + valorAprovadoMain;
 
-    const totalGeral = totalAtivoGeral + totalConcluidoGeral;
-    const taxaAprovacao = totalGeral > 0 ? Math.round((totalConcluidoGeral / totalGeral) * 100) : 0;
+    const taxaAprovacao = totalPropostasSistema > 0 ? Math.round((totalConcluidoGeral / totalPropostasSistema) * 100) : 0;
     
     return {
-      total: totalAtivoGeral,
-      valorTotal: valorAtivoGeral,
+      // Total Geral do Sistema (Todas as Propostas)
+      totalGeral: totalPropostasSistema,
+      valorTotalGeral: valorTotalSistema,
+      total: totalPropostasSistema,
+      valorTotal: valorTotalSistema,
+
       aprovadas: totalConcluidoGeral,
       valorAprovado: valorConcluidoGeral,
       taxaAprovacao,
