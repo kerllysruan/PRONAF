@@ -8,7 +8,7 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { BrandReveal } from './BrandReveal';
 
 export interface LoadingExperienceProps {
-  duration?: number; // Total duration in seconds (default 5.5s for fast high-impact loading)
+  duration?: number; // Default 5.5s (fast, premium and responsive)
   onComplete?: () => void;
 }
 
@@ -28,7 +28,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   const [videoError, setVideoError] = useState<boolean>(false);
 
   useEffect(() => {
-    // Preload image assets instantly into browser memory
+    // Warm up image assets immediately in client cache
     preloadMediaAssets();
 
     const ctx = gsap.context(() => {
@@ -41,20 +41,20 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         },
       });
 
-      // Snappy, energetic stage pacing (Total = ~5.5 seconds)
-      const scene1Dur = 0.8; // Dawn Flare (0 - 0.8s)
-      const scene2Dur = 0.9; // Field Zoom (0.8 - 1.7s)
-      const scene3Dur = 1.0; // Producers & Harvest (1.7 - 2.7s)
-      const scene4Dur = 1.0; // Data Mesh (2.7 - 3.7s)
+      // Precise 5.5s cinematic timeline stages
+      const scene1Dur = 0.8; // Sunrise Dawn flare (0 - 0.8s)
+      const scene2Dur = 0.9; // Crop Fields Parallax (0.8 - 1.7s)
+      const scene3Dur = 1.0; // Producers & Harvest Cards (1.7 - 2.7s)
+      const scene4Dur = 1.0; // Cyber-Agro SVG Mesh (2.7 - 3.7s)
       const scene5Dur = 0.8; // Data Convergence (3.7 - 4.5s)
-      const scene6Dur = 1.0; // Brand Burst (4.5 - 5.5s)
+      const scene6Dur = 1.0; // Brand Reveal (4.5 - 5.5s)
 
       const progressObj = { value: 0 };
 
-      // SCENE 01 — AMANHECER (0s - 0.8s)
+      // SCENE 01 — DAWN (0s - 0.8s)
       tl.call(() => setActiveScene(1))
         .to('.video-lens-flare', {
-          opacity: 0.9,
+          opacity: 0.85,
           scale: 1.3,
           duration: scene1Dur,
           ease: 'power2.inOut',
@@ -69,12 +69,12 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
           '<'
         );
 
-      // SCENE 02 — O CAMPO (0.8s - 1.7s)
+      // SCENE 02 — THE FIELD (0.8s - 1.7s)
       tl.call(() => setActiveScene(2))
         .to('.cinematic-video-bg', {
           scale: 1.15,
           opacity: 1,
-          filter: 'blur(0px) contrast(1.1) brightness(1.05)',
+          filter: 'blur(0px) contrast(1.08) brightness(1.05)',
           duration: scene2Dur,
           ease: 'power2.out',
         })
@@ -88,7 +88,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
           '<'
         );
 
-      // SCENE 03 — PRODUTOR E PRODUÇÃO (1.7s - 2.7s)
+      // SCENE 03 — PRODUCERS & CROPS (1.7s - 2.7s)
       tl.call(() => setActiveScene(3))
         .to('.realistic-producer-grid', {
           opacity: 1,
@@ -96,7 +96,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
           scale: 1,
           filter: 'blur(0px)',
           duration: scene3Dur,
-          ease: 'back.out(1.2)',
+          ease: 'back.out(1.1)',
         })
         .to(
           progressObj,
@@ -108,7 +108,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
           '<'
         );
 
-      // SCENE 04 — A CONEXÃO TECNOLÓGICA (2.7s - 3.7s)
+      // SCENE 04 — CYBER MESH (2.7s - 3.7s)
       tl.call(() => setActiveScene(4))
         .to('.network-layer', {
           opacity: 1,
@@ -125,7 +125,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
           '<'
         );
 
-      // SCENE 05 — CONVERGÊNCIA DOS DADOS (3.7s - 4.5s)
+      // SCENE 05 — DATA GATHERING (3.7s - 4.5s)
       tl.call(() => {
           setIsConverging(true);
           setActiveScene(5);
@@ -133,8 +133,8 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         })
         .to('.realistic-producer-grid', {
           opacity: 0.1,
-          scale: 0.9,
-          filter: 'blur(6px)',
+          scale: 0.92,
+          filter: 'blur(5px)',
           duration: scene5Dur,
         })
         .to(
@@ -148,15 +148,15 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
           '<'
         );
 
-      // SCENE 06 — REVELAÇÃO DA MARCA SUPER GESTÃO (4.5s - 5.5s)
+      // SCENE 06 — BRAND REVEAL (4.5s - 5.5s)
       tl.call(() => {
           setShowIndicator(false);
           setShowBrand(true);
           setActiveScene(6);
         })
         .to('.brand-glow-burst', {
-          scale: 3.2,
-          opacity: 0.85,
+          scale: 3.0,
+          opacity: 0.8,
           duration: 0.5,
           ease: 'power2.out',
         })
@@ -201,7 +201,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
       />
 
       {/* Cinematic Dark Vignette & Gradient Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/60 to-slate-950/80 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/65 to-slate-950/85 pointer-events-none" />
       <div className="absolute inset-0 bg-radial-vignette pointer-events-none opacity-80" />
 
       {/* Realistic Anamorphic Lens Flare */}
@@ -214,57 +214,57 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
       <div className="realistic-producer-grid absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transform translate-y-8 scale-95 filter blur-xs transition-all duration-500 z-15">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 max-w-5xl w-full">
           {/* Family Farmer Card */}
-          <div className="relative rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-amber-400/50 bg-emerald-950/85 backdrop-blur-xl p-2 group">
+          <div className="relative rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-amber-400/30 bg-emerald-950/80 backdrop-blur-xl p-2 group">
             <img
               src={MEDIA_CONFIG.images.familyFarmer}
               alt="Agricultor Rural"
               className="w-full h-40 object-cover rounded-xl shadow-md transition-transform duration-500 group-hover:scale-105"
             />
             <div className="mt-2.5 text-center">
-              <span className="text-[11px] font-extrabold text-amber-300 uppercase tracking-widest block font-sans">
-                Produtor Rural
+              <span className="text-[10px] font-extrabold text-amber-200 uppercase tracking-widest block font-sans">
+                PRODUTOR RURAL
               </span>
             </div>
           </div>
 
           {/* Corn Harvest Card */}
-          <div className="relative rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-amber-400/50 bg-emerald-950/85 backdrop-blur-xl p-2 hidden sm:block group">
+          <div className="relative rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-amber-400/30 bg-emerald-950/80 backdrop-blur-xl p-2 hidden sm:block group">
             <img
               src={MEDIA_CONFIG.images.cornHarvest}
               alt="Colheita de Milho"
               className="w-full h-40 object-cover rounded-xl shadow-md transition-transform duration-500 group-hover:scale-105"
             />
             <div className="mt-2.5 text-center">
-              <span className="text-[11px] font-extrabold text-amber-300 uppercase tracking-widest block font-sans">
-                Lavouras & Custeio
+              <span className="text-[10px] font-extrabold text-amber-200 uppercase tracking-widest block font-sans">
+                LAVOURAS & CUSTEIO
               </span>
             </div>
           </div>
 
           {/* Fresh Produce Card */}
-          <div className="relative rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-amber-400/50 bg-emerald-950/85 backdrop-blur-xl p-2 group">
+          <div className="relative rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-amber-400/30 bg-emerald-950/80 backdrop-blur-xl p-2 group">
             <img
               src={MEDIA_CONFIG.images.organicProduce}
               alt="Hortaliças e Produção"
               className="w-full h-40 object-cover rounded-xl shadow-md transition-transform duration-500 group-hover:scale-105"
             />
             <div className="mt-2.5 text-center">
-              <span className="text-[11px] font-extrabold text-amber-300 uppercase tracking-widest block font-sans">
-                Produção Agrícola
+              <span className="text-[10px] font-extrabold text-amber-200 uppercase tracking-widest block font-sans">
+                PRODUÇÃO AGRÍCOLA
               </span>
             </div>
           </div>
 
           {/* Fruit Harvest Card */}
-          <div className="relative rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.5)] border border-amber-400/50 bg-emerald-950/85 backdrop-blur-xl p-2 hidden md:block group">
+          <div className="relative rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-amber-400/30 bg-emerald-950/80 backdrop-blur-xl p-2 hidden md:block group">
             <img
               src={MEDIA_CONFIG.images.fruitProduce}
               alt="Fruticultura"
               className="w-full h-40 object-cover rounded-xl shadow-md transition-transform duration-500 group-hover:scale-105"
             />
             <div className="mt-2.5 text-center">
-              <span className="text-[11px] font-extrabold text-amber-300 uppercase tracking-widest block font-sans">
-                Oportunidades
+              <span className="text-[10px] font-extrabold text-amber-200 uppercase tracking-widest block font-sans">
+                OPORTUNIDADES
               </span>
             </div>
           </div>
@@ -296,7 +296,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
 
       {/* Bottom Progress Bar & Stage Indicator */}
       <div className="absolute bottom-6 inset-x-0 flex flex-col items-center justify-center z-40 px-6">
-        <div className="w-full max-w-xs bg-emerald-950/90 backdrop-blur-xl rounded-full h-1.5 p-0.5 border border-amber-400/50 overflow-hidden shadow-xl">
+        <div className="w-full max-w-xs bg-emerald-950/90 backdrop-blur-xl rounded-full h-1.5 p-0.5 border border-amber-400/40 overflow-hidden shadow-xl">
           <div
             className="bg-gradient-to-r from-emerald-400 via-amber-400 to-blue-400 h-full rounded-full transition-all duration-200"
             style={{ width: `${progress}%` }}
