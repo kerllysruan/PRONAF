@@ -5,7 +5,7 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { BrandReveal } from './BrandReveal';
 
 export interface LoadingExperienceProps {
-  duration?: number; // 16 seconds for comfortable reading speed
+  duration?: number; // 24 seconds total for ample, extra-calm reading time (6s per stage)
   onComplete?: () => void;
 }
 
@@ -34,7 +34,7 @@ const STAGES = [
 ];
 
 export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
-  duration = 16,
+  duration = 24,
   onComplete,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -47,7 +47,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     const clamped = Math.min(100, Math.max(0, Math.round(val)));
     setProgress(clamped);
 
-    // Stage switching every 25% (4 seconds per stage)
+    // Stage switching every 25% (6 full seconds per stage)
     if (clamped < 25) {
       setActiveStageIndex(0);
     } else if (clamped < 50) {
@@ -73,11 +73,11 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
             setTimeout(() => {
               onComplete?.();
             }, 800);
-          }, 1800);
+          }, 2500);
         },
       });
 
-      // Smooth progress counter over 16 seconds
+      // Smooth progress counter over 24 seconds (6 seconds per narrative stage)
       tl.to(progObj, {
         value: 100,
         duration: duration,
@@ -130,7 +130,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         </div>
       </div>
 
-      {/* ── CENTER AREA: PURE TYPOGRAPHY (NO GREEN BACKGROUND BOX) ── */}
+      {/* ── CENTER AREA: PURE TYPOGRAPHY (NO BACKGROUND BOX) ── */}
       <div className="absolute inset-0 flex items-center justify-center z-20 px-6">
         {!showBrandReveal ? (
           <div
