@@ -1,207 +1,158 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import gsap from 'gsap';
 import { MEDIA_CONFIG, preloadCriticalAssets } from '@/config/imageConfig';
-import { DataParticles } from './DataParticles';
 import { LoadingIndicator } from './LoadingIndicator';
 import { BrandReveal } from './BrandReveal';
 
 export interface LoadingExperienceProps {
-  duration?: number;
+  duration?: number; // 6 seconds total (smooth, fast & pleasant)
   onComplete?: () => void;
 }
 
-/* ──────────────────────────────────────────────────────────
-   MILESTONES — labels that change as the progress advances
-   ────────────────────────────────────────────────────────── */
-function milestoneFor(p: number): string {
-  if (p < 18) return 'Amanhecer no campo brasileiro…';
-  if (p < 38) return 'Agricultura familiar em ação…';
-  if (p < 58) return 'Produção e colheita rural…';
-  if (p < 78) return 'Conectando dados e informações…';
-  if (p < 94) return 'Analisando oportunidades PRONAF…';
-  return 'Tudo pronto!';
-}
+const STAGES = [
+  {
+    title: 'O CAMPO DESPERTA',
+    subtitle: 'Soluções para o desenvolvimento e produção rural brasileira',
+    bgKey: 'sunriseDawn',
+  },
+  {
+    title: 'AGRICULTURA FAMILIAR',
+    subtitle: 'Apoio financeiro e inteligência para quem produz no campo',
+    bgKey: 'aerialCrops',
+  },
+  {
+    title: 'TECNOLOGIA E CONEXÃO',
+    subtitle: 'Informações organizadas em oportunidades de crédito PRONAF',
+    bgKey: 'familyFarmer',
+  },
+  {
+    title: 'ANÁLISE DE OPORTUNIDADES',
+    subtitle: 'Estruturação ágil e inteligente de propostas agrícolas',
+    bgKey: 'cornHarvest',
+  },
+];
 
-/* ──────────────────────────────────────────────────────────
-   COMPONENT
-   Duration default = 7 s  (pleasant, not too short, not long)
-   ────────────────────────────────────────────────────────── */
 export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
-  duration = 7,
+  duration = 6,
   onComplete,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [progress, setProgress] = useState(0);
-  const [milestone, setMilestone] = useState('Amanhecer no campo brasileiro…');
-  const [scene, setScene] = useState(1);
-  const [showCards, setShowCards] = useState(false);
-  const [showNetwork, setShowNetwork] = useState(false);
-  const [showIndicator, setShowIndicator] = useState(false);
-  const [showBrand, setShowBrand] = useState(false);
-  const [fadingOut, setFadingOut] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [progress, setProgress] = useState<number>(0);
+  const [activeStageIndex, setActiveStageIndex] = useState<number>(0);
+  const [showBrandReveal, setShowBrandReveal] = useState<boolean>(false);
+  const [isFadingOut, setIsFadingOut] = useState<boolean>(false);
 
-  const updateProgress = useCallback((v: number) => {
-    const clamped = Math.min(100, Math.max(0, Math.round(v)));
+  const updateProgress = useCallback((val: number) => {
+    const clamped = Math.min(100, Math.max(0, Math.round(val)));
     setProgress(clamped);
-    setMilestone(milestoneFor(clamped));
+
+    // Update active stage index based on progress percentage
+    if (clamped < 25) {
+      setActiveStageIndex(0);
+    } else if (clamped < 50) {
+      setActiveStageIndex(1);
+    } else if (clamped < 75) {
+      setActiveStageIndex(2);
+    } else {
+      setActiveStageIndex(3);
+    }
   }, []);
 
-  /* ── GSAP master timeline ── */
   useEffect(() => {
+    // Preload background images into browser memory on mount
     preloadCriticalAssets();
 
     const ctx = gsap.context(() => {
-      const prog = { v: 0 };
+      const progObj = { value: 0 };
       const tl = gsap.timeline({
-        defaults: { ease: 'power2.inOut' },
-        onComplete() {
-          setFadingOut(true);
-          setTimeout(() => onComplete?.(), 700);
+        onComplete: () => {
+          setShowBrandReveal(true);
+          setTimeout(() => {
+            setIsFadingOut(true);
+            setTimeout(() => {
+              onComplete?.();
+            }, 700);
+          }, 1200);
         },
       });
 
-      /* Scene 01 — Dawn glow (0 → 1.2 s) */
-      tl.call(() => setScene(1))
-        .fromTo('.dawn-gradient', { opacity: 0 }, { opacity: 1, duration: 1.2 })
-        .fromTo('.dawn-flare', { scale: 0.5, opacity: 0 }, { scale: 1.1, opacity: 0.7, duration: 1.2 }, '<')
-        .to(prog, { v: 18, duration: 1.2, onUpdate: () => updateProgress(prog.v) }, '<');
-
-      /* Scene 02 — Field reveal with parallax (1.2 → 2.4 s) */
-      tl.call(() => setScene(2))
-        .to('.field-photo', { opacity: 1, scale: 1.06, duration: 1.2, ease: 'sine.inOut' })
-        .to(prog, { v: 38, duration: 1.2, onUpdate: () => updateProgress(prog.v) }, '<');
-
-      /* Scene 03 — Producer & harvest cards (2.4 → 3.8 s) */
-      tl.call(() => { setScene(3); setShowCards(true); })
-        .fromTo('.card-grid', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1.0, ease: 'back.out(1.2)' })
-        .to(prog, { v: 58, duration: 1.4, onUpdate: () => updateProgress(prog.v) }, '<');
-
-      /* Scene 04 — Data network lines (3.8 → 5.2 s) */
-      tl.call(() => { setScene(4); setShowNetwork(true); })
-        .to('.card-grid', { opacity: 0.15, scale: 0.92, filter: 'blur(4px)', duration: 0.8 })
-        .to(prog, { v: 80, duration: 1.4, onUpdate: () => updateProgress(prog.v) }, '<');
-
-      /* Scene 05 — Progress ring + convergence (5.2 → 6.2 s) */
-      tl.call(() => { setScene(5); setShowIndicator(true); setShowNetwork(false); })
-        .to(prog, { v: 100, duration: 1.0, ease: 'power1.inOut', onUpdate: () => updateProgress(prog.v) });
-
-      /* Scene 06 — Brand reveal (6.2 → 7.0 s) */
-      tl.call(() => { setShowIndicator(false); setShowBrand(true); setScene(6); })
-        .fromTo('.glow-burst', { scale: 0.4, opacity: 0 }, { scale: 2.5, opacity: 0.7, duration: 0.4, ease: 'power2.out' })
-        .to('.glow-burst', { opacity: 0, duration: 0.4 });
+      // Smooth percentage progress counter from 0 to 100%
+      tl.to(progObj, {
+        value: 100,
+        duration: duration,
+        ease: 'none',
+        onUpdate: () => updateProgress(progObj.value),
+      });
 
     }, containerRef);
 
     return () => ctx.revert();
   }, [duration, onComplete, updateProgress]);
 
-  /* ── RENDER ── */
+  const currentStage = STAGES[activeStageIndex];
+
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 z-[99999] overflow-hidden select-none font-sans transition-opacity duration-700 ${fadingOut ? 'opacity-0' : 'opacity-100'}`}
-      style={{ background: '#040e08' }}
+      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-700 ${
+        isFadingOut ? 'opacity-0' : 'opacity-100'
+      }`}
     >
-      {/* ── Layer 0: Base dark background ── */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#030b06] via-[#071f12] to-[#0a2a16]" />
+      {/* ── BACKGROUND LAYER: Smooth Image Crossfades ── */}
+      {Object.entries(MEDIA_CONFIG.images).map(([key, url], idx) => {
+        const isCurrentBg = currentStage.bgKey === key;
+        return (
+          <div
+            key={key}
+            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 transform scale-105 ${
+              isCurrentBg ? 'opacity-40' : 'opacity-0'
+            }`}
+            style={{ backgroundImage: `url(${url})` }}
+          />
+        );
+      })}
 
-      {/* ── Layer 1: Dawn golden gradient ── */}
-      <div className="dawn-gradient absolute inset-0 opacity-0"
-        style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 100%, rgba(212,175,55,0.25) 0%, rgba(30,99,53,0.15) 40%, transparent 70%)' }}
-      />
+      {/* Dark Gradient Overlay for Maximum Readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/80 to-slate-950/90 pointer-events-none" />
 
-      {/* ── Layer 2: Realistic field photograph ── */}
-      <div
-        className="field-photo absolute inset-0 bg-cover bg-center opacity-0 scale-100 transition-transform duration-[2s]"
-        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
-      />
-      {/* Dark cinematic overlay on photo */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#040e08] via-[#040e08]/70 to-[#040e08]/85" />
-
-      {/* ── Layer 3: Vignette ── */}
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 50% 50%, transparent 30%, rgba(4,14,8,0.9) 100%)' }} />
-
-      {/* ── Layer 4: Dawn lens flare ── */}
-      <div className="dawn-flare absolute w-[500px] h-[500px] -bottom-40 left-1/2 -translate-x-1/2 rounded-full opacity-0 mix-blend-screen pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(255,210,100,0.5) 0%, rgba(180,140,50,0.2) 40%, transparent 70%)' }}
-      />
-
-      {/* ── Layer 5: Atmospheric particles ── */}
-      <DataParticles intensity={scene >= 4 ? 'high' : 'medium'} />
-
-      {/* ── Layer 6: Producer & Harvest cards ── */}
-      {showCards && (
-        <div className="card-grid absolute inset-0 flex items-center justify-center z-20 pointer-events-none px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl w-full">
-            {[
-              { src: MEDIA_CONFIG.images.familyFarmer,   label: 'PRODUTOR RURAL',     alt: 'Agricultor' },
-              { src: MEDIA_CONFIG.images.cornHarvest,     label: 'LAVOURAS & CUSTEIO', alt: 'Milho',     hide: 'hidden sm:block' },
-              { src: MEDIA_CONFIG.images.organicProduce,  label: 'PRODUÇÃO AGRÍCOLA',  alt: 'Hortaliças' },
-              { src: MEDIA_CONFIG.images.fruitProduce,    label: 'OPORTUNIDADES',      alt: 'Frutas',    hide: 'hidden md:block' },
-            ].map((card) => (
-              <div key={card.label} className={`rounded-xl overflow-hidden border border-amber-400/25 bg-[#071f12]/80 backdrop-blur-lg shadow-[0_8px_30px_rgba(0,0,0,0.55)] p-1.5 ${card.hide ?? ''}`}>
-                <img src={card.src} alt={card.alt} className="w-full h-32 sm:h-36 object-cover rounded-lg" loading="eager" />
-                <p className="text-center text-[10px] font-bold text-amber-200/90 tracking-[0.18em] uppercase mt-2 mb-1">{card.label}</p>
-              </div>
-            ))}
-          </div>
+      {/* Top Header Logo (Fixed & Clean, No Overlap) */}
+      <div className="absolute top-6 inset-x-0 flex justify-center z-20 px-4">
+        <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-emerald-900/60 border border-amber-400/30 backdrop-blur-md">
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+          <span className="text-[11px] font-bold tracking-widest text-amber-200 uppercase">
+            SUPER GESTÃO — PRONAF
+          </span>
         </div>
-      )}
-
-      {/* ── Layer 7: SVG data network lines ── */}
-      {showNetwork && (
-        <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center animate-fade-in">
-          <svg viewBox="0 0 800 400" className="w-full max-w-3xl h-auto opacity-80" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#34d399" stopOpacity="0.8" />
-                <stop offset="50%" stopColor="#fbbf24" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.7" />
-              </linearGradient>
-              <filter id="gl"><feGaussianBlur stdDeviation="3" /><feComposite in="SourceGraphic" /></filter>
-            </defs>
-            <g filter="url(#gl)">
-              <path d="M100 320 Q200 200 300 280 Q400 160 500 240 Q600 120 700 200" fill="none" stroke="url(#lg)" strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M150 200 L400 180 L650 220" fill="none" stroke="#fbbf24" strokeWidth="1.5" strokeDasharray="8 6" opacity="0.6" />
-              <path d="M100 320 Q250 100 400 180 Q550 100 700 200" fill="none" stroke="#60a5fa" strokeWidth="1.5" opacity="0.5" />
-            </g>
-            {/* Nodes */}
-            {[
-              { cx: 100, cy: 320, label: 'Produtor' },
-              { cx: 300, cy: 280, label: 'Propriedade' },
-              { cx: 400, cy: 180, label: 'Produção' },
-              { cx: 500, cy: 240, label: 'Dados' },
-              { cx: 700, cy: 200, label: 'Análise' },
-            ].map(n => (
-              <g key={n.label}>
-                <circle cx={n.cx} cy={n.cy} r="5" fill="#fbbf24" filter="url(#gl)" />
-                <text x={n.cx} y={n.cy - 14} textAnchor="middle" fill="#fef3c7" fontSize="10" fontWeight="700" fontFamily="sans-serif">{n.label}</text>
-              </g>
-            ))}
-          </svg>
-        </div>
-      )}
-
-      {/* ── Layer 8: Golden glow burst (brand reveal) ── */}
-      <div className="glow-burst absolute inset-0 m-auto w-80 h-80 rounded-full pointer-events-none opacity-0 z-30"
-        style={{ background: 'radial-gradient(circle, rgba(255,220,130,0.7) 0%, rgba(67,189,104,0.3) 40%, transparent 70%)' }}
-      />
-
-      {/* ── Layer 9: Centered indicator / brand ── */}
-      <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
-        <LoadingIndicator progress={progress} milestone={milestone} visible={showIndicator} />
-        <BrandReveal visible={showBrand} />
       </div>
 
-      {/* ── Letterbox bars ── */}
-      <div className="absolute top-0 inset-x-0 h-8 bg-gradient-to-b from-[#040e08] to-transparent z-30 pointer-events-none" />
-      <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-[#040e08] to-transparent z-30 pointer-events-none" />
+      {/* ── CENTER AREA: Non-Overlapping Phase Content ── */}
+      <div className="absolute inset-0 flex items-center justify-center z-20 px-6">
+        {!showBrandReveal ? (
+          <div
+            key={activeStageIndex}
+            className="flex flex-col items-center justify-center text-center space-y-3 max-w-lg mx-auto animate-fade-in"
+          >
+            {/* Stage Title */}
+            <h2 className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-emerald-200 tracking-wider uppercase font-sans drop-shadow-md">
+              {currentStage.title}
+            </h2>
 
-      {/* ── Bottom progress bar ── */}
-      <div className="absolute bottom-5 inset-x-0 flex justify-center z-40 px-8 pointer-events-none">
-        <div className="w-full max-w-xs h-1 rounded-full overflow-hidden bg-[#0a2a16] border border-amber-900/30">
-          <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-sky-400 transition-all duration-200" style={{ width: `${progress}%` }} />
-        </div>
+            {/* Stage Subtitle */}
+            <p className="text-sm sm:text-base font-medium text-emerald-200/90 tracking-wide font-sans leading-relaxed">
+              {currentStage.subtitle}
+            </p>
+          </div>
+        ) : (
+          <BrandReveal visible={showBrandReveal} />
+        )}
+      </div>
+
+      {/* ── BOTTOM AREA: Progress Bar Present from Frame 1 Entrance ── */}
+      <div className="absolute bottom-8 inset-x-0 z-30 px-6">
+        <LoadingIndicator
+          progress={progress}
+          stageLabel={currentStage.title}
+        />
       </div>
     </div>
   );
