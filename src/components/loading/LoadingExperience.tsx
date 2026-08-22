@@ -10,6 +10,7 @@ export interface LoadingExperienceProps {
   onComplete?: () => void;
 }
 
+// Interconnected narrative storytelling stages
 const STAGES = [
   {
     title: 'O CAMPO BRASILEIRO DESPERTA',
@@ -142,16 +143,16 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         isFadingOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {/* ── CINEMATIC BACKGROUND LAYERS WITH DYNAMIC CAMERA MOTION & FOCUS RACK ── */}
+      {/* ── CINEMATIC BACKGROUND LAYERS WITH CALIBRATED BRIGHTNESS & HIGH COLOR SATURATION ── */}
       {Object.entries(MEDIA_CONFIG.images).map(([key, url]) => {
         const isCurrentBg = currentStage.bgKey === key;
         return (
           <div
             key={key}
-            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 transform filter saturate-[1.35] contrast-[1.15] brightness-[1.2] ${
+            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 transform filter saturate-[1.3] contrast-[1.12] brightness-[1.08] ${
               isCurrentBg
-                ? 'opacity-100 scale-105 rotate-0 blur-none'
-                : 'opacity-0 scale-110 rotate-1 blur-sm pointer-events-none'
+                ? 'opacity-95 scale-100 rotate-0 blur-none'
+                : 'opacity-0 scale-105 rotate-1 blur-sm pointer-events-none'
             }`}
             style={{
               backgroundImage: `url(${url})`,
@@ -161,8 +162,9 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         );
       })}
 
-      {/* Light Ambient Overlay for Contrast */}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/50 pointer-events-none" />
+      {/* Light Ambient Overlay & Focal Area Vignette for High Text Readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/30 to-slate-950/50 pointer-events-none" />
+      <div className="absolute inset-0 bg-radial-vignette pointer-events-none opacity-70" />
 
       {/* ── MOTION FX 1: Solar Lens Flare Dynamic Motion Sweep ── */}
       <div className="lens-flare-sweep absolute -top-40 -left-40 w-[650px] h-[650px] bg-radial-flare pointer-events-none opacity-40 mix-blend-screen" />
@@ -175,34 +177,45 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
 
       {/* ── TOP FIXED HEADER BADGE ── */}
       <div className="absolute top-6 inset-x-0 flex justify-center z-20 px-4">
-        <div className="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-slate-950/60 backdrop-blur-md border border-amber-400/40">
+        <div className="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-slate-950/75 backdrop-blur-md border border-amber-400/40 shadow-lg">
           <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_12px_rgba(251,191,36,0.9)]" />
           <span
-            className="text-xs font-black tracking-[0.25em] text-amber-300 uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]"
-            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            className="text-xs font-black tracking-[0.25em] text-amber-300 uppercase"
+            style={{
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.95))',
+            }}
           >
             SUPER GESTÃO — PRONAF
           </span>
         </div>
       </div>
 
-      {/* ── CENTER AREA: CINEMATIC STAGGERED TYPOGRAPHY & LIGHT LINE EXPANSION ── */}
+      {/* ── CENTER AREA: PROFESSINAL SHADOW ENGINE & SUNBURST GOLD TYPOGRAPHY ── */}
       <div className="absolute inset-0 flex items-center justify-center z-20 px-6">
         {!showBrandReveal ? (
           <div className="flex flex-col items-center justify-center text-center space-y-5 max-w-4xl mx-auto">
-            {/* Stage Title (Outfit Ultra-Black Typography + Motion Blur Entrance) */}
+            {/* Stage Title (Outfit Ultra-Black Typography + Dual-Layer Shadow Engine) */}
             <h2
-              className="stage-title-text text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-[0.06em] text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 via-yellow-200 to-emerald-200 drop-shadow-[0_10px_35px_rgba(0,0,0,0.98)]"
-              style={{ fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
+              className="stage-title-text text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-[0.06em] text-transparent bg-clip-text bg-gradient-to-r from-[#fffbeb] via-[#fcd34d] via-[#fbbf24] to-[#f59e0b]"
+              style={{
+                fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif",
+                filter: 'drop-shadow(0px 8px 30px rgba(0, 0, 0, 0.98)) drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.95))',
+              }}
             >
               {currentStage.title}
             </h2>
 
             {/* Glowing Golden Light Line Expansion */}
-            <div className="golden-line-glow w-48 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_12px_rgba(251,191,36,0.8)]" />
+            <div className="golden-line-glow w-48 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_15px_rgba(251,191,36,0.9)]" />
 
-            {/* Stage Subtitle */}
-            <p className="stage-subtitle-text text-base sm:text-2xl md:text-3xl font-bold text-slate-50 tracking-wide font-sans leading-relaxed max-w-3xl drop-shadow-[0_4px_20px_rgba(0,0,0,0.98)]">
+            {/* Stage Subtitle (Platinum White with Outline Shadow) */}
+            <p
+              className="stage-subtitle-text text-base sm:text-2xl md:text-3xl font-bold text-[#f8fafc] tracking-wide font-sans leading-relaxed max-w-3xl"
+              style={{
+                filter: 'drop-shadow(0px 4px 16px rgba(0, 0, 0, 0.98)) drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.9))',
+              }}
+            >
               {currentStage.subtitle}
             </p>
           </div>
