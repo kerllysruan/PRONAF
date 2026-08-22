@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from "react";
+import { Link } from "react-router-dom";
 import { ChartTooltip } from "@/components/ChartTooltip";
 import {
   FileText, CheckCircle2, Search, DollarSign, TrendingUp, Loader2,
@@ -1034,6 +1035,104 @@ export default function Dashboard() {
       </div>
 
       <div ref={dashboardRef} className="space-y-8 p-1">
+
+        {/* ============================================= */}
+        {/* MÓDULOS DE DADOS INTEGRADOS (/propostas, /estoque, /documentacao) */}
+        {/* ============================================= */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-2">
+              <Activity className="h-4 w-4 text-emerald-600" />
+              Alimentação de Dados Integrada em Tempo Real
+            </h2>
+            <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200/60 uppercase tracking-wider">
+              Conexão Ativa
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* 1. Módulo Propostas */}
+            <Link
+              to="/propostas"
+              className="group relative overflow-hidden p-5 rounded-3xl bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-950 text-white border border-emerald-800/40 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <Badge variant="secondary" className="bg-amber-400/20 text-amber-300 border-0 text-[9px] font-black tracking-widest uppercase mb-2">
+                    supergestao.digital/propostas
+                  </Badge>
+                  <h3 className="text-lg font-black tracking-tight text-white group-hover:text-amber-300 transition-colors">
+                    Propostas de Crédito
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-1 font-medium">
+                    {stats.concluidasTotal} propostas concluídas · {formatCompact(stats.valorAprovado)} aprovados
+                  </p>
+                </div>
+                <div className="h-10 w-10 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform">
+                  <FileText className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-amber-300">
+                <span>Gerenciar Esteira de Crédito</span>
+                <ArrowUpRight className="h-4 w-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* 2. Módulo Estoque */}
+            <Link
+              to="/estoque"
+              className="group relative overflow-hidden p-5 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 text-white border border-indigo-800/40 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <Badge variant="secondary" className="bg-indigo-400/20 text-indigo-300 border-0 text-[9px] font-black tracking-widest uppercase mb-2">
+                    supergestao.digital/estoque
+                  </Badge>
+                  <h3 className="text-lg font-black tracking-tight text-white group-hover:text-indigo-300 transition-colors">
+                    Estoque de Propostas
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-1 font-medium">
+                    {stats.estoqueAtivo} em pipeline · {formatCompact(stats.estoqueValor)} estimado
+                  </p>
+                </div>
+                <div className="h-10 w-10 rounded-2xl bg-indigo-400/10 border border-indigo-400/30 flex items-center justify-center text-indigo-300 group-hover:scale-110 transition-transform">
+                  <Box className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-indigo-300">
+                <span>Gerenciar Pipeline de Estoque</span>
+                <ArrowUpRight className="h-4 w-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* 3. Módulo Documentação */}
+            <Link
+              to="/documentacao"
+              className="group relative overflow-hidden p-5 rounded-3xl bg-gradient-to-br from-slate-900 via-teal-950 to-slate-950 text-white border border-teal-800/40 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <Badge variant="secondary" className="bg-teal-400/20 text-teal-300 border-0 text-[9px] font-black tracking-widest uppercase mb-2">
+                    supergestao.digital/documentacao
+                  </Badge>
+                  <h3 className="text-lg font-black tracking-tight text-white group-hover:text-teal-300 transition-colors">
+                    Análise Documental
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-1 font-medium">
+                    {docStats.completedDocs}/{docStats.totalDocs} validados · {docStats.rate}% conformidade
+                  </p>
+                </div>
+                <div className="h-10 w-10 rounded-2xl bg-teal-400/10 border border-teal-400/30 flex items-center justify-center text-teal-300 group-hover:scale-110 transition-transform">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-teal-300">
+                <span>Gerenciar Documentação</span>
+                <ArrowUpRight className="h-4 w-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </div>
+            </Link>
+          </div>
+        </div>
 
       {/* ============================================= */}
       {/* KPI ROW 1 — Visão Geral (Estoque + Concluídas) */}
