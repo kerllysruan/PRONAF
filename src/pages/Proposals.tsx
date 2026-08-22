@@ -241,7 +241,7 @@ export default function Proposals() {
       displayValue: Number(p.requested_value) || 0,
       displayLocation: p.producer_address || '---',
       displayDesigner: PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer,
-      displayDate: p.entry_date
+      displayDate: p.entry_date || p.created_at
     }));
     const stockMapped = concludedStockProposals.map(p => ({
       ...p,
@@ -253,7 +253,9 @@ export default function Proposals() {
     }));
     return [...mainMapped, ...stockMapped].sort((a, b) => {
       if (sortBy === "nome") return a.producer_name.localeCompare(b.producer_name);
-      return new Date(b.displayDate || 0).getTime() - new Date(a.displayDate || 0).getTime();
+      const timeA = a.displayDate ? new Date(a.displayDate).getTime() : 0;
+      const timeB = b.displayDate ? new Date(b.displayDate).getTime() : 0;
+      return timeB - timeA; // Strictly newest to oldest
     });
   }, [concludedMainProposals, concludedStockProposals, sortBy]);
 
@@ -937,9 +939,9 @@ export default function Proposals() {
                       <td className="py-5 pr-8 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <button
-                            onClick={() => p.isMain ? setViewingProposal(p) : setViewingStockProposal(p)}
-                            title="Ver Detalhes"
-                            className="h-9 w-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm"
+                            onClick={() => setViewingProposal(p)}
+                            title="Ver Detalhes da Proposta"
+                            className="h-9 w-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm cursor-pointer"
                           >
                             <Eye className="h-4.5 w-4.5" />
                           </button>
@@ -1053,7 +1055,7 @@ export default function Proposals() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de Detalhes da Proposta Ativa (Configuração Gráfica Premium) */}
+      {/* Dialog de Detalhes da Proposta (Configuração Gráfica Premium) */}
       <Dialog open={!!viewingProposal} onOpenChange={() => setViewingProposal(null)}>
         <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border border-border/50 shadow-2xl">
           <div className="bg-card p-5 border-b border-border/40 text-foreground relative overflow-hidden">
@@ -1068,8 +1070,8 @@ export default function Proposals() {
                     <User className="h-3.5 w-3.5 text-muted-foreground/75" /> {viewingProposal?.producer_cpf || '---'}
                   </span>
                   <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <Badge variant="outline" className={`text-[10px] px-2 py-0.5 rounded-md font-semibold border-0 shadow-sm ${STATUS_COLORS[viewingProposal?.status as ProposalStatus]}`}>
-                    {STATUS_LABELS[viewingProposal?.status as ProposalStatus]?.toUpperCase()}
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 rounded-md font-semibold border-0 shadow-sm bg-emerald-50 text-emerald-700">
+                    {(viewingProposal?.status || 'CONCLUÍDO').toUpperCase()}
                   </Badge>
                 </div>
               </div>
@@ -1085,18 +1087,18 @@ export default function Proposals() {
                   </h4>
                   <div className="space-y-4">
                     <div className="bg-muted/40 p-4 rounded-xl border border-border/40">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Valor Solicitado</p>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Valor da Operação</p>
                       <p className="text-xl font-bold text-slate-900 dark:text-slate-50">
-                        {viewingProposal?.requested_value ? formatCurrency(Number(viewingProposal.requested_value)) : '---'}
+                        {viewingProposal?.displayValue ? formatCurrency(Number(viewingProposal.displayValue)) : (viewingProposal?.requested_value || viewingProposal?.estimated_value ? formatCurrency(Number(viewingProposal.requested_value || viewingProposal.estimated_value)) : '---')}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Programa de Crédito</p>
-                      <p className="text-sm font-semibold text-slate-700">{viewingProposal?.credit_program || '---'}</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Programa / Linha de Crédito</p>
+                      <p className="text-sm font-semibold text-slate-700">{viewingProposal?.credit_program || viewingProposal?.linha_credito || '---'}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">SICAD</p>
-                      <p className="text-sm font-semibold text-indigo-600 font-mono tracking-tighter">{viewingProposal?.sicad || 'SEM SICAD'}</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">SICAD / Status Original</p>
+                      <p className="text-sm font-semibold text-indigo-600 font-mono tracking-tighter">{viewingProposal?.sicad || viewingProposal?.original_csv_status || 'SEM SICAD'}</p>
                     </div>
                   </div>
                 </div>
@@ -1107,12 +1109,12 @@ export default function Proposals() {
                   </h4>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Endereço</span>
-                      <span className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{viewingProposal?.producer_address || '---'}</span>
+                      <span className="text-xs text-slate-500">Endereço / Município</span>
+                      <span className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{viewingProposal?.displayLocation || viewingProposal?.producer_address || viewingProposal?.municipio || '---'}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
                       <span className="text-xs text-slate-500">Projetista</span>
-                      <span className="text-xs font-bold text-indigo-600">{PROJECT_DESIGNER_LABELS[viewingProposal?.project_designer as ProjectDesigner] || '---'}</span>
+                      <span className="text-xs font-bold text-indigo-600">{viewingProposal?.displayDesigner || viewingProposal?.projetista || PROJECT_DESIGNER_LABELS[viewingProposal?.project_designer as ProjectDesigner] || '---'}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
                       <span className="text-xs text-slate-500">Agência</span>
@@ -1130,15 +1132,17 @@ export default function Proposals() {
                   <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
                       <span className="text-xs text-slate-500">Data de Entrada</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingProposal?.entry_date ? format(parseISO(viewingProposal.entry_date), 'dd/MM/yyyy') : '---'}</span>
+                      <span className="text-xs font-bold text-slate-700">
+                        {viewingProposal?.displayDate ? format(parseISO(viewingProposal.displayDate), 'dd/MM/yyyy') : (viewingProposal?.entry_date ? format(parseISO(viewingProposal.entry_date), 'dd/MM/yyyy') : '---')}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">Finalidade</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingProposal?.credit_purpose || '---'}</span>
+                      <span className="text-xs text-slate-500">Finalidade / Origem</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingProposal?.credit_purpose || viewingProposal?.request_type || (viewingProposal?.isMain ? 'Lista Ativa' : 'Estoque')}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                      <span className="text-xs text-slate-500">ID Atividade</span>
-                      <span className="text-xs font-bold text-slate-700">{viewingProposal?.activity_id || '---'}</span>
+                      <span className="text-xs text-slate-500">ID Atividade / Tarefa</span>
+                      <span className="text-xs font-bold text-slate-700">{viewingProposal?.activity_id || viewingProposal?.task || '---'}</span>
                     </div>
                   </div>
                 </div>
@@ -1157,15 +1161,15 @@ export default function Proposals() {
 
           <DialogFooter className="bg-slate-50/80 p-6 border-t border-slate-100 flex sm:justify-between items-center rounded-b-3xl">
             <div className="flex flex-col">
-              <p className="text-[10px] text-slate-400">Origem: {viewingProposal?.originator || 'Sistema'}</p>
+              <p className="text-[10px] text-slate-400">Origem: {viewingProposal?.originator || (viewingProposal?.isMain ? 'Esteira Principal' : 'Estoque')}</p>
               <p className="text-[10px] text-slate-400 italic">Última Análise: {viewingProposal?.last_analyst || 'Não informada'}</p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setViewingProposal(null)} className="rounded-xl font-bold text-xs h-10 border-slate-200">
                 Fechar
               </Button>
-              {permissions.can_edit_proposals && (
-                <Button onClick={() => { setViewingProposal(null); openEdit(viewingProposal); }} className="rounded-xl font-bold text-xs h-10 shadow-lg shadow-primary/20">
+              {viewingProposal?.isMain && permissions.can_edit_proposals && (
+                <Button onClick={() => { const p = viewingProposal; setViewingProposal(null); openEdit(p); }} className="rounded-xl font-bold text-xs h-10 shadow-lg shadow-primary/20">
                   Editar Proposta
                 </Button>
               )}
