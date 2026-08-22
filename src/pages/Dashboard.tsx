@@ -394,21 +394,24 @@ export default function Dashboard() {
     const valorTotalMain = filteredProposals.reduce((sum, p) => sum + Number(p.requested_value), 0);
     const valorAprovadoMain = filteredProposals.filter((p) => p.status === "aprovada" || p.status === "contrato_liberado").reduce((s, p) => s + Number(p.requested_value), 0);
 
-    // 2. Estoque (Pipeline)
-    const estoqueTotal = stockProposals.length;
-    
-    // Filtrar estoque ativo (excluindo concluídos)
-    const estoqueAtivoProposals = stockProposals.filter(p => p.status !== 'CONCLUÍDO' && p.status !== 'CONCLUIDO');
+    // 2. Estoque (Pipeline) — Strictly filter ACTIVE stock proposals ONLY (exclusivo do estoque ativo)
+    const isConcluidoStockStatus = (statusStr: string) => {
+      const norm = (statusStr || '').toUpperCase().trim();
+      return norm === 'CONCLUÍDO' || norm === 'CONCLUIDO' || norm === 'APROVADA' || norm === 'APROVADO' || norm === 'CONTRATO LIBERADO' || norm === 'FINALIZADO';
+    };
+
+    // Strictly active stock items (EXCLUDING any concluded item)
+    const estoqueAtivoProposals = stockProposals.filter(p => !isConcluidoStockStatus(p.status));
     const estoqueAtivo = estoqueAtivoProposals.length;
     const estoqueValor = estoqueAtivoProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
     
-    // Estoque Concluído
-    const estoqueConcluidoProposals = stockProposals.filter(p => p.status === 'CONCLUÍDO' || p.status === 'CONCLUIDO');
+    // Concluded stock items
+    const estoqueConcluidoProposals = stockProposals.filter(p => isConcluidoStockStatus(p.status));
     const estoqueConcluido = estoqueConcluidoProposals.length;
     const estoqueValorConcluido = estoqueConcluidoProposals.reduce((sum, p) => sum + (Number(p.estimated_value) || 0), 0);
 
-    // 3. Totais Consolidados (Estoque + Esteira)
-    const total = estoqueTotal + totalMain;
+    // 3. Totais Consolidados (Estoque Ativo + Esteira de Propostas)
+    const total = estoqueAtivo + totalMain;
     const aprovadas = estoqueConcluido + aprovadasMain;
     const ativos = estoqueAtivo + ativosMain;
     const valorTotal = estoqueValor + valorTotalMain;
@@ -426,7 +429,7 @@ export default function Dashboard() {
       valorTotal,
       valorAprovado,
       taxaAprovacao,
-      estoqueTotal,
+      estoqueTotal: stockProposals.length,
       estoqueAtivo,
       estoqueValor,
       concluidasTotal: aprovadas,
@@ -1050,29 +1053,29 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* 1. Módulo Propostas */}
             <Link
               to="/propostas"
-              className="group relative overflow-hidden p-5 rounded-3xl bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-950 text-white border border-emerald-800/40 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between"
+              className="group relative overflow-hidden p-6 rounded-3xl bg-gradient-to-br from-emerald-900/95 via-emerald-950 to-slate-950 text-white border-2 border-emerald-500/40 shadow-[0_10px_30px_rgba(5,46,22,0.3)] hover:shadow-[0_20px_40px_rgba(16,185,129,0.3)] hover:border-amber-400/60 hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <Badge variant="secondary" className="bg-amber-400/20 text-amber-300 border-0 text-[9px] font-black tracking-widest uppercase mb-2">
+                  <Badge variant="secondary" className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[9px] font-black tracking-widest uppercase mb-2.5">
                     supergestao.digital/propostas
                   </Badge>
-                  <h3 className="text-lg font-black tracking-tight text-white group-hover:text-amber-300 transition-colors">
+                  <h3 className="text-xl font-black tracking-tight text-white group-hover:text-amber-300 transition-colors">
                     Propostas de Crédito
                   </h3>
-                  <p className="text-xs text-slate-300 mt-1 font-medium">
-                    {stats.concluidasTotal} propostas concluídas · {formatCompact(stats.valorAprovado)} aprovados
+                  <p className="text-xs text-slate-300 mt-1.5 font-medium leading-relaxed">
+                    {stats.concluidasTotal} propostas concluídas · <span className="text-emerald-400 font-bold">{formatCompact(stats.valorAprovado)}</span> aprovados
                   </p>
                 </div>
-                <div className="h-10 w-10 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-300 group-hover:scale-110 transition-transform">
-                  <FileText className="h-5 w-5" />
+                <div className="h-12 w-12 rounded-2xl bg-amber-400/15 border border-amber-400/40 flex items-center justify-center text-amber-300 group-hover:scale-110 group-hover:rotate-3 transition-all shadow-md">
+                  <FileText className="h-6 w-6" />
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-amber-300">
+              <div className="mt-5 pt-3.5 border-t border-white/10 flex items-center justify-between text-xs font-black text-amber-300 uppercase tracking-wider">
                 <span>Gerenciar Esteira de Crédito</span>
                 <ArrowUpRight className="h-4 w-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </div>
@@ -1081,25 +1084,25 @@ export default function Dashboard() {
             {/* 2. Módulo Estoque */}
             <Link
               to="/estoque"
-              className="group relative overflow-hidden p-5 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 text-white border border-indigo-800/40 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between"
+              className="group relative overflow-hidden p-6 rounded-3xl bg-gradient-to-br from-indigo-900/95 via-indigo-950 to-slate-950 text-white border-2 border-indigo-500/40 shadow-[0_10px_30px_rgba(30,27,75,0.3)] hover:shadow-[0_20px_40px_rgba(99,102,241,0.3)] hover:border-indigo-400/60 hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <Badge variant="secondary" className="bg-indigo-400/20 text-indigo-300 border-0 text-[9px] font-black tracking-widest uppercase mb-2">
+                  <Badge variant="secondary" className="bg-indigo-400/20 text-indigo-300 border border-indigo-400/30 text-[9px] font-black tracking-widest uppercase mb-2.5">
                     supergestao.digital/estoque
                   </Badge>
-                  <h3 className="text-lg font-black tracking-tight text-white group-hover:text-indigo-300 transition-colors">
+                  <h3 className="text-xl font-black tracking-tight text-white group-hover:text-indigo-300 transition-colors">
                     Estoque de Propostas
                   </h3>
-                  <p className="text-xs text-slate-300 mt-1 font-medium">
-                    {stats.estoqueAtivo} em pipeline · {formatCompact(stats.estoqueValor)} estimado
+                  <p className="text-xs text-slate-300 mt-1.5 font-medium leading-relaxed">
+                    {stats.estoqueAtivo} em pipeline · <span className="text-indigo-300 font-bold">{formatCompact(stats.estoqueValor)}</span> estimado
                   </p>
                 </div>
-                <div className="h-10 w-10 rounded-2xl bg-indigo-400/10 border border-indigo-400/30 flex items-center justify-center text-indigo-300 group-hover:scale-110 transition-transform">
-                  <Box className="h-5 w-5" />
+                <div className="h-12 w-12 rounded-2xl bg-indigo-400/15 border border-indigo-400/40 flex items-center justify-center text-indigo-300 group-hover:scale-110 group-hover:rotate-3 transition-all shadow-md">
+                  <Box className="h-6 w-6" />
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-indigo-300">
+              <div className="mt-5 pt-3.5 border-t border-white/10 flex items-center justify-between text-xs font-black text-indigo-300 uppercase tracking-wider">
                 <span>Gerenciar Pipeline de Estoque</span>
                 <ArrowUpRight className="h-4 w-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </div>
@@ -1108,25 +1111,25 @@ export default function Dashboard() {
             {/* 3. Módulo Documentação */}
             <Link
               to="/documentacao"
-              className="group relative overflow-hidden p-5 rounded-3xl bg-gradient-to-br from-slate-900 via-teal-950 to-slate-950 text-white border border-teal-800/40 shadow-lg hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between"
+              className="group relative overflow-hidden p-6 rounded-3xl bg-gradient-to-br from-teal-900/95 via-teal-950 to-slate-950 text-white border-2 border-teal-500/40 shadow-[0_10px_30px_rgba(19,78,74,0.3)] hover:shadow-[0_20px_40px_rgba(20,184,166,0.3)] hover:border-teal-300/60 hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between"
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <Badge variant="secondary" className="bg-teal-400/20 text-teal-300 border-0 text-[9px] font-black tracking-widest uppercase mb-2">
+                  <Badge variant="secondary" className="bg-teal-400/20 text-teal-300 border border-teal-400/30 text-[9px] font-black tracking-widest uppercase mb-2.5">
                     supergestao.digital/documentacao
                   </Badge>
-                  <h3 className="text-lg font-black tracking-tight text-white group-hover:text-teal-300 transition-colors">
+                  <h3 className="text-xl font-black tracking-tight text-white group-hover:text-teal-300 transition-colors">
                     Análise Documental
                   </h3>
-                  <p className="text-xs text-slate-300 mt-1 font-medium">
-                    {docStats.completedDocs}/{docStats.totalDocs} validados · {docStats.rate}% conformidade
+                  <p className="text-xs text-slate-300 mt-1.5 font-medium leading-relaxed">
+                    {docStats.completedDocs}/{docStats.totalDocs} validados · <span className="text-teal-300 font-bold">{docStats.rate}%</span> conformidade
                   </p>
                 </div>
-                <div className="h-10 w-10 rounded-2xl bg-teal-400/10 border border-teal-400/30 flex items-center justify-center text-teal-300 group-hover:scale-110 transition-transform">
-                  <CheckCircle2 className="h-5 w-5" />
+                <div className="h-12 w-12 rounded-2xl bg-teal-400/15 border border-teal-400/40 flex items-center justify-center text-teal-300 group-hover:scale-110 group-hover:rotate-3 transition-all shadow-md">
+                  <CheckCircle2 className="h-6 w-6" />
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-bold text-teal-300">
+              <div className="mt-5 pt-3.5 border-t border-white/10 flex items-center justify-between text-xs font-bold text-teal-300 uppercase tracking-wider">
                 <span>Gerenciar Documentação</span>
                 <ArrowUpRight className="h-4 w-4 transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </div>
@@ -1135,41 +1138,41 @@ export default function Dashboard() {
         </div>
 
       {/* ============================================= */}
-      {/* KPI ROW 1 — Visão Geral (Estoque + Concluídas) */}
+      {/* KPI ROW 1 — Visão Geral (Estoque Ativo + Concluídas) */}
       {/* ============================================= */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {/* Total em Estoque */}
-        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+        <Card className="group relative overflow-hidden border-2 border-indigo-100 dark:border-indigo-900/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="p-5 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Total em Estoque</p>
-                <p className="text-3xl font-extrabold font-heading text-foreground">{stats.estoqueAtivo}</p>
-                <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-600 border-0 text-[9px] font-bold">
-                  <Box className="h-2.5 w-2.5 mr-1" /> AGUARDANDO ESTEIRA
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Total em Estoque</p>
+                <p className="text-3xl font-black font-heading text-foreground">{stats.estoqueAtivo}</p>
+                <Badge variant="secondary" className="mt-1.5 px-2.5 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-600 border border-indigo-200/50 text-[9px] font-black tracking-wider uppercase">
+                  <Box className="h-2.5 w-2.5 mr-1" /> ESTOQUE ATIVO
                 </Badge>
               </div>
-              <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 transform group-hover:scale-110 group-hover:rotate-3 transition-all">
+              <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 border border-indigo-200/50 flex items-center justify-center text-indigo-600 transform group-hover:scale-110 group-hover:rotate-3 transition-all shadow-sm">
                 <Box className="h-6 w-6" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Volume em Estoque */}
-        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+        {/* Volume em Estoque (Exclusivo Estoque Ativo, sem concluídas!) */}
+        <Card className="group relative overflow-hidden border-2 border-violet-100 dark:border-violet-900/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
           <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="p-5 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Volume em Estoque</p>
-                <p className="text-xl font-extrabold font-heading text-foreground mt-0.5">{formatCompact(stats.estoqueValor)}</p>
-                <p className="text-[9px] font-bold text-muted-foreground mt-1 flex items-center gap-1 italic">
-                  <DollarSign className="h-2.5 w-2.5 opacity-50" /> TOTAL ESTIMADO
-                </p>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Volume em Estoque</p>
+                <p className="text-2xl font-black font-heading text-foreground mt-0.5">{formatCompact(stats.estoqueValor)}</p>
+                <Badge variant="secondary" className="mt-1.5 px-2.5 py-0.5 rounded-lg bg-violet-500/10 text-violet-700 border border-violet-200/50 text-[9px] font-black tracking-wider uppercase">
+                  <CircleDollarSign className="h-2.5 w-2.5 mr-1 text-violet-600" /> APENAS ESTOQUE ATIVO
+                </Badge>
               </div>
-              <div className="h-12 w-12 rounded-2xl bg-violet-500/10 flex items-center justify-center text-violet-600 transform group-hover:scale-110 group-hover:rotate-6 transition-all">
+              <div className="h-12 w-12 rounded-2xl bg-violet-500/10 border border-violet-200/50 flex items-center justify-center text-violet-600 transform group-hover:scale-110 group-hover:rotate-6 transition-all shadow-sm">
                 <CircleDollarSign className="h-6 w-6" />
               </div>
             </div>
@@ -1177,19 +1180,19 @@ export default function Dashboard() {
         </Card>
 
         {/* Contratos Assinados */}
-        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-900 dark:to-slate-950">
+        <Card className="group relative overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="p-5 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5">Contratos Assinados</p>
-                <p className="text-3xl font-extrabold font-heading text-foreground">{stats.aprovadas}</p>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Contratos Assinados</p>
+                <p className="text-3xl font-black font-heading text-foreground">{stats.aprovadas}</p>
                 <div className="flex items-center gap-1 mt-1.5">
                   <TrendingUp className="h-3 w-3 text-emerald-600" />
-                  <span className="text-[9px] text-emerald-600 font-bold">{stats.taxaAprovacao}% TAXA</span>
+                  <span className="text-[9px] text-emerald-600 font-black tracking-wider uppercase">{stats.taxaAprovacao}% TAXA APROVAÇÃO</span>
                 </div>
               </div>
-              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
             </div>
@@ -1197,18 +1200,18 @@ export default function Dashboard() {
         </Card>
 
         {/* Geral Concluídas */}
-        <Card className="group relative overflow-hidden border-0 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-slate-950">
+        <Card className="group relative overflow-hidden border-2 border-emerald-200 dark:border-emerald-900/60 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-950/30 dark:to-slate-900">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <CardContent className="p-5 relative">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-bold text-emerald-600/80 uppercase tracking-widest mb-0.5">Geral Concluídas</p>
-                <p className="text-3xl font-extrabold font-heading text-emerald-600">{stats.concluidasTotal}</p>
-                <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 border-0 text-[9px] font-bold">
+                <p className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Geral Concluídas</p>
+                <p className="text-3xl font-black font-heading text-emerald-600">{stats.concluidasTotal}</p>
+                <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-700 border border-emerald-300/50 text-[9px] font-black tracking-wider uppercase">
                   {stats.estoqueConcluido} DO ESTOQUE
                 </Badge>
               </div>
-              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">
                 <Award className="h-6 w-6" />
               </div>
             </div>
