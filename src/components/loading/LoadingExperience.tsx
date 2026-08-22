@@ -6,7 +6,7 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { BrandReveal } from './BrandReveal';
 
 export interface LoadingExperienceProps {
-  duration?: number; // 12s progress timeline (3s per stage, clean & professional)
+  duration?: number; // 14s total timeline (3.5s per stage - optimal sweet spot)
   onComplete?: () => void;
 }
 
@@ -35,7 +35,7 @@ const STAGES = [
 ];
 
 export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
-  duration = 12,
+  duration = 14,
   onComplete,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -48,7 +48,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     const clamped = Math.min(100, Math.max(0, Math.round(val)));
     setProgress(clamped);
 
-    // Switch stage every 25% (3 seconds per stage)
+    // Switch stage every 25% (3.5 seconds per stage)
     if (clamped < 25) {
       setActiveStageIndex(0);
     } else if (clamped < 50) {
@@ -61,27 +61,25 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   }, []);
 
   useEffect(() => {
-    // Preload background images immediately
     preloadCriticalAssets();
 
     const ctx = gsap.context(() => {
       const progObj = { value: 0 };
 
-      // Master GSAP Timeline with smooth handover at 100%
+      // Master GSAP Timeline
       const tl = gsap.timeline({
         onComplete: () => {
-          // At 100%: Show brand reveal, hold for 1.2s, then smooth 0.5s fade-out handover
           setShowBrandReveal(true);
           setTimeout(() => {
             setIsFadingOut(true);
             setTimeout(() => {
               onComplete?.();
-            }, 500);
-          }, 1200);
+            }, 600);
+          }, 1000);
         },
       });
 
-      // 1. Progress counter over 12 seconds
+      // 1. Smooth Progress Counter over 14 seconds
       tl.to(progObj, {
         value: 100,
         duration: duration,
@@ -112,24 +110,24 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     return () => ctx.revert();
   }, [duration, onComplete, updateProgress]);
 
-  // Stage text animation reset trigger on stage change
+  // Ultra-Smooth Stage Text Animation Reset
   useEffect(() => {
     if (showBrandReveal) return;
     const ctx = gsap.context(() => {
       gsap.fromTo(
         '.stage-title-text',
-        { y: 35, opacity: 0, filter: 'blur(10px)', scale: 0.96 },
-        { y: 0, opacity: 1, filter: 'blur(0px)', scale: 1, duration: 1.0, ease: 'power3.out' }
+        { y: 30, opacity: 0, filter: 'blur(10px)', scale: 0.97 },
+        { y: 0, opacity: 1, filter: 'blur(0px)', scale: 1, duration: 1.2, ease: 'sine.out' }
       );
       gsap.fromTo(
         '.stage-subtitle-text',
-        { y: 20, opacity: 0, filter: 'blur(6px)' },
-        { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.8, delay: 0.25, ease: 'power3.out' }
+        { y: 18, opacity: 0, filter: 'blur(6px)' },
+        { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.0, delay: 0.2, ease: 'sine.out' }
       );
       gsap.fromTo(
         '.golden-line-glow',
         { scaleX: 0, opacity: 0 },
-        { scaleX: 1, opacity: 1, duration: 1.2, delay: 0.4, ease: 'power2.out' }
+        { scaleX: 1, opacity: 1, duration: 1.3, delay: 0.35, ease: 'sine.out' }
       );
     }, containerRef);
 
@@ -141,37 +139,36 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-600 ${
         isFadingOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {/* ── CINEMATIC BACKGROUND LAYERS WITH CALIBRATED BRIGHTNESS & HIGH COLOR SATURATION ── */}
+      {/* ── CINEMATIC BACKGROUND LAYERS WITH SILKY 1200ms CROSSFADE ── */}
       {Object.entries(MEDIA_CONFIG.images).map(([key, url]) => {
         const isCurrentBg = currentStage.bgKey === key;
         return (
           <div
             key={key}
-            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 transform filter saturate-[1.3] contrast-[1.12] brightness-[1.08] ${
+            className={`absolute inset-0 bg-cover bg-center transition-all duration-[1200ms] ease-in-out transform filter saturate-[1.3] contrast-[1.12] brightness-[1.08] ${
               isCurrentBg
                 ? 'opacity-95 scale-100 rotate-0 blur-none'
                 : 'opacity-0 scale-105 rotate-1 blur-sm pointer-events-none'
             }`}
             style={{
               backgroundImage: `url(${url})`,
-              transitionProperty: 'opacity, transform, filter',
             }}
           />
         );
       })}
 
-      {/* Light Ambient Overlay & Focal Area Vignette for High Text Readability */}
+      {/* Light Ambient Overlay & Focal Area Vignette */}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/30 to-slate-950/50 pointer-events-none" />
       <div className="absolute inset-0 bg-radial-vignette pointer-events-none opacity-70" />
 
-      {/* ── MOTION FX 1: Solar Lens Flare Dynamic Motion Sweep ── */}
+      {/* ── MOTION FX 1: Solar Lens Flare Sweep ── */}
       <div className="lens-flare-sweep absolute -top-40 -left-40 w-[650px] h-[650px] bg-radial-flare pointer-events-none opacity-40 mix-blend-screen" />
 
-      {/* ── MOTION FX 2: SVG Cyber Scanline Traversing Topography ── */}
+      {/* ── MOTION FX 2: SVG Cyber Scanline Sweep ── */}
       <div className="tech-scanline absolute left-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-amber-400/80 to-transparent pointer-events-none opacity-60 shadow-[0_0_15px_rgba(251,191,36,0.9)]" />
 
       {/* Volumetric Particles Simulation */}

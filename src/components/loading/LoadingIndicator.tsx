@@ -32,10 +32,10 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
         </span>
       </div>
 
-      {/* Progress Track (Sunburst Gradient & High-Contrast Dark Track) */}
+      {/* Progress Track (Silky Smooth 300ms Ease-Out Interpolation) */}
       <div className="w-full h-3.5 bg-[#040e08]/90 rounded-full border-2 border-amber-400/60 p-0.5 overflow-hidden shadow-[0_6px_20px_rgba(0,0,0,0.85)]">
         <div
-          className="h-full bg-gradient-to-r from-emerald-400 via-amber-400 via-yellow-300 to-emerald-300 rounded-full transition-all duration-200 ease-out shadow-[0_0_20px_rgba(251,191,36,0.8)]"
+          className="h-full bg-gradient-to-r from-emerald-400 via-amber-400 via-yellow-300 to-emerald-300 rounded-full transition-all duration-300 ease-out shadow-[0_0_20px_rgba(251,191,36,0.8)]"
           style={{ width: `${progress}%` }}
         />
       </div>
