@@ -5,35 +5,36 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { BrandReveal } from './BrandReveal';
 
 export interface LoadingExperienceProps {
-  duration?: number; // 10 seconds total for comfortable, pleasant reading speed
+  duration?: number; // 16 seconds total for relaxed, natural reading speed
   onComplete?: () => void;
 }
 
+// Interconnected narrative storytelling stages (each connected logically to the next)
 const STAGES = [
   {
     title: 'O CAMPO BRASILEIRO DESPERTA',
-    subtitle: 'Tecnologia e oportunidades impulsionando o agronegócio',
+    subtitle: 'Na terra fértil do Brasil, o trabalho rural transforma dedicação em produção.',
     bgKey: 'sunriseDawn',
   },
   {
-    title: 'AGRICULTURA FAMILIAR & PRODUÇÃO',
-    subtitle: 'Soluções financeiras fortalecendo quem produz no campo',
+    title: 'A AGRICULTURA FAMILIAR PRODUZ',
+    subtitle: 'Da lavoura ao alimento, a força do produtor movimenta a economia do país.',
     bgKey: 'aerialCrops',
   },
   {
-    title: 'TECNOLOGIA E DADOS CONECTADOS',
-    subtitle: 'Inteligência organizando informações e propostas PRONAF',
-    bgKey: 'familyFarmer',
+    title: 'A TECNOLOGIA ORGANIZA OS DADOS',
+    subtitle: 'Conectamos as informações do campo para gerar inteligência e oportunidades.',
+    bgKey: 'organicProduce',
   },
   {
-    title: 'ANÁLISE DE OPORTUNIDADES',
-    subtitle: 'Estruturação ágil e crédito rural ao alcance do produtor',
+    title: 'O CRÉDITO IMPULSIONA O FUTURO',
+    subtitle: 'Facilitamos a análise e o acesso ao financiamento agrícola do PRONAF.',
     bgKey: 'cornHarvest',
   },
 ];
 
 export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
-  duration = 10,
+  duration = 16,
   onComplete,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -46,7 +47,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     const clamped = Math.min(100, Math.max(0, Math.round(val)));
     setProgress(clamped);
 
-    // Smooth stage transitions aligned with progress percentage
+    // Smooth stage transitions aligned with progress percentage (4s per stage)
     if (clamped < 25) {
       setActiveStageIndex(0);
     } else if (clamped < 50) {
@@ -72,11 +73,11 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
             setTimeout(() => {
               onComplete?.();
             }, 800);
-          }, 1500);
+          }, 1800);
         },
       });
 
-      // Smooth progress counter over 10 seconds (pleasant reading speed)
+      // Smooth progress counter over 16 seconds (4 seconds per narrative stage)
       tl.to(progObj, {
         value: 100,
         duration: duration,
@@ -104,8 +105,8 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         return (
           <div
             key={key}
-            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 transform scale-105 filter saturate-[1.25] contrast-[1.1] brightness-[1.05] ${
-              isCurrentBg ? 'opacity-85 scale-100' : 'opacity-0'
+            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 transform filter saturate-[1.25] contrast-[1.1] brightness-[1.05] ${
+              isCurrentBg ? 'opacity-85 scale-100' : 'opacity-0 scale-105'
             }`}
             style={{ backgroundImage: `url(${url})` }}
           />
@@ -129,14 +130,14 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         </div>
       </div>
 
-      {/* ── CENTER AREA: Premium Non-Overlapping Headlines ── */}
+      {/* ── CENTER AREA: Interconnected Narrative Headlines ── */}
       <div className="absolute inset-0 flex items-center justify-center z-20 px-6">
         {!showBrandReveal ? (
           <div
             key={activeStageIndex}
             className="flex flex-col items-center justify-center text-center space-y-4 max-w-2xl mx-auto animate-fade-in"
           >
-            {/* Stage Title (Plus Jakarta Sans 900 Ultra-Bold Typography) */}
+            {/* Stage Title */}
             <h2
               className="text-3xl sm:text-5xl md:text-6xl font-black uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-200 drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)]"
               style={{ fontFamily: "'Plus Jakarta Sans', 'Outfit', sans-serif" }}
@@ -144,9 +145,9 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
               {currentStage.title}
             </h2>
 
-            {/* Stage Subtitle Badge */}
-            <div className="px-6 py-2 rounded-xl bg-emerald-950/85 border border-amber-400/40 backdrop-blur-md shadow-xl">
-              <p className="text-xs sm:text-base font-bold text-amber-100 tracking-wide font-sans">
+            {/* Stage Subtitle */}
+            <div className="px-6 py-3 rounded-xl bg-emerald-950/85 border border-amber-400/40 backdrop-blur-md shadow-xl">
+              <p className="text-sm sm:text-lg font-bold text-amber-100 tracking-wide font-sans leading-relaxed">
                 {currentStage.subtitle}
               </p>
             </div>
