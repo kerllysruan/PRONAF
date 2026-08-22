@@ -6,7 +6,7 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { BrandReveal } from './BrandReveal';
 
 export interface LoadingExperienceProps {
-  duration?: number; // 24s total (6s per stage for relaxed reading)
+  duration?: number; // 12s progress timeline (3s per stage, clean & professional)
   onComplete?: () => void;
 }
 
@@ -35,7 +35,7 @@ const STAGES = [
 ];
 
 export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
-  duration = 24,
+  duration = 12,
   onComplete,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -48,7 +48,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     const clamped = Math.min(100, Math.max(0, Math.round(val)));
     setProgress(clamped);
 
-    // Switch active stage every 25% (6s per stage)
+    // Switch stage every 25% (3 seconds per stage)
     if (clamped < 25) {
       setActiveStageIndex(0);
     } else if (clamped < 50) {
@@ -61,25 +61,27 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   }, []);
 
   useEffect(() => {
+    // Preload background images immediately
     preloadCriticalAssets();
 
     const ctx = gsap.context(() => {
       const progObj = { value: 0 };
 
-      // Master GSAP Timeline with Motion Design FX
+      // Master GSAP Timeline with smooth handover at 100%
       const tl = gsap.timeline({
         onComplete: () => {
+          // At 100%: Show brand reveal, hold for 1.2s, then smooth 0.5s fade-out handover
           setShowBrandReveal(true);
           setTimeout(() => {
             setIsFadingOut(true);
             setTimeout(() => {
               onComplete?.();
-            }, 800);
-          }, 2500);
+            }, 500);
+          }, 1200);
         },
       });
 
-      // 1. Progress bar counter animation
+      // 1. Progress counter over 12 seconds
       tl.to(progObj, {
         value: 100,
         duration: duration,
@@ -97,7 +99,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         ease: 'sine.inOut',
       }, 0);
 
-      // 3. Cyber Tech Scanline Sweep across topography
+      // 3. Cyber Tech Scanline Sweep
       tl.to('.tech-scanline', {
         top: '100%',
         duration: duration,
@@ -116,18 +118,18 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
     const ctx = gsap.context(() => {
       gsap.fromTo(
         '.stage-title-text',
-        { y: 40, opacity: 0, filter: 'blur(12px)', scale: 0.95 },
-        { y: 0, opacity: 1, filter: 'blur(0px)', scale: 1, duration: 1.2, ease: 'power3.out' }
+        { y: 35, opacity: 0, filter: 'blur(10px)', scale: 0.96 },
+        { y: 0, opacity: 1, filter: 'blur(0px)', scale: 1, duration: 1.0, ease: 'power3.out' }
       );
       gsap.fromTo(
         '.stage-subtitle-text',
-        { y: 25, opacity: 0, filter: 'blur(8px)' },
-        { y: 0, opacity: 1, filter: 'blur(0px)', duration: 1.0, delay: 0.3, ease: 'power3.out' }
+        { y: 20, opacity: 0, filter: 'blur(6px)' },
+        { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.8, delay: 0.25, ease: 'power3.out' }
       );
       gsap.fromTo(
         '.golden-line-glow',
         { scaleX: 0, opacity: 0 },
-        { scaleX: 1, opacity: 1, duration: 1.4, delay: 0.5, ease: 'power2.out' }
+        { scaleX: 1, opacity: 1, duration: 1.2, delay: 0.4, ease: 'power2.out' }
       );
     }, containerRef);
 
@@ -139,7 +141,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-800 ${
+      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-500 ${
         isFadingOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
@@ -191,7 +193,7 @@ export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
         </div>
       </div>
 
-      {/* ── CENTER AREA: PROFESSINAL SHADOW ENGINE & SUNBURST GOLD TYPOGRAPHY ── */}
+      {/* ── CENTER AREA: PROFESSIONAL SHADOW ENGINE & SUNBURST GOLD TYPOGRAPHY ── */}
       <div className="absolute inset-0 flex items-center justify-center z-20 px-6">
         {!showBrandReveal ? (
           <div className="flex flex-col items-center justify-center text-center space-y-5 max-w-4xl mx-auto">
