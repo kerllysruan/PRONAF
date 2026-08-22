@@ -15,21 +15,21 @@ export interface UseLoadingExperienceReturn {
 export function useLoadingExperience(onComplete?: () => void): UseLoadingExperienceReturn {
   const [progress, setProgressState] = useState<number>(0);
   const [state, setState] = useState<LoadingState>('intro');
-  const [currentMilestone, setCurrentMilestone] = useState<string>('O CAMPO DESPERTA');
+  const [currentMilestone, setCurrentMilestone] = useState<string>('O AMANHECER NO CAMPO');
 
   const updateMilestone = useCallback((prog: number) => {
     if (prog < 20) {
-      setCurrentMilestone('O AMANHECER NO CAMPO');
+      setCurrentMilestone('O AMANHECER NO CAMPO BRASILEIRO');
     } else if (prog < 40) {
-      setCurrentMilestone('O PRODUTOR E A TERRA');
+      setCurrentMilestone('AGRICULTURA FAMILIAR EM AÇÃO');
     } else if (prog < 60) {
-      setCurrentMilestone('A PRODUÇÃO AGRÍCOLA');
+      setCurrentMilestone('DESENVOLVIMENTO & PRODUÇÃO RURAL');
     } else if (prog < 80) {
-      setCurrentMilestone('INTEGRAÇÃO DE INFORMAÇÕES');
+      setCurrentMilestone('CONEXÃO DE DADOS & INTELIGÊNCIA');
     } else if (prog < 95) {
-      setCurrentMilestone('ANÁLISE DE OPORTUNIDADES');
+      setCurrentMilestone('ANÁLISE DE OPORTUNIDADES PRONAF');
     } else {
-      setCurrentMilestone('CRÉDITO RURAL LIBERADO');
+      setCurrentMilestone('SUPER GESTÃO CONECTADA');
     }
   }, []);
 
@@ -45,7 +45,7 @@ export function useLoadingExperience(onComplete?: () => void): UseLoadingExperie
   const reset = useCallback(() => {
     setProgressState(0);
     setState('intro');
-    setCurrentMilestone('O AMANHECER NO CAMPO');
+    setCurrentMilestone('O AMANHECER NO CAMPO BRASILEIRO');
   }, []);
 
   return {

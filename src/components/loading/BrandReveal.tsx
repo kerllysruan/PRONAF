@@ -1,4 +1,5 @@
 import React from 'react';
+import { MEDIA_CONFIG } from '@/config/imageConfig';
 
 interface BrandRevealProps {
   visible: boolean;
@@ -11,11 +12,11 @@ export const BrandReveal: React.FC<BrandRevealProps> = ({ visible }) => {
     <div className="flex flex-col items-center justify-center text-center z-30 px-6 animate-fade-in">
       {/* Emblem Icon */}
       <div className="relative mb-6">
-        <div className="absolute inset-0 bg-emerald-500/30 rounded-full blur-2xl animate-pulse" />
+        <div className="absolute inset-0 bg-emerald-500/40 rounded-full blur-2xl animate-pulse" />
 
-        <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-900/90 to-emerald-950/90 border border-amber-400/40 p-4 shadow-2xl flex items-center justify-center">
+        <div className="relative w-24 h-24 rounded-3xl bg-gradient-to-br from-emerald-900/90 via-emerald-950/95 to-slate-950/90 border border-amber-400/50 p-5 shadow-2xl flex items-center justify-center">
           <svg
-            className="w-10 h-10 text-amber-300"
+            className="w-12 h-12 text-amber-300 drop-shadow-md"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -31,18 +32,20 @@ export const BrandReveal: React.FC<BrandRevealProps> = ({ visible }) => {
         </div>
       </div>
 
-      {/* Brand Title */}
-      <h1 className="text-4xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-200 to-emerald-200 tracking-wider uppercase mb-3 font-sans drop-shadow-md">
-        CRÉDITO RURAL
+      {/* Brand Title: SUPER GESTÃO */}
+      <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-emerald-200 tracking-wider uppercase mb-3 font-sans drop-shadow-lg">
+        {MEDIA_CONFIG.brand.title}
       </h1>
 
-      {/* Tagline */}
-      <p className="text-base sm:text-lg text-emerald-200/90 font-medium tracking-widest uppercase max-w-md font-sans">
-        Conectando o campo às oportunidades
-      </p>
+      {/* Tagline: AGRICULTURA FAMILIAR - PRONAF */}
+      <div className="inline-block px-5 py-2 rounded-full bg-emerald-950/80 border border-amber-400/40 backdrop-blur-md shadow-xl">
+        <p className="text-xs sm:text-sm font-bold text-amber-300 tracking-[0.25em] uppercase font-sans">
+          {MEDIA_CONFIG.brand.subtitle}
+        </p>
+      </div>
 
-      {/* Subtle Divider */}
-      <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-amber-400/60 to-transparent mt-5" />
+      {/* Subtle Golden Glow Line */}
+      <div className="w-32 h-0.5 bg-gradient-to-r from-transparent via-amber-400/70 to-transparent mt-6" />
     </div>
   );
 };

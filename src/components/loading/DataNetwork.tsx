@@ -17,7 +17,7 @@ export const DataNetwork: React.FC<DataNetworkProps> = ({
     { id: 'informacao', x: 620, y: 420, label: 'Informações' },
     { id: 'analise', x: 780, y: 260, label: 'Análise Inteligente' },
     { id: 'oportunidade', x: 820, y: 380, label: 'Oportunidades' },
-    { id: 'credito', x: 500, y: 300, label: 'Crédito Rural' }, // Center node
+    { id: 'credito', x: 500, y: 300, label: 'SUPER GESTÃO - PRONAF' }, // Center node
   ];
 
   return (

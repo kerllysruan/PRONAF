@@ -14,7 +14,7 @@ export interface LoadingExperienceProps {
 }
 
 export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
-  duration = 9,
+  duration = 15,
   onComplete,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
