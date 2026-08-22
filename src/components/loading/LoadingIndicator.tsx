@@ -11,48 +11,33 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   milestone,
   visible = true,
 }) => {
-  const radius = 64;
-  const strokeWidth = 4;
-  const normalizedRadius = radius - strokeWidth * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  const R = 58;
+  const STROKE = 4;
+  const NR = R - STROKE * 2;
+  const C = NR * 2 * Math.PI;
+  const offset = C - (progress / 100) * C;
+
+  if (!visible) return null;
 
   return (
-    <div
-      className={`flex flex-col items-center justify-center transition-all duration-500 ${
-        visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-      }`}
-    >
-      {/* Circular Progress Ring */}
-      <div className="relative w-36 h-36 flex items-center justify-center">
-        {/* Soft emerald/amber halo blur */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-emerald-500/10 to-amber-500/10 blur-xl" />
+    <div className="flex flex-col items-center justify-center transition-all duration-400 animate-fade-in">
+      {/* Ring */}
+      <div className="relative w-32 h-32 flex items-center justify-center">
+        <div className="absolute inset-2 rounded-full bg-emerald-500/10 blur-xl" />
 
-        <svg height={radius * 2} width={radius * 2} className="rotate-[-90deg]">
-          {/* Background circle track */}
+        <svg height={R * 2} width={R * 2} className="rotate-[-90deg]">
+          <circle stroke="rgba(255,255,255,0.07)" fill="transparent" strokeWidth={STROKE} r={NR} cx={R} cy={R} />
           <circle
-            stroke="rgba(255, 255, 255, 0.08)"
+            stroke="url(#ringGrad)"
             fill="transparent"
-            strokeWidth={strokeWidth}
-            r={normalizedRadius}
-            cx={radius}
-            cy={radius}
-          />
-          {/* Progress circle */}
-          <circle
-            stroke="url(#premiumRingGrad)"
-            fill="transparent"
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${circumference} ${circumference}`}
-            style={{ strokeDashoffset, transition: 'stroke-dashoffset 0.15s ease-out' }}
+            strokeWidth={STROKE}
+            strokeDasharray={`${C} ${C}`}
+            style={{ strokeDashoffset: offset, transition: 'stroke-dashoffset 0.15s ease-out' }}
             strokeLinecap="round"
-            r={normalizedRadius}
-            cx={radius}
-            cy={radius}
+            r={NR} cx={R} cy={R}
           />
-
           <defs>
-            <linearGradient id="premiumRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="#10b981" />
               <stop offset="60%" stopColor="#f59e0b" />
               <stop offset="100%" stopColor="#3b82f6" />
@@ -60,24 +45,17 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
           </defs>
         </svg>
 
-        {/* Center Percentage Display */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold tracking-tight text-amber-200 drop-shadow-[0_2px_8px_rgba(245,158,11,0.3)]">
-            {progress}%
-          </span>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-2xl font-bold text-amber-200 drop-shadow-sm">{progress}%</span>
         </div>
       </div>
 
-      {/* Progress Milestone label */}
-      <div className="mt-6 text-center px-4">
-        <div className="inline-block px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/20 backdrop-blur-md mb-2">
-          <p className="text-[10px] tracking-[0.25em] font-extrabold text-emerald-400 uppercase font-sans">
-            CARREGANDO SISTEMA
-          </p>
-        </div>
-        <p className="text-sm font-semibold text-amber-100/90 tracking-wide font-sans max-w-xs truncate-2-lines">
-          {milestone}
-        </p>
+      {/* Labels */}
+      <div className="mt-5 text-center px-4 space-y-1.5">
+        <span className="inline-block px-3 py-0.5 rounded-full bg-[#071f12]/80 border border-emerald-700/30 text-[9px] tracking-[0.3em] font-extrabold text-emerald-400 uppercase">
+          CARREGANDO
+        </span>
+        <p className="text-sm font-medium text-amber-100/80 tracking-wide max-w-[240px]">{milestone}</p>
       </div>
     </div>
   );

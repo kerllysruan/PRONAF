@@ -1,306 +1,206 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import gsap from 'gsap';
-import { useLoadingExperience } from '@/hooks/useLoadingExperience';
-import { MEDIA_CONFIG, preloadMediaAssets } from '@/config/imageConfig';
+import { MEDIA_CONFIG, preloadCriticalAssets } from '@/config/imageConfig';
 import { DataParticles } from './DataParticles';
-import { DataNetwork } from './DataNetwork';
 import { LoadingIndicator } from './LoadingIndicator';
 import { BrandReveal } from './BrandReveal';
 
 export interface LoadingExperienceProps {
-  duration?: number; // Default 5.5s (fast, premium and responsive)
+  duration?: number;
   onComplete?: () => void;
 }
 
+/* ──────────────────────────────────────────────────────────
+   MILESTONES — labels that change as the progress advances
+   ────────────────────────────────────────────────────────── */
+function milestoneFor(p: number): string {
+  if (p < 18) return 'Amanhecer no campo brasileiro…';
+  if (p < 38) return 'Agricultura familiar em ação…';
+  if (p < 58) return 'Produção e colheita rural…';
+  if (p < 78) return 'Conectando dados e informações…';
+  if (p < 94) return 'Analisando oportunidades PRONAF…';
+  return 'Tudo pronto!';
+}
+
+/* ──────────────────────────────────────────────────────────
+   COMPONENT
+   Duration default = 7 s  (pleasant, not too short, not long)
+   ────────────────────────────────────────────────────────── */
 export const LoadingExperience: React.FC<LoadingExperienceProps> = ({
-  duration = 5.5,
+  duration = 7,
   onComplete,
 }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const { progress, setProgress, currentMilestone } = useLoadingExperience(onComplete);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+  const [milestone, setMilestone] = useState('Amanhecer no campo brasileiro…');
+  const [scene, setScene] = useState(1);
+  const [showCards, setShowCards] = useState(false);
+  const [showNetwork, setShowNetwork] = useState(false);
+  const [showIndicator, setShowIndicator] = useState(false);
+  const [showBrand, setShowBrand] = useState(false);
+  const [fadingOut, setFadingOut] = useState(false);
 
-  const [activeScene, setActiveScene] = useState<number>(1);
-  const [isConverging, setIsConverging] = useState<boolean>(false);
-  const [showIndicator, setShowIndicator] = useState<boolean>(false);
-  const [showBrand, setShowBrand] = useState<boolean>(false);
-  const [isFadingOut, setIsFadingOut] = useState<boolean>(false);
-  const [videoError, setVideoError] = useState<boolean>(false);
+  const updateProgress = useCallback((v: number) => {
+    const clamped = Math.min(100, Math.max(0, Math.round(v)));
+    setProgress(clamped);
+    setMilestone(milestoneFor(clamped));
+  }, []);
 
+  /* ── GSAP master timeline ── */
   useEffect(() => {
-    // Warm up image assets immediately in client cache
-    preloadMediaAssets();
+    preloadCriticalAssets();
 
     const ctx = gsap.context(() => {
+      const prog = { v: 0 };
       const tl = gsap.timeline({
-        onComplete: () => {
-          setIsFadingOut(true);
-          setTimeout(() => {
-            onComplete?.();
-          }, 600);
+        defaults: { ease: 'power2.inOut' },
+        onComplete() {
+          setFadingOut(true);
+          setTimeout(() => onComplete?.(), 700);
         },
       });
 
-      // Precise 5.5s cinematic timeline stages
-      const scene1Dur = 0.8; // Sunrise Dawn flare (0 - 0.8s)
-      const scene2Dur = 0.9; // Crop Fields Parallax (0.8 - 1.7s)
-      const scene3Dur = 1.0; // Producers & Harvest Cards (1.7 - 2.7s)
-      const scene4Dur = 1.0; // Cyber-Agro SVG Mesh (2.7 - 3.7s)
-      const scene5Dur = 0.8; // Data Convergence (3.7 - 4.5s)
-      const scene6Dur = 1.0; // Brand Reveal (4.5 - 5.5s)
+      /* Scene 01 — Dawn glow (0 → 1.2 s) */
+      tl.call(() => setScene(1))
+        .fromTo('.dawn-gradient', { opacity: 0 }, { opacity: 1, duration: 1.2 })
+        .fromTo('.dawn-flare', { scale: 0.5, opacity: 0 }, { scale: 1.1, opacity: 0.7, duration: 1.2 }, '<')
+        .to(prog, { v: 18, duration: 1.2, onUpdate: () => updateProgress(prog.v) }, '<');
 
-      const progressObj = { value: 0 };
+      /* Scene 02 — Field reveal with parallax (1.2 → 2.4 s) */
+      tl.call(() => setScene(2))
+        .to('.field-photo', { opacity: 1, scale: 1.06, duration: 1.2, ease: 'sine.inOut' })
+        .to(prog, { v: 38, duration: 1.2, onUpdate: () => updateProgress(prog.v) }, '<');
 
-      // SCENE 01 — DAWN (0s - 0.8s)
-      tl.call(() => setActiveScene(1))
-        .to('.video-lens-flare', {
-          opacity: 0.85,
-          scale: 1.3,
-          duration: scene1Dur,
-          ease: 'power2.inOut',
-        })
-        .to(
-          progressObj,
-          {
-            value: 20,
-            duration: scene1Dur,
-            onUpdate: () => setProgress(progressObj.value),
-          },
-          '<'
-        );
+      /* Scene 03 — Producer & harvest cards (2.4 → 3.8 s) */
+      tl.call(() => { setScene(3); setShowCards(true); })
+        .fromTo('.card-grid', { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1.0, ease: 'back.out(1.2)' })
+        .to(prog, { v: 58, duration: 1.4, onUpdate: () => updateProgress(prog.v) }, '<');
 
-      // SCENE 02 — THE FIELD (0.8s - 1.7s)
-      tl.call(() => setActiveScene(2))
-        .to('.cinematic-video-bg', {
-          scale: 1.15,
-          opacity: 1,
-          filter: 'blur(0px) contrast(1.08) brightness(1.05)',
-          duration: scene2Dur,
-          ease: 'power2.out',
-        })
-        .to(
-          progressObj,
-          {
-            value: 40,
-            duration: scene2Dur,
-            onUpdate: () => setProgress(progressObj.value),
-          },
-          '<'
-        );
+      /* Scene 04 — Data network lines (3.8 → 5.2 s) */
+      tl.call(() => { setScene(4); setShowNetwork(true); })
+        .to('.card-grid', { opacity: 0.15, scale: 0.92, filter: 'blur(4px)', duration: 0.8 })
+        .to(prog, { v: 80, duration: 1.4, onUpdate: () => updateProgress(prog.v) }, '<');
 
-      // SCENE 03 — PRODUCERS & CROPS (1.7s - 2.7s)
-      tl.call(() => setActiveScene(3))
-        .to('.realistic-producer-grid', {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          filter: 'blur(0px)',
-          duration: scene3Dur,
-          ease: 'back.out(1.1)',
-        })
-        .to(
-          progressObj,
-          {
-            value: 60,
-            duration: scene3Dur,
-            onUpdate: () => setProgress(progressObj.value),
-          },
-          '<'
-        );
+      /* Scene 05 — Progress ring + convergence (5.2 → 6.2 s) */
+      tl.call(() => { setScene(5); setShowIndicator(true); setShowNetwork(false); })
+        .to(prog, { v: 100, duration: 1.0, ease: 'power1.inOut', onUpdate: () => updateProgress(prog.v) });
 
-      // SCENE 04 — CYBER MESH (2.7s - 3.7s)
-      tl.call(() => setActiveScene(4))
-        .to('.network-layer', {
-          opacity: 1,
-          duration: scene4Dur,
-          ease: 'power2.out',
-        })
-        .to(
-          progressObj,
-          {
-            value: 80,
-            duration: scene4Dur,
-            onUpdate: () => setProgress(progressObj.value),
-          },
-          '<'
-        );
-
-      // SCENE 05 — DATA GATHERING (3.7s - 4.5s)
-      tl.call(() => {
-          setIsConverging(true);
-          setActiveScene(5);
-          setShowIndicator(true);
-        })
-        .to('.realistic-producer-grid', {
-          opacity: 0.1,
-          scale: 0.92,
-          filter: 'blur(5px)',
-          duration: scene5Dur,
-        })
-        .to(
-          progressObj,
-          {
-            value: 100,
-            duration: scene5Dur,
-            ease: 'power1.inOut',
-            onUpdate: () => setProgress(progressObj.value),
-          },
-          '<'
-        );
-
-      // SCENE 06 — BRAND REVEAL (4.5s - 5.5s)
-      tl.call(() => {
-          setShowIndicator(false);
-          setShowBrand(true);
-          setActiveScene(6);
-        })
-        .to('.brand-glow-burst', {
-          scale: 3.0,
-          opacity: 0.8,
-          duration: 0.5,
-          ease: 'power2.out',
-        })
-        .to('.brand-glow-burst', {
-          opacity: 0,
-          duration: 0.5,
-        });
+      /* Scene 06 — Brand reveal (6.2 → 7.0 s) */
+      tl.call(() => { setShowIndicator(false); setShowBrand(true); setScene(6); })
+        .fromTo('.glow-burst', { scale: 0.4, opacity: 0 }, { scale: 2.5, opacity: 0.7, duration: 0.4, ease: 'power2.out' })
+        .to('.glow-burst', { opacity: 0, duration: 0.4 });
 
     }, containerRef);
 
     return () => ctx.revert();
-  }, [duration, onComplete, setProgress]);
+  }, [duration, onComplete, updateProgress]);
 
+  /* ── RENDER ── */
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 z-[99999] overflow-hidden bg-slate-950 font-sans select-none transition-opacity duration-700 ${
-        isFadingOut ? 'opacity-0' : 'opacity-100'
-      }`}
+      className={`fixed inset-0 z-[99999] overflow-hidden select-none font-sans transition-opacity duration-700 ${fadingOut ? 'opacity-0' : 'opacity-100'}`}
+      style={{ background: '#040e08' }}
     >
-      {/* Real HTML5 Video Background Layer */}
-      {!videoError && (
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          onError={() => setVideoError(true)}
-          className="cinematic-video-bg absolute inset-0 w-full h-full object-cover opacity-0 transform scale-100 filter blur-sm contrast-105 transition-all duration-700"
-        >
-          <source src={MEDIA_CONFIG.videos.sunriseField} type="video/mp4" />
-        </video>
-      )}
+      {/* ── Layer 0: Base dark background ── */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#030b06] via-[#071f12] to-[#0a2a16]" />
 
-      {/* Photorealistic High-Res Fallback Layer */}
-      <div
-        className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ${
-          videoError ? 'opacity-90 scale-105' : 'opacity-35 mix-blend-overlay'
-        }`}
-        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
+      {/* ── Layer 1: Dawn golden gradient ── */}
+      <div className="dawn-gradient absolute inset-0 opacity-0"
+        style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 100%, rgba(212,175,55,0.25) 0%, rgba(30,99,53,0.15) 40%, transparent 70%)' }}
       />
 
-      {/* Cinematic Dark Vignette & Gradient Overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/65 to-slate-950/85 pointer-events-none" />
-      <div className="absolute inset-0 bg-radial-vignette pointer-events-none opacity-80" />
+      {/* ── Layer 2: Realistic field photograph ── */}
+      <div
+        className="field-photo absolute inset-0 bg-cover bg-center opacity-0 scale-100 transition-transform duration-[2s]"
+        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
+      />
+      {/* Dark cinematic overlay on photo */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#040e08] via-[#040e08]/70 to-[#040e08]/85" />
 
-      {/* Realistic Anamorphic Lens Flare */}
-      <div className="video-lens-flare absolute -top-32 -left-32 w-[600px] h-[600px] bg-radial-flare pointer-events-none opacity-50 mix-blend-screen" />
+      {/* ── Layer 3: Vignette ── */}
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 50% 50%, transparent 30%, rgba(4,14,8,0.9) 100%)' }} />
 
-      {/* Volumetric Fog & Sunlight Particles */}
-      <DataParticles intensity={activeScene >= 4 ? 'high' : 'medium'} />
+      {/* ── Layer 4: Dawn lens flare ── */}
+      <div className="dawn-flare absolute w-[500px] h-[500px] -bottom-40 left-1/2 -translate-x-1/2 rounded-full opacity-0 mix-blend-screen pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(255,210,100,0.5) 0%, rgba(180,140,50,0.2) 40%, transparent 70%)' }}
+      />
 
-      {/* Scene 03 - Real Photorealistic Producer & Harvest Cards */}
-      <div className="realistic-producer-grid absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 transform translate-y-8 scale-95 filter blur-xs transition-all duration-500 z-15">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 max-w-5xl w-full">
-          {/* Family Farmer Card */}
-          <div className="relative rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-amber-400/30 bg-emerald-950/80 backdrop-blur-xl p-2 group">
-            <img
-              src={MEDIA_CONFIG.images.familyFarmer}
-              alt="Agricultor Rural"
-              className="w-full h-40 object-cover rounded-xl shadow-md transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="mt-2.5 text-center">
-              <span className="text-[10px] font-extrabold text-amber-200 uppercase tracking-widest block font-sans">
-                PRODUTOR RURAL
-              </span>
-            </div>
-          </div>
+      {/* ── Layer 5: Atmospheric particles ── */}
+      <DataParticles intensity={scene >= 4 ? 'high' : 'medium'} />
 
-          {/* Corn Harvest Card */}
-          <div className="relative rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-amber-400/30 bg-emerald-950/80 backdrop-blur-xl p-2 hidden sm:block group">
-            <img
-              src={MEDIA_CONFIG.images.cornHarvest}
-              alt="Colheita de Milho"
-              className="w-full h-40 object-cover rounded-xl shadow-md transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="mt-2.5 text-center">
-              <span className="text-[10px] font-extrabold text-amber-200 uppercase tracking-widest block font-sans">
-                LAVOURAS & CUSTEIO
-              </span>
-            </div>
-          </div>
-
-          {/* Fresh Produce Card */}
-          <div className="relative rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-amber-400/30 bg-emerald-950/80 backdrop-blur-xl p-2 group">
-            <img
-              src={MEDIA_CONFIG.images.organicProduce}
-              alt="Hortaliças e Produção"
-              className="w-full h-40 object-cover rounded-xl shadow-md transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="mt-2.5 text-center">
-              <span className="text-[10px] font-extrabold text-amber-200 uppercase tracking-widest block font-sans">
-                PRODUÇÃO AGRÍCOLA
-              </span>
-            </div>
-          </div>
-
-          {/* Fruit Harvest Card */}
-          <div className="relative rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-amber-400/30 bg-emerald-950/80 backdrop-blur-xl p-2 hidden md:block group">
-            <img
-              src={MEDIA_CONFIG.images.fruitProduce}
-              alt="Fruticultura"
-              className="w-full h-40 object-cover rounded-xl shadow-md transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="mt-2.5 text-center">
-              <span className="text-[10px] font-extrabold text-amber-200 uppercase tracking-widest block font-sans">
-                OPORTUNIDADES
-              </span>
-            </div>
+      {/* ── Layer 6: Producer & Harvest cards ── */}
+      {showCards && (
+        <div className="card-grid absolute inset-0 flex items-center justify-center z-20 pointer-events-none px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl w-full">
+            {[
+              { src: MEDIA_CONFIG.images.familyFarmer,   label: 'PRODUTOR RURAL',     alt: 'Agricultor' },
+              { src: MEDIA_CONFIG.images.cornHarvest,     label: 'LAVOURAS & CUSTEIO', alt: 'Milho',     hide: 'hidden sm:block' },
+              { src: MEDIA_CONFIG.images.organicProduce,  label: 'PRODUÇÃO AGRÍCOLA',  alt: 'Hortaliças' },
+              { src: MEDIA_CONFIG.images.fruitProduce,    label: 'OPORTUNIDADES',      alt: 'Frutas',    hide: 'hidden md:block' },
+            ].map((card) => (
+              <div key={card.label} className={`rounded-xl overflow-hidden border border-amber-400/25 bg-[#071f12]/80 backdrop-blur-lg shadow-[0_8px_30px_rgba(0,0,0,0.55)] p-1.5 ${card.hide ?? ''}`}>
+                <img src={card.src} alt={card.alt} className="w-full h-32 sm:h-36 object-cover rounded-lg" loading="eager" />
+                <p className="text-center text-[10px] font-bold text-amber-200/90 tracking-[0.18em] uppercase mt-2 mb-1">{card.label}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* SVG Intelligent Data Network */}
-      <div className="network-layer absolute inset-0 opacity-0 pointer-events-none transition-opacity duration-500">
-        <DataNetwork opacity={activeScene >= 4 ? 1 : 0} converging={isConverging} />
-      </div>
+      {/* ── Layer 7: SVG data network lines ── */}
+      {showNetwork && (
+        <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center animate-fade-in">
+          <svg viewBox="0 0 800 400" className="w-full max-w-3xl h-auto opacity-80" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#34d399" stopOpacity="0.8" />
+                <stop offset="50%" stopColor="#fbbf24" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.7" />
+              </linearGradient>
+              <filter id="gl"><feGaussianBlur stdDeviation="3" /><feComposite in="SourceGraphic" /></filter>
+            </defs>
+            <g filter="url(#gl)">
+              <path d="M100 320 Q200 200 300 280 Q400 160 500 240 Q600 120 700 200" fill="none" stroke="url(#lg)" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M150 200 L400 180 L650 220" fill="none" stroke="#fbbf24" strokeWidth="1.5" strokeDasharray="8 6" opacity="0.6" />
+              <path d="M100 320 Q250 100 400 180 Q550 100 700 200" fill="none" stroke="#60a5fa" strokeWidth="1.5" opacity="0.5" />
+            </g>
+            {/* Nodes */}
+            {[
+              { cx: 100, cy: 320, label: 'Produtor' },
+              { cx: 300, cy: 280, label: 'Propriedade' },
+              { cx: 400, cy: 180, label: 'Produção' },
+              { cx: 500, cy: 240, label: 'Dados' },
+              { cx: 700, cy: 200, label: 'Análise' },
+            ].map(n => (
+              <g key={n.label}>
+                <circle cx={n.cx} cy={n.cy} r="5" fill="#fbbf24" filter="url(#gl)" />
+                <text x={n.cx} y={n.cy - 14} textAnchor="middle" fill="#fef3c7" fontSize="10" fontWeight="700" fontFamily="sans-serif">{n.label}</text>
+              </g>
+            ))}
+          </svg>
+        </div>
+      )}
 
-      {/* Scene 06 Light Expansion Burst */}
-      <div className="brand-glow-burst absolute inset-0 m-auto w-96 h-96 rounded-full bg-radial-glow pointer-events-none opacity-0 scale-50 z-25" />
+      {/* ── Layer 8: Golden glow burst (brand reveal) ── */}
+      <div className="glow-burst absolute inset-0 m-auto w-80 h-80 rounded-full pointer-events-none opacity-0 z-30"
+        style={{ background: 'radial-gradient(circle, rgba(255,220,130,0.7) 0%, rgba(67,189,104,0.3) 40%, transparent 70%)' }}
+      />
 
-      {/* Centered Loading Meter & Brand Reveal Container */}
+      {/* ── Layer 9: Centered indicator / brand ── */}
       <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
-        <LoadingIndicator
-          progress={progress}
-          milestone={currentMilestone}
-          visible={showIndicator}
-        />
-
+        <LoadingIndicator progress={progress} milestone={milestone} visible={showIndicator} />
         <BrandReveal visible={showBrand} />
       </div>
 
-      {/* Cinematic Letterbox Bars (Top & Bottom Video Framing) */}
-      <div className="absolute top-0 inset-x-0 h-10 bg-gradient-to-b from-slate-950 to-transparent pointer-events-none z-30" />
-      <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-slate-950 to-transparent pointer-events-none z-30" />
+      {/* ── Letterbox bars ── */}
+      <div className="absolute top-0 inset-x-0 h-8 bg-gradient-to-b from-[#040e08] to-transparent z-30 pointer-events-none" />
+      <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-[#040e08] to-transparent z-30 pointer-events-none" />
 
-      {/* Bottom Progress Bar & Stage Indicator */}
-      <div className="absolute bottom-6 inset-x-0 flex flex-col items-center justify-center z-40 px-6">
-        <div className="w-full max-w-xs bg-emerald-950/90 backdrop-blur-xl rounded-full h-1.5 p-0.5 border border-amber-400/40 overflow-hidden shadow-xl">
-          <div
-            className="bg-gradient-to-r from-emerald-400 via-amber-400 to-blue-400 h-full rounded-full transition-all duration-200"
-            style={{ width: `${progress}%` }}
-          />
+      {/* ── Bottom progress bar ── */}
+      <div className="absolute bottom-5 inset-x-0 flex justify-center z-40 px-8 pointer-events-none">
+        <div className="w-full max-w-xs h-1 rounded-full overflow-hidden bg-[#0a2a16] border border-amber-900/30">
+          <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-400 to-sky-400 transition-all duration-200" style={{ width: `${progress}%` }} />
         </div>
       </div>
     </div>

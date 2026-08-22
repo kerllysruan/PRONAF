@@ -1,156 +1,72 @@
 import React, { useEffect, useRef } from 'react';
 
-interface RealisticAtmosphereProps {
+interface DataParticlesProps {
   intensity?: 'low' | 'medium' | 'high';
-  reducedMotion?: boolean;
 }
 
 interface Particle {
-  x: number;
-  y: number;
-  radius: number;
-  vx: number;
-  vy: number;
-  alpha: number;
-  maxAlpha: number;
-  pulseSpeed: number;
-  color: string;
+  x: number; y: number; r: number; vx: number; vy: number;
+  alpha: number; maxA: number; speed: number; color: string;
 }
 
-interface FogCloud {
-  x: number;
-  y: number;
-  radius: number;
-  vx: number;
-  alpha: number;
-}
-
-export const DataParticles: React.FC<RealisticAtmosphereProps> = ({
-  intensity = 'medium',
-  reducedMotion = false,
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+export const DataParticles: React.FC<DataParticlesProps> = ({ intensity = 'medium' }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (reducedMotion) return;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationFrameId: number;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    let raf: number;
+    let w = canvas.width  = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
 
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    };
+    const onResize = () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; };
+    window.addEventListener('resize', onResize);
 
-    window.addEventListener('resize', handleResize);
+    const count = intensity === 'low' ? 20 : intensity === 'medium' ? 40 : 70;
+    const colors = ['rgba(255,220,130,', 'rgba(52,211,153,', 'rgba(96,165,250,'];
 
-    const particleCount = intensity === 'low' ? 30 : intensity === 'medium' ? 60 : 100;
-
-    // Atmospheric sun dust & light specks
-    const particles: Particle[] = Array.from({ length: particleCount }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      radius: Math.random() * 2.2 + 0.6,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: -Math.random() * 0.4 - 0.15, // Floating upward in morning thermal air currents
-      alpha: Math.random() * 0.5 + 0.1,
-      maxAlpha: Math.random() * 0.7 + 0.2,
-      pulseSpeed: Math.random() * 0.015 + 0.004,
-      color: Math.random() > 0.4 ? 'rgba(255, 225, 150, ' : 'rgba(70, 200, 120, ',
+    const particles: Particle[] = Array.from({ length: count }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 1.8 + 0.5,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: -Math.random() * 0.35 - 0.1,
+      alpha: Math.random() * 0.4 + 0.08,
+      maxA: Math.random() * 0.6 + 0.15,
+      speed: Math.random() * 0.012 + 0.003,
+      color: colors[Math.floor(Math.random() * colors.length)],
     }));
 
-    // Realistic Volumetric Fog / Mist clouds floating over lower field horizon
-    const fogCount = 8;
-    const fogClouds: FogCloud[] = Array.from({ length: fogCount }, () => ({
-      x: Math.random() * width,
-      y: height * 0.65 + Math.random() * (height * 0.3),
-      radius: Math.random() * 250 + 180,
-      vx: Math.random() * 0.3 + 0.1, // Gentle morning wind drift
-      alpha: Math.random() * 0.12 + 0.05,
-    }));
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      // Render Realistic Volumetric Fog Layer
-      fogClouds.forEach((cloud) => {
-        cloud.x += cloud.vx;
-        if (cloud.x - cloud.radius > width) {
-          cloud.x = -cloud.radius;
-        }
-
-        const grad = ctx.createRadialGradient(
-          cloud.x,
-          cloud.y,
-          0,
-          cloud.x,
-          cloud.y,
-          cloud.radius
-        );
-        grad.addColorStop(0, `rgba(220, 240, 210, ${cloud.alpha})`);
-        grad.addColorStop(0.5, `rgba(180, 220, 190, ${cloud.alpha * 0.5})`);
-        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(cloud.x, cloud.y, cloud.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Render Sunlight Particles
-      particles.forEach((p) => {
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h);
+      for (const p of particles) {
         p.x += p.vx;
         p.y += p.vy;
-
-        p.alpha += p.pulseSpeed;
-        if (p.alpha > p.maxAlpha || p.alpha < 0.08) {
-          p.pulseSpeed = -p.pulseSpeed;
-        }
-
-        if (p.y < -10) {
-          p.y = height + 10;
-          p.x = Math.random() * width;
-        }
+        p.alpha += p.speed;
+        if (p.alpha > p.maxA || p.alpha < 0.05) p.speed = -p.speed;
+        if (p.y < -5) { p.y = h + 5; p.x = Math.random() * w; }
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fillStyle = `${p.color}${p.alpha})`;
         ctx.fill();
 
-        // Realistic Soft Lens Glow
-        if (p.radius > 1.6) {
+        if (p.r > 1.4) {
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius * 3, 0, Math.PI * 2);
-          ctx.fillStyle = `${p.color}${p.alpha * 0.2})`;
+          ctx.arc(p.x, p.y, p.r * 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = `${p.color}${p.alpha * 0.18})`;
           ctx.fill();
         }
-      });
-
-      animationFrameId = requestAnimationFrame(render);
+      }
+      raf = requestAnimationFrame(draw);
     };
 
-    render();
+    draw();
+    return () => { window.removeEventListener('resize', onResize); cancelAnimationFrame(raf); };
+  }, [intensity]);
 
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [intensity, reducedMotion]);
-
-  if (reducedMotion) return null;
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-10 w-full h-full mix-blend-screen opacity-90"
-    />
-  );
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10 mix-blend-screen opacity-85" />;
 };
