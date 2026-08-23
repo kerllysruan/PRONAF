@@ -698,7 +698,7 @@ export default function DocumentationSubmit() {
       <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-950">
         <div
           className="fixed inset-0 bg-cover bg-center filter saturate-[1.1] brightness-[1.02] pointer-events-none z-0"
-          style={{ backgroundImage: `url(${MEDIA_CONFIG.images.agriFamiliar})` }}
+          style={{ backgroundImage: `url(${MEDIA_CONFIG.images.agriWallpaper})` }}
         />
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px] pointer-events-none z-0" />
 
@@ -760,7 +760,7 @@ export default function DocumentationSubmit() {
     <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-950">
       <div
         className="fixed inset-0 bg-cover bg-center filter saturate-[1.1] brightness-[1.02] pointer-events-none z-0"
-        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.agriFamiliar})` }}
+        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.agriWallpaper})` }}
       />
       <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px] pointer-events-none z-0" />
 
@@ -859,7 +859,9 @@ export default function DocumentationSubmit() {
                   onPaste={(!isApproved && !isPending) ? (e) => handlePaste(doc.key, e) : undefined}
                   className={`group rounded-2xl border transition-all duration-300 overflow-hidden outline-none bg-white/95 backdrop-blur-md shadow-lg shadow-slate-950/20 hover:shadow-2xl hover:border-emerald-500/50 text-slate-900 ${
                     isApproved
-                      ? "border-emerald-500/40"
+                      ? dbFile?.file_path === 'dispensado'
+                        ? "border-purple-400/80 bg-purple-50/10 shadow-purple-950/10"
+                        : "border-emerald-500/40"
                       : isPending
                       ? "border-amber-400/60"
                       : isReplacingRejected
@@ -878,7 +880,9 @@ export default function DocumentationSubmit() {
                   {/* Status accent bar at top of card */}
                   <div className={`h-1.5 w-full ${
                     isApproved
-                      ? "bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600"
+                      ? dbFile?.file_path === 'dispensado'
+                        ? "bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-600"
+                        : "bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600"
                       : isPending
                       ? "bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500"
                       : isReplacingRejected
@@ -940,17 +944,17 @@ export default function DocumentationSubmit() {
                     </div>
                   )}
                   {isApproved ? (
-                    <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center bg-emerald-50/50">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${dbFile?.file_path === 'dispensado' ? 'bg-slate-200 border border-slate-300' : 'bg-emerald-100 border border-emerald-300'}`}>
+                    <div className={`flex flex-col items-center justify-center p-5 min-h-[140px] text-center ${dbFile?.file_path === 'dispensado' ? 'bg-purple-50/40' : 'bg-emerald-50/50'}`}>
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${dbFile?.file_path === 'dispensado' ? 'bg-purple-100 border border-purple-300 shadow-sm' : 'bg-emerald-100 border border-emerald-300'}`}>
                         {dbFile?.file_path === 'dispensado' ? (
-                          <XCircle className="h-6 w-6 text-slate-600" />
+                          <XCircle className="h-6 w-6 text-purple-700" />
                         ) : (
                           <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                         )}
                       </div>
                       <p className="text-slate-950 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                       </p>
-                      <p className={`${dbFile?.file_path === 'dispensado' ? 'text-slate-700' : 'text-emerald-800'} text-[10px] font-extrabold`}>
+                      <p className={`${dbFile?.file_path === 'dispensado' ? 'text-purple-900 bg-purple-100/90 border border-purple-300 px-3 py-1 rounded-full shadow-sm' : 'text-emerald-800'} text-[10px] font-extrabold`}>
                         {dbFile?.file_path === 'dispensado' ? "Dispensado / Não possui 🚫" : "Aprovado ✅"}
                       </p>
                       {dbFile?.file_path === 'dispensado' && (
@@ -973,7 +977,7 @@ export default function DocumentationSubmit() {
                               }
                             }
                           }}
-                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[42px] px-4 py-2 rounded-xl bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 hover:from-emerald-800 hover:to-teal-900 text-white text-xs font-black active:scale-95 transition-all duration-200 shadow-md border border-emerald-500/30 touch-manipulation select-none"
+                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[42px] px-4 py-2 rounded-xl bg-gradient-to-r from-purple-950 via-violet-950 to-indigo-950 hover:from-purple-800 hover:to-violet-900 text-white text-xs font-black active:scale-95 transition-all duration-200 shadow-md border border-purple-500/40 touch-manipulation select-none"
                         >
                           {enablingDoc === doc.key ? (
                             <>
