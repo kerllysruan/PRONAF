@@ -5,7 +5,7 @@ import {
   FileText, CheckCircle2, Search, DollarSign, TrendingUp, Loader2,
   Sparkles, AlertTriangle, Clock, BarChart3, PieChart as PieChartIcon, ArrowUpRight, ArrowDownRight,
   Filter, Check, Box, Zap, Target, Lightbulb, ShieldAlert, Award, Activity, Briefcase,
-  Users, TrendingDown, AlertCircle, Banknote, CircleDollarSign,
+  Users, TrendingDown, AlertCircle, Banknote, CircleDollarSign, Send,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -443,7 +443,7 @@ export default function Dashboard() {
       return false;
     };
 
-    const estoqueEnviadoCentralProposals = stockProposals.filter(p => isEnviadoCentralStockStatus(p.status, p.central, p.central_date));
+    const estoqueEnviadoCentralProposals = estoqueAtivoProposals.filter(p => isEnviadoCentralStockStatus(p.status, p.central, p.central_date));
     const estoqueEnviadoCentral = estoqueEnviadoCentralProposals.length;
     const estoqueValorEnviadoCentral = estoqueEnviadoCentralProposals.reduce((sum, p) => sum + safeParseNum(p.estimated_value), 0);
 
