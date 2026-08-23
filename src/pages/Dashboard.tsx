@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChartTooltip } from "@/components/ChartTooltip";
 import {
   FileText, CheckCircle2, Search, DollarSign, TrendingUp, Loader2,
@@ -77,6 +77,7 @@ const formatCompact = (value: number) => {
 };
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { proposals, loading: loadingP } = useProposals();
   const { proposals: stockProposals, loading: loadingStock } = useStockProposals();
   const { tasks, members, loading: loadingT } = useTeam();
@@ -1336,14 +1337,24 @@ export default function Dashboard() {
           </Card>
 
           {/* 3. Enviadas à Central no Estoque */}
-          <Card className="group relative overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
+          <Card 
+            onClick={() => navigate("/estoque?status=ENVIADO PARA CENTRAL")}
+            className="group relative overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900 cursor-pointer"
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Estoque Enviado à Central</p>
                   <p className="text-3xl font-black font-heading text-foreground">{stats.estoqueEnviadoCentral}</p>
-                  <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-200/50 text-[9px] font-black tracking-wider uppercase">
+                  <Badge 
+                    variant="secondary" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/estoque?status=ENVIADO PARA CENTRAL");
+                    }}
+                    className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 border border-emerald-200/50 text-[9px] font-black tracking-wider uppercase cursor-pointer transition-all active:scale-95 shadow-sm"
+                  >
                     <Send className="h-2.5 w-2.5 mr-1 text-emerald-600" /> ENVIADAS À CENTRAL
                   </Badge>
                 </div>
@@ -1355,15 +1366,25 @@ export default function Dashboard() {
           </Card>
 
           {/* 4. Volume Enviado à Central do Estoque */}
-          <Card className="group relative overflow-hidden border-2 border-emerald-200 dark:border-emerald-900/60 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-950/30 dark:to-slate-900">
+          <Card 
+            onClick={() => navigate("/estoque?status=ENVIADO PARA CENTRAL")}
+            className="group relative overflow-hidden border-2 border-emerald-200 dark:border-emerald-900/60 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-950/30 dark:to-slate-900 cursor-pointer"
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Volume Enviado à Central</p>
                   <p className="text-xl font-black font-heading text-emerald-600 mt-0.5">{formatCurrency(stats.estoqueValorEnviadoCentral)}</p>
-                  <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-700 border border-emerald-300/50 text-[9px] font-black tracking-wider uppercase">
-                    ENVIADO À CENTRAL
+                  <Badge 
+                    variant="secondary" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/estoque?status=ENVIADO PARA CENTRAL");
+                    }}
+                    className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 border border-emerald-300/50 text-[9px] font-black tracking-wider uppercase cursor-pointer transition-all active:scale-95 shadow-sm"
+                  >
+                    <Send className="h-2.5 w-2.5 mr-1 text-emerald-700" /> ENVIADO À CENTRAL
                   </Badge>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">

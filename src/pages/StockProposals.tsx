@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStockProposals } from "@/hooks/useStockProposals";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
 import { useProjetistas } from "@/hooks/useProjetistas";
@@ -340,10 +340,31 @@ export default function StockProposals() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchParams] = useSearchParams();
+  const statusFromUrl = searchParams.get("status");
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMunicipio, setFilterMunicipio] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterStatus, setFilterStatus] = useState(() => {
+    if (statusFromUrl) {
+      const norm = statusFromUrl.toUpperCase();
+      if (norm.includes("CENTRAL")) return "ENVIADO PARA CENTRAL";
+      return statusFromUrl;
+    }
+    return "all";
+  });
   const [filterProjetista, setFilterProjetista] = useState("all");
+
+  useEffect(() => {
+    if (statusFromUrl) {
+      const norm = statusFromUrl.toUpperCase();
+      if (norm.includes("CENTRAL")) {
+        setFilterStatus("ENVIADO PARA CENTRAL");
+      } else {
+        setFilterStatus(statusFromUrl);
+      }
+    }
+  }, [statusFromUrl]);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [viewingDetailProposal, setViewingDetailProposal] = useState<StockProposal | null>(null);
   const [selectedProposalIds, setSelectedProposalIds] = useState<string[]>([]);
@@ -448,7 +469,18 @@ export default function StockProposals() {
       result = result.filter(p => p.municipio === filterMunicipio);
     }
     if (filterStatus !== "all") {
-      result = result.filter(p => formatStatus(p.status) === formatStatus(filterStatus));
+      if (filterStatus === "ENVIADO PARA CENTRAL") {
+        result = result.filter(p => {
+          const norm = (p.status || '').toLowerCase().trim();
+          if (norm.includes('enviad') && norm.includes('central')) return true;
+          if (norm === 'central' || norm.includes('enviado para central') || norm.includes('enviado à central') || norm.includes('enviado a central')) return true;
+          if (p.central && p.central.trim().length > 0 && p.central.trim() !== '---') return true;
+          if (p.central_date && p.central_date.trim().length > 0 && p.central_date.trim() !== '---') return true;
+          return formatStatus(p.status) === formatStatus("ENVIADO PARA CENTRAL");
+        });
+      } else {
+        result = result.filter(p => formatStatus(p.status) === formatStatus(filterStatus));
+      }
     }
     if (filterProjetista !== "all") {
       result = result.filter(p => p.projetista === filterProjetista);
