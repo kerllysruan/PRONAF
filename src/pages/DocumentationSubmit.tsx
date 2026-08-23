@@ -727,43 +727,13 @@ export default function DocumentationSubmit() {
 
                 <div className="mt-8 w-full max-w-lg">
                   <p className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-3 text-left">
-                    Documentos aprovados
-                  </p>
-                  <div className="space-y-2">
-                    {files.map((f) => (
-                      <div
-                        key={f.id}
-                        className="flex items-center gap-3 bg-emerald-950/60 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white"
-                      >
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                        <span className="text-slate-200 text-sm font-medium truncate">
-                          {getDocLabel(f.document_type)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Footer />
-        </div>
-      </div>
-    );
-  }
-
-  // NOTE: isAwaitingAnalysis is now used as a banner inside the main form
-  // (not an early return) so users can still interact with dispensed docs
-
-  // ── Main/Unified submission layout (initial, awaiting analysis, missing files, or rejected)
-  return (
-    <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-100">
+       return (
+    <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-950">
       <div
         className="fixed inset-0 bg-cover bg-center filter saturate-[1.1] brightness-[1.02] pointer-events-none z-0"
-        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
+        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.agriLivestock})` }}
       />
-      <div className="fixed inset-0 bg-slate-900/25 backdrop-blur-[2px] pointer-events-none z-0" />
+      <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px] pointer-events-none z-0" />
 
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 relative z-10">
         <BrandHeader />
@@ -771,22 +741,22 @@ export default function DocumentationSubmit() {
         <div className="animate-fade-in space-y-6">
           {/* Banner: Awaiting Analysis */}
           {isAwaitingAnalysis ? (
-            <Card className="bg-emerald-50/95 border-2 border-emerald-300 rounded-3xl shadow-xl shadow-emerald-900/5 overflow-hidden text-slate-900">
+            <Card className="bg-white border-2 border-emerald-500 rounded-3xl shadow-2xl overflow-hidden text-slate-900 opacity-100">
               <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600" />
               <CardContent className="flex items-start gap-4 p-6">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-emerald-700">
                   <CheckCircle2 className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-extrabold text-emerald-950 mb-1 tracking-tight">
+                  <h2 className="text-lg font-black text-emerald-950 mb-1 tracking-tight">
                     ✅ Documentos Enviados — Aguardando Análise
                   </h2>
-                  <p className="text-emerald-900 text-xs sm:text-sm font-semibold leading-relaxed">
+                  <p className="text-slate-700 text-xs sm:text-sm font-semibold leading-relaxed">
                     Seus documentos foram enviados e estão sendo analisados pela equipe.
                     {hasDispensedDocs && " Caso precise reenviar um documento dispensado, clique em \"Habilitar Envio\" abaixo."}
                   </p>
                   {tokenData?.submitted_at && (
-                    <div className="mt-2 flex items-center gap-1.5 text-emerald-800 text-xs font-bold">
+                    <div className="mt-2 flex items-center gap-1.5 text-emerald-800 text-xs font-black">
                       <FileCheck className="h-3.5 w-3.5" />
                       <span>Enviado em {formatDate(tokenData.submitted_at)}</span>
                     </div>
@@ -796,18 +766,18 @@ export default function DocumentationSubmit() {
             </Card>
           ) : (
             /* Banner: Pending documents or review */
-            <Card className="bg-amber-50/95 border-2 border-amber-300 rounded-3xl shadow-xl shadow-amber-900/5 overflow-hidden text-slate-900">
+            <Card className="bg-white border-2 border-amber-400 rounded-3xl shadow-2xl overflow-hidden text-slate-900 opacity-100">
               <div className="h-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500" />
               <CardContent className="flex items-start gap-4 p-6">
                 <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center flex-shrink-0 text-amber-700">
                   <AlertTriangle className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-extrabold text-amber-950 mb-1 tracking-tight">
+                  <h2 className="text-lg font-black text-slate-950 mb-1 tracking-tight">
                     Documentação Pendente
                   </h2>
-                  <p className="text-amber-900 text-xs sm:text-sm font-semibold leading-relaxed">
-                    A proposta está <strong className="text-amber-950 font-black">Pendente</strong> porque restam documentos obrigatórios a serem enviados ou aprovados pela equipe. Por favor, anexe os documentos necessários abaixo.
+                  <p className="text-slate-700 text-xs sm:text-sm font-semibold leading-relaxed">
+                    A proposta está <strong className="text-amber-800 font-black">Pendente</strong> porque restam documentos obrigatórios a serem enviados ou aprovados pela equipe. Por favor, anexe os documentos necessários abaixo.
                   </p>
                 </div>
               </CardContent>
@@ -818,21 +788,21 @@ export default function DocumentationSubmit() {
           <ProposalInfoCard proposal={proposal} />
 
           {/* Progress */}
-          <Card className="bg-white border border-slate-200/90 rounded-3xl shadow-xl shadow-slate-900/5 overflow-hidden text-slate-900">
+          <Card className="bg-white border-2 border-slate-200 rounded-3xl shadow-2xl overflow-hidden text-slate-900 opacity-100">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">
                   Progresso do Envio
                 </p>
-                <span className="text-slate-900 text-sm font-black tracking-wider">
+                <span className="text-slate-950 text-sm font-black tracking-wider">
                   {readyCount}/{totalDocs}
                 </span>
               </div>
               <Progress
                 value={progressPercent}
-                className="h-3 bg-slate-100 border border-slate-200 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-emerald-600 [&>div]:via-teal-500 [&>div]:to-amber-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
+                className="h-3.5 bg-slate-100 border border-slate-200 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-emerald-600 [&>div]:via-teal-500 [&>div]:to-amber-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
               />
-              <p className="text-slate-600 text-xs mt-2 font-semibold">
+              <p className="text-slate-600 text-xs mt-2 font-bold">
                 {selectedCount === 0
                   ? "Selecione os documentos em PDF para enviar"
                   : `${selectedCount} documento${selectedCount !== 1 ? "s" : ""} selecionado${selectedCount !== 1 ? "s" : ""}`}
@@ -858,18 +828,18 @@ export default function DocumentationSubmit() {
                   key={doc.key}
                   tabIndex={(!isApproved && !isPending) ? 0 : undefined}
                   onPaste={(!isApproved && !isPending) ? (e) => handlePaste(doc.key, e) : undefined}
-                  className={`group rounded-2xl border transition-all duration-300 overflow-hidden outline-none ${
+                  className={`group rounded-2xl border-2 transition-all duration-300 overflow-hidden outline-none opacity-100 ${
                     isApproved
-                      ? "border-2 border-emerald-500 bg-emerald-50/80 text-slate-900 shadow-sm"
+                      ? "border-emerald-500 bg-white text-slate-900 shadow-md"
                       : isPending
-                      ? "border-2 border-amber-400 bg-amber-50/80 text-slate-900 shadow-sm"
+                      ? "border-amber-400 bg-white text-slate-900 shadow-md"
                       : isReplacingRejected
-                      ? "border-2 border-emerald-600 bg-emerald-50/90 text-slate-900 shadow-md"
+                      ? "border-emerald-600 bg-white text-slate-900 shadow-lg"
                       : isRejected
-                      ? "border-2 border-rose-400 bg-rose-50/80 text-slate-900 shadow-sm"
+                      ? "border-rose-400 bg-white text-slate-900 shadow-md"
                       : selected
-                      ? "border-2 border-emerald-600 bg-emerald-50/90 text-slate-900 shadow-md"
-                      : "border-2 border-dashed border-slate-200 bg-white hover:border-emerald-500 hover:bg-emerald-50/20 text-slate-900 shadow-sm"
+                      ? "border-emerald-600 bg-white text-slate-900 shadow-lg"
+                      : "border-slate-200 bg-white hover:border-emerald-500 hover:shadow-lg text-slate-900 shadow-sm"
                   }`}
                   onDragOver={(!isApproved && !isPending) ? (e) => e.preventDefault() : undefined}
                   onDrop={(!isApproved && !isPending) ? (e) => handleDrop(doc.key, e) : undefined}
@@ -880,7 +850,7 @@ export default function DocumentationSubmit() {
                   {isRejected && (
                     <div className={`px-4 py-2.5 flex items-start gap-2.5 ${
                       isReplacingRejected
-                        ? "bg-indigo-600 text-white"
+                        ? "bg-emerald-700 text-white"
                         : "bg-rose-600 text-white"
                     }`}>
                       <div className="flex-shrink-0 mt-0.5">
@@ -917,6 +887,7 @@ export default function DocumentationSubmit() {
                       )}
                     </div>
                   )}
+
                   {/* ── Rejection Reason (shown below banner when rejected+selecting) ─── */}
                   {isReplacingRejected && dbFile?.rejection_reason && (
                     <div className="px-4 py-2 bg-rose-50 border-b border-rose-200">
@@ -926,17 +897,17 @@ export default function DocumentationSubmit() {
                     </div>
                   )}
                   {isApproved ? (
-                    <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${dbFile?.file_path === 'dispensado' ? 'bg-slate-200 border border-slate-300' : 'bg-emerald-100 border border-emerald-200'}`}>
+                    <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center bg-emerald-50/50">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${dbFile?.file_path === 'dispensado' ? 'bg-slate-200 border border-slate-300' : 'bg-emerald-100 border border-emerald-300'}`}>
                         {dbFile?.file_path === 'dispensado' ? (
-                          <XCircle className="h-6 w-6 text-slate-500" />
+                          <XCircle className="h-6 w-6 text-slate-600" />
                         ) : (
                           <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                         )}
                       </div>
-                      <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                      <p className="text-slate-950 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                       </p>
-                      <p className={`${dbFile?.file_path === 'dispensado' ? 'text-slate-400' : 'text-emerald-400'} text-[10px] font-bold`}>
+                      <p className={`${dbFile?.file_path === 'dispensado' ? 'text-slate-700' : 'text-emerald-800'} text-[10px] font-extrabold`}>
                         {dbFile?.file_path === 'dispensado' ? "Dispensado / Não possui 🚫" : "Aprovado ✅"}
                       </p>
                       {dbFile?.file_path === 'dispensado' && (
@@ -959,7 +930,7 @@ export default function DocumentationSubmit() {
                               }
                             }
                           }}
-                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 text-xs font-bold hover:bg-indigo-100 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation select-none"
+                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-black hover:bg-slate-800 active:scale-95 transition-all duration-200 shadow-md touch-manipulation select-none"
                         >
                           {enablingDoc === doc.key ? (
                             <>
@@ -968,7 +939,7 @@ export default function DocumentationSubmit() {
                             </>
                           ) : (
                             <>
-                              <RotateCcw className="h-3.5 w-3.5" />
+                              <RotateCcw className="h-3.5 w-3.5 text-amber-300" />
                               Habilitar Envio
                             </>
                           )}
@@ -976,26 +947,26 @@ export default function DocumentationSubmit() {
                       )}
                     </div>
                   ) : isPending ? (
-                    <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center mb-3">
+                    <div className="flex flex-col items-center justify-center p-5 min-h-[140px] text-center bg-amber-50/50">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center mb-3">
                         <Loader2 className="h-6 w-6 text-amber-600 animate-spin" />
                       </div>
-                      <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                      <p className="text-slate-950 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                       </p>
-                      <p className="text-amber-300 text-[10px] font-bold">
+                      <p className="text-amber-800 text-[10px] font-extrabold">
                         Aguardando Análise ⏳
                       </p>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center p-5 min-h-[140px]">
+                    <div className="flex flex-col items-center justify-center p-5 min-h-[140px] bg-white">
                       {(!needsUpload) ? (
                         <>
                           <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-3">
                             <FileCheck className="h-6 w-6 text-indigo-600" />
                           </div>
-                          <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                          <p className="text-slate-950 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                           </p>
-                          <p className="text-indigo-600 text-[10px] truncate max-w-full px-2">
+                          <p className="text-indigo-700 text-[10px] font-bold truncate max-w-full px-2">
                             {dbFile?.file_name}
                           </p>
                           {(!tokenData?.documents_submitted) && dbFile?.file_path !== "dispensado" && dbFile?.file_path !== "preenchido" && (
@@ -1018,7 +989,7 @@ export default function DocumentationSubmit() {
                                   }
                                 }
                               }}
-                              className="mt-3 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-700 text-[10px] font-bold active:scale-95 transition-all duration-200 disabled:opacity-50"
+                              className="mt-3 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-xl bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-800 text-[10px] font-bold active:scale-95 transition-all duration-200"
                             >
                               {enablingDoc === doc.key ? (
                                 <>
@@ -1039,7 +1010,7 @@ export default function DocumentationSubmit() {
                           {/* Alert & Input for CAR files */}
                           {(doc.key === "car_individual" || doc.key === "car_coletivo") && (
                             <div className="w-full space-y-2 mb-3" onClick={(e) => e.stopPropagation()}>
-                              <p className="text-rose-600 text-xs font-black text-center uppercase tracking-wide leading-snug mb-1">
+                              <p className="text-rose-700 text-xs font-black text-center uppercase tracking-wide leading-snug mb-1">
                                 ATENÇÃO: Digite o número do CAR e o Nome do Imóvel abaixo para liberar o envio do arquivo PDF!
                               </p>
                               <input
@@ -1051,7 +1022,7 @@ export default function DocumentationSubmit() {
                                   if (doc.key === "car_individual") setCarIndividualNumber(val);
                                   else setCarColetivoNumber(val);
                                 }}
-                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground placeholder:text-slate-400 placeholder:font-normal uppercase"
+                                className="w-full px-3 py-1.5 border-2 border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white text-slate-900 placeholder:text-slate-400 uppercase"
                               />
                               <input
                                 type="text"
@@ -1062,14 +1033,14 @@ export default function DocumentationSubmit() {
                                   if (doc.key === "car_individual") setCarIndividualName(val);
                                   else setCarColetivoName(val);
                                 }}
-                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground placeholder:text-slate-400 placeholder:font-normal uppercase"
+                                className="w-full px-3 py-1.5 border-2 border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white text-slate-900 placeholder:text-slate-400 uppercase"
                               />
                             </div>
                           )}
 
                           {doc.key === "cadastro_atividade_plano" && (
                               <div className="w-full space-y-2 mb-3" onClick={(e) => e.stopPropagation()}>
-                                <p className="text-slate-600 text-xs font-black text-center tracking-wide leading-snug mb-1">
+                                <p className="text-slate-700 text-xs font-black text-center tracking-wide leading-snug mb-1">
                                   Informe detalhadamente a Atividade Cadastrada no Plano de Negócios da operação.
                                 </p>
                                 <input
@@ -1077,7 +1048,7 @@ export default function DocumentationSubmit() {
                                   placeholder="Ex: CRIAÇÃO DE BOVINOS CORTE EXTENSIVA"
                                   value={atividadePlano}
                                   onChange={(e) => handleAtividadeChange(e.target.value.toUpperCase())}
-                                  className="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background placeholder:text-slate-400 placeholder:font-normal uppercase"
+                                  className="w-full px-3 py-1.5 border-2 border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white placeholder:text-slate-400 uppercase"
                                 />
                               </div>
                            )}
@@ -1086,11 +1057,11 @@ export default function DocumentationSubmit() {
                           {doc.key === "cadastro_atividade_plano" ? (
                             <div className="w-full text-center py-3">
                               {atividadePlano.trim().length >= 3 ? (
-                                <p className="text-xs font-bold text-emerald-700 flex items-center justify-center gap-1">
+                                <p className="text-xs font-black text-emerald-800 flex items-center justify-center gap-1">
                                   ✅ Atividade preenchida com sucesso!
                                 </p>
                               ) : (
-                                <p className="text-xs font-bold text-rose-500">
+                                <p className="text-xs font-black text-rose-600">
                                   ⚠️ Preencha a atividade acima para continuar.
                                 </p>
                               )}
@@ -1112,17 +1083,17 @@ export default function DocumentationSubmit() {
 
                                 {selected ? (
                                   <>
-                                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-2">
-                                      <FileCheck className="h-6 w-6 text-indigo-600" />
+                                    <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center mb-2">
+                                      <FileCheck className="h-6 w-6 text-emerald-700" />
                                     </div>
-                                    <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                                    <p className="text-slate-950 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                                     </p>
-                                    <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-1.5 text-center max-w-full">
-                                      <p className="text-[9px] font-black uppercase tracking-wider text-indigo-400 mb-0.5">Novo arquivo</p>
-                                      <p className="text-indigo-700 text-[10px] font-bold truncate max-w-full">
+                                    <div className="bg-emerald-50 border border-emerald-300 rounded-xl px-3 py-1.5 text-center max-w-full">
+                                      <p className="text-[9px] font-black uppercase tracking-wider text-emerald-700 mb-0.5">Novo arquivo</p>
+                                      <p className="text-emerald-950 text-[10px] font-black truncate max-w-full">
                                         {selected.name}
                                       </p>
-                                      <p className="text-[9px] text-indigo-400 mt-0.5">
+                                      <p className="text-[9px] text-emerald-800 font-bold mt-0.5">
                                         {(selected.size / 1024).toFixed(0)} KB
                                       </p>
                                     </div>
@@ -1133,7 +1104,7 @@ export default function DocumentationSubmit() {
                                         e.stopPropagation();
                                         handleFileSelect(doc.key, null);
                                       }}
-                                      className="mt-2 text-[10px] text-slate-400 hover:text-rose-500 transition-colors flex items-center gap-1"
+                                      className="mt-2 text-[10px] text-slate-500 hover:text-rose-600 font-bold transition-colors flex items-center gap-1"
                                     >
                                       <XCircle className="h-3 w-3" />
                                       Cancelar
@@ -1144,30 +1115,30 @@ export default function DocumentationSubmit() {
                                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 transition-all duration-300 ${
                                       isRejected
                                         ? "bg-rose-100 border border-rose-300"
-                                        : "bg-slate-100 border border-slate-200 group-hover:bg-indigo-50 group-hover:border-indigo-200"
+                                        : "bg-emerald-50 border border-emerald-200 group-hover:bg-emerald-100 group-hover:border-emerald-400"
                                     }`}>
                                       {isRejected ? (
-                                        <XCircle className="h-5 w-5 text-rose-600" />
+                                        <XCircle className="h-6 w-6 text-rose-600" />
                                       ) : (
-                                        <Upload className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                        <Upload className="h-6 w-6 text-emerald-700 group-hover:scale-110 transition-transform" />
                                       )}
                                     </div>
-                                    <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                                    <p className="text-slate-950 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                                     </p>
                                     {isRejected ? (
                                       <>
                                         {dbFile?.file_name && dbFile.file_name !== "Pendente de envio" && (
                                           <div className="bg-rose-100 border border-rose-200 rounded-lg px-2 py-1 text-center mb-1">
-                                            <p className="text-[9px] font-bold text-rose-500 uppercase tracking-wider">Arquivo reprovado</p>
-                                            <p className="text-rose-700 text-[10px] font-semibold truncate">{dbFile.file_name}</p>
+                                            <p className="text-[9px] font-black text-rose-700 uppercase tracking-wider">Arquivo reprovado</p>
+                                            <p className="text-rose-900 text-[10px] font-bold truncate">{dbFile.file_name}</p>
                                           </div>
                                         )}
-                                        <p className="text-rose-500 text-[10px] text-center font-bold">
+                                        <p className="text-rose-600 text-[10px] text-center font-black">
                                           👆 Clique para enviar novo arquivo
                                         </p>
                                       </>
                                     ) : (
-                                      <p className="text-slate-400 text-[10px]">
+                                      <p className="text-slate-600 text-[10px] font-bold">
                                         Clique, arraste ou cole (Ctrl+V)
                                       </p>
                                     )}
@@ -1176,13 +1147,28 @@ export default function DocumentationSubmit() {
                               </label>
                           ) : (
                             <div className="flex flex-col items-center justify-center cursor-not-allowed w-full">
-                              <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mb-3 opacity-40"><Upload className="h-5 w-5 text-slate-600" />
+                              <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-300 flex items-center justify-center mb-3 opacity-60"><Upload className="h-5 w-5 text-slate-400" />
                               </div>
-                              <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                              <p className="text-slate-950 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                               </p>
-                              <p className="text-slate-600 text-[9px]">Envio Habilitado após preencher o número
+                              <p className="text-slate-500 text-[9px] font-bold">Envio Habilitado após preencher o número
                               </p>
                             </div>
+                          ))}
+
+                          {/* Link de obtenção do documento */}
+                          {doc.obtencaoUrl && !selected && (
+                            <a
+                              href={doc.obtencaoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="mt-3 flex items-center justify-center gap-1.5 w-full min-h-[40px] px-3 py-2 rounded-xl bg-cyan-50 border border-cyan-300 text-cyan-800 text-[11px] font-black hover:bg-cyan-100 active:scale-95 transition-all duration-200 touch-manipulation select-none"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
+                              Obter{doc.fonte ? ` — ${doc.fonte}` : " Documento"}
+                            </a>
+                          )}
                           ))}
 
                           {/* Link de obtenção do documento */}
@@ -1691,7 +1677,7 @@ export default function DocumentationSubmit() {
 function BrandHeader() {
   return (
     <div className="text-center space-y-3 mb-8 animate-fade-in">
-      <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-white/90 border border-emerald-500/30 text-emerald-700 shadow-xl backdrop-blur-md">
+      <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-white border-2 border-emerald-500 text-emerald-700 shadow-2xl">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -1709,11 +1695,11 @@ function BrandHeader() {
         </svg>
       </div>
       <div>
-        <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight drop-shadow-sm">
+        <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
           SUPER GESTÃO
         </h1>
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-emerald-800 bg-white/80 backdrop-blur-md px-4 py-1 rounded-full border border-emerald-200/80 inline-block shadow-sm mt-1">
-          AGRICULTURA FAMILIAR — PRONAF
+        <p className="text-[11px] font-black uppercase tracking-[0.25em] text-amber-300 bg-slate-950/90 px-4 py-1.5 rounded-full border border-amber-400/50 inline-block shadow-lg mt-1">
+          AGRICULTURA E PECUÁRIA — PRONAF
         </p>
       </div>
     </div>
@@ -1749,7 +1735,7 @@ function ProposalInfoCard({
 
   return (
     <Card
-      className={`bg-white/92 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden text-slate-900 ${className}`}
+      className={`bg-white border-2 border-slate-200 rounded-3xl shadow-xl overflow-hidden opacity-100 text-slate-900 ${className}`}
     >
       <div className="h-1.5 bg-gradient-to-r from-emerald-600 via-teal-500 to-amber-500" />
       <CardContent className="p-6">
@@ -1760,7 +1746,7 @@ function ProposalInfoCard({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {infoFields.map((field) => (
             <div key={field.label}>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-0.5">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-0.5">
                 {field.label}
               </p>
               <p className="text-sm font-black text-slate-900 tracking-tight">
@@ -1774,11 +1760,10 @@ function ProposalInfoCard({
   );
 }
 
-
 function Footer() {
   return (
     <div className="text-center mt-10 pb-6">
-      <p className="text-slate-800 font-extrabold text-[11px] uppercase tracking-widest bg-white/80 backdrop-blur-md px-4 py-1.5 rounded-full inline-block border border-slate-200/80 shadow-sm">
+      <p className="text-white font-extrabold text-[11px] uppercase tracking-widest bg-slate-950/90 px-4 py-2 rounded-full inline-block border border-amber-400/40 shadow-xl">
         Super Gestão PRONAF © {new Date().getFullYear()} — Todos os direitos reservados
       </p>
     </div>
