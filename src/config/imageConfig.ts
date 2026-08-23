@@ -1,4 +1,4 @@
-// High-Resolution Background Images Catalog for Super Gestão / PRONAF
+// High-Resolution Background Images Catalog for Super Gestão / PRONAF (Vercel Build Sync v2.5)
 
 export const MEDIA_CONFIG = {
   images: {
