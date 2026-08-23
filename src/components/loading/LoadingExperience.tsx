@@ -23,7 +23,7 @@ const STAGES = [
   },
   {
     title: 'A TECNOLOGIA ORGANIZA OS DADOS',
-    subtitle: 'Conectamos as informações do campo para gerar inteligência e oportunidades.',
+    subtitle: 'Conectando as informações do campo para gerar inteligência e oportunidades.',
     bgKey: 'organicProduce',
   },
   {
