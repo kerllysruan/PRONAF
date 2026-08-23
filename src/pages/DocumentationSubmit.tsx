@@ -857,24 +857,38 @@ export default function DocumentationSubmit() {
                   key={doc.key}
                   tabIndex={(!isApproved && !isPending) ? 0 : undefined}
                   onPaste={(!isApproved && !isPending) ? (e) => handlePaste(doc.key, e) : undefined}
-                  className={`group rounded-2xl border-2 transition-all duration-300 overflow-hidden outline-none opacity-100 ${
+                  className={`group rounded-2xl border transition-all duration-300 overflow-hidden outline-none bg-white/95 backdrop-blur-md shadow-lg shadow-slate-950/20 hover:shadow-2xl hover:border-emerald-500/50 text-slate-900 ${
                     isApproved
-                      ? "border-emerald-500 bg-white text-slate-900 shadow-md"
+                      ? "border-emerald-500/40"
                       : isPending
-                      ? "border-amber-400 bg-white text-slate-900 shadow-md"
+                      ? "border-amber-400/60"
                       : isReplacingRejected
-                      ? "border-emerald-600 bg-white text-slate-900 shadow-lg"
+                      ? "border-emerald-600"
                       : isRejected
-                      ? "border-rose-400 bg-white text-slate-900 shadow-md"
+                      ? "border-rose-400/60"
                       : selected
-                      ? "border-emerald-600 bg-white text-slate-900 shadow-lg"
-                      : "border-slate-200 bg-white hover:border-emerald-500 hover:shadow-lg text-slate-900 shadow-sm"
+                      ? "border-emerald-600 shadow-emerald-900/20"
+                      : "border-slate-200/80"
                   }`}
                   onDragOver={(!isApproved && !isPending) ? (e) => e.preventDefault() : undefined}
                   onDrop={(!isApproved && !isPending) ? (e) => handleDrop(doc.key, e) : undefined}
                   onMouseEnter={(!isApproved && !isPending) ? () => setHoveredDocKey(doc.key) : undefined}
                   onMouseLeave={(!isApproved && !isPending) ? () => setHoveredDocKey(null) : undefined}
                 >
+                  {/* Status accent bar at top of card */}
+                  <div className={`h-1.5 w-full ${
+                    isApproved
+                      ? "bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600"
+                      : isPending
+                      ? "bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500"
+                      : isReplacingRejected
+                      ? "bg-gradient-to-r from-emerald-600 to-teal-600"
+                      : isRejected
+                      ? "bg-gradient-to-r from-rose-500 to-red-600"
+                      : selected
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-600"
+                      : "bg-gradient-to-r from-slate-200 via-slate-300 to-slate-200"
+                  }`} />
                   {/* ── Rejection Banner (always shown when rejected) ─── */}
                   {isRejected && (
                     <div className={`px-4 py-2.5 flex items-start gap-2.5 ${
@@ -959,7 +973,7 @@ export default function DocumentationSubmit() {
                               }
                             }
                           }}
-                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-emerald-950 text-white text-xs font-black active:scale-95 transition-all duration-200 shadow-md border border-slate-800 touch-manipulation select-none"
+                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[42px] px-4 py-2 rounded-xl bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 hover:from-emerald-800 hover:to-teal-900 text-white text-xs font-black active:scale-95 transition-all duration-200 shadow-md border border-emerald-500/30 touch-manipulation select-none"
                         >
                           {enablingDoc === doc.key ? (
                             <>
@@ -1286,13 +1300,13 @@ export default function DocumentationSubmit() {
                 {/* DOCUMENTOS DE IDENTIFICAÇÃO grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
-                      <span className="text-amber-600 text-base">🆔</span>
-                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-950/85 border border-amber-500/40 backdrop-blur-xl text-white shadow-xl">
+                      <span className="text-amber-400 text-base">🆔</span>
+                      <p className="text-white text-xs font-black uppercase tracking-wider">
                         DOCUMENTOS DE IDENTIFICAÇÃO
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-slate-300/60" />
+                    <div className="flex-1 h-0.5 bg-gradient-to-r from-amber-500/50 via-emerald-500/30 to-transparent" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {identificationDocs.map(renderCard)}
@@ -1302,13 +1316,13 @@ export default function DocumentationSubmit() {
                 {/* IDENTIFICAÇÃO IMÓVEL RURAL grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
-                      <span className="text-emerald-600 text-base">🏡</span>
-                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-950/85 border border-emerald-500/40 backdrop-blur-xl text-white shadow-xl">
+                      <span className="text-emerald-400 text-base">🏡</span>
+                      <p className="text-white text-xs font-black uppercase tracking-wider">
                         IDENTIFICAÇÃO IMÓVEL RURAL
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-slate-300/60" />
+                    <div className="flex-1 h-0.5 bg-gradient-to-r from-emerald-500/50 via-teal-500/30 to-transparent" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {ruralPropertyDocs.map(renderCard)}
@@ -1318,13 +1332,13 @@ export default function DocumentationSubmit() {
                 {/* DOCUMENTAÇÃO ENQUADRAMENTO AGRICULTURA FAMILIAR grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
-                      <span className="text-teal-600 text-base">🚜</span>
-                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-950/85 border border-teal-500/40 backdrop-blur-xl text-white shadow-xl">
+                      <span className="text-teal-300 text-base">🚜</span>
+                      <p className="text-white text-xs font-black uppercase tracking-wider">
                         DOCUMENTAÇÃO ENQUADRAMENTO AGRICULTURA FAMILIAR
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-slate-300/60" />
+                    <div className="flex-1 h-0.5 bg-gradient-to-r from-teal-500/50 via-emerald-500/30 to-transparent" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {enquadramentoDocs.map(renderCard)}
@@ -1334,13 +1348,13 @@ export default function DocumentationSubmit() {
                 {/* CERTIDÕES CIVIS E ADMINISTRATIVAS grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
-                      <span className="text-blue-600 text-base">📜</span>
-                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-950/85 border border-blue-500/40 backdrop-blur-xl text-white shadow-xl">
+                      <span className="text-blue-400 text-base">📜</span>
+                      <p className="text-white text-xs font-black uppercase tracking-wider">
                         CERTIDÕES CIVIS E ADMINISTRATIVAS
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-slate-300/60" />
+                    <div className="flex-1 h-0.5 bg-gradient-to-r from-blue-500/50 via-teal-500/30 to-transparent" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {certidoesCivisDocs.map(renderCard)}
@@ -1350,13 +1364,13 @@ export default function DocumentationSubmit() {
                 {/* Main documents grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
-                      <span className="text-emerald-600 text-base">📄</span>
-                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-950/85 border border-emerald-500/40 backdrop-blur-xl text-white shadow-xl">
+                      <span className="text-emerald-400 text-base">📄</span>
+                      <p className="text-white text-xs font-black uppercase tracking-wider">
                         DOCUMENTAÇÃO DO PLANO DE INVESTIMENTO PROPOSTO
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-slate-300/60" />
+                    <div className="flex-1 h-0.5 bg-gradient-to-r from-emerald-500/50 via-teal-500/30 to-transparent" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {mainDocs.map(renderCard)}
@@ -1539,13 +1553,13 @@ export default function DocumentationSubmit() {
                 {/* ── Declarações Ambientais section ────────────────── */}
                 <div className="mt-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
-                      <span className="text-emerald-600 text-base">🌿</span>
-                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-950/85 border border-emerald-500/40 backdrop-blur-xl text-white shadow-xl">
+                      <span className="text-emerald-400 text-base">🌿</span>
+                      <p className="text-white text-xs font-black uppercase tracking-wider">
                         Declarações Ambientais
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-slate-300/60" />
+                    <div className="flex-1 h-0.5 bg-gradient-to-r from-emerald-500/50 via-teal-500/30 to-transparent" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {ambientalDocs.map(renderCard)}
