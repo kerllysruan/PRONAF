@@ -3,6 +3,7 @@
 export const MEDIA_CONFIG = {
   images: {
     agriLivestock:  '/agri_livestock_bg.jpg',
+    agriFamiliar:   '/agri_familiar_bg.jpg',
     sunriseDawn:    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2000&q=85',
     aerialCrops:    'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=2000&q=85',
     familyFarmer:   'https://images.unsplash.com/photo-1592417817098-8f3d6ef23a81?auto=format&fit=crop&w=1200&q=85',

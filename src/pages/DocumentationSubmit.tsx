@@ -698,7 +698,7 @@ export default function DocumentationSubmit() {
       <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-950">
         <div
           className="fixed inset-0 bg-cover bg-center filter saturate-[1.1] brightness-[1.02] pointer-events-none z-0"
-          style={{ backgroundImage: `url(${MEDIA_CONFIG.images.agriLivestock})` }}
+          style={{ backgroundImage: `url(${MEDIA_CONFIG.images.agriFamiliar})` }}
         />
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px] pointer-events-none z-0" />
 
@@ -760,7 +760,7 @@ export default function DocumentationSubmit() {
     <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-950">
       <div
         className="fixed inset-0 bg-cover bg-center filter saturate-[1.1] brightness-[1.02] pointer-events-none z-0"
-        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.agriLivestock})` }}
+        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.agriFamiliar})` }}
       />
       <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px] pointer-events-none z-0" />
 
@@ -959,7 +959,7 @@ export default function DocumentationSubmit() {
                               }
                             }
                           }}
-                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-black hover:bg-slate-800 active:scale-95 transition-all duration-200 shadow-md touch-manipulation select-none"
+                          className="mt-3 flex items-center justify-center gap-2 w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-emerald-950 text-white text-xs font-black active:scale-95 transition-all duration-200 shadow-md border border-slate-800 touch-manipulation select-none"
                         >
                           {enablingDoc === doc.key ? (
                             <>
@@ -1661,7 +1661,7 @@ export default function DocumentationSubmit() {
                       <Send className="h-5 w-5 mr-2" />
                       {hasRejections ? "Reenviar Documentos Reprovados" : "Enviar Documentação"}
                       {selectedCount > 0 && (
-                        <Badge className="ml-2 bg-slate-950/30 text-slate-950 border-0 rounded-full text-xs font-black">
+                        <Badge className="ml-2 bg-white/25 text-white border-0 rounded-full text-xs font-black">
                           {selectedCount}
                         </Badge>
                       )}
