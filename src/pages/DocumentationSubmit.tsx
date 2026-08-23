@@ -765,12 +765,12 @@ export default function DocumentationSubmit() {
 
   // ── Main/Unified submission layout (initial, awaiting analysis, missing files, or rejected)
   return (
-    <div className="min-h-screen relative font-sans overflow-x-hidden">
+    <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-900">
       <div
-        className="fixed inset-0 bg-cover bg-center filter saturate-[1.3] contrast-[1.12] brightness-[1.08] pointer-events-none z-0"
+        className="fixed inset-0 bg-cover bg-center filter saturate-[1.2] contrast-[1.08] brightness-[1.05] pointer-events-none z-0"
         style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
       />
-      <div className="fixed inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/65 to-slate-950/80 pointer-events-none z-0" />
+      <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-slate-900/30 to-slate-950/50 backdrop-blur-[2px] pointer-events-none z-0" />
 
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 relative z-10">
         <BrandHeader />
@@ -778,22 +778,22 @@ export default function DocumentationSubmit() {
         <div className="animate-fade-in space-y-6">
           {/* Banner: Awaiting Analysis */}
           {isAwaitingAnalysis ? (
-            <Card className="bg-slate-950/85 border-2 border-emerald-500/50 rounded-3xl backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden text-white">
-              <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500" />
+            <Card className="bg-emerald-50/95 border-2 border-emerald-400/80 rounded-3xl backdrop-blur-xl shadow-xl overflow-hidden text-emerald-950">
+              <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600" />
               <CardContent className="flex items-start gap-4 p-6">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center flex-shrink-0 text-emerald-400">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-emerald-700">
                   <CheckCircle2 className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-black text-emerald-300 mb-1 tracking-tight">
+                  <h2 className="text-lg font-black text-emerald-900 mb-1 tracking-tight">
                     ✅ Documentos Enviados — Aguardando Análise
                   </h2>
-                  <p className="text-slate-200 text-xs sm:text-sm font-medium leading-relaxed">
+                  <p className="text-emerald-800 text-xs sm:text-sm font-semibold leading-relaxed">
                     Seus documentos foram enviados e estão sendo analisados pela equipe.
                     {hasDispensedDocs && " Caso precise reenviar um documento dispensado, clique em \"Habilitar Envio\" abaixo."}
                   </p>
                   {tokenData?.submitted_at && (
-                    <div className="mt-2 flex items-center gap-1.5 text-emerald-400 text-xs font-bold">
+                    <div className="mt-2 flex items-center gap-1.5 text-emerald-700 text-xs font-extrabold">
                       <FileCheck className="h-3.5 w-3.5" />
                       <span>Enviado em {formatDate(tokenData.submitted_at)}</span>
                     </div>
@@ -803,18 +803,18 @@ export default function DocumentationSubmit() {
             </Card>
           ) : (
             /* Banner: Pending documents or review */
-            <Card className="bg-slate-950/85 border-2 border-amber-400/50 rounded-3xl backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden text-white">
-              <div className="h-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400" />
+            <Card className="bg-amber-50/95 border-2 border-amber-300/90 rounded-3xl backdrop-blur-xl shadow-xl overflow-hidden text-amber-950">
+              <div className="h-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500" />
               <CardContent className="flex items-start gap-4 p-6">
-                <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center flex-shrink-0 text-amber-300">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center flex-shrink-0 text-amber-700">
                   <AlertTriangle className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-black text-amber-300 mb-1 tracking-tight">
+                  <h2 className="text-lg font-black text-amber-900 mb-1 tracking-tight">
                     Documentação Pendente
                   </h2>
-                  <p className="text-slate-200 text-xs sm:text-sm font-medium leading-relaxed">
-                    A proposta está <strong className="text-amber-300 font-black">Pendente</strong> porque restam documentos obrigatórios a serem enviados ou aprovados pela equipe. Por favor, anexe os documentos necessários abaixo.
+                  <p className="text-amber-800 text-xs sm:text-sm font-semibold leading-relaxed">
+                    A proposta está <strong className="text-amber-950 font-black">Pendente</strong> porque restam documentos obrigatórios a serem enviados ou aprovados pela equipe. Por favor, anexe os documentos necessários abaixo.
                   </p>
                 </div>
               </CardContent>
@@ -825,21 +825,21 @@ export default function DocumentationSubmit() {
           <ProposalInfoCard proposal={proposal} />
 
           {/* Progress */}
-          <Card className="bg-slate-950/85 border-2 border-amber-400/30 rounded-3xl backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden text-white">
+          <Card className="bg-white/92 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden text-slate-900">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
+                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">
                   Progresso do Envio
                 </p>
-                <span className="text-amber-300 text-sm font-black tracking-wider">
+                <span className="text-slate-900 text-sm font-black tracking-wider">
                   {readyCount}/{totalDocs}
                 </span>
               </div>
               <Progress
                 value={progressPercent}
-                className="h-3 bg-slate-900 border border-amber-400/30 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-amber-400 [&>div]:via-amber-500 [&>div]:to-emerald-400 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
+                className="h-3 bg-slate-100 border border-slate-200/80 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-emerald-600 [&>div]:via-teal-500 [&>div]:to-amber-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
               />
-              <p className="text-slate-300 text-xs mt-2 font-medium">
+              <p className="text-slate-500 text-xs mt-2 font-semibold">
                 {selectedCount === 0
                   ? "Selecione os documentos em PDF para enviar"
                   : `${selectedCount} documento${selectedCount !== 1 ? "s" : ""} selecionado${selectedCount !== 1 ? "s" : ""}`}
@@ -865,18 +865,18 @@ export default function DocumentationSubmit() {
                   key={doc.key}
                   tabIndex={(!isApproved && !isPending) ? 0 : undefined}
                   onPaste={(!isApproved && !isPending) ? (e) => handlePaste(doc.key, e) : undefined}
-                  className={`group rounded-2xl border transition-all duration-300 overflow-hidden outline-none backdrop-blur-xl ${
+                  className={`group rounded-2xl border transition-all duration-300 overflow-hidden outline-none backdrop-blur-md ${
                     isApproved
-                      ? "border-2 border-emerald-500/60 bg-emerald-950/85 text-white shadow-xl"
+                      ? "border-2 border-emerald-400 bg-emerald-50/95 text-emerald-950 shadow-md"
                       : isPending
-                      ? "border-2 border-amber-400/60 bg-amber-950/80 text-white shadow-xl"
+                      ? "border-2 border-amber-400 bg-amber-50/95 text-amber-950 shadow-md"
                       : isReplacingRejected
-                      ? "border-2 border-amber-400 bg-emerald-950/90 text-white shadow-[0_0_20px_rgba(251,191,36,0.3)]"
+                      ? "border-2 border-emerald-600 bg-emerald-50/95 text-emerald-950 shadow-lg"
                       : isRejected
-                      ? "border-2 border-rose-500/70 bg-rose-950/85 text-white shadow-xl"
+                      ? "border-2 border-rose-400 bg-rose-50/95 text-rose-950 shadow-md"
                       : selected
-                      ? "border-2 border-amber-400 bg-emerald-950/90 text-white shadow-[0_0_20px_rgba(251,191,36,0.3)]"
-                      : "border-2 border-dashed border-amber-400/30 bg-slate-950/80 hover:border-amber-400/70 hover:bg-slate-950/95 text-slate-100 shadow-xl"
+                      ? "border-2 border-emerald-600 bg-emerald-50/95 text-emerald-950 shadow-lg"
+                      : "border-2 border-dashed border-slate-300/90 bg-white/90 hover:bg-white hover:border-emerald-500/60 text-slate-800 transition-all shadow-sm"
                   }`}
                   onDragOver={(!isApproved && !isPending) ? (e) => e.preventDefault() : undefined}
                   onDrop={(!isApproved && !isPending) ? (e) => handleDrop(doc.key, e) : undefined}
@@ -1293,13 +1293,13 @@ export default function DocumentationSubmit() {
                 {/* DOCUMENTOS DE IDENTIFICAÇÃO grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-400/15 border border-amber-400/40 backdrop-blur-xl shadow-lg">
-                      <span className="text-amber-300 text-base">🆔</span>
-                      <p className="text-amber-200 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
+                      <span className="text-amber-600 text-base">🆔</span>
+                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
                         DOCUMENTOS DE IDENTIFICAÇÃO
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-amber-400/30" />
+                    <div className="flex-1 h-px bg-slate-300/60" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {identificationDocs.map(renderCard)}
@@ -1309,13 +1309,13 @@ export default function DocumentationSubmit() {
                 {/* IDENTIFICAÇÃO IMÓVEL RURAL grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-400/15 border border-emerald-400/40 backdrop-blur-xl shadow-lg">
-                      <span className="text-emerald-300 text-base">🏡</span>
-                      <p className="text-emerald-200 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
+                      <span className="text-emerald-600 text-base">🏡</span>
+                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
                         IDENTIFICAÇÃO IMÓVEL RURAL
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-emerald-400/30" />
+                    <div className="flex-1 h-px bg-slate-300/60" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {ruralPropertyDocs.map(renderCard)}
@@ -1325,13 +1325,13 @@ export default function DocumentationSubmit() {
                 {/* DOCUMENTAÇÃO ENQUADRAMENTO AGRICULTURA FAMILIAR grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-teal-400/15 border border-teal-400/40 backdrop-blur-xl shadow-lg">
-                      <span className="text-teal-300 text-base">🚜</span>
-                      <p className="text-teal-200 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
+                      <span className="text-teal-600 text-base">🚜</span>
+                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
                         DOCUMENTAÇÃO ENQUADRAMENTO AGRICULTURA FAMILIAR
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-teal-400/30" />
+                    <div className="flex-1 h-px bg-slate-300/60" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {enquadramentoDocs.map(renderCard)}
@@ -1341,13 +1341,13 @@ export default function DocumentationSubmit() {
                 {/* CERTIDÕES CIVIS E ADMINISTRATIVAS grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-400/15 border border-blue-400/40 backdrop-blur-xl shadow-lg">
-                      <span className="text-blue-300 text-base">📜</span>
-                      <p className="text-blue-200 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
+                      <span className="text-blue-600 text-base">📜</span>
+                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
                         CERTIDÕES CIVIS E ADMINISTRATIVAS
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-blue-400/30" />
+                    <div className="flex-1 h-px bg-slate-300/60" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {certidoesCivisDocs.map(renderCard)}
@@ -1357,13 +1357,13 @@ export default function DocumentationSubmit() {
                 {/* Main documents grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg">
-                      <span className="text-white text-base">📄</span>
-                      <p className="text-white/90 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
+                      <span className="text-emerald-600 text-base">📄</span>
+                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
                         DOCUMENTAÇÃO DO PLANO DE INVESTIMENTO PROPOSTO
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-white/20" />
+                    <div className="flex-1 h-px bg-slate-300/60" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {mainDocs.map(renderCard)}
@@ -1371,19 +1371,19 @@ export default function DocumentationSubmit() {
                 </div>
 
                 {/* INVERSÕES DO PLANO */}
-                <div className="mb-8 p-6 rounded-3xl border-2 border-amber-400/30 bg-slate-950/85 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                <div className="mb-8 p-6 rounded-3xl border border-slate-200/90 bg-white/92 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-400/15 border border-amber-400/40 backdrop-blur-xl shadow-lg w-fit">
-                      <span className="text-amber-300 text-base">📊</span>
-                      <p className="text-amber-200 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200/80 shadow-sm w-fit">
+                      <span className="text-emerald-700 text-base">📊</span>
+                      <p className="text-emerald-900 text-xs font-black uppercase tracking-widest">
                         INVERSÕES DO PLANO
                       </p>
                     </div>
                     {/* Validador de Valor da Proposta */}
                     <div className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-300 ${
                       Math.abs(totalInversoes - estimatedValue) < 0.01 
-                        ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300' 
-                        : 'bg-rose-500/20 border-rose-400/40 text-rose-300'
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                        : 'bg-rose-50 border-rose-200 text-rose-700'
                     }`}>
                       {Math.abs(totalInversoes - estimatedValue) < 0.01 ? (
                         <span>✅ Inversões validadas! Soma bate 100% com o valor proposto: {formatCurrency(estimatedValue)}</span>
@@ -1393,16 +1393,16 @@ export default function DocumentationSubmit() {
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-300 mb-4 font-semibold leading-relaxed">
+                  <p className="text-xs text-slate-600 mb-4 font-semibold leading-relaxed">
                     Informe detalhadamente os itens de investimento que compõem o plano de negócio da operação. O total, a quantidade e a nomenclatura dos itens devem ser exatamente iguais ao proposto no plano assinado e eletrônico!
                   </p>
 
                   <div className="space-y-3">
                     {inversoes.map((item, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-slate-900/80 border border-amber-400/20 p-3 rounded-2xl shadow-sm animate-fade-in text-white">
+                      <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm animate-fade-in text-slate-800">
                         {/* Quantidade */}
                         <div className="col-span-2 md:col-span-1">
-                          <label className="text-[10px] font-bold text-amber-300 uppercase ml-1 block mb-1">Qtd.</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Qtd.</label>
                           <input
                             type="number"
                             min="1"
@@ -1412,13 +1412,13 @@ export default function DocumentationSubmit() {
                               updated[idx].quant = Math.max(1, parseInt(e.target.value) || 1);
                               setInversoes(updated);
                             }}
-                            className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground text-center"
+                            className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground text-center"
                           />
                         </div>
 
                         {/* Unidade */}
                         <div className="col-span-3 md:col-span-2">
-                          <label className="text-[10px] font-bold text-amber-300 uppercase ml-1 block mb-1">Unid.</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Unid.</label>
                           <select
                             value={item.unid || "UNID"}
                             onChange={(e) => {
@@ -1426,7 +1426,7 @@ export default function DocumentationSubmit() {
                               updated[idx].unid = e.target.value;
                               setInversoes(updated);
                             }}
-                            className="w-full px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground cursor-pointer h-[32px]"
+                            className="w-full px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground cursor-pointer h-[32px]"
                           >
                             <option value="UNID">UNID</option>
                             <option value="CX">CX</option>
@@ -1438,7 +1438,7 @@ export default function DocumentationSubmit() {
 
                         {/* Nome / Descrição */}
                         <div className="col-span-3 md:col-span-5">
-                          <label className="text-[10px] font-bold text-amber-300 uppercase ml-1 block mb-1">Item / Inversão</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Item / Inversão</label>
                           <input
                             type="text"
                             placeholder="Ex: Aquisição de Bovinos de Leite"
@@ -1448,13 +1448,13 @@ export default function DocumentationSubmit() {
                               updated[idx].nome = e.target.value.toUpperCase();
                               setInversoes(updated);
                             }}
-                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground uppercase"
+                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground uppercase"
                           />
                         </div>
 
                         {/* Valor Total */}
                         <div className="col-span-3">
-                          <label className="text-[10px] font-bold text-amber-300 uppercase ml-1 block mb-1">Valor Total (R$)</label>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Valor Total (R$)</label>
                           <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
                             <input
@@ -1462,7 +1462,7 @@ export default function DocumentationSubmit() {
                               placeholder="0,00"
                               value={formatInputMoney(item.valor)}
                               onChange={(e) => handleMoneyChange(idx, e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                              className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground"
                             />
                           </div>
                         </div>
@@ -1490,7 +1490,7 @@ export default function DocumentationSubmit() {
                   <button
                     type="button"
                     onClick={() => setInversoes([...inversoes, { quant: 1, nome: "", valor: 0, unid: "UNID" }])}
-                    className="mt-4 px-4 py-2 border border-dashed border-indigo-300 text-indigo-600 hover:bg-indigo-50/50 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 w-full md:w-auto bg-background"
+                    className="mt-4 px-4 py-2 border border-dashed border-emerald-300 text-emerald-700 hover:bg-emerald-50/50 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 w-full md:w-auto bg-background"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Adicionar Item
@@ -1501,10 +1501,10 @@ export default function DocumentationSubmit() {
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                       Custos de Assessoria da Operação
                     </p>
-                    <div className="grid grid-cols-12 gap-3 items-center bg-slate-900/80 border border-amber-400/20 p-3 rounded-2xl shadow-sm text-white">
+                    <div className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-slate-800">
                       {/* Nome / Descrição (Fixo) */}
                       <div className="col-span-8 md:col-span-8">
-                        <label className="text-[10px] font-bold text-amber-300 uppercase ml-1 block mb-1">Item / Inversão</label>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Item / Inversão</label>
                         <input
                           type="text"
                           value="CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA"
@@ -1530,7 +1530,7 @@ export default function DocumentationSubmit() {
                               }
                               setCustoAssessoria(parseFloat(cleanValue) / 100);
                             }}
-                            className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-background text-foreground"
+                            className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground"
                           />
                         </div>
                       </div>
@@ -1546,13 +1546,13 @@ export default function DocumentationSubmit() {
                 {/* ── Declarações Ambientais section ────────────────── */}
                 <div className="mt-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-400/15 border border-emerald-400/40 backdrop-blur-xl shadow-lg">
-                      <span className="text-emerald-300 text-base">🌿</span>
-                      <p className="text-emerald-200 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/90 backdrop-blur-md text-slate-800 shadow-sm">
+                      <span className="text-emerald-600 text-base">🌿</span>
+                      <p className="text-slate-800 text-xs font-black uppercase tracking-widest">
                         Declarações Ambientais
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-emerald-400/30" />
+                    <div className="flex-1 h-px bg-slate-300/60" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {ambientalDocs.map(renderCard)}
@@ -1656,7 +1656,7 @@ export default function DocumentationSubmit() {
                     isSubmitting || 
                     !isInversõesValidadas
                   }
-                  className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500 hover:from-amber-400 hover:via-amber-300 hover:to-emerald-400 text-slate-950 font-black text-base shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
+                  className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-base shadow-xl shadow-emerald-700/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>
@@ -1698,7 +1698,7 @@ export default function DocumentationSubmit() {
 function BrandHeader() {
   return (
     <div className="text-center space-y-3 mb-8 animate-fade-in">
-      <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-900 to-slate-950 border-2 border-amber-400/60 text-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.35)]">
+      <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-white/90 border border-emerald-500/30 text-emerald-700 shadow-xl backdrop-blur-md">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -1706,7 +1706,7 @@ function BrandHeader() {
           strokeWidth="1.8"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="h-8 w-8 text-amber-300"
+          className="h-8 w-8 text-emerald-600"
         >
           <path d="M12 2v20" />
           <path d="M12 4c-3 0-5 2-5 5s2 5 5 5" />
@@ -1716,10 +1716,10 @@ function BrandHeader() {
         </svg>
       </div>
       <div>
-        <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-200 uppercase tracking-tight drop-shadow-md">
+        <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight drop-shadow-sm">
           SUPER GESTÃO
         </h1>
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-amber-300 mt-1">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-emerald-800 bg-white/80 backdrop-blur-md px-4 py-1 rounded-full border border-emerald-200/80 inline-block shadow-sm mt-1">
           AGRICULTURA FAMILIAR — PRONAF
         </p>
       </div>
@@ -1756,21 +1756,21 @@ function ProposalInfoCard({
 
   return (
     <Card
-      className={`bg-slate-950/85 border-2 border-amber-400/30 rounded-3xl backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden text-white ${className}`}
+      className={`bg-white/92 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden text-slate-900 ${className}`}
     >
-      <div className="h-1.5 bg-gradient-to-r from-amber-400 via-emerald-400 to-amber-500" />
+      <div className="h-1.5 bg-gradient-to-r from-emerald-600 via-teal-500 to-amber-500" />
       <CardContent className="p-6">
-        <p className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-4 flex items-center gap-1.5">
-          <FileText className="h-3.5 w-3.5 text-amber-400" />
+        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800 mb-4 flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5 text-emerald-600" />
           Dados da Proposta
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {infoFields.map((field) => (
             <div key={field.label}>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-200/80 mb-0.5">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-0.5">
                 {field.label}
               </p>
-              <p className="text-sm font-black text-white tracking-tight">
+              <p className="text-sm font-black text-slate-900 tracking-tight">
                 {field.value}
               </p>
             </div>
@@ -1785,7 +1785,7 @@ function ProposalInfoCard({
 function Footer() {
   return (
     <div className="text-center mt-10 pb-6">
-      <p className="text-amber-200/60 text-[10px] font-bold uppercase tracking-widest">
+      <p className="text-slate-800 font-extrabold text-[11px] uppercase tracking-widest bg-white/80 backdrop-blur-md px-4 py-1.5 rounded-full inline-block border border-slate-200/80 shadow-sm">
         Super Gestão PRONAF © {new Date().getFullYear()} — Todos os direitos reservados
       </p>
     </div>
