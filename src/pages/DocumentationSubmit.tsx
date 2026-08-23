@@ -765,12 +765,12 @@ export default function DocumentationSubmit() {
 
   // ── Main/Unified submission layout (initial, awaiting analysis, missing files, or rejected)
   return (
-    <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-900">
+    <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-100">
       <div
-        className="fixed inset-0 bg-cover bg-center filter saturate-[1.2] contrast-[1.08] brightness-[1.05] pointer-events-none z-0"
+        className="fixed inset-0 bg-cover bg-center filter saturate-[1.1] brightness-[1.02] pointer-events-none z-0"
         style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
       />
-      <div className="fixed inset-0 bg-gradient-to-b from-slate-950/40 via-slate-900/30 to-slate-950/50 backdrop-blur-[2px] pointer-events-none z-0" />
+      <div className="fixed inset-0 bg-slate-900/25 backdrop-blur-[2px] pointer-events-none z-0" />
 
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 relative z-10">
         <BrandHeader />
@@ -778,22 +778,22 @@ export default function DocumentationSubmit() {
         <div className="animate-fade-in space-y-6">
           {/* Banner: Awaiting Analysis */}
           {isAwaitingAnalysis ? (
-            <Card className="bg-emerald-50/95 border-2 border-emerald-400/80 rounded-3xl backdrop-blur-xl shadow-xl overflow-hidden text-emerald-950">
+            <Card className="bg-emerald-50/95 border-2 border-emerald-300 rounded-3xl shadow-xl shadow-emerald-900/5 overflow-hidden text-slate-900">
               <div className="h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600" />
               <CardContent className="flex items-start gap-4 p-6">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center flex-shrink-0 text-emerald-700">
                   <CheckCircle2 className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-black text-emerald-900 mb-1 tracking-tight">
+                  <h2 className="text-lg font-extrabold text-emerald-950 mb-1 tracking-tight">
                     ✅ Documentos Enviados — Aguardando Análise
                   </h2>
-                  <p className="text-emerald-800 text-xs sm:text-sm font-semibold leading-relaxed">
+                  <p className="text-emerald-900 text-xs sm:text-sm font-semibold leading-relaxed">
                     Seus documentos foram enviados e estão sendo analisados pela equipe.
                     {hasDispensedDocs && " Caso precise reenviar um documento dispensado, clique em \"Habilitar Envio\" abaixo."}
                   </p>
                   {tokenData?.submitted_at && (
-                    <div className="mt-2 flex items-center gap-1.5 text-emerald-700 text-xs font-extrabold">
+                    <div className="mt-2 flex items-center gap-1.5 text-emerald-800 text-xs font-bold">
                       <FileCheck className="h-3.5 w-3.5" />
                       <span>Enviado em {formatDate(tokenData.submitted_at)}</span>
                     </div>
@@ -803,17 +803,17 @@ export default function DocumentationSubmit() {
             </Card>
           ) : (
             /* Banner: Pending documents or review */
-            <Card className="bg-amber-50/95 border-2 border-amber-300/90 rounded-3xl backdrop-blur-xl shadow-xl overflow-hidden text-amber-950">
+            <Card className="bg-amber-50/95 border-2 border-amber-300 rounded-3xl shadow-xl shadow-amber-900/5 overflow-hidden text-slate-900">
               <div className="h-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-500" />
               <CardContent className="flex items-start gap-4 p-6">
                 <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center flex-shrink-0 text-amber-700">
                   <AlertTriangle className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-black text-amber-900 mb-1 tracking-tight">
+                  <h2 className="text-lg font-extrabold text-amber-950 mb-1 tracking-tight">
                     Documentação Pendente
                   </h2>
-                  <p className="text-amber-800 text-xs sm:text-sm font-semibold leading-relaxed">
+                  <p className="text-amber-900 text-xs sm:text-sm font-semibold leading-relaxed">
                     A proposta está <strong className="text-amber-950 font-black">Pendente</strong> porque restam documentos obrigatórios a serem enviados ou aprovados pela equipe. Por favor, anexe os documentos necessários abaixo.
                   </p>
                 </div>
@@ -825,7 +825,7 @@ export default function DocumentationSubmit() {
           <ProposalInfoCard proposal={proposal} />
 
           {/* Progress */}
-          <Card className="bg-white/92 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.08)] overflow-hidden text-slate-900">
+          <Card className="bg-white border border-slate-200/90 rounded-3xl shadow-xl shadow-slate-900/5 overflow-hidden text-slate-900">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">
@@ -837,9 +837,9 @@ export default function DocumentationSubmit() {
               </div>
               <Progress
                 value={progressPercent}
-                className="h-3 bg-slate-100 border border-slate-200/80 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-emerald-600 [&>div]:via-teal-500 [&>div]:to-amber-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
+                className="h-3 bg-slate-100 border border-slate-200 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-emerald-600 [&>div]:via-teal-500 [&>div]:to-amber-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
               />
-              <p className="text-slate-500 text-xs mt-2 font-semibold">
+              <p className="text-slate-600 text-xs mt-2 font-semibold">
                 {selectedCount === 0
                   ? "Selecione os documentos em PDF para enviar"
                   : `${selectedCount} documento${selectedCount !== 1 ? "s" : ""} selecionado${selectedCount !== 1 ? "s" : ""}`}
@@ -865,18 +865,18 @@ export default function DocumentationSubmit() {
                   key={doc.key}
                   tabIndex={(!isApproved && !isPending) ? 0 : undefined}
                   onPaste={(!isApproved && !isPending) ? (e) => handlePaste(doc.key, e) : undefined}
-                  className={`group rounded-2xl border transition-all duration-300 overflow-hidden outline-none backdrop-blur-md ${
+                  className={`group rounded-2xl border transition-all duration-300 overflow-hidden outline-none ${
                     isApproved
-                      ? "border-2 border-emerald-400 bg-emerald-50/95 text-emerald-950 shadow-md"
+                      ? "border-2 border-emerald-500 bg-emerald-50/80 text-slate-900 shadow-sm"
                       : isPending
-                      ? "border-2 border-amber-400 bg-amber-50/95 text-amber-950 shadow-md"
+                      ? "border-2 border-amber-400 bg-amber-50/80 text-slate-900 shadow-sm"
                       : isReplacingRejected
-                      ? "border-2 border-emerald-600 bg-emerald-50/95 text-emerald-950 shadow-lg"
+                      ? "border-2 border-emerald-600 bg-emerald-50/90 text-slate-900 shadow-md"
                       : isRejected
-                      ? "border-2 border-rose-400 bg-rose-50/95 text-rose-950 shadow-md"
+                      ? "border-2 border-rose-400 bg-rose-50/80 text-slate-900 shadow-sm"
                       : selected
-                      ? "border-2 border-emerald-600 bg-emerald-50/95 text-emerald-950 shadow-lg"
-                      : "border-2 border-dashed border-slate-300/90 bg-white/90 hover:bg-white hover:border-emerald-500/60 text-slate-800 transition-all shadow-sm"
+                      ? "border-2 border-emerald-600 bg-emerald-50/90 text-slate-900 shadow-md"
+                      : "border-2 border-dashed border-slate-200 bg-white hover:border-emerald-500 hover:bg-emerald-50/20 text-slate-900 shadow-sm"
                   }`}
                   onDragOver={(!isApproved && !isPending) ? (e) => e.preventDefault() : undefined}
                   onDrop={(!isApproved && !isPending) ? (e) => handleDrop(doc.key, e) : undefined}
