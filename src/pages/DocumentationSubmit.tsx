@@ -778,22 +778,22 @@ export default function DocumentationSubmit() {
         <div className="animate-fade-in space-y-6">
           {/* Banner: Awaiting Analysis */}
           {isAwaitingAnalysis ? (
-            <Card className="bg-emerald-50 border border-emerald-100 rounded-3xl shadow-md overflow-hidden">
-              <div className="h-1.5 bg-emerald-500" />
+            <Card className="bg-slate-950/85 border-2 border-emerald-500/50 rounded-3xl backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden text-white">
+              <div className="h-1.5 bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-500" />
               <CardContent className="flex items-start gap-4 p-6">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-200 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center flex-shrink-0 text-emerald-400">
+                  <CheckCircle2 className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-extrabold text-emerald-900 mb-1">
+                  <h2 className="text-lg font-black text-emerald-300 mb-1 tracking-tight">
                     ✅ Documentos Enviados — Aguardando Análise
                   </h2>
-                  <p className="text-emerald-700/90 text-xs sm:text-sm leading-relaxed">
+                  <p className="text-slate-200 text-xs sm:text-sm font-medium leading-relaxed">
                     Seus documentos foram enviados e estão sendo analisados pela equipe.
                     {hasDispensedDocs && " Caso precise reenviar um documento dispensado, clique em \"Habilitar Envio\" abaixo."}
                   </p>
                   {tokenData?.submitted_at && (
-                    <div className="mt-2 flex items-center gap-1.5 text-emerald-600/80 text-xs font-semibold">
+                    <div className="mt-2 flex items-center gap-1.5 text-emerald-400 text-xs font-bold">
                       <FileCheck className="h-3.5 w-3.5" />
                       <span>Enviado em {formatDate(tokenData.submitted_at)}</span>
                     </div>
@@ -803,18 +803,18 @@ export default function DocumentationSubmit() {
             </Card>
           ) : (
             /* Banner: Pending documents or review */
-            <Card className="bg-amber-50 border border-amber-100 rounded-3xl shadow-md overflow-hidden">
-              <div className="h-1.5 bg-amber-500" />
+            <Card className="bg-slate-950/85 border-2 border-amber-400/50 rounded-3xl backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden text-white">
+              <div className="h-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400" />
               <CardContent className="flex items-start gap-4 p-6">
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center flex-shrink-0">
-                  <AlertTriangle className="h-6 w-6 text-amber-600" />
+                <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center flex-shrink-0 text-amber-300">
+                  <AlertTriangle className="h-6 w-6" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-lg font-extrabold text-amber-900 mb-1">
+                  <h2 className="text-lg font-black text-amber-300 mb-1 tracking-tight">
                     Documentação Pendente
                   </h2>
-                  <p className="text-amber-700/90 text-xs sm:text-sm leading-relaxed">
-                    A proposta está <strong className="text-amber-800">Pendente</strong> porque restam documentos obrigatórios a serem enviados ou aprovados pela equipe. Por favor, anexe os documentos necessários abaixo.
+                  <p className="text-slate-200 text-xs sm:text-sm font-medium leading-relaxed">
+                    A proposta está <strong className="text-amber-300 font-black">Pendente</strong> porque restam documentos obrigatórios a serem enviados ou aprovados pela equipe. Por favor, anexe os documentos necessários abaixo.
                   </p>
                 </div>
               </CardContent>
@@ -825,21 +825,21 @@ export default function DocumentationSubmit() {
           <ProposalInfoCard proposal={proposal} />
 
           {/* Progress */}
-          <Card className="bg-white border border-slate-200 rounded-3xl shadow-md overflow-hidden">
+          <Card className="bg-slate-950/85 border-2 border-amber-400/30 rounded-3xl backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  Progresso do envio
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-300">
+                  Progresso do Envio
                 </p>
-                <span className="text-slate-700 text-sm font-bold">
+                <span className="text-amber-300 text-sm font-black tracking-wider">
                   {readyCount}/{totalDocs}
                 </span>
               </div>
               <Progress
                 value={progressPercent}
-                className="h-2.5 bg-slate-100 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-indigo-600 [&>div]:to-blue-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
+                className="h-3 bg-slate-900 border border-amber-400/30 rounded-full [&>div]:bg-gradient-to-r [&>div]:from-amber-400 [&>div]:via-amber-500 [&>div]:to-emerald-400 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
               />
-              <p className="text-slate-400 text-xs mt-2">
+              <p className="text-slate-300 text-xs mt-2 font-medium">
                 {selectedCount === 0
                   ? "Selecione os documentos em PDF para enviar"
                   : `${selectedCount} documento${selectedCount !== 1 ? "s" : ""} selecionado${selectedCount !== 1 ? "s" : ""}`}
@@ -865,18 +865,18 @@ export default function DocumentationSubmit() {
                   key={doc.key}
                   tabIndex={(!isApproved && !isPending) ? 0 : undefined}
                   onPaste={(!isApproved && !isPending) ? (e) => handlePaste(doc.key, e) : undefined}
-                  className={`group rounded-2xl border transition-all duration-300 overflow-hidden outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                  className={`group rounded-2xl border transition-all duration-300 overflow-hidden outline-none backdrop-blur-xl ${
                     isApproved
-                      ? "border-emerald-200 bg-emerald-50/80"
+                      ? "border-2 border-emerald-500/60 bg-emerald-950/85 text-white shadow-xl"
                       : isPending
-                      ? "border-amber-200 bg-amber-50/80"
+                      ? "border-2 border-amber-400/60 bg-amber-950/80 text-white shadow-xl"
                       : isReplacingRejected
-                      ? "border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-500/5"
+                      ? "border-2 border-amber-400 bg-emerald-950/90 text-white shadow-[0_0_20px_rgba(251,191,36,0.3)]"
                       : isRejected
-                      ? "border-rose-400 bg-rose-50/80 shadow-sm shadow-rose-200"
+                      ? "border-2 border-rose-500/70 bg-rose-950/85 text-white shadow-xl"
                       : selected
-                      ? "border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-500/5"
-                      : "border-dashed border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/10"
+                      ? "border-2 border-amber-400 bg-emerald-950/90 text-white shadow-[0_0_20px_rgba(251,191,36,0.3)]"
+                      : "border-2 border-dashed border-amber-400/30 bg-slate-950/80 hover:border-amber-400/70 hover:bg-slate-950/95 text-slate-100 shadow-xl"
                   }`}
                   onDragOver={(!isApproved && !isPending) ? (e) => e.preventDefault() : undefined}
                   onDrop={(!isApproved && !isPending) ? (e) => handleDrop(doc.key, e) : undefined}
@@ -941,9 +941,9 @@ export default function DocumentationSubmit() {
                           <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                         )}
                       </div>
-                      <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                      <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                       </p>
-                      <p className={`${dbFile?.file_path === 'dispensado' ? 'text-slate-500' : 'text-emerald-600'} text-[10px] font-bold`}>
+                      <p className={`${dbFile?.file_path === 'dispensado' ? 'text-slate-400' : 'text-emerald-400'} text-[10px] font-bold`}>
                         {dbFile?.file_path === 'dispensado' ? "Dispensado / Não possui 🚫" : "Aprovado ✅"}
                       </p>
                       {dbFile?.file_path === 'dispensado' && (
@@ -987,9 +987,9 @@ export default function DocumentationSubmit() {
                       <div className="w-12 h-12 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center mb-3">
                         <Loader2 className="h-6 w-6 text-amber-600 animate-spin" />
                       </div>
-                      <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                      <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                       </p>
-                      <p className="text-amber-600 text-[10px] font-bold">
+                      <p className="text-amber-300 text-[10px] font-bold">
                         Aguardando Análise ⏳
                       </p>
                     </div>
@@ -1000,7 +1000,7 @@ export default function DocumentationSubmit() {
                           <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-3">
                             <FileCheck className="h-6 w-6 text-indigo-600" />
                           </div>
-                          <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                          <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                           </p>
                           <p className="text-indigo-600 text-[10px] truncate max-w-full px-2">
                             {dbFile?.file_name}
@@ -1122,7 +1122,7 @@ export default function DocumentationSubmit() {
                                     <div className="w-12 h-12 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-2">
                                       <FileCheck className="h-6 w-6 text-indigo-600" />
                                     </div>
-                                    <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                                    <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                                     </p>
                                     <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-1.5 text-center max-w-full">
                                       <p className="text-[9px] font-black uppercase tracking-wider text-indigo-400 mb-0.5">Novo arquivo</p>
@@ -1159,7 +1159,7 @@ export default function DocumentationSubmit() {
                                         <Upload className="h-5 w-5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                                       )}
                                     </div>
-                                    <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                                    <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                                     </p>
                                     {isRejected ? (
                                       <>
@@ -1183,11 +1183,11 @@ export default function DocumentationSubmit() {
                               </label>
                           ) : (
                             <div className="flex flex-col items-center justify-center cursor-not-allowed w-full">
-                              <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mb-3 opacity-40"><Upload className="h-5 w-5 text-slate-300" />
+                              <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mb-3 opacity-40"><Upload className="h-5 w-5 text-slate-600" />
                               </div>
-                              <p className="text-slate-800 text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
+                              <p className="text-white text-xs font-black text-center leading-snug mb-1">{doc.label.toUpperCase()}
                               </p>
-                              <p className="text-slate-400 text-[9px] opacity-40">Envio Habilitado após preencher o número
+                              <p className="text-slate-600 text-[9px]">Envio Habilitado após preencher o número
                               </p>
                             </div>
                           ))}
@@ -1293,13 +1293,13 @@ export default function DocumentationSubmit() {
                 {/* DOCUMENTOS DE IDENTIFICAÇÃO grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-50 border border-amber-200 shadow-sm">
-                      <span className="text-amber-600 text-base">🆔</span>
-                      <p className="text-amber-700 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-400/15 border border-amber-400/40 backdrop-blur-xl shadow-lg">
+                      <span className="text-amber-300 text-base">🆔</span>
+                      <p className="text-amber-200 text-xs font-black uppercase tracking-widest">
                         DOCUMENTOS DE IDENTIFICAÇÃO
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-amber-200" />
+                    <div className="flex-1 h-px bg-amber-400/30" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {identificationDocs.map(renderCard)}
@@ -1309,13 +1309,13 @@ export default function DocumentationSubmit() {
                 {/* IDENTIFICAÇÃO IMÓVEL RURAL grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-200 shadow-sm">
-                      <span className="text-indigo-600 text-base">🏡</span>
-                      <p className="text-indigo-700 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-400/15 border border-emerald-400/40 backdrop-blur-xl shadow-lg">
+                      <span className="text-emerald-300 text-base">🏡</span>
+                      <p className="text-emerald-200 text-xs font-black uppercase tracking-widest">
                         IDENTIFICAÇÃO IMÓVEL RURAL
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-indigo-200" />
+                    <div className="flex-1 h-px bg-emerald-400/30" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {ruralPropertyDocs.map(renderCard)}
@@ -1325,13 +1325,13 @@ export default function DocumentationSubmit() {
                 {/* DOCUMENTAÇÃO ENQUADRAMENTO AGRICULTURA FAMILIAR grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-teal-50 border border-teal-200 shadow-sm">
-                      <span className="text-teal-600 text-base">🚜</span>
-                      <p className="text-teal-700 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-teal-400/15 border border-teal-400/40 backdrop-blur-xl shadow-lg">
+                      <span className="text-teal-300 text-base">🚜</span>
+                      <p className="text-teal-200 text-xs font-black uppercase tracking-widest">
                         DOCUMENTAÇÃO ENQUADRAMENTO AGRICULTURA FAMILIAR
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-teal-200" />
+                    <div className="flex-1 h-px bg-teal-400/30" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {enquadramentoDocs.map(renderCard)}
@@ -1341,13 +1341,13 @@ export default function DocumentationSubmit() {
                 {/* CERTIDÕES CIVIS E ADMINISTRATIVAS grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-50 border border-blue-200 shadow-sm">
-                      <span className="text-blue-600 text-base">📜</span>
-                      <p className="text-blue-700 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-400/15 border border-blue-400/40 backdrop-blur-xl shadow-lg">
+                      <span className="text-blue-300 text-base">📜</span>
+                      <p className="text-blue-200 text-xs font-black uppercase tracking-widest">
                         CERTIDÕES CIVIS E ADMINISTRATIVAS
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-blue-200" />
+                    <div className="flex-1 h-px bg-blue-400/30" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {certidoesCivisDocs.map(renderCard)}
@@ -1357,13 +1357,13 @@ export default function DocumentationSubmit() {
                 {/* Main documents grid */}
                 <div className="mb-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-200 shadow-sm">
-                      <span className="text-slate-600 text-base">📄</span>
-                      <p className="text-slate-700 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-xl shadow-lg">
+                      <span className="text-white text-base">📄</span>
+                      <p className="text-white/90 text-xs font-black uppercase tracking-widest">
                         DOCUMENTAÇÃO DO PLANO DE INVESTIMENTO PROPOSTO
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-slate-200" />
+                    <div className="flex-1 h-px bg-white/20" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {mainDocs.map(renderCard)}
@@ -1371,19 +1371,19 @@ export default function DocumentationSubmit() {
                 </div>
 
                 {/* INVERSÕES DO PLANO */}
-                <div className="mb-8 p-6 rounded-3xl border border-slate-200 bg-slate-50/50 shadow-sm">
+                <div className="mb-8 p-6 rounded-3xl border-2 border-amber-400/30 bg-slate-950/85 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-200 shadow-sm w-fit">
-                      <span className="text-indigo-600 text-base">📊</span>
-                      <p className="text-indigo-700 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-400/15 border border-amber-400/40 backdrop-blur-xl shadow-lg w-fit">
+                      <span className="text-amber-300 text-base">📊</span>
+                      <p className="text-amber-200 text-xs font-black uppercase tracking-widest">
                         INVERSÕES DO PLANO
                       </p>
                     </div>
                     {/* Validador de Valor da Proposta */}
                     <div className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-300 ${
                       Math.abs(totalInversoes - estimatedValue) < 0.01 
-                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
-                        : 'bg-rose-50 border-rose-200 text-rose-700'
+                        ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300' 
+                        : 'bg-rose-500/20 border-rose-400/40 text-rose-300'
                     }`}>
                       {Math.abs(totalInversoes - estimatedValue) < 0.01 ? (
                         <span>✅ Inversões validadas! Soma bate 100% com o valor proposto: {formatCurrency(estimatedValue)}</span>
@@ -1393,16 +1393,16 @@ export default function DocumentationSubmit() {
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-500 mb-4 font-semibold leading-relaxed">
+                  <p className="text-xs text-slate-300 mb-4 font-semibold leading-relaxed">
                     Informe detalhadamente os itens de investimento que compõem o plano de negócio da operação. O total, a quantidade e a nomenclatura dos itens devem ser exatamente iguais ao proposto no plano assinado e eletrônico!
                   </p>
 
                   <div className="space-y-3">
                     {inversoes.map((item, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm animate-fade-in">
+                      <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-slate-900/80 border border-amber-400/20 p-3 rounded-2xl shadow-sm animate-fade-in text-white">
                         {/* Quantidade */}
                         <div className="col-span-2 md:col-span-1">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Qtd.</label>
+                          <label className="text-[10px] font-bold text-amber-300 uppercase ml-1 block mb-1">Qtd.</label>
                           <input
                             type="number"
                             min="1"
@@ -1418,7 +1418,7 @@ export default function DocumentationSubmit() {
 
                         {/* Unidade */}
                         <div className="col-span-3 md:col-span-2">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Unid.</label>
+                          <label className="text-[10px] font-bold text-amber-300 uppercase ml-1 block mb-1">Unid.</label>
                           <select
                             value={item.unid || "UNID"}
                             onChange={(e) => {
@@ -1438,7 +1438,7 @@ export default function DocumentationSubmit() {
 
                         {/* Nome / Descrição */}
                         <div className="col-span-3 md:col-span-5">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Item / Inversão</label>
+                          <label className="text-[10px] font-bold text-amber-300 uppercase ml-1 block mb-1">Item / Inversão</label>
                           <input
                             type="text"
                             placeholder="Ex: Aquisição de Bovinos de Leite"
@@ -1454,7 +1454,7 @@ export default function DocumentationSubmit() {
 
                         {/* Valor Total */}
                         <div className="col-span-3">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Valor Total (R$)</label>
+                          <label className="text-[10px] font-bold text-amber-300 uppercase ml-1 block mb-1">Valor Total (R$)</label>
                           <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
                             <input
@@ -1501,10 +1501,10 @@ export default function DocumentationSubmit() {
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
                       Custos de Assessoria da Operação
                     </p>
-                    <div className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+                    <div className="grid grid-cols-12 gap-3 items-center bg-slate-900/80 border border-amber-400/20 p-3 rounded-2xl shadow-sm text-white">
                       {/* Nome / Descrição (Fixo) */}
                       <div className="col-span-8 md:col-span-8">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Item / Inversão</label>
+                        <label className="text-[10px] font-bold text-amber-300 uppercase ml-1 block mb-1">Item / Inversão</label>
                         <input
                           type="text"
                           value="CUSTO ASSESSORIA EMPRESARIAL E TÉCNICA"
@@ -1546,13 +1546,13 @@ export default function DocumentationSubmit() {
                 {/* ── Declarações Ambientais section ────────────────── */}
                 <div className="mt-8">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 shadow-sm">
-                      <span className="text-emerald-600 text-base">🌿</span>
-                      <p className="text-emerald-700 text-xs font-black uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-400/15 border border-emerald-400/40 backdrop-blur-xl shadow-lg">
+                      <span className="text-emerald-300 text-base">🌿</span>
+                      <p className="text-emerald-200 text-xs font-black uppercase tracking-widest">
                         Declarações Ambientais
                       </p>
                     </div>
-                    <div className="flex-1 h-px bg-emerald-200" />
+                    <div className="flex-1 h-px bg-emerald-400/30" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {ambientalDocs.map(renderCard)}
@@ -1656,7 +1656,7 @@ export default function DocumentationSubmit() {
                     isSubmitting || 
                     !isInversõesValidadas
                   }
-                  className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto min-w-[280px] h-14 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500 hover:from-amber-400 hover:via-amber-300 hover:to-emerald-400 text-slate-950 font-black text-base shadow-[0_0_30px_rgba(251,191,36,0.4)] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
                 >
                   {isSubmitting ? (
                     <>
@@ -1668,7 +1668,7 @@ export default function DocumentationSubmit() {
                       <Send className="h-5 w-5 mr-2" />
                       {hasRejections ? "Reenviar Documentos Reprovados" : "Enviar Documentação"}
                       {selectedCount > 0 && (
-                        <Badge className="ml-2 bg-white/20 text-white border-0 rounded-full text-xs">
+                        <Badge className="ml-2 bg-slate-950/30 text-slate-950 border-0 rounded-full text-xs font-black">
                           {selectedCount}
                         </Badge>
                       )}
@@ -1696,7 +1696,35 @@ export default function DocumentationSubmit() {
 // ═══════════════════════════════════════════════════════════════
 
 function BrandHeader() {
-  return null;
+  return (
+    <div className="text-center space-y-3 mb-8 animate-fade-in">
+      <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-900 to-slate-950 border-2 border-amber-400/60 text-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.35)]">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-8 w-8 text-amber-300"
+        >
+          <path d="M12 2v20" />
+          <path d="M12 4c-3 0-5 2-5 5s2 5 5 5" />
+          <path d="M12 4c3 0 5 2 5 5s-2 5-5 5" />
+          <path d="M12 10c-4 0-6 2.5-6 6s2 6 6 6" />
+          <path d="M12 10c4 0 6 2.5 6 6s-2 6-6 6" />
+        </svg>
+      </div>
+      <div>
+        <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-200 uppercase tracking-tight drop-shadow-md">
+          SUPER GESTÃO
+        </h1>
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-amber-300 mt-1">
+          AGRICULTURA FAMILIAR — PRONAF
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function ProposalInfoCard({
@@ -1728,20 +1756,21 @@ function ProposalInfoCard({
 
   return (
     <Card
-      className={`bg-white border border-slate-200 rounded-3xl shadow-md overflow-hidden ${className}`}
+      className={`bg-slate-950/85 border-2 border-amber-400/30 rounded-3xl backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden text-white ${className}`}
     >
-      <div className="h-1 bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500" />
+      <div className="h-1.5 bg-gradient-to-r from-amber-400 via-emerald-400 to-amber-500" />
       <CardContent className="p-6">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-4 flex items-center gap-1.5">
+          <FileText className="h-3.5 w-3.5 text-amber-400" />
           Dados da Proposta
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {infoFields.map((field) => (
             <div key={field.label}>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-200/80 mb-0.5">
                 {field.label}
               </p>
-              <p className="text-slate-800 text-sm font-semibold truncate">
+              <p className="text-sm font-black text-white tracking-tight">
                 {field.value}
               </p>
             </div>
@@ -1752,11 +1781,12 @@ function ProposalInfoCard({
   );
 }
 
+
 function Footer() {
   return (
-    <div className="text-center mt-10">
-      <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-        Super Gestão © {new Date().getFullYear()} — Todos os direitos reservados
+    <div className="text-center mt-10 pb-6">
+      <p className="text-amber-200/60 text-[10px] font-bold uppercase tracking-widest">
+        Super Gestão PRONAF © {new Date().getFullYear()} — Todos os direitos reservados
       </p>
     </div>
   );
