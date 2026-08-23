@@ -31,6 +31,8 @@ import {
   ExternalLink,
   Plus,
   Trash2,
+  Sprout,
+  Wheat,
 } from "lucide-react";
 
 // List of document keys that can be dispensed
@@ -1689,22 +1691,9 @@ export default function DocumentationSubmit() {
 function BrandHeader() {
   return (
     <div className="text-center space-y-3 mb-8 animate-fade-in">
-      <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-white border-2 border-emerald-500 text-emerald-700 shadow-2xl">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-8 w-8 text-emerald-600"
-        >
-          <path d="M12 2v20" />
-          <path d="M12 4c-3 0-5 2-5 5s2 5 5 5" />
-          <path d="M12 4c3 0 5 2 5 5s-2 5-5 5" />
-          <path d="M12 10c-4 0-6 2.5-6 6s2 6 6 6" />
-          <path d="M12 10c4 0 6 2.5 6 6s-2 6-6 6" />
-        </svg>
+      <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-amber-500 border-2 border-amber-400 text-white shadow-2xl relative group overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <Sprout className="h-9 w-9 relative z-10 text-white animate-pulse" />
       </div>
       <div>
         <h1 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
