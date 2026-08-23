@@ -693,41 +693,68 @@ export default function DocumentationSubmit() {
   // ── All documents approved ────────────────────────────────────
   if (tokenData.documents_submitted && allApproved && files.length > 0) {
     return (
-      <div className="min-h-screen relative font-sans overflow-x-hidden">
+      <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-950">
         <div
-          className="fixed inset-0 bg-cover bg-center filter saturate-[1.3] contrast-[1.12] brightness-[1.08] pointer-events-none z-0"
-          style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
+          className="fixed inset-0 bg-cover bg-center filter saturate-[1.1] brightness-[1.02] pointer-events-none z-0"
+          style={{ backgroundImage: `url(${MEDIA_CONFIG.images.agriLivestock})` }}
         />
-        <div className="fixed inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/65 to-slate-950/80 pointer-events-none z-0" />
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px] pointer-events-none z-0" />
 
         <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 relative z-10">
           <BrandHeader />
 
           <div className="animate-fade-in">
-            <Card className="bg-slate-950/85 border-2 border-emerald-500/40 rounded-3xl backdrop-blur-xl shadow-2xl overflow-hidden text-white">
-              <div className="h-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
+            <Card className="bg-white border-2 border-emerald-500 rounded-3xl shadow-2xl overflow-hidden text-slate-900 opacity-100">
+              <div className="h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600" />
               <CardContent className="flex flex-col items-center py-16 px-8 text-center">
                 <div className="relative mb-8">
                   <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-3xl scale-150" />
-                  <div className="relative z-10 w-24 h-24 rounded-full bg-emerald-500/20 border-2 border-emerald-400/50 flex items-center justify-center">
-                    <ShieldCheck className="h-12 w-12 text-emerald-400" />
+                  <div className="relative z-10 w-24 h-24 rounded-full bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center">
+                    <ShieldCheck className="h-12 w-12 text-emerald-600" />
                   </div>
                 </div>
-                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/40 px-4 py-1.5 text-sm font-bold mb-4 rounded-full">
+                <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 px-4 py-1.5 text-sm font-bold mb-4 rounded-full">
                   DOCUMENTAÇÃO APROVADA ✅
                 </Badge>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">
                   Todos os documentos foram aprovados
                 </h2>
-                <p className="text-slate-300 text-sm max-w-md">
+                <p className="text-slate-600 text-sm max-w-md">
                   A documentação do produtor foi analisada e aprovada com sucesso. Nenhuma ação adicional é necessária.
                 </p>
 
                 <ProposalInfoCard proposal={proposal} className="mt-10 w-full max-w-lg" />
 
                 <div className="mt-8 w-full max-w-lg">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-3 text-left">
-       return (
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-800 mb-3 text-left">
+                    Documentos aprovados
+                  </p>
+                  <div className="space-y-2">
+                    {files.map((f) => (
+                      <div
+                        key={f.id}
+                        className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 text-slate-900"
+                      >
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+                        <span className="text-slate-800 text-sm font-bold truncate">
+                          {getDocLabel(f.document_type)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main/Unified submission layout (initial, awaiting analysis, missing files, or rejected)
+  return (
     <div className="min-h-screen relative font-sans overflow-x-hidden bg-slate-950">
       <div
         className="fixed inset-0 bg-cover bg-center filter saturate-[1.1] brightness-[1.02] pointer-events-none z-0"
@@ -1164,21 +1191,6 @@ export default function DocumentationSubmit() {
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
                               className="mt-3 flex items-center justify-center gap-1.5 w-full min-h-[40px] px-3 py-2 rounded-xl bg-cyan-50 border border-cyan-300 text-cyan-800 text-[11px] font-black hover:bg-cyan-100 active:scale-95 transition-all duration-200 touch-manipulation select-none"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
-                              Obter{doc.fonte ? ` — ${doc.fonte}` : " Documento"}
-                            </a>
-                          )}
-                          ))}
-
-                          {/* Link de obtenção do documento */}
-                          {doc.obtencaoUrl && !selected && (
-                            <a
-                              href={doc.obtencaoUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="mt-3 flex items-center justify-center gap-1.5 w-full min-h-[40px] px-3 py-2 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-700 text-[11px] font-bold hover:bg-cyan-100 active:scale-95 transition-all duration-200 touch-manipulation select-none"
                             >
                               <ExternalLink className="h-3.5 w-3.5 flex-shrink-0" />
                               Obter{doc.fonte ? ` — ${doc.fonte}` : " Documento"}
