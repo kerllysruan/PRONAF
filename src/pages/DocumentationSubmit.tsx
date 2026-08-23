@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { SplashScreen } from "@/components/SplashScreen";
+import { MEDIA_CONFIG } from "@/config/imageConfig";
 // Trigger Vercel Build Sincronização 
 import { useSearchParams } from "react-router-dom";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
@@ -638,14 +639,20 @@ export default function DocumentationSubmit() {
   // ── Loading state ─────────────────────────────────────────────
   if (pageLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4 animate-fade-in">
+      <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden font-sans">
+        <div
+          className="fixed inset-0 bg-cover bg-center filter saturate-[1.3] contrast-[1.12] brightness-[1.08] pointer-events-none z-0"
+          style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
+        />
+        <div className="fixed inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/60 to-slate-950/80 pointer-events-none z-0" />
+        
+        <div className="flex flex-col items-center gap-4 animate-fade-in relative z-10">
           <div className="relative">
-            <div className="absolute inset-0 rounded-full bg-indigo-500/10 blur-xl" />
-            <Loader2 className="h-12 w-12 text-indigo-600 animate-spin relative z-10" />
+            <div className="absolute inset-0 rounded-full bg-amber-400/20 blur-xl" />
+            <Loader2 className="h-12 w-12 text-amber-300 animate-spin relative z-10" />
           </div>
-          <p className="text-slate-600 text-sm font-medium tracking-wide">
-            Validando link...
+          <p className="text-amber-200 text-sm font-bold tracking-wide">
+            Validando link de acesso...
           </p>
         </div>
       </div>
@@ -655,27 +662,33 @@ export default function DocumentationSubmit() {
   // ── Invalid token ─────────────────────────────────────────────
   if (isInvalid || !tokenData) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="animate-fade-in w-full max-w-md">
-          <Card className="bg-white border border-slate-200 rounded-3xl shadow-lg">
+      <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden font-sans">
+        <div
+          className="fixed inset-0 bg-cover bg-center filter saturate-[1.3] contrast-[1.12] brightness-[1.08] pointer-events-none z-0"
+          style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
+        />
+        <div className="fixed inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/60 to-slate-950/80 pointer-events-none z-0" />
+
+        <div className="animate-fade-in w-full max-w-md relative z-10">
+          <Card className="bg-slate-950/80 border-2 border-rose-500/40 rounded-3xl backdrop-blur-xl shadow-2xl">
             <CardContent className="flex flex-col items-center py-16 px-8 text-center">
               <div className="relative mb-6">
-                <div className="absolute inset-0 rounded-full bg-rose-500/10 blur-2xl" />
-                <div className="relative z-10 w-20 h-20 rounded-full bg-rose-500/10 border border-rose-200 flex items-center justify-center">
-                  <XCircle className="h-10 w-10 text-rose-500" />
+                <div className="absolute inset-0 rounded-full bg-rose-500/20 blur-2xl" />
+                <div className="relative z-10 w-20 h-20 rounded-full bg-rose-500/20 border border-rose-400/50 flex items-center justify-center">
+                  <XCircle className="h-10 w-10 text-rose-400" />
                 </div>
               </div>
-              <h2 className="text-2xl font-extrabold text-slate-800 mb-3">
+              <h2 className="text-2xl font-extrabold text-white mb-3">
                 Link inválido ou expirado
               </h2>
-              <p className="text-slate-500 text-sm leading-relaxed max-w-xs">
+              <p className="text-slate-300 text-sm leading-relaxed max-w-xs font-medium">
                 Este link de envio de documentação não é válido. Verifique se o
                 link está correto ou solicite um novo link ao seu consultor.
               </p>
             </CardContent>
           </Card>
-          <p className="text-center text-slate-400 text-xs mt-6 tracking-wider uppercase font-semibold">
-            Super Gestão © {new Date().getFullYear()}
+          <p className="text-center text-amber-200/80 text-xs mt-6 tracking-wider uppercase font-bold">
+            Super Gestão PRONAF © {new Date().getFullYear()}
           </p>
         </div>
       </div>
@@ -687,44 +700,50 @@ export default function DocumentationSubmit() {
   // ── All documents approved ────────────────────────────────────
   if (tokenData.documents_submitted && allApproved && files.length > 0) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
+      <div className="min-h-screen relative font-sans overflow-x-hidden">
+        <div
+          className="fixed inset-0 bg-cover bg-center filter saturate-[1.3] contrast-[1.12] brightness-[1.08] pointer-events-none z-0"
+          style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
+        />
+        <div className="fixed inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/65 to-slate-950/80 pointer-events-none z-0" />
+
+        <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 relative z-10">
           <BrandHeader />
 
           <div className="animate-fade-in">
-            <Card className="bg-white border border-slate-200 rounded-3xl shadow-lg overflow-hidden">
+            <Card className="bg-slate-950/85 border-2 border-emerald-500/40 rounded-3xl backdrop-blur-xl shadow-2xl overflow-hidden text-white">
               <div className="h-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-500" />
               <CardContent className="flex flex-col items-center py-16 px-8 text-center">
                 <div className="relative mb-8">
-                  <div className="absolute inset-0 rounded-full bg-emerald-500/10 blur-3xl scale-150" />
-                  <div className="relative z-10 w-24 h-24 rounded-full bg-emerald-500/10 border-2 border-emerald-400/40 flex items-center justify-center">
-                    <ShieldCheck className="h-12 w-12 text-emerald-500" />
+                  <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-3xl scale-150" />
+                  <div className="relative z-10 w-24 h-24 rounded-full bg-emerald-500/20 border-2 border-emerald-400/50 flex items-center justify-center">
+                    <ShieldCheck className="h-12 w-12 text-emerald-400" />
                   </div>
                 </div>
-                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-400/30 px-4 py-1.5 text-sm font-bold mb-4 rounded-full">
+                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-400/40 px-4 py-1.5 text-sm font-bold mb-4 rounded-full">
                   DOCUMENTAÇÃO APROVADA ✅
                 </Badge>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">
                   Todos os documentos foram aprovados
                 </h2>
-                <p className="text-slate-500 text-sm max-w-md">
+                <p className="text-slate-300 text-sm max-w-md">
                   A documentação do produtor foi analisada e aprovada com sucesso. Nenhuma ação adicional é necessária.
                 </p>
 
                 <ProposalInfoCard proposal={proposal} className="mt-10 w-full max-w-lg" />
 
                 <div className="mt-8 w-full max-w-lg">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 text-left">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-3 text-left">
                     Documentos aprovados
                   </p>
                   <div className="space-y-2">
                     {files.map((f) => (
                       <div
                         key={f.id}
-                        className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5"
+                        className="flex items-center gap-3 bg-emerald-950/60 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-white"
                       >
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
-                        <span className="text-slate-700 text-sm font-medium truncate">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                        <span className="text-slate-200 text-sm font-medium truncate">
                           {getDocLabel(f.document_type)}
                         </span>
                       </div>
@@ -746,8 +765,14 @@ export default function DocumentationSubmit() {
 
   // ── Main/Unified submission layout (initial, awaiting analysis, missing files, or rejected)
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
+    <div className="min-h-screen relative font-sans overflow-x-hidden">
+      <div
+        className="fixed inset-0 bg-cover bg-center filter saturate-[1.3] contrast-[1.12] brightness-[1.08] pointer-events-none z-0"
+        style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
+      />
+      <div className="fixed inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/65 to-slate-950/80 pointer-events-none z-0" />
+
+      <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12 relative z-10">
         <BrandHeader />
 
         <div className="animate-fade-in space-y-6">
