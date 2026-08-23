@@ -433,6 +433,20 @@ export default function Dashboard() {
     const estoqueConcluido = estoqueConcluidoProposals.length;
     const estoqueValorConcluido = estoqueConcluidoProposals.reduce((sum, p) => sum + safeParseNum(p.estimated_value), 0);
 
+    // Stock items "enviados à central"
+    const isEnviadoCentralStockStatus = (statusStr: string | null, centralField?: string | null, centralDate?: string | null) => {
+      const norm = (statusStr || '').toLowerCase().trim();
+      if (norm.includes('enviad') && norm.includes('central')) return true;
+      if (norm === 'central' || norm.includes('enviado para central') || norm.includes('enviado à central') || norm.includes('enviado a central')) return true;
+      if (centralField && centralField.trim().length > 0 && centralField.trim() !== '---') return true;
+      if (centralDate && centralDate.trim().length > 0 && centralDate.trim() !== '---') return true;
+      return false;
+    };
+
+    const estoqueEnviadoCentralProposals = stockProposals.filter(p => isEnviadoCentralStockStatus(p.status, p.central, p.central_date));
+    const estoqueEnviadoCentral = estoqueEnviadoCentralProposals.length;
+    const estoqueValorEnviadoCentral = estoqueEnviadoCentralProposals.reduce((sum, p) => sum + safeParseNum(p.estimated_value), 0);
+
     // 3. TOTAIS GERAS ABSOLUTOS (TODAS AS PROPOSTAS DO SISTEMA - INCLUSIVE CONCLUÍDAS)
     const totalPropostasSistema = stockProposals.length + filteredProposals.length;
     const valorTotalSistema = stockProposals.reduce((sum, p) => sum + safeParseNum(p.estimated_value), 0) +
@@ -469,6 +483,8 @@ export default function Dashboard() {
       estoqueValor: estoqueValorAtivo,
       estoqueConcluido,
       estoqueValorConcluido,
+      estoqueEnviadoCentral,
+      estoqueValorEnviadoCentral,
       concluidasTotal: totalConcluidoGeral,
     };
   }, [filteredProposals, stockProposals]);
@@ -1276,7 +1292,7 @@ export default function Dashboard() {
             Detalhamento do Estoque de Propostas (supergestao.digital/estoque)
           </h3>
           <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded-full border border-indigo-200/50">
-            {stats.estoqueAtivo} ativas · {stats.estoqueConcluido} concluídas
+            {stats.estoqueAtivo} ativas · {stats.estoqueEnviadoCentral} enviadas à central
           </span>
         </div>
 
@@ -1319,35 +1335,35 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* 3. Concluídas do Estoque */}
+          {/* 3. Enviadas à Central no Estoque */}
           <Card className="group relative overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Estoque Concluído</p>
-                  <p className="text-3xl font-black font-heading text-foreground">{stats.estoqueConcluido}</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Estoque Enviado à Central</p>
+                  <p className="text-3xl font-black font-heading text-foreground">{stats.estoqueEnviadoCentral}</p>
                   <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-200/50 text-[9px] font-black tracking-wider uppercase">
-                    <CheckCircle2 className="h-2.5 w-2.5 mr-1 text-emerald-600" /> FINALIZADOS NO ESTOQUE
+                    <Send className="h-2.5 w-2.5 mr-1 text-emerald-600" /> ENVIADAS À CENTRAL
                   </Badge>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">
-                  <Award className="h-6 w-6" />
+                  <Send className="h-6 w-6" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* 4. Volume Concluído do Estoque */}
+          {/* 4. Volume Enviado à Central do Estoque */}
           <Card className="group relative overflow-hidden border-2 border-emerald-200 dark:border-emerald-900/60 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-950/30 dark:to-slate-900">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Volume Concluído Estoque</p>
-                  <p className="text-xl font-black font-heading text-emerald-600 mt-0.5">{formatCurrency(stats.estoqueValorConcluido)}</p>
+                  <p className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Volume Enviado à Central</p>
+                  <p className="text-xl font-black font-heading text-emerald-600 mt-0.5">{formatCurrency(stats.estoqueValorEnviadoCentral)}</p>
                   <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-700 border border-emerald-300/50 text-[9px] font-black tracking-wider uppercase">
-                    LIBERADO DO ESTOQUE
+                    ENVIADO À CENTRAL
                   </Badge>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">
