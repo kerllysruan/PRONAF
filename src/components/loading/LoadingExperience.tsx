@@ -28,7 +28,7 @@ const STAGES = [
   },
   {
     title: 'O CRÉDITO IMPULSIONA O FUTURO',
-    subtitle: 'Facilitamos a análise e o acesso ao financiamento agrícola do PRONAF.',
+    subtitle: 'Facilitando a análise e o acesso ao financiamento',
     bgKey: 'cornHarvest',
   },
 ];
