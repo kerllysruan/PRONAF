@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { SplashScreen } from "@/components/SplashScreen";
 // Trigger Vercel Build Sincronização 
 import { useSearchParams } from "react-router-dom";
 import { useDocumentationToken } from "@/hooks/useDocumentationToken";
@@ -98,6 +99,7 @@ function getDispenseButtonLabel(docKey: string): string {
 
 // ─── Component ──────────────────────────────────────────────────
 export default function DocumentationSubmit() {
+  const [showSplash, setShowSplash] = useState(true);
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const { toast } = useToast();
@@ -627,6 +629,11 @@ export default function DocumentationSubmit() {
   // ═══════════════════════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════════════════════
+
+  // ── Entrance Splash Animation Experience ───────────────────────
+  if (showSplash) {
+    return <SplashScreen onFinished={() => setShowSplash(false)} />;
+  }
 
   // ── Loading state ─────────────────────────────────────────────
   if (pageLoading) {
