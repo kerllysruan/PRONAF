@@ -648,6 +648,79 @@ export default function Dashboard() {
       .sort((a, b) => b.value - a.value);
   }, [filteredProposals]);
 
+  // ── Stock Status Distribution ──
+  const stockStatusChartData = useMemo(() => {
+    const map = new Map<string, { name: string; propostas: number; valor: number; fill: string }>();
+    const colors: Record<string, string> = {
+      "AGUARDANDO ENTREVISTA": "#6366f1",
+      "DOCUMENTAÇÃO PENDENTE": "#f59e0b",
+      "DOCUMENTAÇÃO APROVADA": "#10b981",
+      "AUTORIZADO ENVIO CENTRAL": "#06b6d4",
+      "ENVIADO PARA CENTRAL": "#10b981",
+      "PENDÊNCIA CENTRAL": "#ef4444",
+      "RESTRIÇÃO": "#8b5cf6",
+      "CONCLUÍDO": "#059669",
+    };
+
+    stockProposals.forEach(p => {
+      const s = (p.status || "OUTROS").toUpperCase().trim();
+      const norm = s === "CENTRAL" || s === "ENVIADO CENTRAL" ? "ENVIADO PARA CENTRAL" : s;
+      if (!map.has(norm)) {
+        map.set(norm, {
+          name: norm,
+          propostas: 0,
+          valor: 0,
+          fill: colors[norm] || "#94a3b8"
+        });
+      }
+      const item = map.get(norm)!;
+      item.propostas += 1;
+      item.valor += Number(p.estimated_value) || 0;
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.valor - a.valor);
+  }, [stockProposals]);
+
+  // ── Stock Credit Program Distribution ──
+  const stockProgramChartData = useMemo(() => {
+    const map = new Map<string, { name: string; propostas: number; valor: number; fill: string }>();
+    const palette = ["#10b981", "#6366f1", "#f59e0b", "#8b5cf6", "#06b6d4", "#ec4899", "#14b8a6"];
+
+    stockProposals.forEach(p => {
+      const prog = (p.credit_program || p.linha_credito || "PRONAF COMUM").toUpperCase().trim();
+      if (!map.has(prog)) {
+        map.set(prog, {
+          name: prog,
+          propostas: 0,
+          valor: 0,
+          fill: palette[map.size % palette.length]
+        });
+      }
+      const item = map.get(prog)!;
+      item.propostas += 1;
+      item.valor += Number(p.estimated_value) || 0;
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.valor - a.valor);
+  }, [stockProposals]);
+
+  // ── Stock Projetistas Distribution ──
+  const stockProjetistaChartData = useMemo(() => {
+    const map = new Map<string, { name: string; propostas: number; valor: number }>();
+    
+    stockProposals.forEach(p => {
+      const name = (p.projetista || "NÃO ATRIBUÍDO").toUpperCase().trim();
+      if (!map.has(name)) {
+        map.set(name, { name, propostas: 0, valor: 0 });
+      }
+      const item = map.get(name)!;
+      item.propostas += 1;
+      item.valor += Number(p.estimated_value) || 0;
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.valor - a.valor).slice(0, 8);
+  }, [stockProposals]);
+
   const docStats = useMemo(() => {
     const totalSubmissions = submissions.length;
     const fullyApproved = submissions.filter(
@@ -1570,290 +1643,406 @@ export default function Dashboard() {
       </div>
 
       {/* ============================================= */}
-      {/* SECONDARY KPIs — Documentação, Equipe, Negadas, Pendências */}
+      {/* ANALYTICS CHARTS SECTION — Premium Visual Intelligence */}
       {/* ============================================= */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="group relative overflow-hidden border border-slate-200/60 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-[24px] bg-white/70 backdrop-blur-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-5 relative z-10">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Documentação</p>
-              <span className="text-sm font-black text-primary">{docStats.rate}%</span>
-            </div>
-            <Progress value={docStats.rate} className="h-1.5 bg-primary/10" />
-            <p className="text-[10px] text-slate-700 mt-2 font-medium">{docStats.completedDocs}/{docStats.totalDocs} documentos validados</p>
-          </CardContent>
-        </Card>
-        <Card className="group relative overflow-hidden border border-slate-200/60 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-[24px] bg-white/70 backdrop-blur-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-warning/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-5 relative z-10">
-            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Pendências</p>
-            <p className="text-3xl font-extrabold font-heading mt-1 text-foreground">{taskStats.pendentes}</p>
-            {taskStats.atrasadas > 0 && (
-              <div className="flex items-center gap-1.5 mt-2 px-2 py-0.5 rounded-lg bg-destructive/10 w-fit">
-                <AlertTriangle className="h-3 w-3 text-destructive" />
-                <span className="text-[10px] text-destructive font-black">{taskStats.atrasadas} EM ATRASO</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="group relative overflow-hidden border border-slate-200/60 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-[24px] bg-white/70 backdrop-blur-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-5 relative z-10">
-            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Equipe Ativa</p>
-            <p className="text-3xl font-extrabold font-heading mt-1 text-foreground">{members.length}</p>
-            <p className="text-[10px] text-slate-700 mt-2 font-medium uppercase tracking-tighter">analistas disponíveis</p>
-          </CardContent>
-        </Card>
-        <Card className="group relative overflow-hidden border border-slate-200/60 shadow-premium hover:shadow-premium-hover transition-all duration-300 rounded-[24px] bg-white/70 backdrop-blur-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-5 relative z-10">
-            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">Negadas</p>
-            <p className="text-3xl font-extrabold font-heading mt-1 text-foreground">{stats.negadas}</p>
-            {stats.total > 0 && (
-              <div className="flex items-center gap-1.5 mt-2">
-                <div className="h-1 w-12 rounded-full bg-destructive/20 overflow-hidden">
-                  <div className="h-full bg-destructive" style={{ width: `${Math.round((stats.negadas / stats.total) * 100)}%` }} />
-                </div>
-                <span className="text-[10px] text-destructive font-black">{Math.round((stats.negadas / stats.total) * 100)}% DO TOTAL</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* ============================================= */}
-      {/* INSIGHTS INTELIGENTES — Auto-generated */}
-      {/* ============================================= */}
-      {insights.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-sm">
-              <Lightbulb className="h-4 w-4 text-white" />
-            </div>
-            <h2 className="text-sm font-black text-foreground uppercase tracking-widest">Insights Inteligentes</h2>
-          </div>
-          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-            {insights.map((insight, idx) => {
-              const IconComp = insight.icon;
-              return (
-                <div
-                  key={idx}
-                  className={`group relative p-4 rounded-2xl border bg-gradient-to-br ${insightBgMap[insight.type]} hover:scale-[1.02] transition-all duration-300 cursor-default`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${insightIconMap[insight.type]}`}>
-                      <IconComp className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-black text-foreground truncate">{insight.title}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{insight.description}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* ── Section Header ── */}
+      <div className="flex items-center gap-3 pt-2">
+        <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <BarChart3 className="h-4 w-4 text-white" />
         </div>
-      )}
-
-      {/* ============================================= */}
-      {/* CHARTS ROW 1 — Status + Evolução */}
-      {/* ============================================= */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent ref={statusChartRef} className="p-6 relative z-10 flex-1 flex flex-col">
-            <div className="flex flex-col mb-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Distribuição por Status</h3>
-              <p className="text-[10px] text-slate-700 font-medium">Quantidade de propostas ativas</p>
-            </div>
-            <div className="h-64 flex-1">
-              {pieData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie 
-                      data={pieData} 
-                      cx="50%" 
-                      cy="50%" 
-                      innerRadius={55} 
-                      outerRadius={85} 
-                      paddingAngle={3} 
-                      dataKey="value"
-                      labelLine={true}
-                      label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
-                    >
-                      {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-                    </Pie>
-                    <Tooltip content={<ChartTooltip formatter={(v) => `${v} propostas`} />} />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent ref={evolutionChartRef} className="p-6 relative z-10 flex-1 flex flex-col">
-            <div className="flex flex-col mb-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Evolução Acumulada</h3>
-              <p className="text-[10px] text-slate-700 font-medium">Volume financeiro ao longo do tempo</p>
-            </div>
-            <div className="h-64 flex-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                  <defs>
-                    <linearGradient id="colorValor" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#052e16" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#052e16" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis 
-                    tick={{ fontSize: 11 }} 
-                    axisLine={false} 
-                    tickLine={false}
-                    tickFormatter={(value) => value >= 1000000 ? `R$ ${(value / 1000000).toFixed(1)}mi` : value >= 1000 ? `R$ ${(value / 1000).toFixed(0)}k` : `R$ ${value}`}
-                  />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="valor" name="Volume Acumulado" stroke="#052e16" fill="url(#colorValor)" strokeWidth={3} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        <div>
+          <h2 className="text-sm font-black text-foreground uppercase tracking-widest">Painel Analítico</h2>
+          <p className="text-[10px] text-muted-foreground font-medium">Inteligência visual em tempo real dos dados da plataforma</p>
+        </div>
       </div>
 
-      {/* ============================================= */}
-      {/* CHARTS ROW 2 — Programas + Desembolsos */}
-      {/* ============================================= */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-6 relative z-10 flex-1 flex flex-col">
-            <div className="flex flex-col mb-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Programas de Crédito</h3>
-              <p className="text-[10px] text-slate-700 font-medium">Valores processados por linha (R$ mil)</p>
-            </div>
-            <div className="h-64 flex-1">
-              {lineData.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={lineData} layout="vertical" margin={{ top: 5, right: 100, left: 60, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 88%)" />
-                    <XAxis 
-                      type="number" 
-                      tick={{ fontSize: 11 }} 
-                      tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
-                    />
-                    <YAxis 
-                      type="category" 
-                      dataKey="name" 
-                      tick={{ fontSize: 10 }} 
-                      width={120}
-                      tickFormatter={(value) => value.length > 20 ? `${value.substring(0, 20)}...` : value}
-                    />
-                    <Tooltip content={<ChartTooltip />} />
-                    <Bar dataKey="valor" fill="hsl(210, 80%, 55%)" radius={[0, 6, 6, 0]}>
-                      <LabelList 
-                        dataKey="valor" 
-                        position="right" 
-                        offset={10}
-                        style={{ fontSize: '10px', fontWeight: 'bold', fill: 'hsl(210, 80%, 40%)' }}
-                        formatter={(value: number) => 
-                          new Intl.NumberFormat("pt-BR", { 
-                            style: "currency", 
-                            currency: "BRL",
-                            maximumFractionDigits: 0 
-                          }).format(value)
-                        }
-                      />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+      {/* ── ROW A: Status Donut + Programas Horizontal Bar ── */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-5">
 
-        {/* Desembolsos por Projetista — NOVO */}
-        <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
-          <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <CardContent className="p-6 relative z-10 flex-1 flex flex-col">
-            <div className="flex flex-col mb-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Desembolsos por Projetista</h3>
-              <p className="text-[10px] text-slate-700 font-medium">Pendente, solicitado e liberado (R$)</p>
-            </div>
-            <div className="h-64 flex-1">
-              {disbursementByDesigner.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-sm text-muted-foreground gap-2">
-                  <Banknote className="h-8 w-8 opacity-30" />
-                  <span>Nenhum desembolso registrado</span>
+        {/* Donut — Distribuição por Status do Estoque */}
+        <div className="lg:col-span-2">
+          <Card className="border border-slate-200/40 dark:border-slate-700/40 shadow-premium rounded-[28px] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl relative group h-full">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-500/8 via-transparent to-transparent" />
+            <CardContent className="p-6 relative z-10 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Status do Estoque</h3>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">{stockProposals.length} propostas em carteira</p>
                 </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={disbursementByDesigner} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(v) => `R$ ${v / 1000}k`} />
-                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value: number) => [formatCurrency(value), ""]} />
-                    <Legend verticalAlign="top" height={36} iconType="circle" />
-                    <Bar name="Pendente" dataKey="pendente" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={24} />
-                    <Bar name="Solicitado" dataKey="solicitado" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
-                    <Bar name="Liberado" dataKey="liberado" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={24} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ============================================= */}
-      {/* Recent Proposals */}
-      {/* ============================================= */}
-      <Card className="border border-slate-200/60 shadow-premium rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-2xl relative group h-full flex flex-col">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <CardContent className="p-6 relative z-10 flex-1 flex flex-col">
-          <div className="flex flex-col mb-4">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-800">Últimas Propostas Cadastradas</h3>
-            <p className="text-[10px] text-slate-700 font-medium">Histórico recente na esteira</p>
-          </div>
-          <div className="space-y-3">
-            {filteredProposals.slice(0, 5).map((p) => (
-              <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{p.producer_name}</p>
-                    <p className="text-xs text-muted-foreground">{PRONAF_LINE_LABELS[p.pronaf_line as PronafLine]} • {format(parseISO(p.created_at), "dd/MM/yyyy")}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold">{formatCurrency(Number(p.requested_value))}</span>
-                  <Badge className={`text-[10px] ${p.status === "aprovada" ? "bg-success text-success-foreground" :
-                    p.status === "negada" ? "bg-destructive text-destructive-foreground" :
-                      p.status === "em_analise" ? "bg-warning text-warning-foreground" :
-                        "bg-info text-info-foreground"
-                    }`}>
-                    {STATUS_LABELS[p.status as ProposalStatus]}
-                  </Badge>
+                <div className="h-8 w-8 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                  <PieChartIcon className="h-4 w-4 text-indigo-500" />
                 </div>
               </div>
-            ))}
-            {filteredProposals.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma proposta no período selecionado</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              <div className="flex-1 min-h-[260px]">
+                {stockStatusChartData.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <defs>
+                        {stockStatusChartData.map((entry, i) => (
+                          <radialGradient key={i} id={`sGrad${i}`} cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stopColor={entry.fill} stopOpacity={1} />
+                            <stop offset="100%" stopColor={entry.fill} stopOpacity={0.7} />
+                          </radialGradient>
+                        ))}
+                      </defs>
+                      <Pie
+                        data={stockStatusChartData}
+                        cx="50%" cy="45%"
+                        innerRadius={62}
+                        outerRadius={95}
+                        paddingAngle={4}
+                        dataKey="propostas"
+                        strokeWidth={0}
+                      >
+                        {stockStatusChartData.map((entry, i) => (
+                          <Cell key={i} fill={`url(#sGrad${i})`} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ borderRadius: '14px', border: 'none', boxShadow: '0 20px 40px -10px rgb(0 0 0 / 0.2)', backdropFilter: 'blur(12px)', background: 'rgba(255,255,255,0.95)' }}
+                        formatter={(v: number, name: string, props: any) => [
+                          <span className="font-black text-slate-800">{v} propostas — {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(props.payload.valor)}</span>,
+                          <span className="text-[10px] uppercase tracking-widest font-black text-slate-500">{props.payload.name}</span>
+                        ]}
+                      />
+                      <Legend
+                        iconType="circle"
+                        iconSize={8}
+                        formatter={(value) => <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{value.length > 18 ? value.slice(0, 18) + '…' : value}</span>}
+                        wrapperStyle={{ paddingTop: '12px' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+              {/* Center label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ top: '55px', height: '220px' }}>
+                <p className="text-2xl font-black text-slate-800">{stockProposals.length}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">EM ESTOQUE</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Horizontal Bar — Programas de Crédito */}
+        <div className="lg:col-span-3">
+          <Card className="border border-slate-200/40 dark:border-slate-700/40 shadow-premium rounded-[28px] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl relative group h-full">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-emerald-500/8 via-transparent to-transparent" />
+            <CardContent className="p-6 relative z-10 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Programas de Crédito</h3>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Volume financeiro por linha (R$)</p>
+                </div>
+                <div className="h-8 w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                  <DollarSign className="h-4 w-4 text-emerald-500" />
+                </div>
+              </div>
+              <div className="flex-1 min-h-[260px]">
+                {stockProgramChartData.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={stockProgramChartData.slice(0, 7)}
+                      layout="vertical"
+                      margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
+                      barCategoryGap="28%"
+                    >
+                      <defs>
+                        {stockProgramChartData.slice(0, 7).map((entry, i) => (
+                          <linearGradient key={i} id={`pgGrad${i}`} x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor={entry.fill} stopOpacity={0.9} />
+                            <stop offset="100%" stopColor={entry.fill} stopOpacity={0.6} />
+                          </linearGradient>
+                        ))}
+                      </defs>
+                      <CartesianGrid strokeDasharray="0" horizontal={false} vertical={true} stroke="rgba(0,0,0,0.06)" />
+                      <XAxis
+                        type="number"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: '#94a3b8' }}
+                        tickFormatter={(v) => v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: '#64748b', fontWeight: 700 }}
+                        width={115}
+                        tickFormatter={(v: string) => v.length > 17 ? v.slice(0, 17) + '…' : v}
+                      />
+                      <Tooltip
+                        contentStyle={{ borderRadius: '14px', border: 'none', boxShadow: '0 20px 40px -10px rgb(0 0 0 / 0.2)', background: 'rgba(255,255,255,0.97)' }}
+                        formatter={(v: number, _: string, props: any) => [
+                          <span className="font-black">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)} — {props.payload.propostas} propostas</span>,
+                          'Volume'
+                        ]}
+                      />
+                      <Bar dataKey="valor" radius={[0, 8, 8, 0]} maxBarSize={22}>
+                        {stockProgramChartData.slice(0, 7).map((_, i) => (
+                          <Cell key={i} fill={`url(#pgGrad${i})`} />
+                        ))}
+                        <LabelList
+                          dataKey="propostas"
+                          position="right"
+                          style={{ fontSize: '10px', fontWeight: 900, fill: '#475569' }}
+                          formatter={(v: number) => `${v} prop.`}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ── ROW B: Evolução Mensal (wide) + Projetistas ── */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-5">
+
+        {/* Area Chart — Evolução Acumulada */}
+        <div className="lg:col-span-3">
+          <Card className="border border-slate-200/40 dark:border-slate-700/40 shadow-premium rounded-[28px] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl relative group h-full">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-violet-500/6 via-transparent to-transparent" />
+            <CardContent className="p-6 relative z-10 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Evolução Financeira</h3>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Volume acumulado nos últimos 6 meses</p>
+                </div>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-200/40">
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+                  <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wider">Crescimento</span>
+                </div>
+              </div>
+              <div className="flex-1 min-h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -5, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="evolGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#6366f1" stopOpacity={0.35} />
+                        <stop offset="60%" stopColor="#6366f1" stopOpacity={0.08} />
+                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="evolLine" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#818cf8" />
+                        <stop offset="100%" stopColor="#6366f1" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,0,0,0.05)" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 700 }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fill: '#94a3b8' }}
+                      tickFormatter={(v) => v >= 1000000 ? `R$${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `R$${(v / 1000).toFixed(0)}k` : `R$${v}`}
+                    />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '14px', border: 'none', boxShadow: '0 20px 40px -10px rgb(0 0 0 / 0.2)', background: 'rgba(255,255,255,0.97)' }}
+                      formatter={(v: number) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v), 'Volume Acumulado']}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="valor"
+                      stroke="url(#evolLine)"
+                      strokeWidth={3}
+                      fill="url(#evolGrad)"
+                      dot={{ r: 5, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 7, fill: '#6366f1', strokeWidth: 2, stroke: '#fff', filter: 'drop-shadow(0 0 6px #6366f1aa)' }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Stacked Bar — Projetistas por volume */}
+        <div className="lg:col-span-2">
+          <Card className="border border-slate-200/40 dark:border-slate-700/40 shadow-premium rounded-[28px] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl relative group h-full">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-amber-500/8 via-transparent to-transparent" />
+            <CardContent className="p-6 relative z-10 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Por Projetista</h3>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Propostas e volume em estoque</p>
+                </div>
+                <div className="h-8 w-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-amber-500" />
+                </div>
+              </div>
+              <div className="flex-1 min-h-[260px] flex flex-col justify-center gap-2 overflow-hidden">
+                {stockProjetistaChartData.length === 0 ? (
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
+                ) : (
+                  stockProjetistaChartData.map((item, i) => {
+                    const maxVal = stockProjetistaChartData[0].valor || 1;
+                    const pct = Math.round((item.valor / maxVal) * 100);
+                    const colors = ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316'];
+                    const color = colors[i % colors.length];
+                    return (
+                      <div key={i} className="group/item">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-[10px] font-black text-slate-700 uppercase truncate max-w-[110px]">{item.name.split(' ')[0]}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-slate-400">{item.propostas} prop.</span>
+                            <span className="text-[10px] font-black" style={{ color }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(item.valor)}</span>
+                          </div>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{
+                              width: `${pct}%`,
+                              background: `linear-gradient(90deg, ${color}cc, ${color})`,
+                              boxShadow: `0 0 8px ${color}44`
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* ── ROW C: Desembolsos Grouped Bar + Live Feed ── */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-5">
+
+        {/* Grouped Bar — Desembolsos por Projetista */}
+        <div className="lg:col-span-3">
+          <Card className="border border-slate-200/40 dark:border-slate-700/40 shadow-premium rounded-[28px] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl relative group h-full">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-500/6 via-transparent to-transparent" />
+            <CardContent className="p-6 relative z-10 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Desembolsos por Projetista</h3>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Pendente · Solicitado · Liberado (R$)</p>
+                </div>
+                <div className="h-8 w-8 rounded-xl bg-teal-500/10 flex items-center justify-center">
+                  <Banknote className="h-4 w-4 text-teal-500" />
+                </div>
+              </div>
+              <div className="flex-1 min-h-[260px]">
+                {disbursementByDesigner.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+                    <Banknote className="h-10 w-10 opacity-20" />
+                    <p className="text-sm font-medium">Nenhum desembolso registrado</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={disbursementByDesigner} margin={{ top: 5, right: 10, left: -5, bottom: 0 }} barGap={3}>
+                      <defs>
+                        <linearGradient id="pendGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#fbbf24" stopOpacity={0.95} />
+                          <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.8} />
+                        </linearGradient>
+                        <linearGradient id="solGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.95} />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.8} />
+                        </linearGradient>
+                        <linearGradient id="libGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#34d399" stopOpacity={0.95} />
+                          <stop offset="100%" stopColor="#10b981" stopOpacity={0.8} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,0,0,0.05)" vertical={false} />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 700 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                      <Tooltip
+                        contentStyle={{ borderRadius: '14px', border: 'none', boxShadow: '0 20px 40px -10px rgb(0 0 0 / 0.2)', background: 'rgba(255,255,255,0.97)' }}
+                        formatter={(v: number) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)]}
+                      />
+                      <Legend verticalAlign="top" height={30} iconType="circle" iconSize={8}
+                        formatter={(v) => <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{v}</span>}
+                      />
+                      <Bar name="Pendente" dataKey="pendente" fill="url(#pendGrad)" radius={[5, 5, 0, 0]} maxBarSize={20} />
+                      <Bar name="Solicitado" dataKey="solicitado" fill="url(#solGrad)" radius={[5, 5, 0, 0]} maxBarSize={20} />
+                      <Bar name="Liberado" dataKey="liberado" fill="url(#libGrad)" radius={[5, 5, 0, 0]} maxBarSize={20} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Live Feed — Últimas Propostas Cadastradas */}
+        <div className="lg:col-span-2">
+          <Card className="border border-slate-200/40 dark:border-slate-700/40 shadow-premium rounded-[28px] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl relative group h-full">
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-primary/6 via-transparent to-transparent" />
+            <CardContent className="p-6 relative z-10 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Últimas Propostas</h3>
+                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Estoque recente</p>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-200/40">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[9px] font-black text-emerald-700 uppercase tracking-wider">Ao Vivo</span>
+                </div>
+              </div>
+              <div className="flex-1 space-y-2 overflow-hidden">
+                {stockProposals.slice(0, 7).map((p, i) => {
+                  const statusColors: Record<string, string> = {
+                    "AGUARDANDO ENTREVISTA": "bg-indigo-100 text-indigo-700",
+                    "DOCUMENTAÇÃO PENDENTE": "bg-amber-100 text-amber-700",
+                    "DOCUMENTAÇÃO APROVADA": "bg-emerald-100 text-emerald-700",
+                    "ENVIADO PARA CENTRAL": "bg-teal-100 text-teal-700",
+                    "CONCLUÍDO": "bg-green-100 text-green-700",
+                    "RESTRIÇÃO": "bg-red-100 text-red-700",
+                  };
+                  const statusStr = (p.status || "").toUpperCase().trim();
+                  const colorClass = statusColors[statusStr] || "bg-slate-100 text-slate-600";
+                  return (
+                    <div key={p.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/80 hover:bg-slate-100/80 dark:bg-slate-800/50 transition-all duration-200 group/row">
+                      <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center shrink-0">
+                        <span className="text-[10px] font-black text-primary">{i + 1}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 truncate">{p.producer_name}</p>
+                        <p className="text-[9px] text-slate-400 font-medium">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(Number(p.estimated_value))}</p>
+                      </div>
+                      <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-lg shrink-0 ${colorClass}`}>
+                        {statusStr.split(' ').slice(0, 2).join(' ')}
+                      </span>
+                    </div>
+                  );
+                })}
+                {stockProposals.length === 0 && (
+                  <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem propostas</div>
+                )}
+              </div>
+              {stockProposals.length > 7 && (
+                <button
+                  onClick={() => navigate('/estoque')}
+                  className="mt-3 w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary border border-primary/20 hover:bg-primary/5 transition-colors"
+                >
+                  Ver todas as {stockProposals.length} propostas →
+                </button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+
+
 
       {/* ============================================= */}
       {/* Hidden section for PDF Report Layout */}
