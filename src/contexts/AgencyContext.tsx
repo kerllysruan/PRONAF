@@ -47,7 +47,14 @@ export function AgencyProvider({ children }: { children: ReactNode }) {
         }
 
         if (data) {
-            setAgencies(data);
+            const hasNunes = data.some(a => a.name.toUpperCase().includes("NUNES FREIRE"));
+            if (!hasNunes) {
+                setAgencies([{ id: "nunes-freire-291", name: "GOVERNADOR NUNES FREIRE", code: "291" }, ...data]);
+            } else {
+                setAgencies(data);
+            }
+        } else {
+            setAgencies([{ id: "nunes-freire-291", name: "GOVERNADOR NUNES FREIRE", code: "291" }]);
         }
     }, [toast]);
 

@@ -41,8 +41,23 @@ export function useStockProposals() {
 
       if (fetchError) throw fetchError;
 
-      setProposals(data || []);
+      const normalizedData = (data || []).map(p => ({
+        ...p,
+        agencia_cadastro: p.agencia_cadastro || "GOVERNADOR NUNES FREIRE (291)"
+      }));
+
+      setProposals(normalizedData);
       hasLoadedRef.current = true;
+
+      // Background update in DB for any proposal lacking agencia_cadastro
+      const unlinkedIds = (data || []).filter(p => !p.agencia_cadastro).map(p => p.id);
+      if (unlinkedIds.length > 0) {
+        supabase
+          .from("stock_proposals")
+          .update({ agencia_cadastro: "GOVERNADOR NUNES FREIRE (291)" })
+          .in("id", unlinkedIds)
+          .then(() => {});
+      }
     } catch (err: any) {
       console.error("Error fetching stock proposals:", err);
       setError(err.message);
