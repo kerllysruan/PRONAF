@@ -1718,7 +1718,7 @@ function BrandHeader() {
           SUPER GESTÃO
         </h1>
         <p className="text-[11px] font-black uppercase tracking-[0.25em] text-amber-300 bg-slate-950/90 px-4 py-1.5 rounded-full border border-amber-400/50 inline-block shadow-lg mt-1">
-          AGRICULTURA E PECUÁRIA — PRONAF
+          AGRICULTURA — PRONAF
         </p>
       </div>
     </div>

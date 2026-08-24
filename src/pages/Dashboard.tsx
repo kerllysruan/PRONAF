@@ -1804,73 +1804,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── ROW B: Evolução Mensal (wide) + Projetistas ── */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-5">
+      {/* ── ROW B: Projetistas + Últimas Propostas (Premium Side-by-Side) ── */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
 
-        {/* Area Chart — Evolução Acumulada */}
-        <div className="lg:col-span-3">
-          <Card className="border border-slate-200/40 dark:border-slate-700/40 shadow-premium rounded-[28px] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl relative group h-full">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-violet-500/6 via-transparent to-transparent" />
-            <CardContent className="p-6 relative z-10 flex flex-col h-full">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Evolução Financeira</h3>
-                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Volume acumulado nos últimos 6 meses</p>
-                </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-200/40">
-                  <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
-                  <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wider">Crescimento</span>
-                </div>
-              </div>
-              <div className="flex-1 min-h-[260px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -5, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="evolGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#6366f1" stopOpacity={0.35} />
-                        <stop offset="60%" stopColor="#6366f1" stopOpacity={0.08} />
-                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="evolLine" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#818cf8" />
-                        <stop offset="100%" stopColor="#6366f1" />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,0,0,0.05)" vertical={false} />
-                    <XAxis
-                      dataKey="name"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 11, fill: '#94a3b8', fontWeight: 700 }}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 10, fill: '#94a3b8' }}
-                      tickFormatter={(v) => v >= 1000000 ? `R$${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `R$${(v / 1000).toFixed(0)}k` : `R$${v}`}
-                    />
-                    <Tooltip
-                      contentStyle={{ borderRadius: '14px', border: 'none', boxShadow: '0 20px 40px -10px rgb(0 0 0 / 0.2)', background: 'rgba(255,255,255,0.97)' }}
-                      formatter={(v: number) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v), 'Volume Acumulado']}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="valor"
-                      stroke="url(#evolLine)"
-                      strokeWidth={3}
-                      fill="url(#evolGrad)"
-                      dot={{ r: 5, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }}
-                      activeDot={{ r: 7, fill: '#6366f1', strokeWidth: 2, stroke: '#fff', filter: 'drop-shadow(0 0 6px #6366f1aa)' }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Stacked Bar — Projetistas por volume */}
-        <div className="lg:col-span-2">
+        {/* Progress Bars — Projetistas por volume */}
+        <div>
           <Card className="border border-slate-200/40 dark:border-slate-700/40 shadow-premium rounded-[28px] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl relative group h-full">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-amber-500/8 via-transparent to-transparent" />
             <CardContent className="p-6 relative z-10 flex flex-col h-full">
@@ -1883,7 +1821,7 @@ export default function Dashboard() {
                   <Users className="h-4 w-4 text-amber-500" />
                 </div>
               </div>
-              <div className="flex-1 min-h-[260px] flex flex-col justify-center gap-2 overflow-hidden">
+              <div className="flex-1 min-h-[320px] flex flex-col justify-center gap-3 overflow-hidden">
                 {stockProjetistaChartData.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem dados</div>
                 ) : (
@@ -1894,20 +1832,20 @@ export default function Dashboard() {
                     const color = colors[i % colors.length];
                     return (
                       <div key={i} className="group/item">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-[10px] font-black text-slate-700 uppercase truncate max-w-[110px]">{item.name.split(' ')[0]}</span>
-                          <div className="flex items-center gap-2">
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase truncate max-w-[140px]">{item.name.split(' ')[0]}</span>
+                          <div className="flex items-center gap-2.5">
                             <span className="text-[10px] font-bold text-slate-400">{item.propostas} prop.</span>
-                            <span className="text-[10px] font-black" style={{ color }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(item.valor)}</span>
+                            <span className="text-[11px] font-black" style={{ color }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(item.valor)}</span>
                           </div>
                         </div>
-                        <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                        <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all duration-700"
                             style={{
                               width: `${pct}%`,
                               background: `linear-gradient(90deg, ${color}cc, ${color})`,
-                              boxShadow: `0 0 8px ${color}44`
+                              boxShadow: `0 0 10px ${color}44`
                             }}
                           />
                         </div>
@@ -1919,71 +1857,9 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* ── ROW C: Desembolsos Grouped Bar + Live Feed ── */}
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-5">
-
-        {/* Grouped Bar — Desembolsos por Projetista */}
-        <div className="lg:col-span-3">
-          <Card className="border border-slate-200/40 dark:border-slate-700/40 shadow-premium rounded-[28px] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl relative group h-full">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-500/6 via-transparent to-transparent" />
-            <CardContent className="p-6 relative z-10 flex flex-col h-full">
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-800 dark:text-slate-100">Desembolsos por Projetista</h3>
-                  <p className="text-[10px] text-slate-500 font-medium mt-0.5">Pendente · Solicitado · Liberado (R$)</p>
-                </div>
-                <div className="h-8 w-8 rounded-xl bg-teal-500/10 flex items-center justify-center">
-                  <Banknote className="h-4 w-4 text-teal-500" />
-                </div>
-              </div>
-              <div className="flex-1 min-h-[260px]">
-                {disbursementByDesigner.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-                    <Banknote className="h-10 w-10 opacity-20" />
-                    <p className="text-sm font-medium">Nenhum desembolso registrado</p>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={disbursementByDesigner} margin={{ top: 5, right: 10, left: -5, bottom: 0 }} barGap={3}>
-                      <defs>
-                        <linearGradient id="pendGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#fbbf24" stopOpacity={0.95} />
-                          <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.8} />
-                        </linearGradient>
-                        <linearGradient id="solGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.95} />
-                          <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.8} />
-                        </linearGradient>
-                        <linearGradient id="libGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#34d399" stopOpacity={0.95} />
-                          <stop offset="100%" stopColor="#10b981" stopOpacity={0.8} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,0,0,0.05)" vertical={false} />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b', fontWeight: 700 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                      <Tooltip
-                        contentStyle={{ borderRadius: '14px', border: 'none', boxShadow: '0 20px 40px -10px rgb(0 0 0 / 0.2)', background: 'rgba(255,255,255,0.97)' }}
-                        formatter={(v: number) => [new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)]}
-                      />
-                      <Legend verticalAlign="top" height={30} iconType="circle" iconSize={8}
-                        formatter={(v) => <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">{v}</span>}
-                      />
-                      <Bar name="Pendente" dataKey="pendente" fill="url(#pendGrad)" radius={[5, 5, 0, 0]} maxBarSize={20} />
-                      <Bar name="Solicitado" dataKey="solicitado" fill="url(#solGrad)" radius={[5, 5, 0, 0]} maxBarSize={20} />
-                      <Bar name="Liberado" dataKey="liberado" fill="url(#libGrad)" radius={[5, 5, 0, 0]} maxBarSize={20} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Live Feed — Últimas Propostas Cadastradas */}
-        <div className="lg:col-span-2">
+        <div>
           <Card className="border border-slate-200/40 dark:border-slate-700/40 shadow-premium rounded-[28px] overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl relative group h-full">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-primary/6 via-transparent to-transparent" />
             <CardContent className="p-6 relative z-10 flex flex-col h-full">
@@ -1998,7 +1874,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="flex-1 space-y-2 overflow-hidden">
-                {stockProposals.slice(0, 7).map((p, i) => {
+                {stockProposals.slice(0, 10).map((p, i) => {
                   const statusColors: Record<string, string> = {
                     "AGUARDANDO ENTREVISTA": "bg-indigo-100 text-indigo-700",
                     "DOCUMENTAÇÃO PENDENTE": "bg-amber-100 text-amber-700",
@@ -2028,7 +1904,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-center h-full text-sm text-muted-foreground">Sem propostas</div>
                 )}
               </div>
-              {stockProposals.length > 7 && (
+              {stockProposals.length > 10 && (
                 <button
                   onClick={() => navigate('/estoque')}
                   className="mt-3 w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-primary border border-primary/20 hover:bg-primary/5 transition-colors"

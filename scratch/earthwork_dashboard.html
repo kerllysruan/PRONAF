@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Técnico de Terraplenagem - Cota Plana Econômica (Z = 52,60m)</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 20px; }
+    h1 { color: #38bdf8; margin-bottom: 5px; font-size: 2.1em; }
+    p.subtitle { color: #94a3b8; font-size: 1.15em; }
+    
+    .badge-econ { background: #065f46; color: #34d399; border: 1px solid #10b981; padding: 10px 20px; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 1.15em; margin-top: 10px; }
+    
+    .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+    .card h3 { color: #94a3b8; font-size: 0.88em; margin-top: 0; text-transform: uppercase; letter-spacing: 1px; }
+    .card .value { font-size: 1.85em; font-weight: bold; color: #34d399; margin: 10px 0; }
+    .card .subtext { font-size: 0.85em; color: #cbd5e1; }
+
+    .chart-container { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 30px; }
+    .chart-container h2 { color: #f8fafc; margin-top: 0; font-size: 1.3em; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+    
+    img.chart-img { width: 100%; height: auto; border-radius: 8px; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+    th { background-color: #334155; color: #f8fafc; font-size: 0.95em; }
+    tr:hover { background-color: #1e293b; }
+    .highlight-row { background-color: rgba(16, 185, 129, 0.15); font-weight: bold; }
+    .highlight-row td { color: #34d399; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📐 PAINEL TÉCNICO DE TERRAPLENAGEM & COMPENSAÇÃO DE VOLUMES</h1>
+      <p class="subtitle">Estudo Altimétrico Focado Exclusivamente na Cota Plana Econômica (Z = 52,60 m)</p>
+      <div class="badge-econ">COTA PLANA ECONÔMICA OTIMIZADA: Z = 52,60 m (BALANÇO ZERO)</div>
+    </header>
+
+    <div class="grid-cards">
+      <div class="card">
+        <h3>Cota Plana de Projeto</h3>
+        <div class="value">Z = 52,60 m</div>
+        <div class="subtext">Compensação direta entre escavação e aterro</div>
+      </div>
+      <div class="card">
+        <h3>Volume de Corte (Escavação)</h3>
+        <div class="value" style="color: #f87171;">6.704,90 m³</div>
+        <div class="subtext">Área de escavação: 6.120,00 m²</div>
+      </div>
+      <div class="card">
+        <h3>Volume de Aterro (Preenchimento)</h3>
+        <div class="value" style="color: #60a5fa;">6.922,10 m³</div>
+        <div class="subtext">Área de aterro: 7.965,70 m²</div>
+      </div>
+      <div class="card">
+        <h3>Custo Direto Estimado</h3>
+        <div class="value" style="color: #fbbf24;">R$ 203.753,74</div>
+        <div class="subtext">Economia de R$ 211.746 em relação a cotas não otimizadas</div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <h2>1. Curva de Compensação de Volumes e Ponto de Balanço Zero</h2>
+      <img src="../grafico1_curva_cota_plana_ptbr.svg" class="chart-img" alt="Curva de Volumes Cota Plana PT-BR">
+    </div>
+
+    <div class="chart-container">
+      <h2>2. Mapa Espacial 2D de Zonas de Corte e Aterro (Planta de Espessuras)</h2>
+      <img src="../grafico2_mapa_corta_aterro_plana_ptbr.svg" class="chart-img" alt="Mapa Espacial Corte Aterro PT-BR">
+    </div>
+
+    <div class="chart-container">
+      <h2>3. Perfil Longitudinal do Terreno vs Plataforma Plana (Z = 52,60m)</h2>
+      <img src="../grafico3_perfil_longitudinal_plana_ptbr.svg" class="chart-img" alt="Perfil Longitudinal PT-BR">
+    </div>
+
+    <div class="chart-container">
+      <h2>4. Modelo Tridimensional Renderizado de Escavação e Aterro</h2>
+      <img src="../cota_plana_3d_render_1786305652423.jpg" class="chart-img" alt="Render 3D Cota Plana">
+    </div>
+
+    <div class="chart-container">
+      <h2>Resumo Orçamentário e Balanço de Massa (PT-BR)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Etapa / Serviço</th>
+            <th>Unidade</th>
+            <th>Quantidade</th>
+            <th>Preço Unitário (R$)</th>
+            <th>Custo Total (R$)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Locação Topográfica e Demarcação de Greide</td>
+            <td>m²</td>
+            <td>14.085,70</td>
+            <td>R$ 0,45</td>
+            <td>R$ 6.338,57</td>
+          </tr>
+          <tr>
+            <td>Decapagem e Limpeza de Solo Vegetal (15 cm)</td>
+            <td>m³</td>
+            <td>2.112,85</td>
+            <td>R$ 6,50</td>
+            <td>R$ 13.733,53</td>
+          </tr>
+          <tr>
+            <td>Escavação de Solo de 1ª Categoria na Zona de Corte</td>
+            <td>m³</td>
+            <td>6.704,90</td>
+            <td>R$ 11,20</td>
+            <td>R$ 75.094,88</td>
+          </tr>
+          <tr>
+            <td>Carga e Transporte Interno de Solo (Corte ➔ Aterro)</td>
+            <td>m³</td>
+            <td>6.704,90</td>
+            <td>R$ 6,80</td>
+            <td>R$ 45.593,32</td>
+          </tr>
+          <tr>
+            <td>Espalhamento e Conformação de Aterro (Cota 52,60m)</td>
+            <td>m³</td>
+            <td>6.922,10</td>
+            <td>R$ 4,50</td>
+            <td>R$ 31.149,45</td>
+          </tr>
+          <tr>
+            <td>Compactação Mecânica de Aterro (95% Proctor Normal)</td>
+            <td>m³</td>
+            <td>6.922,10</td>
+            <td>R$ 4,20</td>
+            <td>R$ 29.072,82</td>
+          </tr>
+          <tr>
+            <td>Acerto Final e Acabamento de Greide com Patrol</td>
+            <td>m²</td>
+            <td>14.085,70</td>
+            <td>R$ 0,20</td>
+            <td>R$ 2.817,14</td>
+          </tr>
+          <tr class="highlight-row">
+            <td colspan="4">CUSTO TOTAL ESTIMADO DO PROJETO DE TERRAPLENAGEM</td>
+            <td>R$ 203.753,74</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>
