@@ -448,7 +448,7 @@ export default function Dashboard() {
     const estoqueEnviadoCentral = estoqueEnviadoCentralProposals.length;
     const estoqueValorEnviadoCentral = estoqueEnviadoCentralProposals.reduce((sum, p) => sum + safeParseNum(p.estimated_value), 0);
 
-    // 3. TOTAIS GERAS ABSOLUTOS (TODAS AS PROPOSTAS DO SISTEMA - INCLUSIVE CONCLUÍDAS)
+    // 3. TOTAIS GERAIS ABSOLUTOS (TODAS AS PROPOSTAS DO SISTEMA)
     const totalPropostasSistema = stockProposals.length + filteredProposals.length;
     const valorTotalSistema = stockProposals.reduce((sum, p) => sum + safeParseNum(p.estimated_value), 0) +
                                filteredProposals.reduce((sum, p) => sum + safeParseNum(p.requested_value), 0);
@@ -457,7 +457,28 @@ export default function Dashboard() {
     const valorConcluidoGeral = estoqueValorConcluido + valorAprovadoMain;
 
     const taxaAprovacao = totalPropostasSistema > 0 ? Math.round((totalConcluidoGeral / totalPropostasSistema) * 100) : 0;
-    
+
+    // 4. Módulo Documentação (/documentacao)
+    const docRecebidasCount = submissions.length;
+    const docRecebidasValor = submissions.reduce(
+      (sum, s) => sum + safeParseNum(s.proposal?.estimated_value),
+      0
+    );
+
+    const isDocAprovada = (s: any) => {
+      const normStatus = (s.proposal?.status || '').toUpperCase().trim();
+      if (normStatus === 'ENVIADO PARA CENTRAL' || normStatus === 'CONCLUÍDO' || normStatus === 'CONCLUIDO') return true;
+      if (s.totalFiles > 0 && s.approvedCount === s.totalFiles && s.rejectedCount === 0 && s.pendingCount === 0) return true;
+      return false;
+    };
+
+    const docAprovadasProposals = submissions.filter(isDocAprovada);
+    const docAprovadasCount = docAprovadasProposals.length;
+    const docAprovadasValor = docAprovadasProposals.reduce(
+      (sum, s) => sum + safeParseNum(s.proposal?.estimated_value),
+      0
+    );
+
     return {
       // Total Geral do Sistema (Todas as Propostas)
       totalGeral: totalPropostasSistema,
@@ -487,8 +508,14 @@ export default function Dashboard() {
       estoqueEnviadoCentral,
       estoqueValorEnviadoCentral,
       concluidasTotal: totalConcluidoGeral,
+
+      // Documentation breakdown (/documentacao)
+      docRecebidasCount,
+      docRecebidasValor,
+      docAprovadasCount,
+      docAprovadasValor,
     };
-  }, [filteredProposals, stockProposals]);
+  }, [filteredProposals, stockProposals, submissions]);
 
   // Disbursement stats
   const disbursementStats = useMemo(() => {
@@ -1397,7 +1424,7 @@ export default function Dashboard() {
       </div>
 
       {/* ============================================= */}
-      {/* KPI ROW 2 — ESTEIRA DE CRÉDITO (/propostas) */}
+      {/* KPI ROW 3 — MÓDULO ESTEIRA / DOCUMENTAÇÃO (supergestao.digital/propostas / documentacao) */}
       {/* ============================================= */}
       <div className="space-y-2 pt-2">
         <div className="flex items-center justify-between px-1">
@@ -1406,21 +1433,24 @@ export default function Dashboard() {
             Módulo Esteira de Crédito PRONAF (supergestao.digital/propostas)
           </h3>
           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200/50">
-            {stats.totalMainAtivas} propostas em análise
+            {stats.docRecebidasCount} recebidas · {stats.docAprovadasCount} doc. aprovadas
           </span>
         </div>
 
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {/* 1. Propostas Ativas na Esteira */}
-          <Card className="group relative overflow-hidden border-2 border-slate-200/80 dark:border-slate-800 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
+          {/* 1. Total de Propostas Recebidas (Documentação) */}
+          <Card 
+            onClick={() => navigate("/documentacao")}
+            className="group relative overflow-hidden border-2 border-slate-200/80 dark:border-slate-800 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900 cursor-pointer"
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Propostas na Esteira</p>
-                  <p className="text-3xl font-black font-heading text-foreground">{stats.totalMainAtivas}</p>
-                  <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[9px] font-black">
-                    +{stats.novasMain} NOVAS
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Total Propostas Recebidas</p>
+                  <p className="text-3xl font-black font-heading text-foreground">{stats.docRecebidasCount}</p>
+                  <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[9px] font-black tracking-wider uppercase">
+                    <FileText className="h-2.5 w-2.5 mr-1" /> DOCUMENTAÇÃO RECEBIDA
                   </Badge>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary transform group-hover:scale-110 group-hover:rotate-3 transition-all shadow-sm">
@@ -1430,35 +1460,41 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* 2. Volume Financeiro na Esteira (EXCLUSIVO NÃO CONCLUÍDAS) */}
-          <Card className="group relative overflow-hidden border-2 border-slate-200/80 dark:border-slate-800 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
+          {/* 2. Volume Financeiro Recebido (Documentação) */}
+          <Card 
+            onClick={() => navigate("/documentacao")}
+            className="group relative overflow-hidden border-2 border-slate-200/80 dark:border-slate-800 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900 cursor-pointer"
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Volume da Esteira</p>
-                  <p className="text-2xl font-black font-heading text-foreground mt-0.5">{formatCompact(stats.valorTotalMainAtivas)}</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Volume Recebido (Docs)</p>
+                  <p className="text-xl font-black font-heading text-foreground mt-0.5">{formatCurrency(stats.docRecebidasValor)}</p>
                   <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-700 border border-amber-200/50 text-[9px] font-black tracking-wider uppercase">
-                    <DollarSign className="h-2.5 w-2.5 mr-0.5 text-amber-600" /> NÃO CONCLUÍDAS
+                    <CircleDollarSign className="h-2.5 w-2.5 mr-0.5 text-amber-600" /> VALOR EM DOCUMENTAÇÃO
                   </Badge>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent transform group-hover:scale-110 group-hover:rotate-6 transition-all shadow-sm">
-                  <DollarSign className="h-6 w-6" />
+                  <CircleDollarSign className="h-6 w-6" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* 3. Aprovadas na Esteira */}
-          <Card className="group relative overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900">
+          {/* 3. Totalmente Documentação Aprovadas */}
+          <Card 
+            onClick={() => navigate("/documentacao")}
+            className="group relative overflow-hidden border-2 border-emerald-100 dark:border-emerald-900/50 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-white dark:bg-slate-900 cursor-pointer"
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Aprovadas Esteira</p>
-                  <p className="text-3xl font-black font-heading text-foreground">{stats.aprovadasMain}</p>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Documentação Aprovada</p>
+                  <p className="text-3xl font-black font-heading text-foreground">{stats.docAprovadasCount}</p>
                   <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-200/50 text-[9px] font-black tracking-wider uppercase">
-                    CONTRATO LIBERADO
+                    <CheckCircle2 className="h-2.5 w-2.5 mr-1 text-emerald-600" /> 100% DOC. APROVADA
                   </Badge>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">
@@ -1468,20 +1504,23 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* 4. Valor Aprovado Esteira */}
-          <Card className="group relative overflow-hidden border-2 border-emerald-200 dark:border-emerald-900/60 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-950/30 dark:to-slate-900">
+          {/* 4. Volume Documentação Aprovada */}
+          <Card 
+            onClick={() => navigate("/documentacao")}
+            className="group relative overflow-hidden border-2 border-emerald-200 dark:border-emerald-900/60 shadow-md hover:shadow-xl transition-all duration-300 rounded-3xl bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-950/30 dark:to-slate-900 cursor-pointer"
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <CardContent className="p-5 relative">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Valor Aprovado Esteira</p>
-                  <p className="text-2xl font-black font-heading text-emerald-600 mt-0.5">{formatCompact(stats.valorAprovadoMain)}</p>
-                  <p className="text-[9px] font-black text-emerald-600 mt-1.5 flex items-center gap-1 uppercase tracking-wider">
-                    CRÉDITO LIBERADO
-                  </p>
+                  <p className="text-[10px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest mb-0.5">Volume Doc. Aprovada</p>
+                  <p className="text-xl font-black font-heading text-emerald-600 mt-0.5">{formatCurrency(stats.docAprovadasValor)}</p>
+                  <Badge variant="secondary" className="mt-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-700 border border-emerald-300/50 text-[9px] font-black tracking-wider uppercase">
+                    <Banknote className="h-2.5 w-2.5 mr-1 text-emerald-700" /> CRÉDITO APROVADO
+                  </Badge>
                 </div>
                 <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 border border-emerald-200/50 flex items-center justify-center text-emerald-600 transform group-hover:scale-110 group-hover:-rotate-3 transition-all shadow-sm">
-                  <TrendingUp className="h-6 w-6" />
+                  <Banknote className="h-6 w-6" />
                 </div>
               </div>
             </CardContent>
