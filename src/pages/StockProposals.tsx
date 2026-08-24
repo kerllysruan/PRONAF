@@ -245,7 +245,7 @@ function mapCSVRow(row: any, index: number): Partial<InsertStockProposal> | null
     cliente_renovacao: renovacaoVal,
     ano_contrato: cleanCSV(getField(row, ["ANO DO CONTRATO", "ANO CONTRATO"])),
     producer_cpf: cleanCSV(getField(row, ["CPF", "producer_cpf"])),
-    agencia_cadastro: agenciaCadastro || "GOVERNADOR NUNES FREIRE (291)",
+    agencia_cadastro: agenciaCadastro,
     municipio: cleanCSV(getField(row, ["MUNICÍPIO", "MUNICIPIO"])),
     estimated_value: parseBRLValue(getField(row, ["VALOR R$", "VALOR R", "VALOR", "estimated_value"])),
     linha_credito: automatedLinha,
@@ -379,7 +379,6 @@ export default function StockProposals() {
     localizacao: "",
     linha_credito: "",
     projetista: "",
-    agencia_cadastro: "GOVERNADOR NUNES FREIRE (291)",
     status: "AGUARDANDO ENTREVISTA"
   };
 
