@@ -342,6 +342,7 @@ export default function StockProposals() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchParams] = useSearchParams();
   const statusFromUrl = searchParams.get("status");
+  const projetistaFromUrl = searchParams.get("projetista");
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMunicipio, setFilterMunicipio] = useState("all");
@@ -353,7 +354,10 @@ export default function StockProposals() {
     }
     return "all";
   });
-  const [filterProjetista, setFilterProjetista] = useState("all");
+  const [filterProjetista, setFilterProjetista] = useState(() => {
+    if (projetistaFromUrl) return projetistaFromUrl;
+    return "all";
+  });
 
   useEffect(() => {
     if (statusFromUrl) {
@@ -364,7 +368,10 @@ export default function StockProposals() {
         setFilterStatus(statusFromUrl);
       }
     }
-  }, [statusFromUrl]);
+    if (projetistaFromUrl) {
+      setFilterProjetista(projetistaFromUrl);
+    }
+  }, [statusFromUrl, projetistaFromUrl]);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [viewingDetailProposal, setViewingDetailProposal] = useState<StockProposal | null>(null);
   const [selectedProposalIds, setSelectedProposalIds] = useState<string[]>([]);
@@ -483,7 +490,7 @@ export default function StockProposals() {
       }
     }
     if (filterProjetista !== "all") {
-      result = result.filter(p => p.projetista === filterProjetista);
+      result = result.filter(p => (p.projetista || "").toUpperCase().trim() === filterProjetista.toUpperCase().trim());
     }
     // Ordenar da mais nova para a mais antiga (Decrescente)
     result.sort((a, b) => {

@@ -1831,9 +1831,9 @@ export default function Dashboard() {
                     const colors = ['#6366f1', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#ec4899', '#14b8a6', '#f97316'];
                     const color = colors[i % colors.length];
                     return (
-                      <div key={i} className="group/item">
+                      <div key={i} className="group/item cursor-pointer hover:scale-[1.02] transition-transform duration-200" onClick={() => navigate(`/estoque?projetista=${encodeURIComponent(item.name)}`)}>
                         <div className="flex justify-between items-center mb-1.5">
-                          <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase truncate max-w-[140px]">{item.name.split(' ')[0]}</span>
+                          <span className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase truncate max-w-[140px] hover:text-indigo-600 transition-colors">{item.name.split(' ')[0]}</span>
                           <div className="flex items-center gap-2.5">
                             <span className="text-[10px] font-bold text-slate-400">{item.propostas} prop.</span>
                             <span className="text-[11px] font-black" style={{ color }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(item.valor)}</span>
