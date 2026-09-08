@@ -31,6 +31,7 @@ import { useStockProposals } from "@/hooks/useStockProposals";
 import { useTeam } from "@/hooks/useTeam";
 import { useDisbursements } from "@/hooks/useDisbursements";
 import { STATUS_LABELS, PRONAF_LINE_LABELS, PROJECT_DESIGNER_LABELS, type ProposalStatus, type PronafLine, type ProjectDesigner } from "@/types/proposal";
+import { useProjetistas } from "@/hooks/useProjetistas";
 import { format, parseISO, subMonths, startOfMonth, endOfMonth, isWithinInterval, getMonth, getYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MonthYearFilter } from "@/components/filters/MonthYearFilter";
@@ -84,6 +85,7 @@ export default function Dashboard() {
   const { disbursements, loading: loadingD } = useDisbursements();
   const { submissions, loading: loadingDocs } = useDocumentationReview();
   const { agencies, effectiveAgencyId } = useAgency();
+  const { projetistas: PROJETISTAS_LIST } = useProjetistas();
   const [filterMonth, setFilterMonth] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
   const [isExporting, setIsExporting] = useState(false);
@@ -99,7 +101,7 @@ export default function Dashboard() {
   const dashboardRef = useRef<HTMLDivElement>(null);
 
   // Helper arrays for filters
-  const allDesigners = useMemo(() => Object.keys(PROJECT_DESIGNER_LABELS), []);
+  const allDesigners = useMemo(() => PROJETISTAS_LIST, [PROJETISTAS_LIST]);
   const allStatuses = useMemo(() => Object.keys(STATUS_LABELS), []);
   const allMonths = useMemo(() => Array.from({ length: 12 }, (_, i) => (i + 1).toString()), []);
   const allPrograms = useMemo(() => {
@@ -146,7 +148,8 @@ export default function Dashboard() {
       if (filterYear !== "all" && getYear(d) !== Number(filterYear)) return false;
 
       // Report/Global Extension Filters
-      const matchesDesigner = selectedDesigners.length === 0 || (p.project_designer && selectedDesigners.includes(p.project_designer));
+      const designerDisplay = (p.project_designer || "").toUpperCase().replace(/_/g, " ").trim();
+      const matchesDesigner = selectedDesigners.length === 0 || selectedDesigners.some(d => d.toUpperCase().trim() === designerDisplay || d === p.project_designer);
       const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(p.status);
       const matchesProgram = selectedPrograms.length === 0 || (p.credit_program && selectedPrograms.includes(p.credit_program));
 
@@ -329,7 +332,8 @@ export default function Dashboard() {
         if (activeYears.length > 0 && !activeYears.includes(pYear)) return false;
         
         // Selection filters
-        const matchesDesigner = activeDesigners.length === 0 || (p.project_designer && activeDesigners.includes(p.project_designer));
+        const rptDesignerDisplay = (p.project_designer || "").toUpperCase().replace(/_/g, " ").trim();
+        const matchesDesigner = activeDesigners.length === 0 || activeDesigners.some(d => d.toUpperCase().trim() === rptDesignerDisplay || d === p.project_designer);
         const matchesStatus = activeStatuses.length === 0 || (p.status && activeStatuses.includes(p.status));
         const matchesProgram = activePrograms.length === 0 || (p.credit_program && activePrograms.includes(p.credit_program));
 
@@ -338,7 +342,7 @@ export default function Dashboard() {
 
       const tableData = proposalsToPrint.map(p => {
         const designerLabel = p.project_designer 
-          ? (PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer) 
+          ? p.project_designer.toUpperCase() 
           : '-';
           
         return [
@@ -534,17 +538,17 @@ export default function Dashboard() {
   // Disbursement chart data by projetista
   const disbursementByDesigner = useMemo(() => {
     const map = new Map<string, { name: string; pendente: number; solicitado: number; liberado: number }>();
-    
-    Object.entries(PROJECT_DESIGNER_LABELS).forEach(([key, label]) => {
-      map.set(key, { name: label.split(" ")[0], pendente: 0, solicitado: 0, liberado: 0 });
-    });
-    map.set("others", { name: "Outros", pendente: 0, solicitado: 0, liberado: 0 });
 
     disbursements.forEach(d => {
       const proposal = proposals.find(p => p.id === d.proposal_id);
-      const designerKey = proposal?.project_designer || "others";
-      const key = map.has(designerKey) ? designerKey : "others";
-      const entry = map.get(key)!;
+      const designerName = proposal?.project_designer
+        ? proposal.project_designer.toUpperCase().trim()
+        : "OUTROS";
+      
+      if (!map.has(designerName)) {
+        map.set(designerName, { name: designerName.split(" ")[0], pendente: 0, solicitado: 0, liberado: 0 });
+      }
+      const entry = map.get(designerName)!;
       const amount = Number(d.amount);
 
       if (d.status === 'pendente') entry.pendente += amount;
@@ -639,8 +643,7 @@ export default function Dashboard() {
   const designerChartData = useMemo(() => {
     const counts: Record<string, number> = {};
     filteredProposals.forEach(p => {
-      const designerKey = p.project_designer;
-      const designerName = designerKey ? (PROJECT_DESIGNER_LABELS[designerKey] || designerKey) : 'Não Definido';
+      const designerName = p.project_designer ? p.project_designer.toUpperCase().trim() : 'NÃO DEFINIDO';
       counts[designerName] = (counts[designerName] || 0) + 1;
     });
     return Object.entries(counts)
@@ -1071,7 +1074,7 @@ export default function Dashboard() {
                         <div key={designer} className={`flex items-center space-x-2.5 group cursor-pointer p-2 rounded-xl transition-all duration-150 ${selectedDesigners.includes(designer) ? 'bg-violet-50/80 border border-violet-200' : 'hover:bg-gray-50 border border-transparent'}`} onClick={() => toggleSelection(selectedDesigners, setSelectedDesigners, designer)}>
                           <Checkbox checked={selectedDesigners.includes(designer)} className="rounded-md border-2 data-[state=checked]:bg-violet-600 data-[state=checked]:border-violet-600" />
                           <Label className="text-sm font-semibold cursor-pointer group-hover:text-violet-700 transition-colors">
-                            {PROJECT_DESIGNER_LABELS[designer as ProjectDesigner] || designer}
+                            {designer}
                           </Label>
                         </div>
                       ))}

@@ -6,7 +6,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DbDisbursement } from "@/hooks/useDisbursements";
 import { DbProposal } from "@/hooks/useProposals";
-import { PROJECT_DESIGNER_LABELS } from "@/types/proposal";
 
 interface DisbursementChartsProps {
     disbursements: DbDisbursement[];
@@ -35,18 +34,16 @@ export function DisbursementCharts({ disbursements, proposals }: DisbursementCha
     const designerData = useMemo(() => {
         const map = new Map<string, { name: string, requested: number, released: number, pending: number }>();
 
-        Object.entries(PROJECT_DESIGNER_LABELS).forEach(([key, label]) => {
-            map.set(key, { name: label.split(" ")[0], requested: 0, released: 0, pending: 0 });
-        });
-
-        map.set("others", { name: "Outros", requested: 0, released: 0, pending: 0 });
-
         disbursements.forEach(d => {
             const proposal = proposals.find(p => p.id === d.proposal_id);
-            const designerKey = proposal?.project_designer || "others";
-            const key = map.has(designerKey) ? designerKey : "others";
+            const designerKey = (proposal?.project_designer || "Outros").trim().toUpperCase();
+            const displayName = designerKey === "OUTROS" ? "Outros" : designerKey.split(" ")[0];
 
-            const entry = map.get(key)!;
+            if (!map.has(designerKey)) {
+                map.set(designerKey, { name: displayName, requested: 0, released: 0, pending: 0 });
+            }
+
+            const entry = map.get(designerKey)!;
             const amount = Number(d.amount);
 
             // Solicitado (todos exceto negados)

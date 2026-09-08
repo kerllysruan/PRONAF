@@ -39,6 +39,7 @@ import { ImportProposalsDialog } from "@/components/proposals/ImportProposalsDia
 
 import { usePermissions } from "@/hooks/usePermissions";
 import { useStockProposals } from "@/hooks/useStockProposals";
+import { useProjetistas } from "@/hooks/useProjetistas";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -54,6 +55,7 @@ export default function Proposals() {
   const { proposals: stockProposals, updateProposal: updateStockProposal, addProposal: addStockProposal } = useStockProposals();
   const { members, createTask } = useTeam();
   const { permissions } = usePermissions();
+  const { projetistas: PROJETISTAS_LIST } = useProjetistas();
 
   // Propostas concluídas (Estoque + Contrato Assinado da Lista Principal)
   const concludedStockProposals = useMemo(
@@ -96,7 +98,7 @@ export default function Proposals() {
     credit_program: p.credit_program,
     estimated_value: p.requested_value,
     notes: p.notes,
-    projetista: PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer,
+    projetista: p.project_designer || "",
     municipio: p.producer_address,
     original_csv_status: p.sicad || null,
     linha_credito: p.credit_purpose || null,
@@ -185,7 +187,7 @@ export default function Proposals() {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     producer_name: "", producer_cpf: "", producer_address: "", producer_phone: "",
-    pronaf_line: "custeio", project_designer: "ney_medeiros", requested_value: 0, status: "nova",
+    pronaf_line: "custeio", project_designer: "", requested_value: 0, status: "nova",
     entry_date: new Date().toISOString().split("T")[0], notes: "",
     sicad: "", credit_program: "", request_type: "", agency_code: "", agency_name: "",
     task: "", central_date: "", activity_start_date: "", last_analyst: "",
@@ -240,7 +242,7 @@ export default function Proposals() {
       isMain: true,
       displayValue: Number(p.requested_value) || 0,
       displayLocation: p.producer_address || '---',
-      displayDesigner: PROJECT_DESIGNER_LABELS[p.project_designer as ProjectDesigner] || p.project_designer,
+      displayDesigner: (p.project_designer || "SEM PROJETISTA").toUpperCase(),
       displayDate: p.entry_date || p.created_at
     }));
     const stockMapped = concludedStockProposals.map(p => ({
@@ -485,7 +487,7 @@ export default function Proposals() {
     setEditingId(null);
     setFormData({
       producer_name: "", producer_cpf: "", producer_address: "", producer_phone: "",
-      pronaf_line: "custeio", project_designer: "ney_medeiros", requested_value: 0, status: "nova",
+      pronaf_line: "custeio", project_designer: "", requested_value: 0, status: "nova",
       entry_date: new Date().toISOString().split("T")[0], notes: "",
       sicad: "", credit_program: "", request_type: "", agency_code: "", agency_name: "",
       task: "", central_date: "", activity_start_date: "", last_analyst: "",
@@ -504,7 +506,7 @@ export default function Proposals() {
     setFormData({
       producer_name: p.producer_name, producer_cpf: p.producer_cpf,
       producer_address: p.producer_address, producer_phone: p.producer_phone,
-      pronaf_line: p.pronaf_line, project_designer: p.project_designer || "ney_medeiros", requested_value: Number(p.requested_value),
+      pronaf_line: p.pronaf_line, project_designer: p.project_designer || "", requested_value: Number(p.requested_value),
       status: p.status, entry_date: p.entry_date, notes: p.notes || "",
       sicad: p.sicad || "", credit_program: p.credit_program || "", request_type: p.request_type || "",
       agency_code: p.agency_code || "", agency_name: p.agency_name || "",
@@ -553,7 +555,7 @@ export default function Proposals() {
           credit_program: formData.credit_program,
           estimated_value: formData.requested_value,
           notes: formData.notes,
-          projetista: PROJECT_DESIGNER_LABELS[formData.project_designer as ProjectDesigner] || formData.project_designer,
+          projetista: formData.project_designer || "",
           municipio: formData.producer_address,
           original_csv_status: formData.sicad || null,
           linha_credito: formData.credit_purpose || null,
@@ -1114,7 +1116,7 @@ export default function Proposals() {
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
                       <span className="text-xs text-slate-500">Projetista</span>
-                      <span className="text-xs font-bold text-indigo-600">{viewingProposal?.displayDesigner || viewingProposal?.projetista || PROJECT_DESIGNER_LABELS[viewingProposal?.project_designer as ProjectDesigner] || '---'}</span>
+                      <span className="text-xs font-bold text-indigo-600">{viewingProposal?.displayDesigner || viewingProposal?.projetista || viewingProposal?.project_designer || '---'}</span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b border-slate-50">
                       <span className="text-xs text-slate-500">Agência</span>
@@ -1249,8 +1251,8 @@ export default function Proposals() {
                     <Select value={formData.project_designer} onValueChange={(v) => setFormData((f) => ({ ...f, project_designer: v }))}>
                       <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
                       <SelectContent className="rounded-xl">
-                        {Object.entries(PROJECT_DESIGNER_LABELS).map(([key, label]) => (
-                          <SelectItem key={key} value={key} className="rounded-lg">{label}</SelectItem>
+                        {PROJETISTAS_LIST.map((name) => (
+                          <SelectItem key={name} value={name} className="rounded-lg">{name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
