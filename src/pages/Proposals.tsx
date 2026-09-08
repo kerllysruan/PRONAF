@@ -43,6 +43,7 @@ import { useProjetistas } from "@/hooks/useProjetistas";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { StatusBadge } from "@/components/shared/StatusBadge";
+import { useAgency } from "@/contexts/AgencyContext";
 
 const PAGE_SIZE = 10;
 
@@ -56,6 +57,7 @@ export default function Proposals() {
   const { members, createTask } = useTeam();
   const { permissions } = usePermissions();
   const { projetistas: PROJETISTAS_LIST } = useProjetistas();
+  const { effectiveAgencyId, agencies } = useAgency();
 
   // Propostas concluídas (Estoque + Contrato Assinado da Lista Principal)
   const concludedStockProposals = useMemo(
@@ -533,6 +535,12 @@ export default function Proposals() {
   const handleSave = async () => {
     if (!formData.producer_name.trim() || !formData.producer_cpf.trim()) return;
     
+    const targetAgency = (formData as any).agency_id || (effectiveAgencyId && effectiveAgencyId !== "all" ? effectiveAgencyId : undefined);
+    if (!editingId && !targetAgency) {
+      alert("Selecione uma agência antes de cadastrar a proposta.");
+      return;
+    }
+
     let targetProposalId = editingId;
     let saveSuccess = false;
 
@@ -540,7 +548,7 @@ export default function Proposals() {
       await updateProposal(editingId, formData);
       saveSuccess = true;
     } else {
-      const result = await createProposal(formData as any);
+      const result = await createProposal(formData as any, targetAgency);
       if (result) {
         targetProposalId = result.id;
         saveSuccess = true;
@@ -559,6 +567,7 @@ export default function Proposals() {
           municipio: formData.producer_address,
           original_csv_status: formData.sicad || null,
           linha_credito: formData.credit_purpose || null,
+          agency_id: targetAgency || (formData as any).agency_id,
           status: 'CONCLUÍDO',
           order_index: 0
         };
@@ -1200,6 +1209,28 @@ export default function Proposals() {
                   Dados do Produtor
                 </h3>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {effectiveAgencyId === "all" && (
+                    <div className="space-y-2 lg:col-span-3 p-3 bg-primary/5 rounded-2xl border border-primary/20">
+                      <Label className="text-[10px] font-black uppercase tracking-wider text-primary ml-1">
+                        Agência de Destino * (Obrigatória)
+                      </Label>
+                      <Select
+                        value={(formData as any).agency_id || ""}
+                        onValueChange={(val) => setFormData((f) => ({ ...f, agency_id: val } as any))}
+                      >
+                        <SelectTrigger className="rounded-xl border-primary/30 bg-background">
+                          <SelectValue placeholder="Selecione a agência para vincular a proposta..." />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          {agencies.map((a) => (
+                            <SelectItem key={a.id} value={a.id} className="rounded-lg">
+                              {a.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div className="space-y-2 lg:col-span-2">
                     <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-1">Nome do Produtor *</Label>
                     <Input value={formData.producer_name} onChange={(e) => setFormData((f) => ({ ...f, producer_name: e.target.value }))} placeholder="Nome completo" className="rounded-xl" />

@@ -129,16 +129,19 @@ export function useProposals() {
     };
   }, [fetchProposals]);
 
-  const createProposal = async (data: Omit<DbProposal, "id" | "created_by" | "created_at" | "updated_at" | "agency_id">) => {
+  const createProposal = async (data: Omit<DbProposal, "id" | "created_by" | "created_at" | "updated_at" | "agency_id">, agencyIdOverride?: string) => {
     if (!user) return;
-    if (!agencyId) {
-      toast({ title: "Erro", description: "Agência não encontrada para o usuário.", variant: "destructive" });
+
+    const targetAgencyId = agencyIdOverride || (effectiveAgencyId && effectiveAgencyId !== "all" ? effectiveAgencyId : agencyId);
+
+    if (!targetAgencyId) {
+      toast({ title: "Agência obrigatória", description: "Selecione uma agência antes de cadastrar a proposta.", variant: "destructive" });
       return null;
     }
 
     const { data: newProposal, error } = await supabase
       .from("proposals")
-      .insert({ ...data, created_by: user.id, agency_id: agencyId })
+      .insert({ ...data, created_by: user.id, agency_id: targetAgencyId })
       .select()
       .single();
 

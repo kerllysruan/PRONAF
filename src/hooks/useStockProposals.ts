@@ -72,15 +72,26 @@ export function useStockProposals() {
     }
   }, [fetchProposals]);
 
-  const addProposal = async (proposal: InsertStockProposal) => {
+  const addProposal = async (proposal: InsertStockProposal, agencyIdOverride?: string) => {
     if (!user) return null;
+
+    const targetAgencyId = agencyIdOverride || proposal.agency_id || (effectiveAgencyId !== "all" ? effectiveAgencyId : undefined);
+
+    if (!targetAgencyId) {
+      toast({
+        title: "Agência obrigatória",
+        description: "Não é possível cadastrar proposta sem vincular a uma agência. Selecione uma agência no seletor superior ou no formulário.",
+        variant: "destructive",
+      });
+      return null;
+    }
 
     try {
       const { data, error } = await supabase
         .from("stock_proposals")
         .insert([{
           ...proposal,
-          agency_id: effectiveAgencyId === "all" ? undefined : effectiveAgencyId,
+          agency_id: targetAgencyId,
           created_by: user.id
         }])
         .select()
@@ -105,13 +116,26 @@ export function useStockProposals() {
     }
   };
 
-  const addProposalsBulk = async (newProposals: InsertStockProposal[]) => {
+  const addProposalsBulk = async (newProposals: InsertStockProposal[], agencyIdOverride?: string) => {
     if (!user || newProposals.length === 0) return null;
+
+    const defaultAgencyId = agencyIdOverride || (effectiveAgencyId !== "all" ? effectiveAgencyId : undefined);
+
+    // Validar se todas as propostas terão agência definida
+    const hasMissing = newProposals.some(p => !p.agency_id && !defaultAgencyId);
+    if (hasMissing) {
+      toast({
+        title: "Agência obrigatória",
+        description: "Não é possível importar propostas sem vincular a uma agência. Selecione a agência de destino.",
+        variant: "destructive",
+      });
+      throw new Error("Agência de destino não selecionada para a importação.");
+    }
 
     try {
       const proposalsToInsert = newProposals.map(p => ({
         ...p,
-        agency_id: effectiveAgencyId === "all" ? undefined : effectiveAgencyId,
+        agency_id: p.agency_id || defaultAgencyId!,
         created_by: user.id
       }));
 

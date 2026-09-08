@@ -34,6 +34,7 @@ import { useProjetistasControl } from "@/hooks/useProjetistasControl";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ProposalFlowTimeline } from "@/components/shared/ProposalFlowTimeline";
 import { useAppData } from "@/contexts/AppDataContext";
+import { useAgency } from "@/contexts/AgencyContext";
 
 // ─── CSV parser (Force Refresh) ────────────────────────────────
 function parseCSVLine(line: string): string[] {
@@ -265,6 +266,7 @@ export default function StockProposals() {
   const { proposals, loading, addProposal, addProposalsBulk, updateProposal, deleteProposal, deleteAllProposals, refreshProposals } = useStockProposals();
   const { generateToken, loading: tokenLoading } = useDocumentationToken();
   const { projetistas: PROJETISTAS } = useProjetistas();
+  const { effectiveAgencyId, agencies } = useAgency();
   const { toast } = useToast();
 
   const copyDocumentationLinkAndText = useCallback(async (p: StockProposal) => {
@@ -336,6 +338,7 @@ export default function StockProposals() {
     projetista: "all"
   });
   const [importProjetista, setImportProjetista] = useState("");
+  const [importAgencyId, setImportAgencyId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -680,7 +683,14 @@ export default function StockProposals() {
             return;
           }
 
-          await addProposalsBulk(rows as InsertStockProposal[]);
+          const targetAgency = effectiveAgencyId !== "all" ? effectiveAgencyId : importAgencyId;
+          if (!targetAgency) {
+            toast({ title: "Agência obrigatória", description: "Selecione uma agência de destino antes de importar.", variant: "destructive" });
+            setIsImporting(false);
+            return;
+          }
+
+          await addProposalsBulk(rows as InsertStockProposal[], targetAgency);
           toast({
             title: "Importação concluída",
             description: `${rows.length} propostas importadas com sucesso.`,
@@ -713,6 +723,17 @@ export default function StockProposals() {
     const isRenovacao = (formData.cliente_renovacao || '').toUpperCase().includes('SIM');
     const automatedLinha = isRenovacao ? 'PRONAF A 699' : 'PRONAF A 368';
 
+    const targetAgency = (formData as any).agency_id || (effectiveAgencyId !== "all" ? effectiveAgencyId : undefined);
+    if (!targetAgency) {
+      toast({
+        title: "Agência obrigatória",
+        description: "Selecione uma agência antes de cadastrar a proposta.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const newProposal: InsertStockProposal = {
       producer_name: formData.producer_name!,
       producer_cpf: formData.producer_cpf || null,
@@ -723,9 +744,10 @@ export default function StockProposals() {
       linha_credito: formData.credit_program || formData.linha_credito || null,
       localizacao: formData.localizacao || null,
       projetista: formData.projetista || null,
+      agency_id: targetAgency,
       order_index: proposals.length > 0 ? proposals.map(p => p.order_index).reduce((a, b) => Math.max(a, b), 0) + 1 : 1,
     };
-    const res = await addProposal(newProposal);
+    const res = await addProposal(newProposal, targetAgency);
     if (res) {
       localStorage.removeItem('stock_proposal_new_draft');
       setIsDialogOpen(false);
@@ -1347,8 +1369,36 @@ export default function StockProposals() {
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-6 py-4">
+                {effectiveAgencyId === "all" ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="import-agency" className="text-sm font-bold text-slate-700">1. Selecione a Agência de Destino *</Label>
+                    <Select
+                      value={importAgencyId}
+                      onValueChange={setImportAgencyId}
+                    >
+                      <SelectTrigger id="import-agency" className="w-full h-11 border-indigo-100 bg-indigo-50/30 focus:ring-indigo-500">
+                        <SelectValue placeholder="Escolha a agência..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {agencies.map(a => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-indigo-50/60 rounded-xl border border-indigo-100 flex items-center justify-between text-xs text-indigo-900">
+                    <span className="font-bold">Agência de Destino:</span>
+                    <Badge variant="outline" className="bg-white text-indigo-700 font-bold border-indigo-200">
+                      {agencies.find(a => a.id === effectiveAgencyId)?.name || "Agência Atual"}
+                    </Badge>
+                  </div>
+                )}
+
                 <div className="space-y-3">
-                  <Label htmlFor="import-projetista" className="text-sm font-bold text-slate-700">1. Selecione o Projetista</Label>
+                  <Label htmlFor="import-projetista" className="text-sm font-bold text-slate-700">
+                    {effectiveAgencyId === "all" ? "2. Selecione o Projetista *" : "1. Selecione o Projetista *"}
+                  </Label>
                   <Select
                     value={importProjetista}
                     onValueChange={setImportProjetista}
@@ -1364,37 +1414,51 @@ export default function StockProposals() {
                   </Select>
                 </div>
 
-                <div className="space-y-3">
-                  <Label className="text-sm font-bold text-slate-700">2. Anexe o arquivo CSV</Label>
-                  <div
-                    onClick={() => !isImporting && importProjetista && fileInputRef.current?.click()}
-                    className={`
-                      border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer
-                      ${!importProjetista ? 'bg-slate-50 border-slate-200 opacity-50 cursor-not-allowed' : 'bg-indigo-50/30 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-400 group'}
-                    `}
-                  >
-                    <div className={`p-3 rounded-full ${!importProjetista ? 'bg-slate-100' : 'bg-white shadow-sm ring-4 ring-indigo-50 group-hover:scale-110 transition-transform'}`}>
-                      <Upload className={`h-6 w-6 ${!importProjetista ? 'text-slate-400' : 'text-indigo-600'}`} />
+                {(() => {
+                  const hasAgency = effectiveAgencyId !== "all" || !!importAgencyId;
+                  const canUpload = !isImporting && !!importProjetista && hasAgency;
+
+                  return (
+                    <div className="space-y-3">
+                      <Label className="text-sm font-bold text-slate-700">
+                        {effectiveAgencyId === "all" ? "3. Anexe o arquivo CSV" : "2. Anexe o arquivo CSV"}
+                      </Label>
+                      <div
+                        onClick={() => canUpload && fileInputRef.current?.click()}
+                        className={`
+                          border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer
+                          ${!canUpload ? 'bg-slate-50 border-slate-200 opacity-50 cursor-not-allowed' : 'bg-indigo-50/30 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-400 group'}
+                        `}
+                      >
+                        <div className={`p-3 rounded-full ${!canUpload ? 'bg-slate-100' : 'bg-white shadow-sm ring-4 ring-indigo-50 group-hover:scale-110 transition-transform'}`}>
+                          <Upload className={`h-6 w-6 ${!canUpload ? 'text-slate-400' : 'text-indigo-600'}`} />
+                        </div>
+                        <div className="text-center">
+                          <p className={`text-sm font-bold ${!canUpload ? 'text-slate-400' : 'text-indigo-900'}`}>Clique para selecionar o arquivo</p>
+                          <p className="text-[10px] text-slate-500 mt-1">Formatos aceitos: .csv, .txt (Separado por vírgulas)</p>
+                        </div>
+                        {!hasAgency && (
+                          <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200 text-[10px]">
+                            Selecione a agência primeiro
+                          </Badge>
+                        )}
+                        {hasAgency && !importProjetista && (
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200 text-[10px]">
+                            Selecione o projetista primeiro
+                          </Badge>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept=".csv,.txt"
+                        className="hidden"
+                        onChange={handleCSVImport}
+                        disabled={!canUpload}
+                      />
                     </div>
-                    <div className="text-center">
-                      <p className={`text-sm font-bold ${!importProjetista ? 'text-slate-400' : 'text-indigo-900'}`}>Clique para selecionar o arquivo</p>
-                      <p className="text-[10px] text-slate-500 mt-1">Formatos aceitos: .csv, .txt (Separado por vírgulas)</p>
-                    </div>
-                    {!importProjetista && (
-                      <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200 text-[10px]">
-                        Selecione o projetista primeiro
-                      </Badge>
-                    )}
-                  </div>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept=".csv,.txt"
-                    className="hidden"
-                    onChange={handleCSVImport}
-                    disabled={isImporting || !importProjetista}
-                  />
-                </div>
+                  );
+                })()}
               </div>
               {isImporting && (
                 <div className="flex items-center justify-center gap-3 p-4 bg-indigo-50 rounded-lg">
@@ -1427,6 +1491,26 @@ export default function StockProposals() {
                 </DialogHeader>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-x-4 gap-y-2">
+                  {effectiveAgencyId === "all" && (
+                    <div className="space-y-1 md:col-span-4 p-3 bg-indigo-50/60 rounded-xl border border-indigo-200">
+                      <Label htmlFor="manual-agency" className="text-[10px] font-black uppercase tracking-wider text-indigo-900">
+                        Agência de Destino * (Obrigatória)
+                      </Label>
+                      <Select
+                        value={(formData as any).agency_id || ""}
+                        onValueChange={(val) => setFormData(prev => ({ ...prev, agency_id: val } as any))}
+                      >
+                        <SelectTrigger id="manual-agency" className="h-9 text-sm w-full bg-white border-indigo-200">
+                          <SelectValue placeholder="Selecione a agência para vincular esta proposta..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {agencies.map(a => (
+                            <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div className="space-y-1">
                     <Label htmlFor="name" className="text-[10px] font-bold uppercase text-slate-500">Nome do Produtor *</Label>
                     <div className="relative">
