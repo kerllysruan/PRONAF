@@ -111,12 +111,18 @@ const STORAGE_KEY = "pronaf_projetistas_list_v3";
 const LEGACY_STORAGE_KEYS = ["pronaf_projetistas_list_v2", "pronaf_projetistas_list_v1"];
 
 function cleanProjetistasList(list: Projetista[]): Projetista[] {
-  return list.filter(
-    (p) => {
+  return list
+    .filter((p) => {
       const upper = p.name.toUpperCase().trim();
       return upper !== "NEY MEDEIROS" && upper !== "NEY MEDEIRO";
-    }
-  );
+    })
+    .map((p) => {
+      const upper = p.name.toUpperCase().trim();
+      if (upper === "CLEDSON CLOVISSSS" || upper === "CLEDSON CLOVIS DA SILVAAAAAA") {
+        return { ...p, name: "CLEDSON CLOVIS" };
+      }
+      return p;
+    });
 }
 
 function loadInitialProjetistas(): Projetista[] {

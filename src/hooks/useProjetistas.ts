@@ -155,6 +155,9 @@ export function useProjetistas() {
       if (key === "NEY MEDEIROS" || key === "NEY MEDEIRO") {
         key = "NEY MEDEIROS DE ARAÚJO";
       }
+      if (key === "CLEDSON CLOVISSSS" || key === "CLEDSON CLOVIS DA SILVAAAAAA") {
+        key = "CLEDSON CLOVIS";
+      }
       if (!uniqueSet.has(key)) {
         uniqueSet.set(key, key);
       }
