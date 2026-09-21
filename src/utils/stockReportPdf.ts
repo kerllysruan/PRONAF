@@ -40,7 +40,7 @@ function formatCompactBRL(value: number): string {
   return formatBRL(value);
 }
 
-// Cores temáticas do relatório
+// Cores temáticas do relatório executivo
 const THEME = {
   primary: [15, 23, 42] as [number, number, number],       // Slate 900 (Fundo escuro corporativo)
   primarySoft: [30, 41, 59] as [number, number, number],   // Slate 800
@@ -181,12 +181,6 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
     .map(([linha, stat]) => ({ linha, count: stat.count, total: stat.total }))
     .sort((a, b) => b.total - a.total);
 
-  // Map de Agências para resolução rápida de nome
-  const agencyNameMap = new Map<string, string>();
-  if (agencies) {
-    agencies.forEach((ag) => agencyNameMap.set(ag.id, ag.name));
-  }
-
   // ── INICIALIZAÇÃO DO DOCUMENTO (Landscape A4: 297mm x 210mm) ──
   const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
   const pageW = doc.internal.pageSize.getWidth();
@@ -194,86 +188,86 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
   const timestamp = format(new Date(), "dd/MM/yyyy HH:mm");
 
   // =========================================================================
-  // SEÇÃO: DESENHAR PÁGINA 1 — DASHBOARD EXECUTIVO
+  // SEÇÃO: PÁGINA 1 — DASHBOARD ESTRATÉGICO EXECUTIVO (ENQUADRAMENTO PROFISSIONAL)
   // =========================================================================
   if (reportType === "full" || reportType === "executive") {
-    // 1. Fundo Geral
+    // 1. Fundo da Página (Off-White Slate 50)
     doc.setFillColor(...THEME.pageBg);
     doc.rect(0, 0, pageW, pageH, "F");
 
-    // 2. Barra Superior Gradiente Elegante (Navy + Faixa Emerald)
+    // 2. Header Executivo (Altura: 30mm)
     doc.setFillColor(...THEME.primary);
-    doc.rect(0, 0, pageW, 36, "F");
+    doc.rect(0, 0, pageW, 30, "F");
 
-    // Filete colorido superior
+    // Filete Gradiente de Destaque (Altura: 1.5mm)
     doc.setFillColor(...THEME.accentEmerald);
-    doc.rect(0, 36, pageW * 0.6, 2, "F");
+    doc.rect(0, 30, pageW * 0.6, 1.5, "F");
     doc.setFillColor(...THEME.accentIndigo);
-    doc.rect(pageW * 0.6, 36, pageW * 0.4, 2, "F");
+    doc.rect(pageW * 0.6, 30, pageW * 0.4, 1.5, "F");
 
-    // Logo / Ícone de Bloco Minimalista
+    // Logo / Ícone de Identidade
     doc.setFillColor(...THEME.accentEmerald);
-    doc.roundedRect(14, 8, 9, 9, 2, 2, "F");
+    doc.roundedRect(14, 6.5, 8, 8, 1.8, 1.8, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
-    doc.text("PR", 18.5, 14, { align: "center" });
+    doc.setFontSize(6.5);
+    doc.text("PR", 18, 12, { align: "center" });
 
     // Título Principal
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("PRONAF GESTÃO DE ESTOQUE", 27, 14);
+    doc.text("PRONAF GESTÃO DE ESTOQUE", 25, 12);
 
-    doc.setFontSize(8.5);
+    doc.setFontSize(7.5);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...THEME.textLight);
-    doc.text("PAINEL ESTRATÉGICO DE CAPTAÇÃO & POSICIONAMENTO DA CARTEIRA", 27, 21);
+    doc.text("PAINEL ESTRATÉGICO DE CAPTAÇÃO & GESTÃO DA CARTEIRA", 25, 18);
 
-    // Metadata Card no Topo Direito
-    const metaW = 105;
-    const metaH = 22;
+    // Metadata Card no Topo Direito (Largura: 104mm, Altura: 20mm)
+    const metaW = 104;
+    const metaH = 20;
     const metaX = pageW - metaW - 14;
-    const metaY = 7;
+    const metaY = 5;
 
     doc.setFillColor(...THEME.primarySoft);
     doc.roundedRect(metaX, metaY, metaW, metaH, 2, 2, "F");
     doc.setDrawColor(51, 65, 85);
     doc.roundedRect(metaX, metaY, metaW, metaH, 2, 2, "S");
 
-    doc.setFontSize(6.5);
+    doc.setFontSize(6);
     doc.setTextColor(...THEME.textLight);
-    doc.text("EMISSÃO:", metaX + 4, metaY + 6);
+    doc.text("EMISSÃO:", metaX + 4, metaY + 5.5);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(255, 255, 255);
-    doc.text(timestamp, metaX + 22, metaY + 6);
+    doc.text(timestamp, metaX + 20, metaY + 5.5);
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...THEME.textLight);
-    doc.text("AGÊNCIA:", metaX + 4, metaY + 12);
+    doc.text("AGÊNCIA:", metaX + 4, metaY + 11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...THEME.accentEmerald);
     const agTxt = (selectedAgencyName || "TODAS AS AGÊNCIAS").toUpperCase();
-    doc.text(agTxt.length > 28 ? agTxt.substring(0, 26) + "..." : agTxt, metaX + 22, metaY + 12);
+    doc.text(agTxt.length > 28 ? agTxt.substring(0, 26) + "..." : agTxt, metaX + 20, metaY + 11);
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...THEME.textLight);
-    doc.text("FILTROS:", metaX + 4, metaY + 18);
+    doc.text("FILTROS:", metaX + 4, metaY + 16.5);
     let filterSummary = "";
     if (filters.projetista !== "all") filterSummary += `Proj: ${filters.projetista} | `;
     if (filters.municipio !== "all") filterSummary += `Mun: ${filters.municipio} | `;
     if (filters.status !== "all") filterSummary += `Status: ${filters.status}`;
     if (!filterSummary) filterSummary = "Visão Global (Sem Restrição de Filtros)";
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(6);
-    doc.text(filterSummary.length > 40 ? filterSummary.substring(0, 38) + "..." : filterSummary, metaX + 22, metaY + 18);
+    doc.setFontSize(5.5);
+    doc.text(filterSummary.length > 44 ? filterSummary.substring(0, 42) + "..." : filterSummary, metaX + 20, metaY + 16.5);
 
-    // ── 3. CARDS DE KPI (6 Cards Perfeitamente Proporcionados) ──
-    const kpiY = 43;
-    const kpiH = 23;
-    const cardGap = 4;
+    // ── 3. CARDS DE KPI (Faixa: Y = 35mm até Y = 57mm | Altura: 22mm) ──
+    const kpiY = 35;
+    const kpiH = 22;
+    const cardGap = 3.5;
     const totalCards = 6;
-    const kpiW = (pageW - 28 - (totalCards - 1) * cardGap) / totalCards;
+    const kpiW = (pageW - 28 - (totalCards - 1) * cardGap) / totalCards; // ~42mm cada
 
     const drawKpiCard = (
       index: number,
@@ -293,222 +287,237 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
 
       // Barra de destaque superior
       doc.setFillColor(...accentColor);
-      doc.rect(x + 3, kpiY, kpiW - 6, 1.8, "F");
+      doc.rect(x + 3, kpiY, kpiW - 6, 1.5, "F");
 
       // Título do KPI
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.5);
+      doc.setFontSize(6);
       doc.setTextColor(...THEME.textMuted);
-      doc.text(title.toUpperCase(), x + 4, kpiY + 6.5);
+      doc.text(title.toUpperCase(), x + 4, kpiY + 6);
 
-      // Valor Principal
+      // Valor Principal (Calibrado dinamicamente para nunca vazar do card)
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10.5);
+      if (mainValue.length > 15) {
+        doc.setFontSize(8);
+      } else if (mainValue.length > 11) {
+        doc.setFontSize(9);
+      } else {
+        doc.setFontSize(10.5);
+      }
       doc.setTextColor(...THEME.textMain);
-      doc.text(mainValue, x + 4, kpiY + 13.5);
+      doc.text(mainValue, x + 4, kpiY + 13);
 
       // Subtexto explicativo
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(6);
+      doc.setFontSize(5.5);
       doc.setTextColor(...THEME.textMuted);
-      doc.text(subValue, x + 4, kpiY + 19);
+      const subSafe = subValue.length > 22 ? subValue.substring(0, 20) + ".." : subValue;
+      doc.text(subSafe, x + 4, kpiY + 18.5);
 
       // Badge opcional no canto
       if (badgeText) {
         doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-        doc.roundedRect(x + kpiW - 16, kpiY + 3.5, 13, 4.5, 1, 1, "F");
+        doc.roundedRect(x + kpiW - 15, kpiY + 3.2, 12, 4, 1, 1, "F");
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(5);
+        doc.setFontSize(4.5);
         doc.setFont("helvetica", "bold");
-        doc.text(badgeText, x + kpiW - 9.5, kpiY + 6.8, { align: "center" });
+        doc.text(badgeText, x + kpiW - 9, kpiY + 6, { align: "center" });
       }
     };
 
-    drawKpiCard(0, "Montante em Estoque", formatCompactBRL(totalValue), `Total: ${formatBRL(totalValue)}`, THEME.accentEmerald, "R$ TOTAL");
-    drawKpiCard(1, "Volume de Propostas", `${totalCount} Propostas`, "Propostas cadastradas", THEME.accentIndigo, `${totalCount} UN`);
+    drawKpiCard(0, "Montante Estoque", formatCompactBRL(totalValue), `Total: ${formatBRL(totalValue)}`, THEME.accentEmerald, "TOTAL");
+    drawKpiCard(1, "Qtd Propostas", `${totalCount} Propostas`, "Propostas cadastradas", THEME.accentIndigo, `${totalCount} UN`);
     drawKpiCard(2, "Ticket Médio", formatCompactBRL(avgValue), `Média: ${formatBRL(avgValue)}`, THEME.accentBlue);
-    drawKpiCard(3, "Índice Regularidade", `${pctRegular}% Regular`, `${countRestricao} com restrição`, pctRegular >= 80 ? THEME.accentEmerald : THEME.accentAmber);
-    drawKpiCard(4, "Projetista Destaque", topProjetista.name.split(" ")[0] || "N/A", formatCompactBRL(topProjetista.total), THEME.accentPurple, "LÍDER");
-    drawKpiCard(5, "Polo Regional", topMunicipio.name.split("/")[0] || "N/A", `${topMunicipio.count} propostas`, THEME.accentAmber, "1º LUGAR");
+    drawKpiCard(3, "Regularidade", `${pctRegular}% Regular`, `${countRestricao} com restrição`, pctRegular >= 80 ? THEME.accentEmerald : THEME.accentAmber);
+    drawKpiCard(4, "Top Projetista", topProjetista.name.split(" ")[0] || "N/A", formatCompactBRL(topProjetista.total), THEME.accentPurple, "1º LUGAR");
+    drawKpiCard(5, "Polo Regional", topMunicipio.name.split("/")[0] || "N/A", `${topMunicipio.count} propostas`, THEME.accentAmber, "LÍDER");
 
-    // ── 4. ÁREA ANALÍTICA CENTRAL (3 Colunas Bem Definidas) ──
-    const mainY = 71;
-    const mainH = 92;
-    const colGap = 5;
-    const colW = (pageW - 28 - 2 * colGap) / 3; // ~87mm cada coluna
+    // ── 4. ÁREA ANALÍTICA CENTRAL (Faixa: Y = 61mm até Y = 143mm | Altura: 82mm) ──
+    const mainY = 61;
+    const mainH = 82;
+    const colGap = 4.5;
+    const colW = (pageW - 28 - 2 * colGap) / 3; // ~86.6mm cada coluna
 
-    // ─── COLUNA 1: DISTRIBUIÇÃO POR STATUS (Barras Horizontais Modernas) ───
+    // ─── COLUNA 1: DISTRIBUIÇÃO POR STATUS (Barras Horizontais Protegidas) ───
     const col1X = 14;
     doc.setFillColor(...THEME.cardBg);
-    doc.roundedRect(col1X, mainY, colW, mainH, 3, 3, "F");
+    doc.roundedRect(col1X, mainY, colW, mainH, 2.5, 2.5, "F");
     doc.setDrawColor(...THEME.border);
-    doc.roundedRect(col1X, mainY, colW, mainH, 3, 3, "S");
+    doc.roundedRect(col1X, mainY, colW, mainH, 2.5, 2.5, "S");
 
     // Header da Coluna 1
     doc.setFillColor(241, 245, 249);
-    doc.roundedRect(col1X, mainY, colW, 9, 3, 3, "F");
-    doc.rect(col1X, mainY + 6, colW, 3, "F"); // alisar borda inferior
+    doc.roundedRect(col1X, mainY, colW, 8.5, 2.5, 2.5, "F");
+    doc.rect(col1X, mainY + 5.5, colW, 3, "F");
     doc.setDrawColor(...THEME.border);
-    doc.line(col1X, mainY + 9, col1X + colW, mainY + 9);
+    doc.line(col1X, mainY + 8.5, col1X + colW, mainY + 8.5);
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
+    doc.setFontSize(7);
     doc.setTextColor(...THEME.textMain);
-    doc.text("DISTRIBUIÇÃO DE CARTEIRA POR STATUS", col1X + 5, mainY + 6);
+    doc.text("DISTRIBUIÇÃO DE CARTEIRA POR STATUS", col1X + 5, mainY + 5.5);
 
-    const maxStatusCount = Math.max(...statusStats.map((s) => s.count), 1);
-    const visibleStatuses = statusStats.slice(0, 7);
-    const barStartY = mainY + 12;
-    const barRowH = 10.5;
+    // Agrupamento para caber exatamente em 6 linhas sem risco de transbordamento
+    let visibleStatuses = statusStats.slice(0, 6);
+    if (statusStats.length > 6) {
+      const top5 = statusStats.slice(0, 5);
+      const others = statusStats.slice(5);
+      const otherCount = others.reduce((acc, o) => acc + o.count, 0);
+      const otherTotal = others.reduce((acc, o) => acc + o.total, 0);
+      visibleStatuses = [...top5, { status: "OUTROS STATUS", count: otherCount, total: otherTotal }];
+    }
+
+    const maxStatusCount = Math.max(...visibleStatuses.map((s) => s.count), 1);
+    const barStartY = mainY + 11;
+    const barRowH = 11.5;
 
     visibleStatuses.forEach((st, idx) => {
       const y = barStartY + idx * barRowH;
       const barColor = getStatusColor(st.status);
       const pct = totalCount > 0 ? Math.round((st.count / totalCount) * 100) : 0;
-      const progressW = (colW - 10) * (st.count / maxStatusCount);
+      const progressW = (colW - 12) * (st.count / maxStatusCount);
 
       // Ponto colorido + Nome do status
       doc.setFillColor(...barColor);
-      doc.circle(col1X + 5, y + 2, 1.5, "F");
+      doc.circle(col1X + 5, y + 2, 1.3, "F");
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.5);
+      doc.setFontSize(6);
       doc.setTextColor(...THEME.textMain);
-      const stLabel = st.status.length > 22 ? st.status.substring(0, 20) + ".." : st.status;
+      const stLabel = st.status.length > 20 ? st.status.substring(0, 18) + ".." : st.status;
       doc.text(stLabel, col1X + 8, y + 3);
 
       // Contagem e Valor no canto direito
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(6);
+      doc.setFontSize(5.5);
       doc.setTextColor(...THEME.textMuted);
       doc.text(`${st.count} un (${pct}%)  •  ${formatCompactBRL(st.total)}`, col1X + colW - 5, y + 3, { align: "right" });
 
       // Barra de progresso de fundo
       doc.setFillColor(241, 245, 249);
-      doc.roundedRect(col1X + 5, y + 4.8, colW - 10, 3, 1, 1, "F");
+      doc.roundedRect(col1X + 5, y + 4.8, colW - 10, 2.8, 1, 1, "F");
 
       // Barra preenchida
       if (progressW > 2) {
         doc.setFillColor(...barColor);
-        doc.roundedRect(col1X + 5, y + 4.8, Math.max(progressW, 3), 3, 1, 1, "F");
+        doc.roundedRect(col1X + 5, y + 4.8, Math.max(progressW, 3), 2.8, 1, 1, "F");
       }
     });
 
     // ─── COLUNA 2: SAÚDE DA CARTEIRA & LINHAS DE CRÉDITO ───
     const col2X = col1X + colW + colGap;
     doc.setFillColor(...THEME.cardBg);
-    doc.roundedRect(col2X, mainY, colW, mainH, 3, 3, "F");
+    doc.roundedRect(col2X, mainY, colW, mainH, 2.5, 2.5, "F");
     doc.setDrawColor(...THEME.border);
-    doc.roundedRect(col2X, mainY, colW, mainH, 3, 3, "S");
+    doc.roundedRect(col2X, mainY, colW, mainH, 2.5, 2.5, "S");
 
     // Header da Coluna 2
     doc.setFillColor(241, 245, 249);
-    doc.roundedRect(col2X, mainY, colW, 9, 3, 3, "F");
-    doc.rect(col2X, mainY + 6, colW, 3, "F");
+    doc.roundedRect(col2X, mainY, colW, 8.5, 2.5, 2.5, "F");
+    doc.rect(col2X, mainY + 5.5, colW, 3, "F");
     doc.setDrawColor(...THEME.border);
-    doc.line(col2X, mainY + 9, col2X + colW, mainY + 9);
+    doc.line(col2X, mainY + 8.5, col2X + colW, mainY + 8.5);
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
+    doc.setFontSize(7);
     doc.setTextColor(...THEME.textMain);
-    doc.text("SAÚDE & LINHAS DE CRÉDITO", col2X + 5, mainY + 6);
+    doc.text("SAÚDE & LINHAS DE CRÉDITO", col2X + 5, mainY + 5.5);
 
-    // Bloco Superior: Medidor de Regularidade Circular / Segmentado
-    const gaugeCenterY = mainY + 26;
+    // Medidor Circular de Regularidade
+    const gaugeCenterY = mainY + 23;
     const gaugeCenterX = col2X + colW / 2;
 
-    // Fundo do círculo
     doc.setDrawColor(241, 245, 249);
-    doc.setLineWidth(5);
-    doc.circle(gaugeCenterX, gaugeCenterY, 13, "S");
+    doc.setLineWidth(4.5);
+    doc.circle(gaugeCenterX, gaugeCenterY, 11, "S");
 
     // Indicador Regularidade
     doc.setDrawColor(pctRegular >= 80 ? 16 : 245, pctRegular >= 80 ? 185 : 158, pctRegular >= 80 ? 129 : 11);
-    doc.setLineWidth(5);
-    doc.circle(gaugeCenterX, gaugeCenterY, 13, "S");
+    doc.setLineWidth(4.5);
+    doc.circle(gaugeCenterX, gaugeCenterY, 11, "S");
 
     // Texto Central do Círculo
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setTextColor(...THEME.textMain);
-    doc.text(`${pctRegular}%`, gaugeCenterX, gaugeCenterY + 1.5, { align: "center" });
+    doc.text(`${pctRegular}%`, gaugeCenterX, gaugeCenterY + 1.2, { align: "center" });
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(5.5);
+    doc.setFontSize(5);
     doc.setTextColor(...THEME.accentEmerald);
-    doc.text("REGULARIDADE", gaugeCenterX, gaugeCenterY + 6, { align: "center" });
+    doc.text("REGULARIDADE", gaugeCenterX, gaugeCenterY + 5.2, { align: "center" });
 
     // Mini Legenda de Saúde
-    const subLegendY = mainY + 44;
+    const subLegendY = mainY + 38;
     doc.setFillColor(...THEME.accentEmerald);
-    doc.circle(col2X + 10, subLegendY, 1.5, "F");
+    doc.circle(col2X + 8, subLegendY, 1.3, "F");
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(6);
+    doc.setFontSize(5.5);
     doc.setTextColor(...THEME.textMain);
-    doc.text(`Aptas / Regulares: ${countRegular} propostas (${pctRegular}%)`, col2X + 13, subLegendY + 1);
+    doc.text(`Aptas / Regulares: ${countRegular} propostas (${pctRegular}%)`, col2X + 11, subLegendY + 1);
 
     doc.setFillColor(...THEME.accentRed);
-    doc.circle(col2X + 10, subLegendY + 5, 1.5, "F");
-    doc.text(`Com Restrição / Pendência: ${countRestricao} propostas (${100 - pctRegular}%)`, col2X + 13, subLegendY + 6);
+    doc.circle(col2X + 8, subLegendY + 5, 1.3, "F");
+    doc.text(`Com Restrição: ${countRestricao} propostas (${100 - pctRegular}%)`, col2X + 11, subLegendY + 6);
 
     // Divisor sutil
     doc.setDrawColor(...THEME.border);
     doc.setLineWidth(0.3);
-    doc.line(col2X + 5, subLegendY + 10, col2X + colW - 5, subLegendY + 10);
+    doc.line(col2X + 5, subLegendY + 9.5, col2X + colW - 5, subLegendY + 9.5);
 
     // Bloco Inferior: Top Linhas de Crédito
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.setTextColor(...THEME.textMain);
-    doc.text("PRINCIPAIS LINHAS DE CRÉDITO", col2X + 5, subLegendY + 15);
+    doc.text("PRINCIPAIS LINHAS DE CRÉDITO", col2X + 5, subLegendY + 14);
 
     const visibleLinhas = linhaStats.slice(0, 3);
     visibleLinhas.forEach((lin, idx) => {
-      const ly = subLegendY + 20 + idx * 8;
+      const ly = subLegendY + 18 + idx * 7.5;
       doc.setFillColor(248, 250, 252);
-      doc.roundedRect(col2X + 5, ly - 2, colW - 10, 6.5, 1, 1, "F");
+      doc.roundedRect(col2X + 5, ly - 2, colW - 10, 6, 1, 1, "F");
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6);
+      doc.setFontSize(5.5);
       doc.setTextColor(...THEME.textMain);
-      const lName = lin.linha.length > 22 ? lin.linha.substring(0, 20) + ".." : lin.linha;
+      const lName = lin.linha.length > 20 ? lin.linha.substring(0, 18) + ".." : lin.linha;
       doc.text(lName, col2X + 8, ly + 2);
 
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(5.5);
+      doc.setFontSize(5);
       doc.setTextColor(...THEME.textMuted);
       doc.text(`${lin.count} un  •  ${formatCompactBRL(lin.total)}`, col2X + colW - 8, ly + 2, { align: "right" });
     });
 
-    // ─── COLUNA 3: RANKING DE PROJETISTAS (Mini-Tabela Executiva) ───
+    // ─── COLUNA 3: RANKING DE PROJETISTAS (Mini-Tabela Rigorosamente Enquadrada) ───
     const col3X = col2X + colW + colGap;
     doc.setFillColor(...THEME.cardBg);
-    doc.roundedRect(col3X, mainY, colW, mainH, 3, 3, "F");
+    doc.roundedRect(col3X, mainY, colW, mainH, 2.5, 2.5, "F");
     doc.setDrawColor(...THEME.border);
-    doc.roundedRect(col3X, mainY, colW, mainH, 3, 3, "S");
+    doc.roundedRect(col3X, mainY, colW, mainH, 2.5, 2.5, "S");
 
     // Header da Coluna 3
     doc.setFillColor(241, 245, 249);
-    doc.roundedRect(col3X, mainY, colW, 9, 3, 3, "F");
-    doc.rect(col3X, mainY + 6, colW, 3, "F");
+    doc.roundedRect(col3X, mainY, colW, 8.5, 2.5, 2.5, "F");
+    doc.rect(col3X, mainY + 5.5, colW, 3, "F");
     doc.setDrawColor(...THEME.border);
-    doc.line(col3X, mainY + 9, col3X + colW, mainY + 9);
+    doc.line(col3X, mainY + 8.5, col3X + colW, mainY + 8.5);
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
+    doc.setFontSize(7);
     doc.setTextColor(...THEME.textMain);
-    doc.text("RANKING DE PROJETISTAS (VOLUME)", col3X + 5, mainY + 6);
+    doc.text("RANKING DE PROJETISTAS (VOLUME)", col3X + 5, mainY + 5.5);
 
-    const visibleProj = projRanking.slice(0, 7);
+    const visibleProj = projRanking.slice(0, 5);
     const projTableData = visibleProj.map((p, idx) => {
       const share = totalValue > 0 ? Math.round((p.total / totalValue) * 100) : 0;
       const medal = idx === 0 ? "1º" : idx === 1 ? "2º" : idx === 2 ? "3º" : `${idx + 1}º`;
-      const shortName = p.name.length > 20 ? p.name.substring(0, 18) + ".." : p.name;
+      const shortName = p.name.length > 18 ? p.name.substring(0, 16) + ".." : p.name;
       return [medal, shortName, p.count.toString(), formatCompactBRL(p.total), `${share}%`];
     });
 
     autoTable(doc, {
-      startY: mainY + 11,
+      startY: mainY + 10,
       head: [["#", "PROJETISTA", "QTD", "VALOR R$", "%"]],
       body: projTableData,
       theme: "plain",
@@ -520,17 +529,17 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
         halign: "left",
       },
       styles: {
-        fontSize: 6,
-        cellPadding: 1.6,
+        fontSize: 5.5,
+        cellPadding: 1.8,
         textColor: [15, 23, 42],
         valign: "middle",
       },
       columnStyles: {
         0: { halign: "center", fontStyle: "bold", cellWidth: 7 },
-        1: { fontStyle: "bold", cellWidth: 38 },
+        1: { fontStyle: "bold", cellWidth: 37 },
         2: { halign: "center", cellWidth: 9 },
         3: { halign: "right", fontStyle: "bold", cellWidth: 20 },
-        4: { halign: "right", textColor: [100, 116, 139], cellWidth: 10 },
+        4: { halign: "right", textColor: [100, 116, 139], cellWidth: 9 },
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252],
@@ -538,26 +547,27 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
       margin: { left: col3X + 2, right: pageW - (col3X + colW - 2) },
     });
 
-    // ── 5. SEÇÃO INFERIOR: CONCENTRAÇÃO GEOGRÁFICA (Cards Horizontais) ──
-    const geoY = mainY + mainH + 5;
+    // ── 5. SEÇÃO INFERIOR: CONCENTRAÇÃO GEOGRÁFICA (Faixa: Y = 147mm até Y = 173mm | Altura: 26mm) ──
+    // IMPORTANTE: Começa a 147mm (4mm abaixo das 3 colunas que terminam em 143mm) — ZERO SOBREPOSIÇÃO!
+    const geoY = 147;
     const geoH = 26;
     doc.setFillColor(...THEME.cardBg);
-    doc.roundedRect(14, geoY, pageW - 28, geoH, 3, 3, "F");
+    doc.roundedRect(14, geoY, pageW - 28, geoH, 2.5, 2.5, "F");
     doc.setDrawColor(...THEME.border);
-    doc.roundedRect(14, geoY, pageW - 28, geoH, 3, 3, "S");
+    doc.roundedRect(14, geoY, pageW - 28, geoH, 2.5, 2.5, "S");
 
     // Título da faixa geográfica
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
+    doc.setFontSize(7);
     doc.setTextColor(...THEME.accentIndigo);
-    doc.text("DISTRIBUIÇÃO GEOGRÁFICA REGIONAL (TOP 5 MUNICÍPIOS)", 20, geoY + 6);
+    doc.text("DISTRIBUIÇÃO GEOGRÁFICA REGIONAL (TOP 5 MUNICÍPIOS)", 20, geoY + 5.5);
 
     const top5Municipios = munRanking.slice(0, 5);
-    const munCardW = (pageW - 28 - 20 - 4 * 4) / 5; // ~48mm cada
+    const munCardW = (pageW - 28 - 16 - 4 * 3.5) / 5; // ~48.5mm cada
 
     top5Municipios.forEach((m, idx) => {
-      const mx = 20 + idx * (munCardW + 4);
-      const my = geoY + 9;
+      const mx = 20 + idx * (munCardW + 3.5);
+      const my = geoY + 8.5;
 
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(mx, my, munCardW, 14, 2, 2, "F");
@@ -569,19 +579,19 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
       doc.rect(mx + 2, my + 2, 1.5, 10, "F");
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.5);
+      doc.setFontSize(6);
       doc.setTextColor(...THEME.textMain);
-      const munTitle = m.name.length > 16 ? m.name.substring(0, 14) + ".." : m.name;
-      doc.text(munTitle, mx + 5, my + 5.5);
+      const munTitle = m.name.length > 15 ? m.name.substring(0, 13) + ".." : m.name;
+      doc.text(munTitle, mx + 5, my + 5);
 
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(5.5);
+      doc.setFontSize(5);
       doc.setTextColor(...THEME.textMuted);
-      doc.text(`${m.count} propostas cadastradas`, mx + 5, my + 9);
+      doc.text(`${m.count} propostas cadastradas`, mx + 5, my + 8.5);
 
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...THEME.accentEmerald);
-      doc.text(formatCompactBRL(m.total), mx + 5, my + 12.5);
+      doc.text(formatCompactBRL(m.total), mx + 5, my + 12);
     });
   }
 
@@ -595,21 +605,21 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
 
     // Header da Página de Detalhamento
     doc.setFillColor(...THEME.primary);
-    doc.rect(0, 0, pageW, 18, "F");
+    doc.rect(0, 0, pageW, 16, "F");
 
     // Filete colorido
     doc.setFillColor(...THEME.accentEmerald);
-    doc.rect(0, 18, pageW, 1.5, "F");
+    doc.rect(0, 16, pageW, 1.5, "F");
 
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.text("PRONAF DIGITAL • DETALHAMENTO TÉCNICO DAS PROPOSTAS EM ESTOQUE", 14, 11);
+    doc.setFontSize(10.5);
+    doc.text("PRONAF DIGITAL • DETALHAMENTO TÉCNICO DAS PROPOSTAS EM ESTOQUE", 14, 10);
 
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...THEME.textLight);
-    doc.text(`Listagem Analítica Completa  •  Total de Registros: ${totalCount} propostas  •  Montante: ${formatBRL(totalValue)}`, 14, 15.5);
+    doc.text(`Listagem Analítica Completa  •  Total: ${totalCount} propostas  •  Montante: ${formatBRL(totalValue)}  •  Emissão: ${timestamp}`, 14, 14);
 
     // Preparação dos Dados da Tabela
     const tableHeaders = [
@@ -635,7 +645,7 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
     ]);
 
     autoTable(doc, {
-      startY: 23,
+      startY: 21,
       head: [tableHeaders],
       body: tableBody,
       theme: "grid",
@@ -645,23 +655,23 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
         fontSize: 7,
         fontStyle: "bold",
         halign: "center",
-        cellPadding: 2.5,
+        cellPadding: 2.2,
       },
       styles: {
         fontSize: 6.5,
-        cellPadding: 2,
+        cellPadding: 1.8,
         valign: "middle",
         textColor: [30, 41, 59],
       },
       columnStyles: {
         0: { halign: "center", cellWidth: 8 },
-        1: { fontStyle: "bold", cellWidth: 60 },
+        1: { fontStyle: "bold", cellWidth: 56 },
         2: { halign: "center", cellWidth: 26 },
-        3: { cellWidth: 48 },
+        3: { cellWidth: 44 },
         4: { cellWidth: 32 },
-        5: { cellWidth: 34 },
-        6: { halign: "center", fontStyle: "bold", cellWidth: 35 },
-        7: { halign: "right", fontStyle: "bold", cellWidth: 26 },
+        5: { cellWidth: 32 },
+        6: { halign: "center", fontStyle: "bold", cellWidth: 38 },
+        7: { halign: "right", fontStyle: "bold", cellWidth: 33 },
       },
       alternateRowStyles: {
         fillColor: [248, 250, 252],
@@ -686,12 +696,12 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
         fontSize: 7,
         halign: "right",
       },
-      margin: { left: 14, right: 14, bottom: 14 },
+      margin: { left: 14, right: 14, top: 21, bottom: 16 },
     });
   }
 
   // =========================================================================
-  // RODAPÉ CORPORATIVO EM TODAS AS PÁGINAS
+  // RODAPÉ CORPORATIVO EM TODAS AS PÁGINAS (Y = 198mm até 206mm)
   // =========================================================================
   const totalPages = (doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
@@ -700,9 +710,9 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
     // Linha divisória fina no rodapé
     doc.setDrawColor(...THEME.border);
     doc.setLineWidth(0.3);
-    doc.line(14, pageH - 8, pageW - 14, pageH - 8);
+    doc.line(14, pageH - 9, pageW - 14, pageH - 9);
 
-    doc.setFontSize(6.5);
+    doc.setFontSize(6);
     doc.setTextColor(...THEME.textMuted);
     doc.text(
       `Documento emitido pelo Sistema PRONAF Digital  •  Uso Interno e Confidencial  •  Emissão: ${timestamp}`,
@@ -715,6 +725,6 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
   }
 
   // Salvar o arquivo
-  const filename = `Relatorio_Estoque_PRONAF_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`;
+  const filename = `Relatorio_Executivo_Estoque_PRONAF_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`;
   doc.save(filename);
 }
