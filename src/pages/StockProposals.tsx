@@ -35,6 +35,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ProposalFlowTimeline } from "@/components/shared/ProposalFlowTimeline";
 import { useAppData } from "@/contexts/AppDataContext";
 import { useAgency } from "@/contexts/AgencyContext";
+import { generateExecutiveStockReport } from "@/utils/stockReportPdf";
 
 // ─── CSV parser (Force Refresh) ────────────────────────────────
 function parseCSVLine(line: string): string[] {
@@ -341,11 +342,48 @@ export default function StockProposals() {
     return null;
   });
 
-  const [reportFilters, setReportFilters] = useState({
+  const [reportFilters, setReportFilters] = useState<{
+    municipio: string;
+    status: string;
+    projetista: string;
+    reportType: "full" | "executive" | "table_only";
+    sortBy: "value_desc" | "name_asc" | "projetista_asc" | "status_asc";
+  }>({
     municipio: "all",
     status: "all",
-    projetista: "all"
+    projetista: "all",
+    reportType: "full",
+    sortBy: "value_desc",
   });
+
+  const reportPreviewStats = useMemo(() => {
+    let count = 0;
+    let total = 0;
+    const targetProj = (reportFilters.projetista || "").trim().toUpperCase();
+    const targetMun = (reportFilters.municipio || "").trim().toUpperCase();
+    const targetSt = (reportFilters.status || "")
+      .trim()
+      .toUpperCase()
+      .replace("AUTORIZADO ENVIO PARA CENTRAL", "AUTORIZADO ENVIO CENTRAL");
+
+    proposals.forEach((p) => {
+      const pProj = (p.projetista || "").trim().toUpperCase();
+      const pMun = (p.municipio || "").trim().toUpperCase();
+      const pSt = (p.status || "")
+        .trim()
+        .toUpperCase()
+        .replace("AUTORIZADO ENVIO PARA CENTRAL", "AUTORIZADO ENVIO CENTRAL");
+
+      if (reportFilters.projetista !== "all" && pProj !== targetProj) return;
+      if (reportFilters.municipio !== "all" && pMun !== targetMun) return;
+      if (reportFilters.status !== "all" && pSt !== targetSt) return;
+
+      count++;
+      total += Number(p.estimated_value) || 0;
+    });
+
+    return { count, total };
+  }, [proposals, reportFilters]);
   const [importProjetista, setImportProjetista] = useState("");
   const [importAgencyId, setImportAgencyId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -815,391 +853,23 @@ export default function StockProposals() {
     return "bg-slate-100 text-slate-700 border-slate-200";
   };
 
-  const generateProposalsReport = () => {
-    const doc = new jsPDF({ orientation: 'landscape' });
-    const timestamp = format(new Date(), "dd/MM/yyyy HH:mm");
+  const handleGenerateReport = (customFilters?: typeof reportFilters) => {
+    const filtersToUse = customFilters || reportFilters;
+    const selectedAgency = agencies.find((a) => a.id === effectiveAgencyId);
+    const selectedAgencyName = effectiveAgencyId === "all" ? "Todas as Agências" : (selectedAgency?.name || "");
 
-    // Header
-    doc.setFillColor(30, 41, 59); // Slate 800
-    doc.rect(0, 0, 300, 40, "F");
-
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("RELATÓRIO DE ESTOQUE - PRONAF", 15, 18);
-
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text(`GERADO EM: ${timestamp}`, 15, 26);
-    doc.text(`TOTAL DE PROPOSTAS: ${filtered.length}`, 15, 31);
-    doc.text(`VOLUME TOTAL ESTIMADO: ${formatCurrency(totalEstimated)}`, 15, 36);
-
-    // Filters Summary
-    doc.setTextColor(51, 65, 85);
-    doc.setFontSize(8);
-    let filterTxt = "FILTROS ATIVOS: ";
-    if (searchTerm) filterTxt += `Busca: "${searchTerm}" | `;
-    if (filterMunicipio !== "all") filterTxt += `Município: ${filterMunicipio} | `;
-    if (filterStatus !== "all") filterTxt += `Status: ${filterStatus} | `;
-    if (filterProjetista !== "all") filterTxt += `Projetista: ${filterProjetista} | `;
-    if (filterTxt === "FILTROS ATIVOS: ") filterTxt += "Nenhum";
-    doc.text(filterTxt, 15, 48);
-
-    const tableData = filtered.map((p, idx) => [
-      idx + 1,
-      p.producer_name.toUpperCase(),
-      p.producer_cpf || '---',
-      p.projetista || 'N/A',
-      p.municipio || '---',
-      p.status.toUpperCase(),
-      formatCurrency(p.estimated_value || 0)
-    ]);
-
-    autoTable(doc, {
-      startY: 52,
-      head: [["#", "NOME DO PRODUTOR", "CPF", "PROJETISTA", "MUNICÍPIO", "STATUS", "VALOR R$"]],
-      body: tableData,
-      theme: 'grid',
-      headStyles: {
-        fillColor: [79, 70, 229], // Indigo 600
-        textColor: 255,
-        fontSize: 8,
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      styles: {
-        fontSize: 7,
-        cellPadding: 2,
-        valign: 'middle'
-      },
-      columnStyles: {
-        0: { halign: 'center', cellWidth: 8 },
-        1: { fontStyle: 'bold', cellWidth: 80 },
-        6: { halign: 'right', fontStyle: 'bold' }
-      },
-      alternateRowStyles: { fillColor: [248, 250, 252] } // Slate 50
-    });
-    doc.save(`Relatorio_Estoque_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
-  };
-
-
-  const generatePremiumReport = (filters: typeof reportFilters) => {
-    const doc = new jsPDF({ orientation: 'landscape' });
-    const timestamp = format(new Date(), "dd/MM/yyyy HH:mm");
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-
-    // 1. Data Prep & Normalization (Fix counting errors)
-    const normalize = (val: string | null | undefined) => (val || '').trim().toUpperCase();
-
-    // Normalize our data set to ensure "PARA CENTRAL" and "CENTRAL" are treated equally if they slip through
-    const normalizedProposals = proposals.map(p => ({
-      ...p,
-      status: normalize(p.status).replace('AUTORIZADO ENVIO PARA CENTRAL', 'AUTORIZADO ENVIO CENTRAL'),
-      projetista: normalize(p.projetista),
-      municipio: normalize(p.municipio)
-    }));
-
-    // Filter based on normalized values
-    let reportData = normalizedProposals;
-    if (filters.municipio !== "all") reportData = reportData.filter(p => p.municipio === normalize(filters.municipio));
-    if (filters.status !== "all") {
-      const targetStatus = normalize(filters.status).replace('AUTORIZADO ENVIO PARA CENTRAL', 'AUTORIZADO ENVIO CENTRAL');
-      reportData = reportData.filter(p => p.status === targetStatus);
-    }
-    if (filters.projetista !== "all") reportData = reportData.filter(p => p.projetista === normalize(filters.projetista));
-
-    // Core Metrics
-    const totalVal = reportData.reduce((acc, p) => acc + (Number(p.estimated_value) || 0), 0);
-    const avgVal = reportData.length ? totalVal / reportData.length : 0;
-    const countRestricao = reportData.filter(p => p.status === 'RESTRIÇÃO').length;
-    const pctRestricao = reportData.length ? Math.round((countRestricao / reportData.length) * 100) : 0;
-
-    const uniqueMunicipios = [...new Set(reportData.map(p => p.municipio).filter(Boolean))];
-    const uniqueProjetistas = [...new Set(reportData.map(p => p.projetista).filter(Boolean))];
-
-    // Find Leaders
-    const topProjEntry = [...new Set(reportData.map(p => p.projetista))]
-      .map(name => ({ name, val: reportData.filter(p => p.projetista === name).reduce((a, b) => a + (Number(b.estimated_value) || 0), 0) }))
-      .sort((a, b) => b.val - a.val)[0];
-
-    const topMunEntry = [...new Set(reportData.map(p => p.municipio))]
-      .map(name => ({ name, count: reportData.filter(p => p.municipio === name).length }))
-      .sort((a, b) => b.count - a.count)[0];
-
-    // ═══════════════════════════════════════════════════════════
-    // PÁGINA 1 — DASHBOARD DE GESTÃO ESTRATÉGICA
-    // ═══════════════════════════════════════════════════════════
-
-    // Background Base
-    doc.setFillColor(249, 250, 251); // Gray 50
-    doc.rect(0, 0, pageW, pageH, "F");
-
-    // Header Premium
-    doc.setFillColor(15, 23, 42); // Slate 900
-    doc.rect(0, 0, pageW, 42, "F");
-    doc.setFillColor(79, 70, 229); // Indigo 600
-    doc.rect(0, 42, pageW, 2.5, "F");
-
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text("PRONAF DIGITAL", 15, 18);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(148, 163, 184);
-    doc.text("DASHBOARD ESTRATÉGICO DE GESTÃO DE ESTOQUE", 15, 28);
-
-    // Dynamic Filter Badges in Header
-    doc.setFontSize(7);
-    doc.setTextColor(255, 255, 255);
-    const drawBadge = (x: number, label: string, val: string) => {
-      doc.setFillColor(30, 41, 59);
-      doc.roundedRect(x, 12, 45, 18, 2, 2, "F");
-      doc.setTextColor(148, 163, 184);
-      doc.text(label, x + 4, 18);
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.text(val.length > 20 ? val.substring(0, 18) + "..." : val, x + 4, 25);
-      doc.setFont("helvetica", "normal");
-    };
-    drawBadge(pageW - 200, "PROJETISTA", filters.projetista === "all" ? "GERAL" : filters.projetista.toUpperCase());
-    drawBadge(pageW - 150, "MUNICÍPIO", filters.municipio === "all" ? "TODOS" : filters.municipio.toUpperCase());
-    drawBadge(pageW - 100, "STATUS", filters.status === "all" ? "TODOS" : filters.status.toUpperCase());
-
-    // ── KPI GRID (6 Cards) ─────────────────────────
-    const kpiY = 55;
-    const kpiW = 44;
-    const kpiH = 24;
-    const kpiGap = 3.5;
-
-    const drawKPI = (x: number, title: string, value: string, sub: string, color: [number, number, number]) => {
-      doc.setFillColor(255, 255, 255);
-      doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "F");
-      doc.setDrawColor(226, 232, 240); // Slate 200
-      doc.roundedRect(x, kpiY, kpiW, kpiH, 3, 3, "S");
-
-      doc.setFillColor(...color);
-      doc.rect(x + 5, kpiY + 8, 2, 10, "F"); // Accent bar
-
-      doc.setTextColor(100, 116, 139);
-      doc.setFontSize(6.5);
-      doc.setFont("helvetica", "bold");
-      doc.text(title.toUpperCase(), x + 10, kpiY + 10);
-
-      doc.setTextColor(15, 23, 42);
-      doc.setFontSize(11);
-      doc.text(value, x + 10, kpiY + 17);
-
-      doc.setTextColor(148, 163, 184);
-      doc.setFontSize(5.5);
-      doc.setFont("helvetica", "normal");
-      doc.text(sub, x + 10, kpiY + 21);
-    };
-
-    const startX = 15;
-    drawKPI(startX, "Contagem Total", `${reportData.length} Propostas`, "volume em estoque", [79, 70, 229]);
-    drawKPI(startX + (kpiW + kpiGap), "Valor Estimado", formatCurrency(totalVal), "valor total bruto", [16, 185, 129]);
-    drawKPI(startX + (kpiW + kpiGap) * 2, "Ticket Médio", formatCurrency(avgVal), "media por produtor", [245, 158, 11]);
-    drawKPI(startX + (kpiW + kpiGap) * 3, "Líder Regional", (topMunEntry?.name || "N/I"), `${topMunEntry?.count || 0} propostas aqui`, [139, 92, 246]);
-    drawKPI(startX + (kpiW + kpiGap) * 4, "Top Projetista", (topProjEntry?.name || "N/A"), formatCurrency(topProjEntry?.val || 0), [6, 182, 212]);
-    drawKPI(startX + (kpiW + kpiGap) * 5, "Restrições", `${pctRestricao}%`, `${countRestricao} casos pendentes`, [239, 68, 68]);
-
-    // ── MAIN ANALYSIS AREA (3 Columns) ─────────────
-    const mainY = 90;
-
-    // COLUMN 1: DISTRIBUIÇÃO POR STATUS (Horizontal Bars)
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("DISTRIBUIÇÃO POR STATUS", 15, mainY);
-
-    const statusCounts = [...new Set(reportData.map(p => p.status))]
-      .map(s => ({
-        label: s,
-        count: reportData.filter(p => p.status === s).length,
-        val: reportData.filter(p => p.status === s).reduce((a, b) => a + (Number(b.estimated_value) || 0), 0)
-      }))
-      .sort((a, b) => b.count - a.count);
-
-    const barX = 15;
-    const barW = 85;
-    const barH = 7;
-    const barGap = 3;
-    const maxC = Math.max(...statusCounts.map(s => s.count), 1);
-
-    statusCounts.forEach((s, i) => {
-      const y = mainY + 8 + i * (barH + barGap);
-      const fillW = (s.count / maxC) * barW;
-
-      doc.setFillColor(241, 245, 249);
-      doc.roundedRect(barX, y, barW, barH, 2, 2, "F");
-
-      const themeColor = s.label.includes('REST') ? [239, 68, 68] : s.label.includes('CENTRAL') ? [99, 102, 241] : [16, 185, 129];
-      doc.setFillColor(...themeColor);
-      if (fillW > 3) doc.roundedRect(barX, y, fillW, barH, 2, 2, "F");
-
-      doc.setFontSize(6.5);
-      doc.setTextColor(51, 65, 85);
-      doc.setFont("helvetica", "bold");
-      doc.text(s.label, barX + 2, y - 1);
-      doc.setTextColor(15, 23, 42);
-      doc.text(`${s.count} (${formatCurrency(s.val)})`, barX + barW - 2, y + 5, { align: "right" });
+    generateExecutiveStockReport({
+      proposals,
+      agencies,
+      selectedAgencyName,
+      filters: filtersToUse,
     });
 
-    // COLUMN 2: ANALISE DE SAUDE (Simulated Donut Chart)
-    const midX = 120;
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("SAÚDE DO ESTOQUE", midX, mainY);
-
-    const centerX = midX + 40;
-    const centerY = mainY + 35;
-
-    // Background Circle
-    doc.setLineWidth(12);
-    doc.setDrawColor(241, 245, 249);
-    doc.circle(centerX, centerY, 18, "S");
-
-    // Active / Success Segment (Approximation)
-    const successPct = 1 - (pctRestricao / 100);
-    doc.setDrawColor(16, 185, 129);
-    doc.circle(centerX, centerY, 18, "S"); // For simplicity, we draw full and overlay
-
-    if (pctRestricao > 0) {
-      doc.setDrawColor(239, 68, 68);
-      // Drawing a segment would require path commands, we use a small square overlay for indicator
-      doc.setLineWidth(1);
-    }
-
-    doc.setTextColor(16, 185, 129);
-    doc.setFontSize(14);
-    doc.text(`${Math.round(successPct * 100)}%`, centerX, centerY + 2, { align: "center" });
-    doc.setFontSize(6);
-    doc.setTextColor(100, 116, 139);
-    doc.text("REGULARIDADE", centerX, centerY + 8, { align: "center" });
-
-    // Legend for health
-    const legendY = mainY + 65;
-    doc.setFillColor(16, 185, 129); doc.circle(midX + 5, legendY, 2, "F");
-    doc.setTextColor(15, 23, 42); doc.setFontSize(7); doc.text(`Fluxo Regular: ${reportData.length - countRestricao} propostas`, midX + 10, legendY + 2.5);
-    doc.setFillColor(239, 68, 68); doc.circle(midX + 5, legendY + 6, 2, "F");
-    doc.text(`Com Restrição: ${countRestricao} propostas`, midX + 10, legendY + 8.5);
-
-    // COLUMN 3: RANKING DE CANAIS (Projetistas)
-    const rightX = 210;
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("RANKING DE PROJETISTAS", rightX, mainY);
-
-    const projRanking = uniqueProjetistas
-      .map(p => ({
-        name: p,
-        total: reportData.filter(r => r.projetista === p).reduce((a, b) => a + (Number(b.estimated_value) || 0), 0),
-        count: reportData.filter(r => r.projetista === p).length
-      }))
-      .sort((a, b) => b.total - a.total);
-
-    autoTable(doc, {
-      startY: mainY + 5,
-      head: [["POS", "PROJETISTA", "ENTREGAS", "VOLUME"]],
-      body: projRanking.map((p, i) => [i + 1, p.name, p.count, formatCurrency(p.total)]),
-      theme: 'grid',
-      headStyles: { fillColor: [15, 23, 42], fontSize: 7, halign: 'center' },
-      styles: { fontSize: 7, cellPadding: 2 },
-      columnStyles: { 0: { halign: 'center', cellWidth: 10 }, 2: { halign: 'center' }, 3: { halign: 'right', fontStyle: 'bold' } },
-      margin: { left: rightX, right: 15 }
-    });
-
-    // GEOGRAPHIC INSIGHT (Bottom Section filling space)
-    const geoY = pageH - 50;
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(15, geoY, pageW - 30, 35, 3, 3, "F");
-    doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(15, geoY, pageW - 30, 35, 3, 3, "S");
-
-    doc.setTextColor(79, 70, 229);
-    doc.setFontSize(9);
-    doc.text("VISÃO GEOGRÁFICA E CONCENTRAÇÃO", 22, geoY + 10);
-
-    const top5Mun = uniqueMunicipios
-      .map(m => ({ name: m, val: reportData.filter(r => r.municipio === m).reduce((a, b) => a + (Number(b.estimated_value) || 0), 0) }))
-      .sort((a, b) => b.val - a.val).slice(0, 5);
-
-    top5Mun.forEach((m, i) => {
-      const x = 25 + (i * 54);
-      doc.setFillColor(248, 250, 252);
-      doc.roundedRect(x, geoY + 15, 50, 15, 2, 2, "F");
-      doc.setTextColor(15, 23, 42); doc.setFontSize(7); doc.setFont("helvetica", "bold");
-      doc.text(m.name.substring(0, 15), x + 5, geoY + 22);
-      doc.setTextColor(79, 70, 229); doc.setFontSize(6.5);
-      doc.text(formatCurrency(m.val), x + 5, geoY + 27);
-    });
-
-    // ═══════════════════════════════════════════════════════════
-    // PÁGINA 2+ — DETALHAMENTO ANALÍTICO (Verificação Rigorosa)
-    // ═══════════════════════════════════════════════════════════
-    doc.addPage();
-    doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, pageW, 15, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    doc.text("DETALHAMENTO TÉCNICO DAS PROPOSTAS EM ESTOQUE", 15, 10);
-
-    const showCentralCols = filters.status === "all" || normalize(filters.status).includes("CENTRAL");
-
-    const tableHeaders = [
-      "#", 
-      "PRODUTOR", 
-      "CPF", 
-      "PROJETISTA", 
-      "MUNICÍPIO", 
-      "LINHA", 
-      ...(showCentralCols ? ["CENTRAL", "DATA CENTRAL"] : []),
-      "STATUS", 
-      "VALOR R$"
-    ];
-
-    const tableData = reportData.map((p, idx) => [
-      idx + 1,
-      p.producer_name.toUpperCase(),
-      p.producer_cpf || '---',
-      p.projetista || 'N/A',
-      p.municipio || '---',
-      p.linha_credito || '---',
-      ...(showCentralCols ? [p.central || '---', p.central_date || '---'] : []),
-      p.status.toUpperCase(),
-      formatCurrency(p.estimated_value || 0)
-    ]);
-
-    autoTable(doc, {
-      startY: 18,
-      head: [tableHeaders],
-      body: tableData,
-      theme: 'grid',
-      headStyles: { fillColor: [79, 70, 229], color: 255, fontSize: 7.5, halign: 'center' },
-      styles: { fontSize: 7, cellPadding: 2, valign: 'middle' },
-      columnStyles: { 
-        0: { halign: 'center' }, 
-        [tableHeaders.length - 1]: { halign: 'right', fontStyle: 'bold' } 
-      },
-      alternateRowStyles: { fillColor: [248, 250, 252] }
-    });
-
-    // FOOTER (All Pages)
-    const pages = (doc as any).internal.getNumberOfPages();
-    for (let i = 1; i <= pages; i++) {
-      doc.setPage(i);
-      doc.setFontSize(7);
-      doc.setTextColor(148, 163, 184);
-      doc.text(`Documento Gerado em ${timestamp}  |  Sistema de Gestão PRONAF Digital  |  Página ${i} de ${pages}`, pageW / 2, pageH - 5, { align: "center" });
-    }
-
-    doc.save(`Dashboard_Estoque_${format(new Date(), "yyyyMMdd_HHmm")}.pdf`);
     setIsReportDialogOpen(false);
-    toast({ title: "Dashboard Executivo Gerado", description: "Acesse o PDF para análise completa." });
+    toast({
+      title: "Relatório Executivo Gerado! 📄",
+      description: "O documento PDF premium foi gerado e baixado com sucesso.",
+    });
   };
 
 
@@ -1289,67 +959,166 @@ export default function StockProposals() {
                 Relatório
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[480px]">
+            <DialogContent className="sm:max-w-[540px]">
               <DialogHeader>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2 text-indigo-900">
-                  <FileText className="h-5 w-5" />
-                  Configurar Relatório Premium
-                </DialogTitle>
-                <DialogDescription>
-                  Personalize as informações que aparecerão no seu documento PDF profissional.
-                </DialogDescription>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                    <FileText className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-xl font-bold text-foreground">
+                      Relatório Executivo PRONAF
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                      Gere um documento PDF profissional com dashboard gerencial e detalhamento analítico.
+                    </DialogDescription>
+                  </div>
+                </div>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label>Filtrar por Projetista</Label>
-                  <Select value={reportFilters.projetista} onValueChange={(v) => setReportFilters({ ...reportFilters, projetista: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+
+              <div className="grid gap-4 py-3">
+                {/* Formato do Relatório */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-foreground">Modelo do Relatório</Label>
+                  <Select
+                    value={reportFilters.reportType}
+                    onValueChange={(v: "full" | "executive" | "table_only") =>
+                      setReportFilters({ ...reportFilters, reportType: v })
+                    }
+                  >
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos os Projetistas</SelectItem>
-                      {existingProjetistas.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                      <SelectItem value="full">
+                        <span className="font-semibold">Completo</span> — Dashboard Executivo + Detalhamento de Propostas
+                      </SelectItem>
+                      <SelectItem value="executive">
+                        <span className="font-semibold">Resumo Executivo</span> — Apenas Dashboard Estratégico (1 Página)
+                      </SelectItem>
+                      <SelectItem value="table_only">
+                        <span className="font-semibold">Listagem Analítica</span> — Apenas Tabela Completa de Propostas
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Município</Label>
-                    <Select value={reportFilters.municipio} onValueChange={(v) => setReportFilters({ ...reportFilters, municipio: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+
+                {/* Filtros em Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-foreground">Projetista</Label>
+                    <Select
+                      value={reportFilters.projetista}
+                      onValueChange={(v) => setReportFilters({ ...reportFilters, projetista: v })}
+                    >
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        {municipios.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                        <SelectItem value="all">Todos os Projetistas</SelectItem>
+                        {existingProjetistas.map((p) => (
+                          <SelectItem key={p} value={p}>
+                            {p}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select value={reportFilters.status} onValueChange={(v) => setReportFilters({ ...reportFilters, status: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-foreground">Município</Label>
+                    <Select
+                      value={reportFilters.municipio}
+                      onValueChange={(v) => setReportFilters({ ...reportFilters, municipio: v })}
+                    >
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        {statuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        <SelectItem value="all">Todos os Municípios</SelectItem>
+                        {municipios.map((m) => (
+                          <SelectItem key={m} value={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
-                <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 flex items-start gap-3 mt-2">
-                  <AlertTriangle className="h-5 w-5 text-indigo-600 mt-0.5" />
-                  <div className="text-xs text-indigo-900 leading-relaxed">
-                    <strong>Relatório de Gestão:</strong> O documento incluirá gráficos de resumo, KPIs financeiros e detalhamento analítico completo em formato PDF premium.
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-foreground">Status da Proposta</Label>
+                    <Select
+                      value={reportFilters.status}
+                      onValueChange={(v) => setReportFilters({ ...reportFilters, status: v })}
+                    >
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os Status</SelectItem>
+                        {statuses.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-foreground">Ordenar Listagem por</Label>
+                    <Select
+                      value={reportFilters.sortBy}
+                      onValueChange={(v: "value_desc" | "name_asc" | "projetista_asc" | "status_asc") =>
+                        setReportFilters({ ...reportFilters, sortBy: v })
+                      }
+                    >
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="value_desc">Maior Valor R$ (Decrescente)</SelectItem>
+                        <SelectItem value="name_asc">Nome do Produtor (A-Z)</SelectItem>
+                        <SelectItem value="projetista_asc">Projetista (A-Z)</SelectItem>
+                        <SelectItem value="status_asc">Status</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
+
+                {/* Banner de Preview Dinâmico */}
+                <div className="p-3.5 bg-gradient-to-r from-indigo-50/80 via-blue-50/60 to-emerald-50/80 rounded-2xl border border-indigo-100 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                      {reportPreviewStats.count}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-indigo-950">
+                        {reportPreviewStats.count} proposta{reportPreviewStats.count !== 1 ? "s" : ""} selecionada{reportPreviewStats.count !== 1 ? "s" : ""}
+                      </p>
+                      <p className="text-[11px] text-indigo-700 font-medium">
+                        Volume estimado: <strong className="text-emerald-700">{formatCurrency(reportPreviewStats.total)}</strong>
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="bg-white/80 border-indigo-200 text-indigo-800 text-[10px] font-semibold">
+                    {effectiveAgencyId === "all" ? "Todas Agências" : "Agência Ativa"}
+                  </Badge>
+                </div>
               </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsReportDialogOpen(false)}
-                >
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setIsReportDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={() => generatePremiumReport(reportFilters)} className="bg-indigo-600 hover:bg-indigo-700">
+                <Button
+                  onClick={() => handleGenerateReport()}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md shadow-indigo-200"
+                >
                   <Download className="mr-2 h-4 w-4" />
-                  Gerar PDF agora
+                  Gerar PDF Executivo
                 </Button>
               </DialogFooter>
             </DialogContent>
