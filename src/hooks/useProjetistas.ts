@@ -5,13 +5,12 @@ import { useProjetistasControl } from "@/hooks/useProjetistasControl";
 
 // Projetistas originais conhecidos (mantidos como fallback garantido)
 const PROJETISTAS_FIXOS = [
-  "NEY MEDEIROS",
+  "NEY MEDEIROS DE ARAÚJO",
   "JAIRO SANTANA",
   "CLEDSON CLOVIS",
   "JAILSON",
   "OLIVEIRA",
   "CLEDSON CLOVIS DA SILVA",
-  "NEY MEDEIROS DE ARAÚJO",
   "FRANCISCO DAS CHAGAS SOUSA OLIVEIRA",
   "JOSE FRANCISCO LIMA SEIXAS",
   "TANCREDO ANTONIO DA SILVA OLIVEIRA",
@@ -139,9 +138,12 @@ export function useProjetistas() {
     ];
     const uniqueSet = new Map<string, string>();
     allNames.forEach(name => {
-      const key = name.toUpperCase().trim();
+      let key = name.toUpperCase().trim();
+      if (key === "NEY MEDEIROS" || key === "NEY MEDEIRO") {
+        key = "NEY MEDEIROS DE ARAÚJO";
+      }
       if (!uniqueSet.has(key)) {
-        uniqueSet.set(key, name.toUpperCase().trim());
+        uniqueSet.set(key, key);
       }
     });
     return Array.from(uniqueSet.values()).sort((a, b) => a.localeCompare(b));

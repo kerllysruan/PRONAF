@@ -16,8 +16,8 @@ export interface Projetista {
 
 export const DEFAULT_PROJETISTAS: Projetista[] = [
   {
-    id: "proj-1",
-    name: "NEY MEDEIROS",
+    id: "proj-7",
+    name: "NEY MEDEIROS DE ARAÚJO",
     cpf: "123.456.789-01",
     crea_cfta: "CREA-MA 12345/D",
     phone: "(98) 98123-4567",
@@ -76,16 +76,6 @@ export const DEFAULT_PROJETISTAS: Projetista[] = [
     created_at: "2024-02-01T10:00:00.000Z",
   },
   {
-    id: "proj-7",
-    name: "NEY MEDEIROS DE ARAÚJO",
-    cpf: "123.456.789-01",
-    crea_cfta: "CREA-MA 12345/D",
-    phone: "(98) 98123-4567",
-    email: "ney.medeiros@pronaf.gov.br",
-    status: "ativo",
-    created_at: "2024-02-01T10:00:00.000Z",
-  },
-  {
     id: "proj-8",
     name: "FRANCISCO DAS CHAGAS SOUSA OLIVEIRA",
     cpf: "",
@@ -117,38 +107,49 @@ export const DEFAULT_PROJETISTAS: Projetista[] = [
   },
 ];
 
-const STORAGE_KEY = "pronaf_projetistas_list_v2";
-const LEGACY_STORAGE_KEY = "pronaf_projetistas_list_v1";
+const STORAGE_KEY = "pronaf_projetistas_list_v3";
+const LEGACY_STORAGE_KEYS = ["pronaf_projetistas_list_v2", "pronaf_projetistas_list_v1"];
+
+function cleanProjetistasList(list: Projetista[]): Projetista[] {
+  return list.filter(
+    (p) => {
+      const upper = p.name.toUpperCase().trim();
+      return upper !== "NEY MEDEIROS" && upper !== "NEY MEDEIRO";
+    }
+  );
+}
 
 function loadInitialProjetistas(): Projetista[] {
   try {
-    const savedV2 = localStorage.getItem(STORAGE_KEY);
-    if (savedV2) {
-      const parsed = JSON.parse(savedV2);
+    const savedV3 = localStorage.getItem(STORAGE_KEY);
+    if (savedV3) {
+      const parsed = JSON.parse(savedV3);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Merge with DEFAULT_PROJETISTAS to make sure new defaults are not missing
-        const existingNames = new Set(parsed.map((p: Projetista) => p.name.toUpperCase().trim()));
+        const cleaned = cleanProjetistasList(parsed);
+        const existingNames = new Set(cleaned.map((p: Projetista) => p.name.toUpperCase().trim()));
         const missingDefaults = DEFAULT_PROJETISTAS.filter(
           (d) => !existingNames.has(d.name.toUpperCase().trim())
         );
-        return [...parsed, ...missingDefaults];
+        return [...cleaned, ...missingDefaults];
       }
     }
 
-    // Check legacy v1 and merge
-    const savedV1 = localStorage.getItem(LEGACY_STORAGE_KEY);
-    if (savedV1) {
-      const parsedV1 = JSON.parse(savedV1);
-      if (Array.isArray(parsedV1) && parsedV1.length > 0) {
-        const merged = [...parsedV1];
-        const existingNames = new Set(merged.map((p: Projetista) => p.name.toUpperCase().trim()));
-        DEFAULT_PROJETISTAS.forEach((def) => {
-          if (!existingNames.has(def.name.toUpperCase().trim())) {
-            merged.push(def);
-            existingNames.add(def.name.toUpperCase().trim());
-          }
-        });
-        return merged;
+    // Check legacy versions
+    for (const key of LEGACY_STORAGE_KEYS) {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const cleaned = cleanProjetistasList(parsed);
+          const existingNames = new Set(cleaned.map((p: Projetista) => p.name.toUpperCase().trim()));
+          DEFAULT_PROJETISTAS.forEach((def) => {
+            if (!existingNames.has(def.name.toUpperCase().trim())) {
+              cleaned.push(def);
+              existingNames.add(def.name.toUpperCase().trim());
+            }
+          });
+          return cleaned;
+        }
       }
     }
   } catch (e) {
@@ -192,7 +193,7 @@ export function useProjetistasControl() {
             // Overwrite/add with Supabase data
             data.forEach((row: any) => {
               const key = (row.name || "").toUpperCase().trim();
-              if (key) {
+              if (key && key !== "NEY MEDEIROS" && key !== "NEY MEDEIRO") {
                 map.set(key, {
                   id: row.id || `proj-${Date.now()}`,
                   name: row.name.toUpperCase().trim(),
@@ -205,6 +206,8 @@ export function useProjetistasControl() {
                 });
               }
             });
+            map.delete("NEY MEDEIROS");
+            map.delete("NEY MEDEIRO");
             return Array.from(map.values());
           });
         }
@@ -228,7 +231,7 @@ export function useProjetistasControl() {
           ...new Set(
             data
               .map((row) => (row.projetista || "").trim().toUpperCase())
-              .filter(Boolean)
+              .filter((name) => Boolean(name) && name !== "NEY MEDEIROS" && name !== "NEY MEDEIRO")
           ),
         ];
 

@@ -718,7 +718,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
     const normalizeName = (name: string | null | undefined) => {
       if (!name) return "";
       const trimmed = name.trim().toUpperCase();
-      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS";
+      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS DE ARAÚJO";
       return trimmed;
     };
 
@@ -732,7 +732,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
     const normalizeName = (name: string | null | undefined) => {
       if (!name) return "";
       const trimmed = name.trim().toUpperCase();
-      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS";
+      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS DE ARAÚJO";
       return trimmed;
     };
 
@@ -754,7 +754,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
     const normalizeName = (name: string | null | undefined) => {
       if (!name) return "";
       const trimmed = name.trim().toUpperCase();
-      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS";
+      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS DE ARAÚJO";
       return trimmed;
     };
 
@@ -813,7 +813,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
     const normalizeName = (name: string | null | undefined) => {
       if (!name) return "";
       const trimmed = name.trim().toUpperCase();
-      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS";
+      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS DE ARAÚJO";
       return trimmed;
     };
 
@@ -837,7 +837,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
     const set = new Set<string>();
     const normalizeName = (name: string) => {
       const trimmed = name.trim().toUpperCase();
-      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS";
+      if (trimmed === "NEY MEDEIRO" || trimmed === "NEY MEDEIROS") return "NEY MEDEIROS DE ARAÚJO";
       return trimmed;
     };
     submissions.forEach((s) => {
@@ -876,7 +876,7 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
     const normalizeProjetista = (name: string | null) => {
       if (!name) return null;
       const upper = name.trim().toUpperCase();
-      if (upper === "NEY MEDEIRO" || upper === "NEY MEDEIROS") return "NEY MEDEIROS";
+      if (upper === "NEY MEDEIRO" || upper === "NEY MEDEIROS") return "NEY MEDEIROS DE ARAÚJO";
       return upper;
     };
 

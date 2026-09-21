@@ -420,7 +420,7 @@ export default function ProjetistasControl() {
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ex: NEY MEDEIROS"
+                placeholder="Ex: NEY MEDEIROS DE ARAÚJO"
                 className="rounded-xl text-sm"
               />
             </div>
@@ -535,7 +535,7 @@ export default function ProjetistasControl() {
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ex: NEY MEDEIROS"
+                placeholder="Ex: NEY MEDEIROS DE ARAÚJO"
                 className="rounded-xl text-sm"
               />
             </div>

@@ -68,7 +68,7 @@ export interface DocumentItem {
 }
 
 export const PROJECT_DESIGNER_LABELS: Record<ProjectDesigner, string> = {
-  ney_medeiros: 'Ney Medeiros',
+  ney_medeiros: 'Ney Medeiros de Araújo',
   jairo_santana: 'Jairo Santana',
   cledson: 'Cledson',
   jailson: 'Jailson',
