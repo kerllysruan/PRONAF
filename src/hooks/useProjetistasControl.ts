@@ -327,12 +327,21 @@ export function useProjetistasControl() {
   // Editar Projetista
   const updateProjetista = useCallback(
     async (id: string, data: Partial<Omit<Projetista, "id" | "created_at">>) => {
-      setProjetistas((prev) =>
-        prev.map((item) => {
+      let oldName = "";
+      let newName = "";
+
+      setProjetistas((prev) => {
+        const currentItem = prev.find((p) => p.id === id);
+        if (currentItem) {
+          oldName = currentItem.name.trim().toUpperCase();
+        }
+        newName = data.name ? data.name.trim().toUpperCase() : oldName;
+
+        return prev.map((item) => {
           if (item.id === id) {
             return {
               ...item,
-              ...(data.name && { name: data.name.trim().toUpperCase() }),
+              ...(data.name && { name: newName }),
               ...(data.cpf !== undefined && { cpf: data.cpf.trim() }),
               ...(data.crea_cfta !== undefined && {
                 crea_cfta: data.crea_cfta.trim().toUpperCase(),
@@ -343,11 +352,14 @@ export function useProjetistasControl() {
             };
           }
           return item;
-        })
-      );
+        });
+      });
 
+      // Sincronizar no banco de dados Supabase
       try {
-        const updatePayload: Record<string, any> = {};
+        const updatePayload: Record<string, any> = {
+          updated_at: new Date().toISOString(),
+        };
         if (data.name) updatePayload.name = data.name.trim().toUpperCase();
         if (data.cpf !== undefined) updatePayload.cpf = data.cpf.trim();
         if (data.crea_cfta !== undefined)
@@ -356,14 +368,80 @@ export function useProjetistasControl() {
         if (data.email !== undefined) updatePayload.email = data.email.trim();
         if (data.status) updatePayload.status = data.status;
 
-        await supabase.from("projetistas").update(updatePayload).eq("id", id);
+        const { data: updatedRows, error: updateErr } = await supabase
+          .from("projetistas")
+          .update(updatePayload)
+          .eq("id", id)
+          .select();
+
+        // Se o registro não existia com esse id no banco, tenta localizar por nome ou faz upsert
+        if (!updateErr && (!updatedRows || updatedRows.length === 0)) {
+          if (oldName) {
+            const { data: byNameRows } = await supabase
+              .from("projetistas")
+              .update(updatePayload)
+              .ilike("name", oldName)
+              .select();
+
+            if (!byNameRows || byNameRows.length === 0) {
+              await supabase.from("projetistas").upsert({
+                id: id,
+                name: newName,
+                cpf: data.cpf?.trim() || "",
+                crea_cfta: data.crea_cfta?.trim().toUpperCase() || "",
+                phone: data.phone?.trim() || "",
+                email: data.email?.trim() || "",
+                status: data.status || "ativo",
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              });
+            }
+          }
+        }
+
+        // Se houve alteração de nome, propaga explicitamente para todas as tabelas de propostas
+        if (oldName && newName && oldName !== newName) {
+          await Promise.allSettled([
+            supabase
+              .from("stock_proposals")
+              .update({ projetista: newName })
+              .ilike("projetista", oldName),
+            supabase
+              .from("proposals")
+              .update({ project_designer: newName })
+              .ilike("project_designer", oldName),
+            supabase
+              .from("team_members")
+              .update({ name: newName })
+              .ilike("name", oldName),
+          ]);
+        }
       } catch (err) {
         console.warn("Atualização no Supabase falhou:", err);
       }
 
+      // Disparar evento global para atualização imediata dos componentes e hooks
+      window.dispatchEvent(
+        new CustomEvent("projetista-updated", {
+          detail: {
+            id,
+            oldName,
+            newName,
+            cpf: data.cpf,
+            crea_cfta: data.crea_cfta,
+            phone: data.phone,
+            email: data.email,
+            status: data.status,
+          },
+        })
+      );
+
       toast({
         title: "Projetista atualizado! ✏️",
-        description: "Informações alteradas com sucesso.",
+        description:
+          oldName && newName && oldName !== newName
+            ? `Informações alteradas e propostas de "${oldName}" atualizadas para "${newName}".`
+            : "Informações alteradas com sucesso e refletidas nas propostas associadas.",
       });
     },
     [toast]
@@ -381,9 +459,18 @@ export function useProjetistasControl() {
 
       try {
         await supabase.from("projetistas").delete().eq("id", id);
+        if (deletedName) {
+          await supabase.from("projetistas").delete().ilike("name", deletedName);
+        }
       } catch (err) {
         console.warn("Exclusão no Supabase falhou:", err);
       }
+
+      window.dispatchEvent(
+        new CustomEvent("projetista-deleted", {
+          detail: { id, deletedName },
+        })
+      );
 
       toast({
         title: "Projetista removido 🗑️",

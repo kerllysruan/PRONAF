@@ -269,9 +269,20 @@ export default function StockProposals() {
   const { effectiveAgencyId, agencies } = useAgency();
   const { toast } = useToast();
 
+  const { projetistas: registeredProjetistasList } = useProjetistasControl();
+
+  const projetistasMap = useMemo(() => {
+    const map = new Map<string, (typeof registeredProjetistasList)[0]>();
+    registeredProjetistasList.forEach((proj) => {
+      map.set(proj.name.trim().toUpperCase(), proj);
+    });
+    return map;
+  }, [registeredProjetistasList]);
+
   const copyDocumentationLinkAndText = useCallback(async (p: StockProposal) => {
     const token = await generateToken(p.id, p.original_csv_status || p.status);
     if (token) {
+      const matched = p.projetista ? projetistasMap.get(p.projetista.trim().toUpperCase()) : null;
       const message = generateWppStatusMessage({
         producerName: p.producer_name,
         producerCpf: p.producer_cpf,
@@ -279,6 +290,8 @@ export default function StockProposals() {
         estimatedValue: p.estimated_value,
         municipio: p.municipio,
         projetista: p.projetista,
+        projetistaCpf: matched?.cpf,
+        projetistaCreaCfta: matched?.crea_cfta,
         proposalStatus: p.status,
         token: token,
       });
@@ -289,14 +302,10 @@ export default function StockProposals() {
         description: "A mensagem formatada com a data e o link de envio já está na sua área de transferência. Cole no WhatsApp." 
       });
     }
-  }, [generateToken, toast]);
-
-  const { projetistas: registeredProjetistasList } = useProjetistasControl();
+  }, [generateToken, toast, projetistasMap]);
 
   const copyVisitaGerencialText = useCallback((p: StockProposal) => {
-    const matched = registeredProjetistasList.find(
-      (proj) => proj.name.toUpperCase().trim() === (p.projetista || "").toUpperCase().trim()
-    );
+    const matched = p.projetista ? projetistasMap.get(p.projetista.trim().toUpperCase()) : null;
     const text = generateVisitaGerencialText({
       producerName: p.producer_name,
       producerCpf: p.producer_cpf,
@@ -314,7 +323,7 @@ export default function StockProposals() {
         description: "Texto de 6 linhas copiado para a área de transferência.",
       });
     });
-  }, [toast, registeredProjetistasList]);
+  }, [toast, projetistasMap]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(() => {
     return localStorage.getItem('stock_proposal_new_open') === 'true';
@@ -2323,6 +2332,7 @@ export default function StockProposals() {
                   <tbody className="divide-y divide-slate-100">
                     {filtered.map((p, idx) => {
                       const restriction = hasSerasaRestriction(p.serasa);
+                      const matchedProj = p.projetista ? projetistasMap.get(p.projetista.trim().toUpperCase()) : null;
                       return (
                         <tr key={p.id} className={`transition-colors group ${restriction ? 'bg-red-50/80 hover:bg-red-100/80' : 'hover:bg-indigo-50/30'}`}>
                           <td className="p-3 text-center align-top w-10">
@@ -2352,9 +2362,25 @@ export default function StockProposals() {
                               )}
                             </div>
                           </td>
-                          <td className="p-3 align-top">
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-tight">{p.projetista || 'N/A'}</span>
+                          <td className="p-3 align-top min-w-[170px]">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-tight line-clamp-1" title={p.projetista || 'N/A'}>
+                                {p.projetista || 'N/A'}
+                              </span>
+                              {matchedProj && (matchedProj.crea_cfta || matchedProj.cpf) && (
+                                <div className="flex flex-col text-[9px] text-slate-500 font-mono leading-tight mt-0.5">
+                                  {matchedProj.crea_cfta && (
+                                    <span className="text-slate-600 font-semibold truncate" title={matchedProj.crea_cfta}>
+                                      {matchedProj.crea_cfta}
+                                    </span>
+                                  )}
+                                  {matchedProj.cpf && (
+                                    <span className="text-slate-400">
+                                      CPF: {matchedProj.cpf}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </td>
                           <td className="p-3 align-top min-w-[140px]">
@@ -2510,6 +2536,7 @@ export default function StockProposals() {
               <div className="md:hidden divide-y divide-slate-100">
                 {filtered.map((p, idx) => {
                   const restriction = hasSerasaRestriction(p.serasa);
+                  const matchedProjMobile = p.projetista ? projetistasMap.get(p.projetista.trim().toUpperCase()) : null;
                   return (
                     <div key={p.id} className={`p-4 ${restriction ? 'bg-red-50/80 border-l-4 border-l-red-500' : ''}`}>
                       <div className="flex items-start gap-3">
@@ -2592,9 +2619,16 @@ export default function StockProposals() {
                               <span className="text-amber-600">{p.pendencias}</span>
                             </div>
                           )}
-                          <div className="flex justify-between text-xs">
+                          <div className="flex justify-between text-xs items-start">
                             <span className="text-slate-500">Projetista</span>
-                            <span className="text-indigo-600 font-bold uppercase">{p.projetista || 'N/A'}</span>
+                            <div className="flex flex-col items-end text-right">
+                              <span className="text-indigo-600 font-bold uppercase">{p.projetista || 'N/A'}</span>
+                              {matchedProjMobile && (matchedProjMobile.crea_cfta || matchedProjMobile.cpf) && (
+                                <span className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                  {[matchedProjMobile.crea_cfta, matchedProjMobile.cpf ? `CPF ${matchedProjMobile.cpf}` : ''].filter(Boolean).join(' • ')}
+                                </span>
+                              )}
+                            </div>
                           </div>
                           <div className="flex justify-between text-xs">
                             <span className="text-slate-500">Programa de Crédito</span>
@@ -2768,7 +2802,21 @@ export default function StockProposals() {
                     </div>
                     <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
                       <span className="text-xs text-slate-500 font-medium">Projetista</span>
-                      <span className="text-xs font-bold text-indigo-600">{viewingDetailProposal?.projetista || '---'}</span>
+                      {(() => {
+                        const detailProj = viewingDetailProposal?.projetista
+                          ? projetistasMap.get(viewingDetailProposal.projetista.trim().toUpperCase())
+                          : null;
+                        return (
+                          <div className="flex flex-col items-end text-right">
+                            <span className="text-xs font-bold text-indigo-600">{viewingDetailProposal?.projetista || '---'}</span>
+                            {detailProj && (detailProj.crea_cfta || detailProj.cpf) && (
+                              <span className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                {[detailProj.crea_cfta, detailProj.cpf ? `CPF: ${detailProj.cpf}` : ''].filter(Boolean).join(' • ')}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex justify-between items-start py-1.5">
                       <span className="text-xs text-slate-500 font-medium">Localização / Imóvel</span>

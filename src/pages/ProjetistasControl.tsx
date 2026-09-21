@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useProjetistasControl, Projetista } from "@/hooks/useProjetistasControl";
+import { useStockProposals } from "@/hooks/useStockProposals";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,19 @@ export default function ProjetistasControl() {
     deleteProjetista,
     resetToDefault,
   } = useProjetistasControl();
+
+  const { proposals: stockProposals } = useStockProposals();
+
+  const proposalCountByProjetista = useMemo(() => {
+    const counts = new Map<string, number>();
+    stockProposals.forEach((p) => {
+      if (p.projetista) {
+        const key = p.projetista.trim().toUpperCase();
+        counts.set(key, (counts.get(key) || 0) + 1);
+      }
+    });
+    return counts;
+  }, [stockProposals]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -300,6 +314,7 @@ export default function ProjetistasControl() {
                   <TableHead className="pl-6 text-[10px] font-black uppercase tracking-wider">Nome do Projetista</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-wider">CPF</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-wider">CREA / CFTA</TableHead>
+                  <TableHead className="text-[10px] font-black uppercase tracking-wider">Propostas</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-wider">Contato</TableHead>
                   <TableHead className="text-[10px] font-black uppercase tracking-wider">Status</TableHead>
                   <TableHead className="pr-6 text-right text-[10px] font-black uppercase tracking-wider">Ações</TableHead>
@@ -336,6 +351,20 @@ export default function ProjetistasControl() {
                       ) : (
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
+                    </TableCell>
+
+                    <TableCell>
+                      {(() => {
+                        const count = proposalCountByProjetista.get(proj.name.trim().toUpperCase()) || 0;
+                        return count > 0 ? (
+                          <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800 text-xs font-semibold gap-1">
+                            <Briefcase className="h-3 w-3" />
+                            {count} {count === 1 ? "proposta" : "propostas"}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">0</span>
+                        );
+                      })()}
                     </TableCell>
 
                     <TableCell>
@@ -526,6 +555,18 @@ export default function ProjetistasControl() {
               Altere os dados cadastrais do projetista selecionado.
             </DialogDescription>
           </DialogHeader>
+
+          {editingProjetista && (
+            <div className="mx-6 mt-1 bg-indigo-50/80 border border-indigo-100 dark:bg-indigo-950/40 dark:border-indigo-900/60 rounded-xl p-3 text-xs space-y-1">
+              <div className="font-bold flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300">
+                <Briefcase className="h-3.5 w-3.5" />
+                {proposalCountByProjetista.get(editingProjetista.name.trim().toUpperCase()) || 0} proposta(s) vinculada(s)
+              </div>
+              <p className="text-[11px] text-indigo-600/90 dark:text-indigo-300/80 leading-relaxed">
+                Ao alterar o nome, CPF ou CREA/CFTA, todas as propostas vinculadas a este projetista no estoque e no sistema serão atualizadas e sincronizadas automaticamente.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">

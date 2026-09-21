@@ -120,8 +120,17 @@ export function useProjetistas() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_proposals' }, fetchStockProjetistas)
       .subscribe();
 
+    const handleUpdate = () => {
+      fetchStockProjetistas();
+    };
+
+    window.addEventListener("projetista-updated", handleUpdate);
+    window.addEventListener("projetista-deleted", handleUpdate);
+
     return () => {
       supabase.removeChannel(ch3);
+      window.removeEventListener("projetista-updated", handleUpdate);
+      window.removeEventListener("projetista-deleted", handleUpdate);
     };
   }, []);
 
@@ -130,8 +139,12 @@ export function useProjetistas() {
       .filter((p) => p.status === "ativo")
       .map((p) => p.name);
 
+    // Se já existem projetistas gerenciados no sistema, usamos eles como fonte primária
+    // mantendo PROJETISTAS_FIXOS apenas se a lista gerenciada estiver vazia
+    const fallbackList = managedProjetistas.length === 0 ? PROJETISTAS_FIXOS : [];
+
     const allNames = [
-      ...PROJETISTAS_FIXOS,
+      ...fallbackList,
       ...activeManagedNames,
       ...dynamicProjetistas,
       ...stockProjetistas,

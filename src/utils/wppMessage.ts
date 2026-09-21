@@ -7,6 +7,8 @@ export interface WppMessageParams {
   estimatedValue?: number | null;
   municipio?: string | null;
   projetista?: string | null;
+  projetistaCpf?: string | null;
+  projetistaCreaCfta?: string | null;
   proposalStatus?: string | null;
   token?: string | null;
   files?: Array<{
@@ -120,7 +122,18 @@ export function generateWppStatusMessage(params: WppMessageParams): string {
   msg += `💰 *Valor:* ${valor}\n`;
   msg += `📍 *Município:* ${municipio}\n`;
   if (projetista && projetista !== "—") {
-    msg += `👷 *Projetista:* ${projetista}\n`;
+    let projText = projetista;
+    const details: string[] = [];
+    if (params.projetistaCpf && params.projetistaCpf.trim() !== "" && params.projetistaCpf !== "—") {
+      details.push(`CPF: ${params.projetistaCpf.trim()}`);
+    }
+    if (params.projetistaCreaCfta && params.projetistaCreaCfta.trim() !== "" && params.projetistaCreaCfta !== "—") {
+      details.push(`CREA/CFTA: ${params.projetistaCreaCfta.trim()}`);
+    }
+    if (details.length > 0) {
+      projText += ` (${details.join(" | ")})`;
+    }
+    msg += `👷 *Projetista:* ${projText}\n`;
   }
   msg += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 

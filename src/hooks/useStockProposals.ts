@@ -72,6 +72,57 @@ export function useStockProposals() {
     }
   }, [fetchProposals]);
 
+  // Realtime subscription para atualizações na tabela stock_proposals
+  useEffect(() => {
+    const channel = supabase
+      .channel("realtime-stock-proposals-sync")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "stock_proposals",
+        },
+        () => {
+          fetchProposals(true);
+        }
+      )
+      .subscribe();
+
+    const handleProjetistaUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        oldName?: string;
+        newName?: string;
+      }>;
+      const { oldName, newName } = customEvent.detail || {};
+
+      if (oldName && newName && oldName !== newName) {
+        setProposals((prev) =>
+          prev.map((p) =>
+            p.projetista &&
+            p.projetista.trim().toUpperCase() === oldName.trim().toUpperCase()
+              ? { ...p, projetista: newName }
+              : p
+          )
+        );
+      }
+      fetchProposals(true);
+    };
+
+    const handleProjetistaDeleted = () => {
+      fetchProposals(true);
+    };
+
+    window.addEventListener("projetista-updated", handleProjetistaUpdated);
+    window.addEventListener("projetista-deleted", handleProjetistaDeleted);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener("projetista-updated", handleProjetistaUpdated);
+      window.removeEventListener("projetista-deleted", handleProjetistaDeleted);
+    };
+  }, [fetchProposals]);
+
   const addProposal = async (proposal: InsertStockProposal, agencyIdOverride?: string) => {
     if (!user) return null;
 
