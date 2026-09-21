@@ -599,7 +599,7 @@ export default function Proposals() {
     const dataMap: Record<string, { count: number; value: number }> = {};
     filtered.forEach((p) => {
       let program = p.credit_program || "Sem Linha";
-      if (program.includes("699")) program = "PRONAF A (699)";
+      if (program.includes("699")) program = "PRONAF A 699";
       else if (program.includes("368")) program = "PRONAF A (368)";
       else if (program.includes("434")) program = "MAIS ALIMENTOS";
       else if (program.includes("406")) program = "MULHER";

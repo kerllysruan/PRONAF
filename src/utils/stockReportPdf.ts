@@ -172,10 +172,16 @@ export function generateExecutiveStockReport(options: StockReportOptions): void 
   // Linhas de Crédito breakdown
   const linhaMap = new Map<string, { count: number; total: number }>();
   filtered.forEach((p) => {
-    const entry = linhaMap.get(p.linha_credito) || { count: 0, total: 0 };
+    let rawLinha = (p.linha_credito || p.credit_program || "NÃO INFORMADA").trim();
+    if (rawLinha.includes("699")) {
+      rawLinha = "PRONAF A 699";
+    } else if (rawLinha.includes("368")) {
+      rawLinha = "PRONAF A 368";
+    }
+    const entry = linhaMap.get(rawLinha) || { count: 0, total: 0 };
     entry.count += 1;
     entry.total += p.estimated_value;
-    linhaMap.set(p.linha_credito, entry);
+    linhaMap.set(rawLinha, entry);
   });
   const linhaStats = Array.from(linhaMap.entries())
     .map(([linha, stat]) => ({ linha, count: stat.count, total: stat.total }))
