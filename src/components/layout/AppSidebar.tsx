@@ -8,6 +8,7 @@ import {
   Share2,
   Wheat,
   UserCheck,
+  BookOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -33,6 +34,7 @@ const menuItems = [
   { title: "Documentação", url: "/documentacao", icon: FolderCheck, permission: "can_view_documentation", badge: "doc" as string },
   { title: "Controle de Acesso", url: "/controle-acesso", icon: Shield, permission: "can_view_access_control", badge: null as string | null },
   { title: "Gestão de Agências", url: "/admin/agencies", icon: Building2, permission: "can_manage_agencies", badge: null as string | null },
+  { title: "Guia da Plataforma", url: "/documentacao-plataforma", icon: BookOpen, permission: "can_view_dashboard", badge: null as string | null },
 ];
 
 export function AppSidebar() {

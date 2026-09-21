@@ -19,6 +19,7 @@ import StockProposals from "./pages/StockProposals";
 import FileExchange from "./pages/FileExchange";
 import DocumentationSubmit from "./pages/DocumentationSubmit";
 import ProjetistasControl from "./pages/ProjetistasControl";
+import PlatformDocumentation from "./pages/PlatformDocumentation";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Loader2 } from "lucide-react";
 
@@ -74,6 +75,7 @@ const AppRoutes = () => (
     <Route path="/documentacao" element={<ProtectedRoute><PermissionGate permission="can_view_documentation" showError><Documentation /></PermissionGate></ProtectedRoute>} />
     <Route path="/controle-acesso" element={<ProtectedRoute><PermissionGate permission="can_view_access_control" showError><AccessControl /></PermissionGate></ProtectedRoute>} />
     <Route path="/admin/agencies" element={<ProtectedRoute><PermissionGate requireAdmin showError><AdminAgencies /></PermissionGate></ProtectedRoute>} />
+    <Route path="/documentacao-plataforma" element={<ProtectedRoute><PlatformDocumentation /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
