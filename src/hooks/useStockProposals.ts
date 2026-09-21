@@ -109,7 +109,19 @@ export function useStockProposals() {
       fetchProposals(true);
     };
 
-    const handleProjetistaDeleted = () => {
+    const handleProjetistaDeleted = (event: Event) => {
+      const customEvent = event as CustomEvent<{ deletedName?: string }>;
+      const deletedName = customEvent.detail?.deletedName;
+      if (deletedName) {
+        setProposals((prev) =>
+          prev.map((p) =>
+            p.projetista &&
+            p.projetista.trim().toUpperCase() === deletedName.trim().toUpperCase()
+              ? { ...p, projetista: null }
+              : p
+          )
+        );
+      }
       fetchProposals(true);
     };
 

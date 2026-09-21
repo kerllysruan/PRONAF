@@ -125,31 +125,7 @@ function loadInitialProjetistas(): Projetista[] {
     if (savedV3) {
       const parsed = JSON.parse(savedV3);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const cleaned = cleanProjetistasList(parsed);
-        const existingNames = new Set(cleaned.map((p: Projetista) => p.name.toUpperCase().trim()));
-        const missingDefaults = DEFAULT_PROJETISTAS.filter(
-          (d) => !existingNames.has(d.name.toUpperCase().trim())
-        );
-        return [...cleaned, ...missingDefaults];
-      }
-    }
-
-    // Check legacy versions
-    for (const key of LEGACY_STORAGE_KEYS) {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const cleaned = cleanProjetistasList(parsed);
-          const existingNames = new Set(cleaned.map((p: Projetista) => p.name.toUpperCase().trim()));
-          DEFAULT_PROJETISTAS.forEach((def) => {
-            if (!existingNames.has(def.name.toUpperCase().trim())) {
-              cleaned.push(def);
-              existingNames.add(def.name.toUpperCase().trim());
-            }
-          });
-          return cleaned;
-        }
+        return cleanProjetistasList(parsed);
       }
     }
   } catch (e) {
@@ -172,7 +148,7 @@ export function useProjetistasControl() {
     }
   }, [projetistas]);
 
-  // Carregar do Supabase (tabela projetistas) e sincronizar
+  // Carregar do Supabase (tabela projetistas) como fonte da verdade
   useEffect(() => {
     let isMounted = true;
 
@@ -183,91 +159,36 @@ export function useProjetistasControl() {
           .select("*")
           .order("name", { ascending: true });
 
-        if (!error && data && data.length > 0 && isMounted) {
-          setProjetistas((prev) => {
-            const map = new Map<string, Projetista>();
-            // Add defaults first
-            DEFAULT_PROJETISTAS.forEach((p) => map.set(p.name.toUpperCase().trim(), p));
-            // Add current state
-            prev.forEach((p) => map.set(p.name.toUpperCase().trim(), p));
-            // Overwrite/add with Supabase data
-            data.forEach((row: any) => {
-              const key = (row.name || "").toUpperCase().trim();
-              if (key && key !== "NEY MEDEIROS" && key !== "NEY MEDEIRO") {
-                map.set(key, {
-                  id: row.id || `proj-${Date.now()}`,
-                  name: row.name.toUpperCase().trim(),
-                  cpf: row.cpf || "",
-                  crea_cfta: row.crea_cfta || "",
-                  phone: row.phone || "",
-                  email: row.email || "",
-                  status: (row.status as "ativo" | "inativo") || "ativo",
-                  created_at: row.created_at || new Date().toISOString(),
-                });
-              }
-            });
-            map.delete("NEY MEDEIROS");
-            map.delete("NEY MEDEIRO");
-            return Array.from(map.values());
-          });
+        if (!error && data && isMounted) {
+          const list: Projetista[] = data
+            .filter((row: any) => {
+              const upper = (row.name || "").toUpperCase().trim();
+              return upper && upper !== "NEY MEDEIROS" && upper !== "NEY MEDEIRO";
+            })
+            .map((row: any) => ({
+              id: row.id,
+              name: (row.name || "").toUpperCase().trim(),
+              cpf: row.cpf || "",
+              crea_cfta: row.crea_cfta || "",
+              phone: row.phone || "",
+              email: row.email || "",
+              status: (row.status as "ativo" | "inativo") || "ativo",
+              created_at: row.created_at || new Date().toISOString(),
+            }));
+
+          setProjetistas(list);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+          } catch (e) {
+            console.error("Erro ao salvar projetistas no localStorage", e);
+          }
         }
       } catch (err) {
         console.warn("Tabela projetistas ainda não acessível via API direta:", err);
       }
     };
 
-    // Sincronizar também com projetistas distintos de stock_proposals
-    const syncFromStockProposals = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("stock_proposals")
-          .select("projetista")
-          .not("projetista", "is", null)
-          .not("projetista", "eq", "");
-
-        if (error || !data || !isMounted) return;
-
-        const dbNames = [
-          ...new Set(
-            data
-              .map((row) => (row.projetista || "").trim().toUpperCase())
-              .filter((name) => Boolean(name) && name !== "NEY MEDEIROS" && name !== "NEY MEDEIRO")
-          ),
-        ];
-
-        setProjetistas((prev) => {
-          const existingKeys = new Set(prev.map((p) => p.name.toUpperCase().trim()));
-          const newEntries: Projetista[] = [];
-
-          dbNames.forEach((name) => {
-            if (!existingKeys.has(name)) {
-              newEntries.push({
-                id: `proj-db-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-                name: name,
-                cpf: "",
-                crea_cfta: "",
-                phone: "",
-                email: "",
-                status: "ativo",
-                created_at: new Date().toISOString(),
-              });
-              existingKeys.add(name);
-            }
-          });
-
-          if (newEntries.length > 0) {
-            return [...prev, ...newEntries];
-          }
-          return prev;
-        });
-      } catch (err) {
-        console.error("Erro ao sincronizar projetistas de stock_proposals:", err);
-      }
-    };
-
-    fetchFromSupabase().then(() => {
-      if (isMounted) syncFromStockProposals();
-    });
+    fetchFromSupabase();
 
     // Realtime channel para a tabela projetistas
     const channel = supabase
@@ -453,14 +374,38 @@ export function useProjetistasControl() {
       let deletedName = "";
       setProjetistas((prev) => {
         const target = prev.find((p) => p.id === id);
-        if (target) deletedName = target.name;
-        return prev.filter((p) => p.id !== id);
+        if (target) deletedName = target.name.trim().toUpperCase();
+        const updated = prev.filter(
+          (p) => p.id !== id && (deletedName ? p.name.trim().toUpperCase() !== deletedName : true)
+        );
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        } catch (e) {
+          console.error("Erro ao salvar no localStorage", e);
+        }
+        return updated;
       });
 
       try {
         await supabase.from("projetistas").delete().eq("id", id);
         if (deletedName) {
           await supabase.from("projetistas").delete().ilike("name", deletedName);
+
+          // Desvincular propostas associadas para que não fiquem presas a um projetista excluído
+          await Promise.allSettled([
+            supabase
+              .from("stock_proposals")
+              .update({ projetista: null })
+              .ilike("projetista", deletedName),
+            supabase
+              .from("proposals")
+              .update({ project_designer: null })
+              .ilike("project_designer", deletedName),
+            supabase
+              .from("team_members")
+              .delete()
+              .ilike("name", deletedName),
+          ]);
         }
       } catch (err) {
         console.warn("Exclusão no Supabase falhou:", err);
@@ -474,15 +419,33 @@ export function useProjetistasControl() {
 
       toast({
         title: "Projetista removido 🗑️",
-        description: `${deletedName || "O projetista"} foi excluído do sistema.`,
+        description: `${deletedName || "O projetista"} foi excluído com sucesso do sistema.`,
       });
     },
     [toast]
   );
 
   // Restaurar padrão
-  const resetToDefault = useCallback(() => {
+  const resetToDefault = useCallback(async () => {
     setProjetistas(DEFAULT_PROJETISTAS);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PROJETISTAS));
+      await supabase.from("projetistas").upsert(
+        DEFAULT_PROJETISTAS.map((p) => ({
+          id: p.id,
+          name: p.name,
+          cpf: p.cpf,
+          crea_cfta: p.crea_cfta,
+          phone: p.phone || "",
+          email: p.email || "",
+          status: p.status,
+          created_at: p.created_at,
+          updated_at: new Date().toISOString(),
+        }))
+      );
+    } catch (err) {
+      console.warn("Erro ao restaurar no Supabase:", err);
+    }
     toast({
       title: "Lista restaurada 🔄",
       description: "Lista de projetistas restaurada para o padrão completo com todos os projetistas.",
