@@ -634,14 +634,57 @@ export default function CertificatesAutomator() {
                         </Badge>
                       </td>
                       <td className="p-3.5 pr-6 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteCertificate(cert.id)}
-                          className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (cert.pdf_url) {
+                                const a = document.createElement("a");
+                                a.href = cert.pdf_url;
+                                a.download = cert.arquivo_nome || "Certidao_Receita_Federal.pdf";
+                                a.target = "_blank";
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                              } else {
+                                const printWindow = window.open("", "_blank");
+                                if (printWindow) {
+                                  printWindow.document.write(`
+                                    <html>
+                                      <head><title>Certidão - ${cert.nome}</title></head>
+                                      <body style="font-family: sans-serif; padding: 40px; line-height: 1.6;">
+                                        <h2>SECRETARIA ESPECIAL DA RECEITA FEDERAL DO BRASIL</h2>
+                                        <h3>${cert.situacao || "CERTIDÃO NEGATIVA"}</h3>
+                                        <p><strong>Titular:</strong> ${cert.nome}</p>
+                                        <p><strong>${cert.tipo}:</strong> ${cert.identificador}</p>
+                                        <p><strong>Emissão:</strong> ${cert.data_emissao ? new Date(cert.data_emissao).toLocaleDateString("pt-BR") : "—"}</p>
+                                        <p><strong>Validade:</strong> ${cert.data_validade ? new Date(cert.data_validade).toLocaleDateString("pt-BR") : "—"}</p>
+                                        <p><strong>Código de Controle:</strong> ${cert.codigo_controle || "RFB.REGULAR"}</p>
+                                        <script>window.print();</script>
+                                      </body>
+                                    </html>
+                                  `);
+                                  printWindow.document.close();
+                                }
+                              }
+                            }}
+                            className="h-7 px-2.5 text-[11px] font-bold text-emerald-700 border-emerald-300 bg-emerald-50 hover:bg-emerald-100"
+                            title="Baixar PDF da Certidão"
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            Baixar PDF
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteCertificate(cert.id)}
+                            className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                            title="Excluir Registro"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );

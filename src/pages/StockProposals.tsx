@@ -17,7 +17,7 @@ import {
   Loader2, Plus, Box, Calendar, FileText, Trash2, User, Landmark,
   Upload, Search, Filter, MapPin, AlertTriangle, CheckCircle2, XCircle, ShieldCheck,
   FileSpreadsheet, Download, Eye, ChevronDown, ChevronUp, Users, Hash, Send, RotateCcw,
-  Edit2, TrendingUp, DollarSign, Link2
+  Edit2, TrendingUp, DollarSign, Link2, FileCheck
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import jsPDF from "jspdf";
@@ -36,6 +36,7 @@ import { ProposalFlowTimeline } from "@/components/shared/ProposalFlowTimeline";
 import { useAppData } from "@/contexts/AppDataContext";
 import { useAgency } from "@/contexts/AgencyContext";
 import { generateExecutiveStockReport } from "@/utils/stockReportPdf";
+import { EmitCertidaoDialog } from "@/components/proposals/EmitCertidaoDialog";
 
 // ─── CSV parser (Force Refresh) ────────────────────────────────
 function parseCSVLine(line: string): string[] {
@@ -424,6 +425,8 @@ export default function StockProposals() {
   }, [statusFromUrl, projetistaFromUrl]);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [viewingDetailProposal, setViewingDetailProposal] = useState<StockProposal | null>(null);
+  const [certidaoProposal, setCertidaoProposal] = useState<StockProposal | null>(null);
+  const [isCertidaoDialogOpen, setIsCertidaoDialogOpen] = useState(false);
   const [selectedProposalIds, setSelectedProposalIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -2220,6 +2223,17 @@ export default function StockProposals() {
                               >
                                 <Edit2 className="h-3.5 w-3.5" />
                               </Button>
+                              <Button
+                                variant="outline" size="icon"
+                                className="h-8 w-8 text-teal-600 border-teal-200 bg-teal-50/50 hover:bg-teal-100 hover:text-teal-700 transition-colors shadow-sm"
+                                title="Emitir Certidão de Regularidade Fiscal"
+                                onClick={() => {
+                                  setCertidaoProposal(p);
+                                  setIsCertidaoDialogOpen(true);
+                                }}
+                              >
+                                <FileCheck className="h-3.5 w-3.5" />
+                              </Button>
                               {!(p.status || '').toUpperCase().includes("AUTORIZADO") ? (
                                 <Button
                                   variant="outline" size="icon"
@@ -2656,23 +2670,47 @@ export default function StockProposals() {
           </div>
 
           <DialogFooter className="bg-slate-50 p-5 border-t border-slate-200/80 flex justify-between items-center rounded-b-3xl">
-            <Button
-              variant="outline"
-              onClick={() => {
-                const current = viewingDetailProposal;
-                setViewingDetailProposal(null);
-                if (current) openEditDialog(current);
-              }}
-              className="rounded-xl font-bold text-xs h-10 border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-1.5"
-            >
-              <Edit2 className="h-3.5 w-3.5" /> Editar Proposta
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const current = viewingDetailProposal;
+                  if (current) {
+                    setCertidaoProposal(current);
+                    setIsCertidaoDialogOpen(true);
+                  }
+                }}
+                className="rounded-xl font-bold text-xs h-10 border-emerald-300 text-emerald-700 hover:bg-emerald-50 gap-1.5"
+              >
+                <FileCheck className="h-3.5 w-3.5 text-emerald-600" />
+                Emitir Certidão RFB
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const current = viewingDetailProposal;
+                  setViewingDetailProposal(null);
+                  if (current) openEditDialog(current);
+                }}
+                className="rounded-xl font-bold text-xs h-10 border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-1.5"
+              >
+                <Edit2 className="h-3.5 w-3.5" /> Editar Proposta
+              </Button>
+            </div>
             <Button variant="default" onClick={() => setViewingDetailProposal(null)} className="rounded-xl font-bold text-xs h-10 px-6 bg-slate-900 hover:bg-slate-800 text-white">
               Fechar Detalhes
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Janela / Modal de Emissão de Certidão de Regularidade Fiscal */}
+      <EmitCertidaoDialog
+        open={isCertidaoDialogOpen}
+        onOpenChange={setIsCertidaoDialogOpen}
+        proposal={certidaoProposal}
+        onSuccess={() => fetchProposals(true)}
+      />
     </div>
   );
 }
