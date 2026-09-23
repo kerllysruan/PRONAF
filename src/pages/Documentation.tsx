@@ -3374,56 +3374,89 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                           </p>
                         </div>
                       )}
-                      {items.map((item, idx) => (
-                        <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-                          {/* Quantidade */}
-                          <div className="col-span-2 md:col-span-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Quant.</label>
-                            <input
-                              type="number"
-                              value={item.quant}
-                              disabled
-                              className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
-                            />
-                          </div>
+                      {items.map((item: any, idx) => {
+                        const quant = Math.max(1, Number(item.quant) || 1);
+                        const valorTotal = Number(item.valor) || 0;
+                        const valorUnit = Number(item.valor_unitario) || (valorTotal > 0 ? valorTotal / quant : 0);
+                        const teto = Number(item.teto_maximo) || 0;
+                        const isExcesso = teto > 0 && (valorUnit - teto) > 0.01;
 
-                          {/* Unidade */}
-                          <div className="col-span-3 md:col-span-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Unid.</label>
-                            <input
-                              type="text"
-                              value={item.unid || "UNID"}
-                              disabled
-                              className="w-full px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
-                            />
-                          </div>
-
-                          {/* Nome / Descrição */}
-                          <div className="col-span-4 md:col-span-6">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Item / Inversão</label>
-                            <input
-                              type="text"
-                              value={item.nome}
-                              disabled
-                              className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-slate-500 cursor-not-allowed"
-                            />
-                          </div>
-
-                          {/* Valor Total */}
-                          <div className="col-span-3">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Valor Total (R$)</label>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                        return (
+                          <div key={idx} className={`grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border ${isExcesso ? 'border-rose-300 bg-rose-50/20' : 'border-slate-200'} shadow-sm`}>
+                            {/* Quantidade */}
+                            <div className="col-span-2 md:col-span-1">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Quant.</label>
                               <input
-                                type="text"
-                                value={new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.valor)}
+                                type="number"
+                                value={quant}
                                 disabled
-                                className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold bg-slate-50 text-slate-500 cursor-not-allowed"
+                                className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
                               />
                             </div>
+
+                            {/* Unidade */}
+                            <div className="col-span-2 md:col-span-1">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Unid.</label>
+                              <input
+                                type="text"
+                                value={item.unid || "UNID"}
+                                disabled
+                                className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-bold text-center bg-slate-50 text-slate-500 cursor-not-allowed"
+                              />
+                            </div>
+
+                            {/* Nome / Descrição */}
+                            <div className="col-span-8 md:col-span-5">
+                              <div className="flex items-center justify-between mb-1 ml-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase">Item / Inversão</label>
+                                {teto > 0 && (
+                                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${
+                                    isExcesso ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  }`}>
+                                    Teto: {formatCurrency(teto)}/{item.unid || 'UNID'} {isExcesso ? '⚠️ Excesso' : '✓ OK'}
+                                  </span>
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                value={item.nome}
+                                disabled
+                                className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold bg-slate-50 text-slate-500 cursor-not-allowed"
+                              />
+                            </div>
+
+                            {/* Valor Unitário */}
+                            <div className="col-span-6 md:col-span-2">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Valor Unit. (R$)</label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                                <input
+                                  type="text"
+                                  value={new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(valorUnit)}
+                                  disabled
+                                  className={`w-full pl-8 pr-2 py-1.5 border rounded-xl text-xs font-bold cursor-not-allowed ${
+                                    isExcesso ? 'bg-rose-50 border-rose-300 text-rose-700' : 'bg-slate-50 border-slate-200 text-slate-600'
+                                  }`}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Valor Total */}
+                            <div className="col-span-6 md:col-span-3">
+                              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1 block mb-1">Valor Total (R$)</label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                                <input
+                                  type="text"
+                                  value={new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(valorTotal)}
+                                  disabled
+                                  className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold bg-slate-50 text-slate-500 cursor-not-allowed"
+                                />
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
 
                       {/* Campo de Custo Assessoria */}
                       {custo > 0 && (

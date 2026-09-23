@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { MEDIA_CONFIG } from "@/config/imageConfig";
 // Trigger Vercel Build Sincronização 
 import { useSearchParams } from "react-router-dom";
@@ -11,6 +11,9 @@ import {
   DocumentationTokenWithProposal,
   getDocLabel,
 } from "@/types/documentation";
+import { InversaoCombobox } from "@/components/inversoes/InversaoCombobox";
+import { useInversoesReferencia } from "@/hooks/useInversoesReferencia";
+import { InversaoItem, InversaoReferencia } from "@/types/inversoes";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -131,11 +134,56 @@ export default function DocumentationSubmit() {
   const [carColetivoName, setCarColetivoName] = useState("");
   const [atividadePlano, setAtividadePlano] = useState("");
 
+  // Reference tables & Inversões hook
+  const { findReferencia } = useInversoesReferencia();
+
   // Inversões state
-  const [inversoes, setInversoes] = useState<{ quant: number; nome: string; valor: number; unid?: string }[]>([
-    { quant: 1, nome: "", valor: 0, unid: "UNID" }
+  const [inversoes, setInversoes] = useState<InversaoItem[]>([
+    { quant: 1, unid: "UNID", nome: "", valor_unitario: 0, valor: 0, teto_maximo: null, item_referencia_id: null }
   ]);
   const [custoAssessoria, setCustoAssessoria] = useState<number>(0);
+
+  // Proposta UF para precificação regional (se presente no município)
+  const propostaUf = useMemo(() => {
+    const mun = tokenData?.stock_proposals?.municipio || "";
+    const match = mun.match(/\b([A-Z]{2})\b/);
+    return match ? match[1] : undefined;
+  }, [tokenData]);
+
+  // Validador de item individual contra teto do BNB / PRONAF
+  const getItemValidation = useCallback((item: InversaoItem) => {
+    let teto = item.teto_maximo;
+    if (teto == null || teto === undefined) {
+      if (item.nome) {
+        const ref = findReferencia(item.item_referencia_id || item.nome);
+        if (ref) {
+          teto = (propostaUf && ref.precos_por_uf && ref.precos_por_uf[propostaUf])
+            ? ref.precos_por_uf[propostaUf]
+            : ref.valor_maximo;
+        }
+      }
+    }
+    const tetoNum = Number(teto) || 0;
+    if (tetoNum <= 0) {
+      return { hasExcesso: false, teto: 0, excessoUnitario: 0, valorUnit: item.valor_unitario };
+    }
+    const quant = Math.max(1, item.quant || 1);
+    const valorUnit = item.valor_unitario > 0 ? item.valor_unitario : (item.valor > 0 ? item.valor / quant : 0);
+    const excesso = valorUnit - tetoNum;
+    const hasExcesso = excesso > 0.01;
+    return {
+      hasExcesso,
+      teto: tetoNum,
+      excessoUnitario: Math.max(0, excesso),
+      valorUnit,
+    };
+  }, [findReferencia, propostaUf]);
+
+  const itensComExcesso = useMemo(() => {
+    return inversoes
+      .map((item, idx) => ({ ...item, idx, validation: getItemValidation(item) }))
+      .filter((i) => i.validation.hasExcesso);
+  }, [inversoes, getItemValidation]);
 
   const totalInversoes = useMemo(() => {
     const sumItems = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0);
@@ -143,7 +191,8 @@ export default function DocumentationSubmit() {
   }, [inversoes, custoAssessoria]);
 
   const estimatedValue = tokenData?.stock_proposals?.estimated_value || 0;
-  const isInversõesValidadas = Math.abs(totalInversoes - estimatedValue) < 0.01;
+  const isSomaValida = Math.abs(totalInversoes - estimatedValue) < 0.01;
+  const isInversõesValidadas = isSomaValida && itensComExcesso.length === 0;
 
   const formatInputMoney = (value: number) => {
     if (value === 0 || isNaN(value)) return "";
@@ -153,18 +202,145 @@ export default function DocumentationSubmit() {
     }).format(value);
   };
 
-  const handleMoneyChange = (idx: number, rawValue: string) => {
+  const handleItemSelect = (idx: number, nome: string, ref?: InversaoReferencia) => {
+    const updated = [...inversoes];
+    const current = updated[idx];
+    const quant = Math.max(1, current.quant || 1);
+
+    if (ref) {
+      let teto = ref.valor_maximo;
+      if (propostaUf && ref.precos_por_uf && ref.precos_por_uf[propostaUf]) {
+        teto = ref.precos_por_uf[propostaUf];
+      }
+      const unitVal = current.valor_unitario > 0 ? current.valor_unitario : 0;
+      const totalVal = unitVal > 0 ? Math.round(quant * unitVal * 100) / 100 : current.valor;
+
+      updated[idx] = {
+        ...current,
+        nome: ref.nome_completo,
+        unid: ref.unidade_padrao || current.unid || "UNID",
+        item_referencia_id: ref.id,
+        teto_maximo: teto,
+        valor_unitario: unitVal,
+        valor: totalVal,
+      };
+    } else {
+      const matched = findReferencia(nome);
+      let teto: number | null = null;
+      let refId: string | null = null;
+      let unidPadrao = current.unid || "UNID";
+
+      if (matched) {
+        refId = matched.id;
+        unidPadrao = matched.unidade_padrao || unidPadrao;
+        teto = (propostaUf && matched.precos_por_uf && matched.precos_por_uf[propostaUf])
+          ? matched.precos_por_uf[propostaUf]
+          : matched.valor_maximo;
+      }
+
+      updated[idx] = {
+        ...current,
+        nome: nome.toUpperCase(),
+        unid: unidPadrao,
+        item_referencia_id: refId,
+        teto_maximo: teto,
+      };
+    }
+    setInversoes(updated);
+  };
+
+  const handleQuantChange = (idx: number, rawQuant: number) => {
+    const quant = Math.max(1, rawQuant || 1);
+    const updated = [...inversoes];
+    const current = updated[idx];
+    let valorTotal = current.valor;
+    let valorUnit = current.valor_unitario;
+
+    if (valorUnit > 0) {
+      valorTotal = Math.round(quant * valorUnit * 100) / 100;
+    } else if (valorTotal > 0) {
+      valorUnit = Math.round((valorTotal / quant) * 100) / 100;
+    }
+
+    updated[idx] = {
+      ...current,
+      quant,
+      valor_unitario: valorUnit,
+      valor: valorTotal,
+    };
+    setInversoes(updated);
+  };
+
+  const handleUnitMoneyChange = (idx: number, rawValue: string) => {
     const cleanValue = rawValue.replace(/\D/g, "");
+    const updated = [...inversoes];
+    const current = updated[idx];
+    const quant = Math.max(1, current.quant || 1);
+
     if (!cleanValue) {
-      const updated = [...inversoes];
-      updated[idx].valor = 0;
+      updated[idx] = {
+        ...current,
+        valor_unitario: 0,
+        valor: 0,
+      };
       setInversoes(updated);
       return;
     }
+
     const numValue = parseFloat(cleanValue) / 100;
-    const updated = [...inversoes];
-    updated[idx].valor = numValue;
+    const total = Math.round(quant * numValue * 100) / 100;
+
+    updated[idx] = {
+      ...current,
+      valor_unitario: numValue,
+      valor: total,
+    };
     setInversoes(updated);
+  };
+
+  const handleTotalMoneyChange = (idx: number, rawValue: string) => {
+    const cleanValue = rawValue.replace(/\D/g, "");
+    const updated = [...inversoes];
+    const current = updated[idx];
+    const quant = Math.max(1, current.quant || 1);
+
+    if (!cleanValue) {
+      updated[idx] = {
+        ...current,
+        valor_unitario: 0,
+        valor: 0,
+      };
+      setInversoes(updated);
+      return;
+    }
+
+    const totalValue = parseFloat(cleanValue) / 100;
+    const unitValue = Math.round((totalValue / quant) * 100) / 100;
+
+    updated[idx] = {
+      ...current,
+      valor_unitario: unitValue,
+      valor: totalValue,
+    };
+    setInversoes(updated);
+  };
+
+  const handleAjustarParaTeto = (idx: number, teto: number) => {
+    const updated = [...inversoes];
+    const current = updated[idx];
+    const quant = Math.max(1, current.quant || 1);
+    const total = Math.round(quant * teto * 100) / 100;
+
+    updated[idx] = {
+      ...current,
+      valor_unitario: teto,
+      valor: total,
+    };
+    setInversoes(updated);
+    toast({
+      title: "Valor ajustado ao teto máximo",
+      description: `O valor unitário de "${current.nome || 'Item'}" foi ajustado para ${formatCurrency(teto)}.`,
+    });
   };
 
   // Global paste handler when mouse is hovering over a card
@@ -246,13 +422,32 @@ export default function DocumentationSubmit() {
       }
       if (data.stock_proposals?.inversoes) {
         const inv = data.stock_proposals.inversoes;
+        const parseItem = (item: any): InversaoItem => {
+          const quant = Math.max(1, Number(item.quant) || 1);
+          const valorTotal = Number(item.valor) || 0;
+          const valorUnit = Number(item.valor_unitario) || (valorTotal > 0 ? Math.round((valorTotal / quant) * 100) / 100 : 0);
+          return {
+            quant,
+            unid: item.unid || "UNID",
+            nome: item.nome || "",
+            valor_unitario: valorUnit,
+            valor: valorTotal,
+            item_referencia_id: item.item_referencia_id || null,
+            teto_maximo: item.teto_maximo != null ? Number(item.teto_maximo) : null,
+          };
+        };
+
         if (Array.isArray(inv)) {
-          setInversoes(inv as any);
+          setInversoes(inv.length > 0 ? inv.map(parseItem) : [
+            { quant: 1, unid: "UNID", nome: "", valor_unitario: 0, valor: 0, teto_maximo: null, item_referencia_id: null }
+          ]);
           setCustoAssessoria(0);
         } else if (inv && typeof inv === "object") {
           const obj = inv as any;
           if (Array.isArray(obj.items)) {
-            setInversoes(obj.items);
+            setInversoes(obj.items.length > 0 ? obj.items.map(parseItem) : [
+              { quant: 1, unid: "UNID", nome: "", valor_unitario: 0, valor: 0, teto_maximo: null, item_referencia_id: null }
+            ]);
           }
           if (typeof obj.custoAssessoria === "number") {
             setCustoAssessoria(obj.custoAssessoria);
@@ -465,7 +660,17 @@ export default function DocumentationSubmit() {
   async function handleSubmit() {
     if (!tokenData || !token || selectedCount < missingOrRejectedCount) return;
 
-    // Validação das Inversões
+    // Validação de teto das Inversões
+    if (itensComExcesso.length > 0) {
+      toast({
+        title: "Inversões com Valor Acima do Teto",
+        description: `Existem ${itensComExcesso.length} item(ns) com valor unitário acima do teto estipulado pela tabela do BNB/PRONAF. Ajuste os valores destacados para prosseguir!`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validação da soma das Inversões
     const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) + custoAssessoria;
     const estimatedValue = tokenData.stock_proposals?.estimated_value || 0;
     if (Math.abs(totalInversoes - estimatedValue) >= 0.01) {
@@ -538,7 +743,17 @@ export default function DocumentationSubmit() {
   async function handleResubmit() {
     if (!tokenData || !token || selectedCount === 0) return;
 
-    // Validação das Inversões
+    // Validação de teto das Inversões
+    if (itensComExcesso.length > 0) {
+      toast({
+        title: "Inversões com Valor Acima do Teto",
+        description: `Existem ${itensComExcesso.length} item(ns) com valor unitário acima do teto estipulado pela tabela do BNB/PRONAF. Ajuste os valores destacados para prosseguir!`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validação da soma das Inversões
     const totalInversoes = inversoes.reduce((acc, item) => acc + (Number(item.valor) || 0), 0) + custoAssessoria;
     const estimatedValue = tokenData.stock_proposals?.estimated_value || 0;
     if (Math.abs(totalInversoes - estimatedValue) >= 0.01) {
@@ -1387,17 +1602,19 @@ export default function DocumentationSubmit() {
                     <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200/80 shadow-sm w-fit">
                       <span className="text-emerald-700 text-base">📊</span>
                       <p className="text-emerald-900 text-xs font-black uppercase tracking-widest">
-                        INVERSÕES DO PLANO
+                        INVERSÕES DO PLANO (PREÇOS REFERENCIAIS BNB/PRONAF)
                       </p>
                     </div>
                     {/* Validador de Valor da Proposta */}
                     <div className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-300 ${
-                      Math.abs(totalInversoes - estimatedValue) < 0.01 
+                      isInversõesValidadas
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
                         : 'bg-rose-50 border-rose-200 text-rose-700'
                     }`}>
-                      {Math.abs(totalInversoes - estimatedValue) < 0.01 ? (
-                        <span>✅ Inversões validadas! Soma bate 100% com o valor proposto: {formatCurrency(estimatedValue)}</span>
+                      {isInversõesValidadas ? (
+                        <span>✅ Inversões validadas! Itens dentro do teto e soma bate 100%: {formatCurrency(estimatedValue)}</span>
+                      ) : itensComExcesso.length > 0 ? (
+                        <span>⚠️ Atenção: {itensComExcesso.length} item(ns) acima do teto máximo permitido!</span>
                       ) : (
                         <span>⚠️ Soma divergente: {formatCurrency(totalInversoes)} (Proposta: {formatCurrency(estimatedValue)})</span>
                       )}
@@ -1405,102 +1622,191 @@ export default function DocumentationSubmit() {
                   </div>
 
                   <p className="text-xs text-slate-600 mb-4 font-semibold leading-relaxed">
-                    Informe detalhadamente os itens de investimento que compõem o plano de negócio da operação. O total, a quantidade e a nomenclatura dos itens devem ser exatamente iguais ao proposto no plano assinado e eletrônico!
+                    Informe detalhadamente os itens de investimento que compõem o plano de negócio da operação utilizando os preços referenciais oficiais do PRONAF/BNB. O valor unitário de cada item não pode ultrapassar o teto máximo permitido pelo banco.
                   </p>
 
-                  <div className="space-y-3">
-                    {inversoes.map((item, idx) => (
-                      <div key={idx} className="grid grid-cols-12 gap-3 items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm animate-fade-in text-slate-800">
-                        {/* Quantidade */}
-                        <div className="col-span-2 md:col-span-1">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Qtd.</label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={item.quant}
-                            onChange={(e) => {
-                              const updated = [...inversoes];
-                              updated[idx].quant = Math.max(1, parseInt(e.target.value) || 1);
-                              setInversoes(updated);
-                            }}
-                            className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground text-center"
-                          />
-                        </div>
-
-                        {/* Unidade */}
-                        <div className="col-span-3 md:col-span-2">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Unid.</label>
-                          <select
-                            value={item.unid || "UNID"}
-                            onChange={(e) => {
-                              const updated = [...inversoes];
-                              updated[idx].unid = e.target.value;
-                              setInversoes(updated);
-                            }}
-                            className="w-full px-2 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground cursor-pointer h-[32px]"
-                          >
-                            <option value="UNID">UNID</option>
-                            <option value="CX">CX</option>
-                            <option value="SC">SC</option>
-                            <option value="T">T</option>
-                            <option value="HECT">HECT</option>
-                          </select>
-                        </div>
-
-                        {/* Nome / Descrição */}
-                        <div className="col-span-3 md:col-span-5">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Item / Inversão</label>
-                          <input
-                            type="text"
-                            placeholder="Ex: Aquisição de Bovinos de Leite"
-                            value={item.nome}
-                            onChange={(e) => {
-                              const updated = [...inversoes];
-                              updated[idx].nome = e.target.value.toUpperCase();
-                              setInversoes(updated);
-                            }}
-                            className="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground uppercase"
-                          />
-                        </div>
-
-                        {/* Valor Total */}
-                        <div className="col-span-3">
-                          <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Valor Total (R$)</label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
-                            <input
-                              type="text"
-                              placeholder="0,00"
-                              value={formatInputMoney(item.valor)}
-                              onChange={(e) => handleMoneyChange(idx, e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Ações */}
-                        <div className="col-span-1 flex justify-center pt-5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (inversoes.length > 1) {
-                                setInversoes(inversoes.filter((_, i) => i !== idx));
-                              } else {
-                                setInversoes([{ quant: 1, nome: "", valor: 0 }]);
-                              }
-                            }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                  {/* Banner de alerta geral se houver excesso */}
+                  {itensComExcesso.length > 0 && (
+                    <div className="mb-5 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 flex items-start gap-3 animate-fade-in">
+                      <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+                      <div className="text-xs space-y-1">
+                        <p className="font-bold text-rose-950">Atenção: Limite Máximo da Tabela PRONAF Ultrapassado</p>
+                        <p className="text-rose-800 leading-relaxed">
+                          {itensComExcesso.length === 1 
+                            ? "Existe 1 item com valor unitário acima do teto estipulado pelo BNB/PRONAF. Clique no botão de correção rápida 'Corrigir p/ Máximo' no item correspondente para ajustar."
+                            : `Existem ${itensComExcesso.length} itens com valor unitário acima do teto estipulado pelo BNB/PRONAF. Use os botões de correção rápida nos itens para ajustar ao teto máximo.`}
+                        </p>
                       </div>
-                    ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    {inversoes.map((item, idx) => {
+                      const validation = getItemValidation(item);
+                      const hasTeto = validation.teto > 0;
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-3.5 rounded-2xl border transition-all duration-200 shadow-sm ${
+                            validation.hasExcesso
+                              ? 'bg-rose-50/40 border-rose-300 ring-2 ring-rose-200/80'
+                              : 'bg-white border-slate-200'
+                          } text-slate-800`}
+                        >
+                          <div className="grid grid-cols-12 gap-3 items-center">
+                            {/* Quantidade */}
+                            <div className="col-span-3 sm:col-span-2 md:col-span-1">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Qtd.</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.quant}
+                                onChange={(e) => handleQuantChange(idx, parseInt(e.target.value) || 1)}
+                                className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground text-center"
+                              />
+                            </div>
+
+                            {/* Unidade */}
+                            <div className="col-span-3 sm:col-span-2 md:col-span-1">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Unid.</label>
+                              <select
+                                value={item.unid || "UNID"}
+                                onChange={(e) => {
+                                  const updated = [...inversoes];
+                                  updated[idx] = { ...updated[idx], unid: e.target.value };
+                                  setInversoes(updated);
+                                }}
+                                className="w-full px-1 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground cursor-pointer h-[34px] text-center"
+                              >
+                                <option value="UNID">UNID</option>
+                                <option value="CAB">CAB</option>
+                                <option value="HECT">HECT</option>
+                                <option value="KG">KG</option>
+                                <option value="SC">SC</option>
+                                <option value="CX">CX</option>
+                                <option value="T">T</option>
+                                <option value="M">M</option>
+                                <option value="M²">M²</option>
+                                <option value="M³">M³</option>
+                                <option value="DZ">DZ</option>
+                                <option value="LT">LT</option>
+                                <option value="DIA">DIA</option>
+                                {item.unid && !["UNID","CAB","HECT","KG","SC","CX","T","M","M²","M³","DZ","LT","DIA"].includes(item.unid) && (
+                                  <option value={item.unid}>{item.unid}</option>
+                                )}
+                              </select>
+                            </div>
+
+                            {/* Nome / Inversão (InversaoCombobox) */}
+                            <div className="col-span-6 sm:col-span-8 md:col-span-5">
+                              <div className="flex items-center justify-between mb-1 ml-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase">Item / Inversão</label>
+                                {hasTeto && (
+                                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${
+                                    validation.hasExcesso
+                                      ? 'text-rose-700 bg-rose-100 border-rose-200'
+                                      : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                                  }`}>
+                                    Teto BNB: {formatCurrency(validation.teto)}/{item.unid || 'UNID'}
+                                  </span>
+                                )}
+                              </div>
+                              <InversaoCombobox
+                                value={item.nome}
+                                onChange={(nome, ref) => handleItemSelect(idx, nome, ref)}
+                                placeholder="Busque ou digite a inversão (ex: Bovinos, Matrizes, Cerca)..."
+                              />
+                            </div>
+
+                            {/* Valor Unitário (R$) */}
+                            <div className="col-span-6 sm:col-span-5 md:col-span-2">
+                              <div className="flex items-center justify-between mb-1 ml-1">
+                                <label className="text-[10px] font-bold text-slate-500 uppercase">
+                                  Valor Unit. (R$)
+                                </label>
+                              </div>
+                              <div className="relative">
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                                <input
+                                  type="text"
+                                  placeholder="0,00"
+                                  value={formatInputMoney(item.valor_unitario)}
+                                  onChange={(e) => handleUnitMoneyChange(idx, e.target.value)}
+                                  className={`w-full pl-8 pr-2 py-1.5 border rounded-xl text-xs font-semibold focus:outline-none transition-colors ${
+                                    validation.hasExcesso
+                                      ? 'border-rose-400 focus:ring-2 focus:ring-rose-500 bg-rose-50/70 text-rose-900 font-bold'
+                                      : 'border-slate-200 focus:ring-2 focus:ring-emerald-500 bg-background text-foreground'
+                                  }`}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Valor Total (R$) */}
+                            <div className="col-span-5 sm:col-span-5 md:col-span-2">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase ml-1 block mb-1">Valor Total (R$)</label>
+                              <div className="relative">
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">R$</span>
+                                <input
+                                  type="text"
+                                  placeholder="0,00"
+                                  value={formatInputMoney(item.valor)}
+                                  onChange={(e) => handleTotalMoneyChange(idx, e.target.value)}
+                                  className="w-full pl-8 pr-2 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-background text-foreground"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Ações */}
+                            <div className="col-span-1 sm:col-span-2 md:col-span-1 flex justify-center pt-5">
+                              <button
+                                type="button"
+                                title="Excluir item"
+                                onClick={() => {
+                                  if (inversoes.length > 1) {
+                                    setInversoes(inversoes.filter((_, i) => i !== idx));
+                                  } else {
+                                    setInversoes([{ quant: 1, unid: "UNID", nome: "", valor_unitario: 0, valor: 0, teto_maximo: null, item_referencia_id: null }]);
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Banner de Erro com Botão de Correção Imediata se passar do teto */}
+                          {validation.hasExcesso && (
+                            <div className="mt-3 p-3 rounded-xl bg-rose-100/70 border border-rose-300 text-rose-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+                              <div className="flex items-start sm:items-center gap-2">
+                                <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5 sm:mt-0" />
+                                <span className="text-xs">
+                                  <strong>Valor acima do teto!</strong> O valor unitário de{" "}
+                                  <span className="font-bold underline">{formatCurrency(validation.valorUnit)}</span>{" "}
+                                  ultrapassa o teto máximo de{" "}
+                                  <span className="font-bold text-rose-950">{formatCurrency(validation.teto)}</span> por {item.unid || "UNID"}{" "}
+                                  (excesso de {formatCurrency(validation.excessoUnitario)} por {item.unid || "UNID"}).
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => handleAjustarParaTeto(idx, validation.teto)}
+                                className="h-7 text-xs bg-rose-700 hover:bg-rose-800 text-white font-bold shadow-sm shrink-0 self-start sm:self-auto"
+                              >
+                                Corrigir p/ Máximo ({formatCurrency(validation.teto)})
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setInversoes([...inversoes, { quant: 1, nome: "", valor: 0, unid: "UNID" }])}
+                    onClick={() => setInversoes([...inversoes, { quant: 1, unid: "UNID", nome: "", valor_unitario: 0, valor: 0, teto_maximo: null, item_referencia_id: null }])}
                     className="mt-4 px-4 py-2 border border-dashed border-emerald-300 text-emerald-700 hover:bg-emerald-50/50 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 w-full md:w-auto bg-background"
                   >
                     <Plus className="h-3.5 w-3.5" />

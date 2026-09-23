@@ -51,12 +51,21 @@ app.get("/health", (req, res) => {
  * POST /emitir-certidao-pf
  * Body: { cpf, data_nascimento, proposta_id, nome }
  *
- * Fluxo:
- *  1. Playwright abre o portal da Receita Federal (https://servicos.receitafederal.gov.br/servico/certidoes/#/home/cpf)
- *  2. Intercepta a resposta da API POST /Emissao que retorna o PDF em base64
- *  3. Decodifica o base64 → buffer → upload no Supabase Storage
- *  4. Grava registro em certidoes_produtores
- *  5. Retorna pdf_url público
+ * Fluxo oficial da Receita Federal:
+ *  1. Acessa: https://servicos.receitafederal.gov.br/servico/certidoes/#/home/cpf
+ *  2. Preenche CPF e Data de Nascimento
+ *  3. Clica em "Emitir Certidão"
+ *  4. Se houver modal de certidão existente ("Segunda Via"), clica em "Emitir Nova Certidão"
+ *  5. Aguarda a navegação OBRIGATÓRIA para:
+ *     https://servicos.receitafederal.gov.br/servico/certidoes/#/home/cpf/resultado
+ *  6. Na página #/home/cpf/resultado, extrai o PDF através de 4 camadas de garantia:
+ *     - Evento automático de download disparado pelo site
+ *     - Clique no link manual de download (a[download]) na página
+ *     - Leitura direta do blob: via evaluate(fetch(href)) no navegador
+ *     - Resposta da API /Emissao (campo pdf em base64) interceptada na página de resultado
+ *  7. Valida se o arquivo é um PDF íntegro (%PDF-)
+ *  8. Envia o PDF oficial para o Supabase Storage (bucket 'certidoes')
+ *  9. Salva no banco de dados e retorna o link para download direto
  */
 app.post("/emitir-certidao-pf", authenticate, async (req, res) => {
   const { cpf, data_nascimento, proposta_id, nome } = req.body;
@@ -80,48 +89,37 @@ app.post("/emitir-certidao-pf", authenticate, async (req, res) => {
     });
   }
 
-  // Format date as DD/MM/YYYY for input
   const formattedBirth = `${cleanBirth.slice(0, 2)}/${cleanBirth.slice(2, 4)}/${cleanBirth.slice(4, 8)}`;
 
-  console.log(
-    `[EMISSÃO INICIADA] CPF: ${cleanCpf} | Nasc: ${formattedBirth} | Proposta: ${proposta_id || "avulsa"}`
-  );
+  console.log(`================================================================`);
+  console.log(`[INÍCIO EMISSÃO] CPF: ${cleanCpf} | Nascimento: ${formattedBirth}`);
+  console.log(`Proposta: ${proposta_id || "Avulsa"} | Nome: ${nome || "Não informado"}`);
+  console.log(`================================================================`);
 
   let browser = null;
 
   try {
-    // 1. Iniciar Playwright Chromium
+    // 1. Iniciar Playwright Chromium com downloads habilitados
     browser = await chromium.launch({
       headless: true,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-blink-features=AutomationControlled",
-        "--disable-web-security",
-        "--disable-features=IsolateOrigins,site-per-process",
       ],
     });
 
     const context = await browser.newContext({
+      acceptDownloads: true,
       viewport: { width: 1280, height: 900 },
       userAgent:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-      // Hide webdriver flag
-      javaScriptEnabled: true,
-    });
-
-    // Remove webdriver property
-    await context.addInitScript(() => {
-      Object.defineProperty(navigator, "webdriver", { get: () => undefined });
     });
 
     const page = await context.newPage();
 
-    // 2. Interceptar a resposta da API /Emissao para capturar o PDF em base64
+    // 2. Interceptar a resposta da API /Emissao para metadados e garantia
     let capturedApiResponse = null;
-    let capturedEmissaoError = null;
-
-    // Intercepta respostas do endpoint /Emissao (não /verificar)
     page.on("response", async (response) => {
       const url = response.url();
       const method = response.request().method();
@@ -131,234 +129,261 @@ app.post("/emitir-certidao-pf", authenticate, async (req, res) => {
         !url.includes("/hcaptcha") &&
         method === "POST"
       ) {
-        console.log(`[API INTERCEPT] POST ${url} → status ${response.status()}`);
         try {
           const body = await response.json();
-          console.log(
-            `[API INTERCEPT] statusEmissao: ${body.statusEmissao}, has pdf: ${!!body.pdf}`
-          );
+          console.log(`[API /Emissao] Resposta capturada. statusEmissao=${body.statusEmissao}, tem PDF=${!!body.pdf}`);
           capturedApiResponse = body;
-        } catch (e) {
-          console.warn("[API INTERCEPT] Não foi possível parsear JSON da resposta:", e.message);
-        }
+        } catch (_) {}
       }
     });
 
-    // 3. Acessar portal da Receita Federal
-    const targetUrl = "https://servicos.receitafederal.gov.br/servico/certidoes/#/home/cpf";
-    console.log(`-> Navegando para: ${targetUrl}`);
-    await page.goto(targetUrl, { waitUntil: "networkidle", timeout: 45000 });
-    await page.waitForTimeout(2000);
+    // 3. Acessar o formulário inicial da Receita Federal
+    const homeUrl = "https://servicos.receitafederal.gov.br/servico/certidoes/#/home/cpf";
+    console.log(`-> Acessando: ${homeUrl}`);
+    await page.goto(homeUrl, { waitUntil: "domcontentloaded", timeout: 35000 });
 
-    // Fechar aviso de cookies se presente
+    // Aguardar campos do formulário
+    const cpfInput = page.locator('input[name="niContribuinte"]').first();
+    await cpfInput.waitFor({ state: "visible", timeout: 15000 });
+
+    // Fechar cookies se presente
     try {
       const cookieBtn = page.locator('button:has-text("Aceitar")').first();
       if (await cookieBtn.isVisible({ timeout: 2000 })) {
         await cookieBtn.click();
-        await page.waitForTimeout(500);
+        console.log("-> Aviso de cookies aceito.");
       }
     } catch (_) {}
 
     // 4. Preencher CPF e Data de Nascimento
-    const cpfInput = page.locator('input[name="niContribuinte"]').first();
-    await cpfInput.waitFor({ timeout: 10000 });
+    console.log("-> Preenchendo campos do formulário...");
     await cpfInput.click();
     await cpfInput.fill(cleanCpf);
     await page.waitForTimeout(300);
 
     const birthInput = page.locator('input[name="dataNascimento"]').first();
-    await birthInput.waitFor({ timeout: 10000 });
     await birthInput.click();
     await birthInput.fill(formattedBirth);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(400);
 
-    // 5. Clicar em "Emitir Certidão" — aguardar resposta da API
-    console.log('-> Clicando em "Emitir Certidão"...');
-    const emitirBtn = page
-      .locator(
-        'button[type="submit"]:has-text("Emitir Certidão"), button.br-button.primary.btn-acao-3:has-text("Emitir")'
-      )
-      .first();
+    // 5. Preparar escuta de evento de download antes do clique
+    const downloadPromise = page.waitForEvent("download", { timeout: 40000 }).catch(() => null);
 
-    // Aguardar resposta da API /Emissao OU timeout
-    const [apiResponsePromise] = await Promise.allSettled([
-      page.waitForResponse(
-        (response) => {
-          const url = response.url();
-          return (
-            url.includes("/Emissao") &&
-            !url.includes("/verificar") &&
-            response.request().method() === "POST"
-          );
-        },
-        { timeout: 40000 }
-      ),
-    ]);
-
-    // Clicar após configurar o listener
+    // 6. Clicar em "Emitir Certidão"
+    console.log("-> Clicando em 'Emitir Certidão'...");
+    const emitirBtn = page.locator('button[type="submit"]:has-text("Emitir Certidão")').first();
     await emitirBtn.click();
-    console.log("-> Botão clicado. Aguardando resposta da Receita Federal...");
 
-    // Aguardar processamento completo (inclui polling se necessário)
-    await page.waitForTimeout(5000);
+    // 7. Aguardar processamento da validação (3 a 5 segundos)
+    await page.waitForTimeout(4000);
 
-    // Tentar aguardar mais tempo se necessário
-    let waitCount = 0;
-    while (!capturedApiResponse && waitCount < 8) {
-      await page.waitForTimeout(2000);
-      waitCount++;
-      console.log(`-> Aguardando resposta da API... (${waitCount * 2}s / 16s)`);
-    }
-
-    // Verificar erros na página (erro de captcha, divergência cadastral, etc.)
+    // Verificar se modal de certidão existente ("Segunda Via") apareceu
     try {
-      const errorLocator = page
-        .locator('.alert-danger, .msg-erro, [class*="erro"], [class*="alert-info"]')
-        .first();
-      if (await errorLocator.isVisible({ timeout: 1500 })) {
-        const errText = (await errorLocator.textContent()) || "";
-        if (
-          errText.toLowerCase().includes("divergência") ||
-          errText.toLowerCase().includes("inválido") ||
-          errText.toLowerCase().includes("não foi possível") ||
-          errText.toLowerCase().includes("pendência")
-        ) {
-          console.warn(`[ERRO RECEITA] ${errText.trim()}`);
-          await browser.close();
-          return res.status(422).json({
-            success: false,
-            situacao: "NÃO EMITIDA",
-            error: errText.trim(),
-          });
+      const modalSegundaVia = page.locator('.modal-segunda-via, text="Certidão Válida Encontrada", text="Já existe uma certidão válida"').first();
+      if (await modalSegundaVia.isVisible({ timeout: 2000 })) {
+        console.log('[MODAL SEGUNDA VIA] Certidão existente encontrada. Clicando em "Emitir Nova Certidão"...');
+        const btnNova = page.locator('button:has-text("Emitir Nova Certidão")').first();
+        if (await btnNova.isVisible({ timeout: 2000 })) {
+          await btnNova.click();
+        } else {
+          const btnConsultar = page.locator('button:has-text("Consultar Certidão")').first();
+          await btnConsultar.click();
         }
       }
     } catch (_) {}
 
-    // 6. Processar resposta capturada da API
-    if (!capturedApiResponse) {
-      // Tentar extrair dados da página renderizada como fallback
-      console.warn(
-        "[AVISO] Resposta da API não capturada. Tentando extrair dados da página renderizada..."
-      );
+    // 8. Aguardar navegação até a página de resultado da certidão:
+    // https://servicos.receitafederal.gov.br/servico/certidoes/#/home/cpf/resultado
+    console.log("-> Aguardando navegação para: #/home/cpf/resultado ...");
+    let chegouAoResultado = false;
+    try {
+      await page.waitForURL("**/resultado**", { timeout: 15000 });
+      chegouAoResultado = true;
+      console.log(`-> SUCESSO: Navegou para a página de resultado: ${page.url()}`);
+    } catch (_) {
+      console.log(`-> Não navegou para resultado. URL atual: ${page.url()}`);
+    }
 
-      const pageText = await page.innerText("body").catch(() => "");
-      let situacao = "CERTIDÃO NEGATIVA";
-      if (pageText.includes("POSITIVA COM EFEITO DE NEGATIVA")) {
-        situacao = "POSITIVA COM EFEITO DE NEGATIVA";
-      } else if (pageText.includes("CERTIDÃO POSITIVA") || pageText.includes("PENDÊNCIAS")) {
-        situacao = "COM PENDÊNCIA";
+    // Se NÃO chegou à página de resultado, extrair os alertas de erro da Receita Federal
+    if (!chegouAoResultado) {
+      const errTexts = await page
+        .locator('.br-message, .alert, [class*="feedback"], [class*="erro"], text="Mensagem de Erro", text="Não foi possível"')
+        .allInnerTexts()
+        .catch(() => []);
+
+      let errorMsg = "A Receita Federal não avançou para a página de resultado da certidão.";
+      if (errTexts.length > 0) {
+        const cleanTexts = errTexts
+          .map((t) => t.replace(/Fechar/g, "").replace(/\s+/g, " ").trim())
+          .filter((t) => t.length > 5);
+        if (cleanTexts.length > 0) {
+          errorMsg = cleanTexts.join(" | ");
+        }
       }
-
-      // Último recurso: gerar PDF via page.pdf() da página de resultado
-      const tempFileName = `CPF_${cleanCpf}_${Date.now()}.pdf`;
-      const tempFilePath = path.join(__dirname, tempFileName);
-      await page.pdf({
-        path: tempFilePath,
-        format: "A4",
-        printBackground: true,
-        margin: { top: "10mm", bottom: "10mm", left: "10mm", right: "10mm" },
-      });
 
       await browser.close();
       browser = null;
 
-      const fileBuffer = fs.readFileSync(tempFilePath);
-      try {
-        fs.unlinkSync(tempFilePath);
-      } catch (_) {}
-
-      // Verificar se é PDF válido
-      const isPdfValid = fileBuffer.slice(0, 5).toString() === "%PDF-";
-      console.log(
-        `[FALLBACK PDF] Tamanho: ${fileBuffer.length} bytes, válido: ${isPdfValid}`
-      );
-
-      const storagePath = `certidoes_pf/${tempFileName}`;
-      const { error: uploadError } = await supabase.storage
-        .from(BUCKET_NAME)
-        .upload(storagePath, fileBuffer, { contentType: "application/pdf", upsert: true });
-
-      let pdfUrl = null;
-      if (!uploadError) {
-        const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(storagePath);
-        pdfUrl = urlData?.publicUrl || null;
-      }
-
-      return res.status(200).json({
-        success: true,
-        situacao,
-        data_emissao: new Date().toLocaleDateString("pt-BR"),
-        data_validade: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-BR"),
-        pdf_url: pdfUrl,
-        arquivo_nome: tempFileName,
-        aviso: "PDF gerado via renderização de página (API não capturada)",
+      console.warn(`[ERRO NA EMISSÃO RECEITA] ${errorMsg}`);
+      return res.status(422).json({
+        success: false,
+        situacao: "NÃO EMITIDA",
+        error: errorMsg,
       });
     }
 
+    // 9. CAPTURAR O PDF OFICIAL NA PÁGINA DE RESULTADO
+    // (https://servicos.receitafederal.gov.br/servico/certidoes/#/home/cpf/resultado)
+    console.log("-> Extraindo o PDF oficial gerado na página de resultado...");
+    let downloadedPdfBuffer = null;
+    let nomeArquivoBaixado = `Certidao_${cleanCpf}.pdf`;
+
+    // Camada 1: Evento automático de download do navegador disparado na página
+    const autoDownload = await downloadPromise;
+    if (autoDownload) {
+      console.log(`-> [DOWNLOAD CAMADA 1 - OK] Evento automático disparado: ${autoDownload.suggestedFilename()}`);
+      nomeArquivoBaixado = autoDownload.suggestedFilename();
+      const tempPath = path.join(__dirname, `temp_auto_${Date.now()}_${nomeArquivoBaixado}`);
+      await autoDownload.saveAs(tempPath);
+      downloadedPdfBuffer = fs.readFileSync(tempPath);
+      try { fs.unlinkSync(tempPath); } catch (_) {}
+    }
+
+    // Camada 2: Clicar no link manual "download do documento PDF da certidão" presente na página
+    if (!downloadedPdfBuffer) {
+      console.log("-> Tentando Camada 2: Link manual de download na página de resultado...");
+      try {
+        const manualLink = page
+          .locator('a[download], a:has-text("download do documento PDF"), a:has-text("download")')
+          .first();
+
+        if (await manualLink.isVisible({ timeout: 6000 })) {
+          console.log("-> Link manual visível. Clicando...");
+          const [manualDownload] = await Promise.all([
+            page.waitForEvent("download", { timeout: 15000 }).catch(() => null),
+            manualLink.click(),
+          ]);
+
+          if (manualDownload) {
+            console.log(`-> [DOWNLOAD CAMADA 2 - OK] Baixado via link: ${manualDownload.suggestedFilename()}`);
+            nomeArquivoBaixado = manualDownload.suggestedFilename();
+            const tempPath = path.join(__dirname, `temp_manual_${Date.now()}_${nomeArquivoBaixado}`);
+            await manualDownload.saveAs(tempPath);
+            downloadedPdfBuffer = fs.readFileSync(tempPath);
+            try { fs.unlinkSync(tempPath); } catch (_) {}
+          }
+        }
+      } catch (e2) {
+        console.warn("-> Camada 2 aviso:", e2.message);
+      }
+    }
+
+    // Camada 3: Leitura direta do objeto blob: URL gerado no DOM da página
+    if (!downloadedPdfBuffer) {
+      console.log("-> Tentando Camada 3: Extrair conteúdo do blob URL no navegador...");
+      try {
+        const manualLink = page
+          .locator('a[download], a:has-text("download do documento PDF"), a:has-text("download")')
+          .first();
+
+        const blobHref = await manualLink.getAttribute("href").catch(() => null);
+        if (blobHref && blobHref.startsWith("blob:")) {
+          console.log(`-> Blob URL encontrado: ${blobHref}. Baixando diretamente via evaluate...`);
+          const base64Data = await page.evaluate(async (url) => {
+            const res = await fetch(url);
+            const blob = await res.blob();
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const resStr = reader.result;
+                resolve(resStr.split(",")[1]);
+              };
+              reader.readAsDataURL(blob);
+            });
+          }, blobHref);
+
+          if (base64Data) {
+            console.log("-> [DOWNLOAD CAMADA 3 - OK] Blob extraído com sucesso!");
+            downloadedPdfBuffer = Buffer.from(base64Data, "base64");
+          }
+        }
+      } catch (e3) {
+        console.warn("-> Camada 3 aviso:", e3.message);
+      }
+    }
+
+    // Camada 4: Utilizar o PDF oficial retornado em base64 pela chamada da API /Emissao
+    if (!downloadedPdfBuffer && capturedApiResponse?.pdf) {
+      console.log("-> [DOWNLOAD CAMADA 4 - OK] Utilizando PDF retornado na resposta da API /Emissao da página de resultado.");
+      downloadedPdfBuffer = Buffer.from(capturedApiResponse.pdf, "base64");
+    }
+
+    // Fechar o navegador
     await browser.close();
     browser = null;
 
-    // 7. Decodificar PDF base64 da resposta da API
-    const apiBody = capturedApiResponse;
-    const statusEmissao = apiBody.statusEmissao || "";
-    const pdfBase64 = apiBody.pdf || null;
-
-    // Mapear statusEmissao para situação legível
-    let situacao = "CERTIDÃO NEGATIVA";
-    if (statusEmissao === "Sucesso" || statusEmissao === "Emitida") {
-      situacao = "CERTIDÃO NEGATIVA";
-    } else if (statusEmissao === "EmProcessamento") {
-      situacao = "EM PROCESSAMENTO";
-    } else if (statusEmissao === "SemDireitoCertidao") {
-      situacao = "COM PENDÊNCIA";
-    } else if (apiBody.mensagem?.texto) {
-      situacao = apiBody.mensagem.texto.substring(0, 50);
-    }
-
-    // Extrair código de controle e validade da mensagem HTML
-    let codigoControle = null;
-    let dataValidade = null;
-    const htmlMensagem = apiBody.mensagem?.texto || "";
-
-    const codigoMatch = htmlMensagem.match(/Código de controle[^:]*:\s*([A-Z0-9.\-]+)/i);
-    if (codigoMatch) codigoControle = codigoMatch[1].trim();
-
-    const validadeMatch = htmlMensagem.match(/Válida até\s*([0-9/]{10})/i);
-    if (validadeMatch) dataValidade = validadeMatch[1].trim();
-
-    if (!pdfBase64) {
-      console.warn(`[AVISO] API respondeu mas sem campo 'pdf'. statusEmissao: ${statusEmissao}`);
-      return res.status(422).json({
+    // 10. Validação de integridade do arquivo PDF
+    if (!downloadedPdfBuffer || downloadedPdfBuffer.length < 500) {
+      return res.status(500).json({
         success: false,
-        situacao,
-        error: `Receita Federal retornou status: ${statusEmissao}. ${apiBody.mensagem?.texto || ""}`,
-        status_emissao: statusEmissao,
+        error: "Não foi possível baixar o PDF oficial na página de resultado da Receita Federal.",
       });
     }
 
-    // 8. Decodificar base64 → buffer binário do PDF
-    const pdfBuffer = Buffer.from(pdfBase64, "base64");
-    console.log(
-      `[PDF CAPTURADO] Tamanho: ${pdfBuffer.length} bytes | Válido: ${pdfBuffer.slice(0, 5).toString() === "%PDF-"}`
-    );
+    const pdfHeader = downloadedPdfBuffer.slice(0, 5).toString();
+    if (pdfHeader !== "%PDF-") {
+      return res.status(500).json({
+        success: false,
+        error: `Arquivo baixado da Receita Federal possui cabeçalho inválido: '${pdfHeader}'. Esperado '%PDF-'.`,
+      });
+    }
 
-    const tempFileName = `CPF_${cleanCpf}_${Date.now()}.pdf`;
-    const storagePath = `certidoes_pf/${tempFileName}`;
+    console.log(`-> [VALIDAÇÃO OK] PDF oficial verificado (%PDF-), tamanho: ${downloadedPdfBuffer.length} bytes.`);
 
-    // 9. Upload do PDF real no Supabase Storage
+    // 11. Extrair informações cadastrais da resposta oficial
+    let situacao = "CERTIDÃO NEGATIVA";
+    let dataValidade = null;
+    let codigoControle = null;
+
+    if (capturedApiResponse) {
+      const msgTexto = capturedApiResponse.mensagem?.texto || "";
+      if (msgTexto.includes("POSITIVA COM EFEITO DE NEGATIVA")) {
+        situacao = "POSITIVA COM EFEITO DE NEGATIVA";
+      } else if (msgTexto.includes("CERTIDÃO POSITIVA")) {
+        situacao = "CERTIDÃO POSITIVA";
+      } else if (msgTexto.includes("PENDÊNCIAS") || msgTexto.includes("PENDÊNCIA")) {
+        situacao = "COM PENDÊNCIA";
+      }
+
+      const valMatch = msgTexto.match(/Válida até\s*([0-9/]{10})/i) || msgTexto.match(/Validade:\s*([0-9/]{10})/i);
+      if (valMatch) dataValidade = valMatch[1].trim();
+
+      const codMatch = msgTexto.match(/Código de controle[^:]*:\s*([A-Z0-9.\-]+)/i);
+      if (codMatch) codigoControle = codMatch[1].trim();
+    }
+
+    // 12. Fazer upload do PDF oficial no Supabase Storage
+    const storageFileName = `CPF_${cleanCpf}_${Date.now()}.pdf`;
+    const storagePath = `certidoes_pf/${storageFileName}`;
+
+    console.log(`-> Salvando PDF no Supabase Storage (${BUCKET_NAME}/${storagePath})...`);
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_NAME)
-      .upload(storagePath, pdfBuffer, { contentType: "application/pdf", upsert: true });
+      .upload(storagePath, downloadedPdfBuffer, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
 
     let pdfUrl = null;
     if (uploadError) {
-      console.warn("Aviso ao enviar PDF para o Storage:", uploadError.message);
+      console.warn("-> Aviso no upload Storage:", uploadError.message);
     } else {
       const { data: urlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(storagePath);
       pdfUrl = urlData?.publicUrl || null;
+      console.log(`-> PDF armazenado com sucesso: ${pdfUrl}`);
     }
 
-    // 10. Atualizar data_nascimento na proposta caso vinculado
+    // 13. Atualizar data_nascimento na proposta
     if (proposta_id) {
       await supabase
         .from("stock_proposals")
@@ -366,7 +391,7 @@ app.post("/emitir-certidao-pf", authenticate, async (req, res) => {
         .eq("id", proposta_id);
     }
 
-    // 11. Gravar na tabela certidoes_produtores
+    // 14. Registrar certidão emitida em public.certidoes_produtores
     const nowIso = new Date().toISOString();
     const validadeIso = dataValidade
       ? new Date(dataValidade.split("/").reverse().join("-")).toISOString()
@@ -387,10 +412,10 @@ app.post("/emitir-certidao-pf", authenticate, async (req, res) => {
           data_emissao: nowIso,
           data_validade: validadeIso,
           codigo_controle: codigoControle,
-          observacoes: `Emitida via Playwright. Status: ${statusEmissao}. Código: ${codigoControle || "N/A"}`,
+          observacoes: `Certidão oficial baixada diretamente do portal da Receita Federal (#/home/cpf/resultado). Código: ${codigoControle || "OK"}`,
           status_consulta: "OK",
           pdf_url: pdfUrl,
-          arquivo_nome: tempFileName,
+          arquivo_nome: storageFileName,
           atualizado_em: nowIso,
           criado_em: nowIso,
         },
@@ -398,7 +423,11 @@ app.post("/emitir-certidao-pf", authenticate, async (req, res) => {
       .select()
       .single();
 
-    console.log(`[EMISSÃO CONCLUÍDA] Situação: ${situacao} | PDF: ${pdfUrl} | ID: ${certRow?.id}`);
+    console.log(`================================================================`);
+    console.log(`[EMISSÃO CONCLUÍDA COM SUCESSO]`);
+    console.log(`Situação: ${situacao} | Validade: ${dataValidade || "180 dias"}`);
+    console.log(`Código: ${codigoControle || "N/A"} | PDF: ${pdfUrl}`);
+    console.log(`================================================================`);
 
     return res.status(200).json({
       success: true,
@@ -407,9 +436,8 @@ app.post("/emitir-certidao-pf", authenticate, async (req, res) => {
       data_validade: dataValidade || new Date(validadeIso).toLocaleDateString("pt-BR"),
       codigo_controle: codigoControle,
       pdf_url: pdfUrl,
-      arquivo_nome: tempFileName,
+      arquivo_nome: storageFileName,
       certidao_id: certRow?.id || null,
-      status_emissao: statusEmissao,
     });
   } catch (err) {
     console.error("[ERRO CRÍTICO NO RUNNER]", err);
