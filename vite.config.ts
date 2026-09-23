@@ -35,6 +35,10 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "crypto": path.resolve(__dirname, "./src/utils/cryptoShim.ts"),
+      "events": path.resolve(__dirname, "./src/utils/cryptoShim.ts"),
+      "stream": path.resolve(__dirname, "./src/utils/cryptoShim.ts"),
+      "timers": path.resolve(__dirname, "./src/utils/cryptoShim.ts"),
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime"],
   },

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDocumentationReview, SubmittedProposal, AuthorizedProposal, parseSafeDate } from "@/hooks/useDocumentationReview";
 import { useAgency } from "@/contexts/AgencyContext";
@@ -70,7 +70,9 @@ import {
   Building,
   MapPin,
   Copy,
+  FileSpreadsheet,
 } from "lucide-react";
+import { parseExcelInversoes } from "@/utils/excelInversoesReader";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -349,6 +351,48 @@ export default function Documentation() {
   const [parecerAgenciaHistorico, setParecerAgenciaHistorico] = useState("");
   const [parecerUtilizaCarIndividual, setParecerUtilizaCarIndividual] = useState("SIM");
   const [parecerGeneroProponente, setParecerGeneroProponente] = useState("MASCULINO");
+
+  // Excel Import for Parecer Técnico
+  const parecerExcelInputRef = useRef<HTMLInputElement>(null);
+  const [isImportingParecerExcel, setIsImportingParecerExcel] = useState(false);
+
+  const handleParecerExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setIsImportingParecerExcel(true);
+    try {
+      const result = await parseExcelInversoes(file);
+      if (result.success && result.items.length > 0) {
+        setParecerInversoes(
+          result.items.map((i) => ({
+            quant: i.quant,
+            unid: i.unid,
+            nome: i.nome,
+            valor: i.valor,
+          }))
+        );
+        toast({
+          title: "Inversões importadas para o Parecer!",
+          description: `${result.items.length} itens extraídos da planilha (${result.formatDetected || "SEAP/Excel"}).`,
+        });
+      } else {
+        toast({
+          title: "Erro ao importar planilha",
+          description: result.error || "Não foi possível identificar os itens de investimento.",
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Erro ao ler arquivo",
+        description: err?.message || "Falha na leitura da planilha.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImportingParecerExcel(false);
+    }
+  };
 
   // Visita Gerencial State
   const [visitaGerencialDialogOpen, setVisitaGerencialDialogOpen] = useState(false);
@@ -4013,15 +4057,39 @@ A análise econômico-financeira evidencia capacidade de pagamento compatível c
                     <h3 className="font-semibold text-xs uppercase tracking-wider text-indigo-600">
                       Inversões (Investimento Fixo)
                     </h3>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs rounded-lg border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold"
-                      onClick={() => setParecerInversoes([...parecerInversoes, { quant: 1, unid: "UNID", nome: "", valor: 0 }])}
-                    >
-                      + Adicionar Inversão
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="file"
+                        ref={parecerExcelInputRef}
+                        accept=".xlsx,.xlsm,.xls,.pronaf_a2,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        className="hidden"
+                        onChange={handleParecerExcelUpload}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs rounded-lg border-emerald-300 text-emerald-800 hover:bg-emerald-50 font-bold flex items-center gap-1 shadow-sm"
+                        onClick={() => parecerExcelInputRef.current?.click()}
+                        disabled={isImportingParecerExcel}
+                      >
+                        {isImportingParecerExcel ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-emerald-700" />
+                        ) : (
+                          <FileSpreadsheet className="h-3 w-3 text-emerald-700" />
+                        )}
+                        Importar Planilha
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs rounded-lg border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold"
+                        onClick={() => setParecerInversoes([...parecerInversoes, { quant: 1, unid: "UNID", nome: "", valor: 0 }])}
+                      >
+                        + Adicionar Inversão
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
                     {parecerInversoes.map((item, idx) => (

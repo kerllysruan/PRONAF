@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { MEDIA_CONFIG } from "@/config/imageConfig";
 // Trigger Vercel Build Sincronização 
 import { useSearchParams } from "react-router-dom";
@@ -14,6 +14,7 @@ import {
 import { InversaoCombobox } from "@/components/inversoes/InversaoCombobox";
 import { useInversoesReferencia } from "@/hooks/useInversoesReferencia";
 import { InversaoItem, InversaoReferencia } from "@/types/inversoes";
+import { parseExcelInversoes } from "@/utils/excelInversoesReader";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ import {
   Trash2,
   Sprout,
   Wheat,
+  FileSpreadsheet,
 } from "lucide-react";
 
 // List of document keys that can be dispensed
@@ -343,6 +345,78 @@ export default function DocumentationSubmit() {
     });
   };
 
+  // ── Importação de Inversões via Planilha Excel / SEAP ────────────────
+  const [isImportingExcel, setIsImportingExcel] = useState(false);
+  const excelFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input so the user can re-select the same file if needed
+    e.target.value = "";
+
+    setIsImportingExcel(true);
+    try {
+      const result = await parseExcelInversoes(file, {
+        findReferencia,
+        uf: propostaUf,
+      });
+
+      if (!result.success) {
+        toast({
+          title: "Erro ao importar planilha",
+          description: result.error || "Não foi possível extrair as inversões do arquivo selecionado.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!result.items || result.items.length === 0) {
+        toast({
+          title: "Nenhuma inversão encontrada",
+          description: "O arquivo foi lido, mas nenhuma linha de investimento válida foi identificada.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Preenche os itens importados
+      setInversoes(result.items);
+
+      // Preenche custo de assessoria se detectado
+      if (typeof result.custoAssessoria === "number") {
+        setCustoAssessoria(result.custoAssessoria);
+      }
+
+      const totalCalculado = result.totalGeral;
+      const isTotalExato = Math.abs(totalCalculado - estimatedValue) < 0.01;
+
+      // Alerta de sucesso
+      toast({
+        title: "Inversões Importadas com Sucesso!",
+        description: `${result.items.length} itens importados (${result.formatDetected || "Planilha"}). Total: ${formatCurrency(totalCalculado)}.`,
+      });
+
+      if (!isTotalExato) {
+        toast({
+          title: "Atenção ao Valor Total",
+          description: `A soma importada (${formatCurrency(totalCalculado)}) difere do valor da proposta (${formatCurrency(estimatedValue)}). Verifique se há ajustes necessários.`,
+          variant: "destructive",
+        });
+      }
+    } catch (err: any) {
+      console.error("Erro na importação da planilha:", err);
+      toast({
+        title: "Erro inesperado",
+        description: err?.message || "Ocorreu um erro ao processar o arquivo Excel/SEAP.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImportingExcel(false);
+    }
+  };
+
   // Global paste handler when mouse is hovering over a card
   useEffect(() => {
     function handleGlobalPaste(e: ClipboardEvent) {
@@ -613,6 +687,36 @@ export default function DocumentationSubmit() {
       }
       return { ...prev, [docKey]: file };
     });
+
+    // Se o projetista enviou a planilha do SEAP ou Excel em plano_eletronico ou orcamento, auto-carrega as inversões
+    if (file && (docKey === "plano_eletronico" || docKey === "orcamento")) {
+      const ext = file.name.toLowerCase();
+      if (ext.endsWith(".pronaf_a2") || ext.endsWith(".xlsx") || ext.endsWith(".xls") || ext.endsWith(".xlsm")) {
+        const isVazio = inversoes.length === 0 || (inversoes.length === 1 && !inversoes[0].nome && inversoes[0].valor === 0);
+        if (isVazio) {
+          setIsImportingExcel(true);
+          parseExcelInversoes(file, { findReferencia, uf: propostaUf })
+            .then((result) => {
+              if (result.success && result.items.length > 0) {
+                setInversoes(result.items);
+                if (typeof result.custoAssessoria === "number") {
+                  setCustoAssessoria(result.custoAssessoria);
+                }
+                toast({
+                  title: "Inversões auto-importadas com sucesso!",
+                  description: `${result.items.length} itens extraídos da planilha do ${docKey === "plano_eletronico" ? "Plano Eletrônico" : "Orçamento"}.`,
+                });
+              }
+            })
+            .catch((err) => {
+              console.warn("Erro ao ler inversões do arquivo:", err);
+            })
+            .finally(() => {
+              setIsImportingExcel(false);
+            });
+        }
+      }
+    }
   }
 
   function handleAtividadeChange(val: string) {
@@ -635,8 +739,13 @@ export default function DocumentationSubmit() {
     e.preventDefault();
     e.stopPropagation();
     const droppedFile = e.dataTransfer.files?.[0];
-    if (droppedFile && droppedFile.type === "application/pdf") {
-      handleFileSelect(docKey, droppedFile);
+    if (droppedFile) {
+      const isAllowed = droppedFile.type === "application/pdf" ||
+        ((docKey === "plano_eletronico" || docKey === "orcamento") &&
+          /\.(xlsx|xlsm|xls|pronaf_a2)$/i.test(droppedFile.name));
+      if (isAllowed) {
+        handleFileSelect(docKey, droppedFile);
+      }
     }
   }
 
@@ -647,7 +756,8 @@ export default function DocumentationSubmit() {
       const item = items[i];
       if (item.kind === "file") {
         const file = item.getAsFile();
-        if (file && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"))) {
+        if (file && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf") ||
+          ((docKey === "plano_eletronico" || docKey === "orcamento") && /\.(xlsx|xlsm|xls|pronaf_a2)$/i.test(file.name)))) {
           e.preventDefault();
           e.stopPropagation();
           handleFileSelect(docKey, file);
@@ -1336,7 +1446,7 @@ export default function DocumentationSubmit() {
                               <label className="flex flex-col items-center justify-center cursor-pointer w-full">
                                 <input
                                   type="file"
-                                  accept=".pdf,application/pdf"
+                                  accept={doc.key === "plano_eletronico" || doc.key === "orcamento" ? ".pdf,application/pdf,.xlsx,.xlsm,.xls,.pronaf_a2,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : ".pdf,application/pdf"}
                                   className="hidden"
                                   onChange={(e) =>
                                     handleFileSelect(doc.key, e.target.files?.[0] || null)
@@ -1599,12 +1709,44 @@ export default function DocumentationSubmit() {
                 {/* INVERSÕES DO PLANO */}
                 <div className="mb-8 p-6 rounded-3xl border border-slate-200/90 bg-white/92 backdrop-blur-xl shadow-[0_10px_30px_rgba(0,0,0,0.08)]">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200/80 shadow-sm w-fit">
-                      <span className="text-emerald-700 text-base">📊</span>
-                      <p className="text-emerald-900 text-xs font-black uppercase tracking-widest">
-                        INVERSÕES DO PLANO (PREÇOS REFERENCIAIS BNB/PRONAF)
-                      </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200/80 shadow-sm w-fit">
+                        <span className="text-emerald-700 text-base">📊</span>
+                        <p className="text-emerald-900 text-xs font-black uppercase tracking-widest">
+                          INVERSÕES DO PLANO (PREÇOS REFERENCIAIS BNB/PRONAF)
+                        </p>
+                      </div>
+
+                      {/* Botão de Importar Planilha Excel / SEAP */}
+                      <input
+                        type="file"
+                        ref={excelFileInputRef}
+                        onChange={handleExcelUpload}
+                        accept=".xlsx,.xlsm,.xls,.pronaf_a2,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => excelFileInputRef.current?.click()}
+                        disabled={isImportingExcel}
+                        className="h-9 px-3.5 rounded-2xl border-emerald-300 text-emerald-800 hover:bg-emerald-100/70 hover:border-emerald-400 text-xs font-bold flex items-center gap-2 shadow-sm transition-all bg-emerald-50/70"
+                      >
+                        {isImportingExcel ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />
+                            <span>Lendo e Descriptografando...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FileSpreadsheet className="h-4 w-4 text-emerald-700" />
+                            <span>Importar Planilha (Excel / SEAP)</span>
+                          </>
+                        )}
+                      </Button>
                     </div>
+
                     {/* Validador de Valor da Proposta */}
                     <div className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all duration-300 ${
                       isInversõesValidadas
@@ -1804,14 +1946,35 @@ export default function DocumentationSubmit() {
                     })}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setInversoes([...inversoes, { quant: 1, unid: "UNID", nome: "", valor_unitario: 0, valor: 0, teto_maximo: null, item_referencia_id: null }])}
-                    className="mt-4 px-4 py-2 border border-dashed border-emerald-300 text-emerald-700 hover:bg-emerald-50/50 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 w-full md:w-auto bg-background"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Adicionar Item
-                  </button>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setInversoes([...inversoes, { quant: 1, unid: "UNID", nome: "", valor_unitario: 0, valor: 0, teto_maximo: null, item_referencia_id: null }])}
+                      className="px-4 py-2 border border-dashed border-emerald-300 text-emerald-700 hover:bg-emerald-50/50 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 w-full md:w-auto bg-background"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Adicionar Item
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => excelFileInputRef.current?.click()}
+                      disabled={isImportingExcel}
+                      className="px-4 py-2 border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm w-full md:w-auto"
+                    >
+                      {isImportingExcel ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-700" />
+                          <span>Importando planilha...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-700" />
+                          <span>Importar Planilha (Excel / SEAP)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
 
                   {/* Custo Assessoria Empresarial e Técnica com o mesmo layout dos itens */}
                   <div className="mt-6 pt-6 border-t border-slate-200">

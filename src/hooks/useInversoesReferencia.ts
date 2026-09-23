@@ -102,7 +102,49 @@ export function useInversoesReferencia() {
           i.nome_completo.toUpperCase().includes(clean) ||
           clean.includes(i.item.toUpperCase())
       );
-      return partial || null;
+      if (partial) return partial;
+
+      // 4. Busca por similaridade de palavras-chave / tokens
+      const norm = (s: string) =>
+        s
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toUpperCase()
+          .replace(/[^A-Z0-9\s]/g, " ");
+
+      const stopWords = new Set(["AQUISICAO", "IMPLANTACAO", "REFORMA", "PARA", "COM", "DOS", "DAS", "UMA", "UNID"]);
+      const qWords = norm(clean)
+        .split(/\s+/)
+        .filter((w) => w.length > 2 && !stopWords.has(w));
+
+      if (qWords.length > 0) {
+        let bestMatch: InversaoReferencia | null = null;
+        let bestScore = 0;
+
+        for (const inv of inversoes) {
+          const target = norm(inv.nome_completo);
+          let score = 0;
+          for (const w of qWords) {
+            if (target.includes(w)) {
+              score += 3;
+            } else if (w.length > 4 && (w.endsWith("AS") || w.endsWith("OS"))) {
+              if (target.includes(w.slice(0, -2))) score += 2;
+            } else if (w.length > 3 && w.endsWith("S")) {
+              if (target.includes(w.slice(0, -1))) score += 2;
+            }
+          }
+          if (score > bestScore) {
+            bestScore = score;
+            bestMatch = inv;
+          }
+        }
+
+        if (bestScore >= 3 && bestMatch) {
+          return bestMatch;
+        }
+      }
+
+      return null;
     },
     [inversoes]
   );
