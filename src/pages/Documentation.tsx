@@ -72,7 +72,6 @@ import {
   Copy,
   FileSpreadsheet,
 } from "lucide-react";
-import { parseExcelInversoes } from "@/utils/excelInversoesReader";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -362,6 +361,7 @@ export default function Documentation() {
     e.target.value = "";
     setIsImportingParecerExcel(true);
     try {
+      const { parseExcelInversoes } = await import("@/utils/excelInversoesReader");
       const result = await parseExcelInversoes(file);
       if (result.success && result.items.length > 0) {
         setParecerInversoes(
