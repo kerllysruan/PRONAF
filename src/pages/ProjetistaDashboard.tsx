@@ -73,11 +73,18 @@ import {
   Lock,
   Download,
   CheckCheck,
+  Sprout,
+  Scale,
+  Layers,
+  Trees,
+  Users,
+  Activity,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useInversoesReferencia } from "@/hooks/useInversoesReferencia";
 import { InversaoCombobox } from "@/components/inversoes/InversaoCombobox";
 import { InversaoReferencia } from "@/types/inversoes";
-import type { ExcelProposalParsed } from "@/utils/excelInversoesReader";
+import type { ExcelProposalParsed, DadosProponenteData, SuporteForrageiroData } from "@/utils/excelInversoesReader";
 
 // ── Linhas PRONAF Oficiais com Tetos Normativos ─────────────────────────────
 export const PRONAF_LINES = [
@@ -166,6 +173,9 @@ interface ProposalItem {
   agency_id?: string;
   agency_name?: string;
   inversoes?: any[];
+  dados_proponente?: DadosProponenteData | any;
+  suporte_forrageiro?: SuporteForrageiroData | any;
+  data_nascimento?: string;
   notes?: string;
   updated_at?: string;
 }
@@ -234,6 +244,35 @@ export default function ProjetistaDashboard() {
   const [newPropInversoes, setNewPropInversoes] = useState<InversaoFormItem[]>([]);
   const [newPropParecer, setNewPropParecer] = useState("");
   const [submittingNewProp, setSubmittingNewProp] = useState(false);
+
+  // ── Dados Expandidos do Proponente ──────────────────────────────────────────
+  const [newPropRg, setNewPropRg] = useState("");
+  const [newPropOrgaoEmissor, setNewPropOrgaoEmissor] = useState("");
+  const [newPropDataNascimento, setNewPropDataNascimento] = useState("");
+  const [newPropEstadoCivil, setNewPropEstadoCivil] = useState("Casado(a)");
+  const [newPropNomeConjuge, setNewPropNomeConjuge] = useState("");
+  const [newPropCpfConjuge, setNewPropCpfConjuge] = useState("");
+  const [newPropCondicaoPosse, setNewPropCondicaoPosse] = useState("Proprietário");
+  const [newPropAreaTotalHa, setNewPropAreaTotalHa] = useState<number>(0);
+  const [newPropAreaExploradaHa, setNewPropAreaExploradaHa] = useState<number>(0);
+  const [newPropCar, setNewPropCar] = useState("");
+  const [newPropNirfCcir, setNewPropNirfCcir] = useState("");
+  const [newPropBanco, setNewPropBanco] = useState("004 - Banco do Nordeste (BNB)");
+  const [newPropAgenciaConta, setNewPropAgenciaConta] = useState("");
+
+  // ── Suporte Forrageiro & Dimensionamento Pecuário ───────────────────────────
+  const [newPropTemPecuaria, setNewPropTemPecuaria] = useState(false);
+  const [newPropAreaPastagemNativa, setNewPropAreaPastagemNativa] = useState<number>(0);
+  const [newPropAreaPastagemCultivada, setNewPropAreaPastagemCultivada] = useState<number>(0);
+  const [newPropAreaCapineira, setNewPropAreaCapineira] = useState<number>(0);
+  const [newPropAreaPalma, setNewPropAreaPalma] = useState<number>(0);
+  const [newPropEspeciePastagem, setNewPropEspeciePastagem] = useState("Brachiaria brizantha");
+  const [newPropRebanhoCabecas, setNewPropRebanhoCabecas] = useState<number>(0);
+  const [newPropRebanhoTotalUa, setNewPropRebanhoTotalUa] = useState<number>(0);
+  const [newPropTaxaLotacao, setNewPropTaxaLotacao] = useState<number>(0);
+  const [newPropPeriodoEstiagem, setNewPropPeriodoEstiagem] = useState<number>(6);
+  const [newPropEstrategiaSuplementacao, setNewPropEstrategiaSuplementacao] = useState("");
+  const [newPropParecerSuporte, setNewPropParecerSuporte] = useState("");
 
   // Arquivos anexos da nova proposta
   const [docProjetoTecnico, setDocProjetoTecnico] = useState<File | null>(null);
@@ -395,6 +434,36 @@ export default function ProjetistaDashboard() {
     return newPropInversoes.filter((i) => i.excesso);
   }, [newPropInversoes]);
 
+  // Cálculos de Suporte Forrageiro
+  const computedAreaForrageiraTotal = useMemo(() => {
+    return Math.round(
+      (Number(newPropAreaPastagemNativa || 0) +
+        Number(newPropAreaPastagemCultivada || 0) +
+        Number(newPropAreaCapineira || 0) +
+        Number(newPropAreaPalma || 0)) *
+        100
+    ) / 100;
+  }, [
+    newPropAreaPastagemNativa,
+    newPropAreaPastagemCultivada,
+    newPropAreaCapineira,
+    newPropAreaPalma,
+  ]);
+
+  const computedRebanhoUa = useMemo(() => {
+    if (newPropRebanhoTotalUa > 0) return newPropRebanhoTotalUa;
+    if (newPropRebanhoCabecas > 0) return Math.round(newPropRebanhoCabecas * 0.8 * 10) / 10;
+    return 0;
+  }, [newPropRebanhoTotalUa, newPropRebanhoCabecas]);
+
+  const computedTaxaLotacao = useMemo(() => {
+    if (newPropTaxaLotacao > 0) return newPropTaxaLotacao;
+    if (computedAreaForrageiraTotal > 0 && computedRebanhoUa > 0) {
+      return Math.round((computedRebanhoUa / computedAreaForrageiraTotal) * 100) / 100;
+    }
+    return 0;
+  }, [newPropTaxaLotacao, computedAreaForrageiraTotal, computedRebanhoUa]);
+
   // Manipular adição de item de inversão
   const handleAddInversao = (nome: string, ref?: InversaoReferencia) => {
     const newItem: InversaoFormItem = {
@@ -541,6 +610,42 @@ export default function ProjetistaDashboard() {
       setNewPropValorSolicitado(parsedProposalData.totalGeral);
     }
 
+    // Preenche dados expandidos do proponente
+    const dp = parsedProposalData.dadosProponente;
+    if (dp) {
+      if (dp.rg) setNewPropRg(dp.rg);
+      if (dp.orgaoEmissor) setNewPropOrgaoEmissor(dp.orgaoEmissor);
+      if (dp.dataNascimento) setNewPropDataNascimento(dp.dataNascimento);
+      if (dp.estadoCivil) setNewPropEstadoCivil(dp.estadoCivil);
+      if (dp.nomeConjuge) setNewPropNomeConjuge(dp.nomeConjuge);
+      if (dp.cpfConjuge) setNewPropCpfConjuge(formatCPF(dp.cpfConjuge));
+      if (dp.condicaoPosse) setNewPropCondicaoPosse(dp.condicaoPosse);
+      if (dp.areaTotalHa && dp.areaTotalHa > 0) setNewPropAreaTotalHa(dp.areaTotalHa);
+      if (dp.areaExploradaHa && dp.areaExploradaHa > 0) setNewPropAreaExploradaHa(dp.areaExploradaHa);
+      if (dp.car) setNewPropCar(dp.car);
+      if (dp.nirf || dp.ccir) setNewPropNirfCcir(dp.nirf || dp.ccir || "");
+      if (dp.agencia || dp.conta) {
+        setNewPropAgenciaConta(`Ag: ${dp.agencia || ""} / C/C: ${dp.conta || ""}`);
+      }
+    }
+
+    // Preenche Suporte Forrageiro & Dimensionamento Pecuário
+    const sf = parsedProposalData.suporteForrageiro;
+    if (sf && (sf.temPecuaria || sf.areaTotalForrageiraHa > 0 || sf.rebanhoCabecas > 0)) {
+      setNewPropTemPecuaria(true);
+      if (sf.areaPastagemNativaHa > 0) setNewPropAreaPastagemNativa(sf.areaPastagemNativaHa);
+      if (sf.areaPastagemCultivadaHa > 0) setNewPropAreaPastagemCultivada(sf.areaPastagemCultivadaHa);
+      if (sf.areaCapineiraHa > 0) setNewPropAreaCapineira(sf.areaCapineiraHa);
+      if (sf.areaPalmaHa > 0) setNewPropAreaPalma(sf.areaPalmaHa);
+      if (sf.especiePastagem) setNewPropEspeciePastagem(sf.especiePastagem);
+      if (sf.rebanhoCabecas > 0) setNewPropRebanhoCabecas(sf.rebanhoCabecas);
+      if (sf.rebanhoTotalUa > 0) setNewPropRebanhoTotalUa(sf.rebanhoTotalUa);
+      if (sf.taxaLotacaoUaHa > 0) setNewPropTaxaLotacao(sf.taxaLotacaoUaHa);
+      if (sf.periodoEstiagemMeses > 0) setNewPropPeriodoEstiagem(sf.periodoEstiagemMeses);
+      if (sf.estrategiaSuplementacao) setNewPropEstrategiaSuplementacao(sf.estrategiaSuplementacao);
+      if (sf.parecerCapacidadeSuporte) setNewPropParecerSuporte(sf.parecerCapacidadeSuporte);
+    }
+
     // Carregar itens de inversão na grade
     if (parsedProposalData.items && parsedProposalData.items.length > 0) {
       const convertedItems: InversaoFormItem[] = parsedProposalData.items.map((it, idx) => ({
@@ -566,8 +671,8 @@ export default function ProjetistaDashboard() {
     setHidePromptBanner(true);
 
     toast({
-      title: "Formulário Preenchido! 🎉",
-      description: "Os dados do produtor, valores e inversões foram aplicados ao formulário com sucesso.",
+      title: "Formulário Preenchido com Sucesso! 🎉",
+      description: "Dados do produtor, suporte forrageiro e inversões foram extraídos e aplicados com precisão.",
     });
   };
 
@@ -697,6 +802,53 @@ export default function ProjetistaDashboard() {
           uploadedDocs.map((d) => `• ${d.tipo.toUpperCase()}: ${d.nome} (${d.url})`).join("\n");
       }
 
+      const dadosProponentePayload = {
+        nome: newPropProducerName.trim().toUpperCase(),
+        cpf: cleanCpf,
+        rg: newPropRg.trim() || null,
+        orgao_emissor: newPropOrgaoEmissor.trim().toUpperCase() || null,
+        data_nascimento: newPropDataNascimento.trim() || null,
+        estado_civil: newPropEstadoCivil || null,
+        nome_conjuge: newPropNomeConjuge.trim().toUpperCase() || null,
+        cpf_conjuge: newPropCpfConjuge.replace(/\D/g, "") || null,
+        telefone: newPropProducerPhone.trim() || null,
+        municipio: newPropMunicipio.trim().toUpperCase() || null,
+        propriedade: newPropLocalizacao.trim().toUpperCase() || null,
+        condicao_posse: newPropCondicaoPosse || null,
+        area_total_ha: Number(newPropAreaTotalHa) || 0,
+        area_explorada_ha: Number(newPropAreaExploradaHa) || 0,
+        dap_caf: newPropDapCaf.trim() || null,
+        car: newPropCar.trim() || null,
+        nirf_ccir: newPropNirfCcir.trim() || null,
+        banco: newPropBanco || null,
+        agencia_conta: newPropAgenciaConta.trim() || null,
+      };
+
+      const suporteForrageiroPayload =
+        newPropTemPecuaria || computedAreaForrageiraTotal > 0 || newPropRebanhoCabecas > 0
+          ? {
+              tem_pecuaria: true,
+              area_pastagem_nativa_ha: Number(newPropAreaPastagemNativa) || 0,
+              area_pastagem_cultivada_ha: Number(newPropAreaPastagemCultivada) || 0,
+              area_capineira_ha: Number(newPropAreaCapineira) || 0,
+              area_palma_ha: Number(newPropAreaPalma) || 0,
+              area_total_forrageira_ha: computedAreaForrageiraTotal,
+              especie_pastagem: newPropEspeciePastagem || "Brachiaria",
+              rebanho_cabecas: Number(newPropRebanhoCabecas) || 0,
+              rebanho_total_ua: computedRebanhoUa,
+              taxa_lotacao_ua_ha: computedTaxaLotacao,
+              periodo_estiagem_meses: Number(newPropPeriodoEstiagem) || 6,
+              estrategia_suplementacao:
+                newPropEstrategiaSuplementacao ||
+                "Suplementação volumosa e mineral no período de estiagem",
+              parecer_capacidade_suporte:
+                newPropParecerSuporte ||
+                (computedTaxaLotacao <= 1.2
+                  ? "Suporte Forrageiro Equilibrado e Sustentável."
+                  : "Lotação Intensiva com Suporte de Reserva Estratégica."),
+            }
+          : null;
+
       const { data: insertedProposal, error: insertErr } = await supabase
         .from("stock_proposals")
         .insert([
@@ -704,6 +856,7 @@ export default function ProjetistaDashboard() {
             producer_name: newPropProducerName.trim().toUpperCase(),
             producer_cpf: cleanCpf,
             producer_phone: newPropProducerPhone.trim(),
+            data_nascimento: newPropDataNascimento.trim() || null,
             municipio: newPropMunicipio.trim().toUpperCase() || projetistaInfo?.municipio || null,
             localizacao: newPropLocalizacao.trim().toUpperCase() || null,
             agency_id: newPropAgenciaId,
@@ -717,6 +870,8 @@ export default function ProjetistaDashboard() {
             status: "nova",
             proposal_number: proposalNumber,
             inversoes: inversoesPayload,
+            dados_proponente: dadosProponentePayload,
+            suporte_forrageiro: suporteForrageiroPayload,
             notes: notesCombined,
             created_by: user.id,
             order_index: 1,
@@ -745,6 +900,27 @@ export default function ProjetistaDashboard() {
       setNewPropValorSolicitado(0);
       setNewPropInversoes([]);
       setNewPropParecer("");
+      setNewPropRg("");
+      setNewPropOrgaoEmissor("");
+      setNewPropDataNascimento("");
+      setNewPropEstadoCivil("Casado(a)");
+      setNewPropNomeConjuge("");
+      setNewPropCpfConjuge("");
+      setNewPropCondicaoPosse("Proprietário");
+      setNewPropAreaTotalHa(0);
+      setNewPropAreaExploradaHa(0);
+      setNewPropCar("");
+      setNewPropNirfCcir("");
+      setNewPropAgenciaConta("");
+      setNewPropTemPecuaria(false);
+      setNewPropAreaPastagemNativa(0);
+      setNewPropAreaPastagemCultivada(0);
+      setNewPropAreaCapineira(0);
+      setNewPropAreaPalma(0);
+      setNewPropRebanhoCabecas(0);
+      setNewPropRebanhoTotalUa(0);
+      setNewPropTaxaLotacao(0);
+      setNewPropParecerSuporte("");
       setDocProjetoTecnico(null);
       setDocDapCaf(null);
       setDocOrcamentos(null);
@@ -1513,6 +1689,81 @@ export default function ProjetistaDashboard() {
                         />
                       </div>
 
+                      {/* RG & Órgão Emissor */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">RG do Produtor</Label>
+                        <Input
+                          placeholder="Ex: 00000000000-0"
+                          value={newPropRg}
+                          onChange={(e) => setNewPropRg(e.target.value)}
+                          className="rounded-xl h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Órgão Emissor / UF</Label>
+                        <Input
+                          placeholder="Ex: SSP/MA"
+                          value={newPropOrgaoEmissor}
+                          onChange={(e) => setNewPropOrgaoEmissor(e.target.value.toUpperCase())}
+                          className="rounded-xl h-10 text-xs uppercase"
+                        />
+                      </div>
+
+                      {/* Data de Nascimento & Estado Civil */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Data de Nascimento</Label>
+                        <Input
+                          placeholder="DD/MM/AAAA"
+                          value={newPropDataNascimento}
+                          onChange={(e) => setNewPropDataNascimento(e.target.value)}
+                          className="rounded-xl h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Estado Civil</Label>
+                        <Select value={newPropEstadoCivil} onValueChange={setNewPropEstadoCivil}>
+                          <SelectTrigger className="rounded-xl h-10 text-xs">
+                            <SelectValue placeholder="Selecione o estado civil" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Casado(a)">Casado(a)</SelectItem>
+                            <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
+                            <SelectItem value="União Estável">União Estável</SelectItem>
+                            <SelectItem value="Divorciado(a)">Divorciado(a)</SelectItem>
+                            <SelectItem value="Viúvo(a)">Viúvo(a)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Cônjuge se Casado ou União Estável */}
+                      {(newPropEstadoCivil.includes("Casad") || newPropEstadoCivil.includes("Uni")) && (
+                        <>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-bold">Nome Completo do Cônjuge</Label>
+                            <Input
+                              placeholder="Nome do cônjuge / companheiro(a)"
+                              value={newPropNomeConjuge}
+                              onChange={(e) => setNewPropNomeConjuge(e.target.value)}
+                              className="rounded-xl h-10 text-xs"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-bold">CPF do Cônjuge</Label>
+                            <Input
+                              placeholder="000.000.000-00"
+                              value={newPropCpfConjuge}
+                              onChange={(e) => setNewPropCpfConjuge(formatCPF(e.target.value))}
+                              maxLength={14}
+                              className="rounded-xl h-10 text-xs font-mono"
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* Município & Propriedade */}
                       <div className="space-y-1.5">
                         <Label className="text-xs font-bold">Município da Propriedade</Label>
                         <Input
@@ -1533,12 +1784,86 @@ export default function ProjetistaDashboard() {
                         />
                       </div>
 
-                      <div className="space-y-1.5 sm:col-span-2">
-                        <Label className="text-xs font-bold">Número da DAP / CAF (Se houver)</Label>
+                      {/* Condição de Posse & Áreas */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Condição de Posse da Terra</Label>
+                        <Select value={newPropCondicaoPosse} onValueChange={setNewPropCondicaoPosse}>
+                          <SelectTrigger className="rounded-xl h-10 text-xs">
+                            <SelectValue placeholder="Selecione a condição de posse" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Proprietário">Proprietário</SelectItem>
+                            <SelectItem value="Assentado">Assentado da Reforma Agrária</SelectItem>
+                            <SelectItem value="Posseiro">Posseiro</SelectItem>
+                            <SelectItem value="Arrendatário">Arrendatário</SelectItem>
+                            <SelectItem value="Parceiro">Parceiro</SelectItem>
+                            <SelectItem value="Comodatário">Comodatário</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold">Área Total (ha)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="Ex: 25.5"
+                            value={newPropAreaTotalHa || ""}
+                            onChange={(e) => setNewPropAreaTotalHa(Number(e.target.value) || 0)}
+                            className="rounded-xl h-10 text-xs font-mono font-bold"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold">Área Explorada (ha)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="Ex: 15.0"
+                            value={newPropAreaExploradaHa || ""}
+                            onChange={(e) => setNewPropAreaExploradaHa(Number(e.target.value) || 0)}
+                            className="rounded-xl h-10 text-xs font-mono font-bold"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Documentos Fundiários: CAF, CAR e NIRF/CCIR */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Número da DAP / CAF</Label>
                         <Input
                           placeholder="Ex: CAF-MA-0012345/2026"
                           value={newPropDapCaf}
                           onChange={(e) => setNewPropDapCaf(e.target.value)}
+                          className="rounded-xl h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">CAR (Cadastro Ambiental Rural)</Label>
+                        <Input
+                          placeholder="Ex: MA-2104502-..."
+                          value={newPropCar}
+                          onChange={(e) => setNewPropCar(e.target.value.toUpperCase())}
+                          className="rounded-xl h-10 text-xs font-mono uppercase"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">NIRF / CCIR / Matrícula</Label>
+                        <Input
+                          placeholder="Ex: NIRF: 1234567-8 / CCIR: 987654"
+                          value={newPropNirfCcir}
+                          onChange={(e) => setNewPropNirfCcir(e.target.value)}
+                          className="rounded-xl h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Dados Bancários Produtor (BNB)</Label>
+                        <Input
+                          placeholder="Ex: Ag: 0098 / Conta Corrente: 12345-6"
+                          value={newPropAgenciaConta}
+                          onChange={(e) => setNewPropAgenciaConta(e.target.value)}
                           className="rounded-xl h-10 text-xs font-mono"
                         />
                       </div>
@@ -1864,12 +2189,272 @@ export default function ProjetistaDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* 5. Documentos do Projeto */}
+                {/* 5. Suporte Forrageiro & Dimensionamento Pecuário */}
+                <Card className="rounded-3xl border border-border/60 shadow-sm bg-card overflow-hidden">
+                  <CardHeader className="pb-3 border-b border-border/40 bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-transparent">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <CardTitle className="text-sm font-extrabold flex items-center gap-2">
+                          <Sprout className="h-4 w-4 text-emerald-600" />
+                          5. Suporte Forrageiro & Dimensionamento Pecuário
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          Cálculo de capacidade forrageira, rebanho em UA, taxa de lotação e balanço de alimentação no período de estiagem
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="toggle-pecuaria" className="text-xs font-bold cursor-pointer">
+                          Atividade Pecuária:
+                        </Label>
+                        <Switch
+                          id="toggle-pecuaria"
+                          checked={newPropTemPecuaria}
+                          onCheckedChange={setNewPropTemPecuaria}
+                        />
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="p-5 space-y-4">
+                    {!newPropTemPecuaria ? (
+                      <div className="p-5 text-center border-2 border-dashed border-border/60 rounded-2xl text-muted-foreground text-xs space-y-2">
+                        <Sprout className="h-8 w-8 mx-auto text-emerald-600 opacity-40" />
+                        <p className="font-semibold text-foreground">
+                          Projeto exclusivamente agrícola ou não pecuário
+                        </p>
+                        <p className="text-[11px]">
+                          Se a proposta envolver bovinos, ovinos, caprinos ou formação/recuperação de pastagens, ative a chave acima para preencher o dimensionamento forrageiro normativo do BNB.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4 animate-fade-in">
+                        {/* Indicadores de Destaque no Topo do Card */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                          <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+                            <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase block">
+                              Área Forrageira Total
+                            </span>
+                            <p className="text-base font-black font-mono text-emerald-700 dark:text-emerald-300">
+                              {computedAreaForrageiraTotal} ha
+                            </p>
+                          </div>
+
+                          <div className="p-3 rounded-2xl bg-teal-500/10 border border-teal-500/20">
+                            <span className="text-[10px] font-bold text-teal-800 dark:text-teal-300 uppercase block">
+                              Rebanho (Cabeças)
+                            </span>
+                            <p className="text-base font-black font-mono text-teal-700 dark:text-teal-300">
+                              {newPropRebanhoCabecas} cab.
+                            </p>
+                          </div>
+
+                          <div className="p-3 rounded-2xl bg-cyan-500/10 border border-cyan-500/20">
+                            <span className="text-[10px] font-bold text-cyan-800 dark:text-cyan-300 uppercase block">
+                              Unidades Animais (UA)
+                            </span>
+                            <p className="text-base font-black font-mono text-cyan-700 dark:text-cyan-300">
+                              {computedRebanhoUa} UA
+                            </p>
+                          </div>
+
+                          <div className={`p-3 rounded-2xl border ${
+                            computedTaxaLotacao <= 1.2
+                              ? "bg-emerald-500/15 border-emerald-500/30"
+                              : computedTaxaLotacao <= 2.0
+                              ? "bg-amber-500/15 border-amber-500/30"
+                              : "bg-rose-500/15 border-rose-500/30"
+                          }`}>
+                            <span className="text-[10px] font-bold uppercase block text-muted-foreground">
+                              Taxa de Lotação
+                            </span>
+                            <p className={`text-base font-black font-mono ${
+                              computedTaxaLotacao <= 1.2
+                                ? "text-emerald-700 dark:text-emerald-300"
+                                : computedTaxaLotacao <= 2.0
+                                ? "text-amber-700 dark:text-amber-300"
+                                : "text-rose-700 dark:text-rose-300"
+                            }`}>
+                              {computedTaxaLotacao} UA/ha
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Campos de Áreas Forrageiras */}
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                            <Trees className="h-3.5 w-3.5 text-emerald-600" />
+                            Áreas de Pastagens e Forrageiras (Hectares):
+                          </Label>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div className="space-y-1">
+                              <Label className="text-[10px] text-muted-foreground font-semibold">
+                                Pasto Cultivado (ha)
+                              </Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder="0.0"
+                                value={newPropAreaPastagemCultivada || ""}
+                                onChange={(e) => setNewPropAreaPastagemCultivada(Number(e.target.value) || 0)}
+                                className="h-8 rounded-lg text-xs font-mono font-bold"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-[10px] text-muted-foreground font-semibold">
+                                Pasto Nativo (ha)
+                              </Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder="0.0"
+                                value={newPropAreaPastagemNativa || ""}
+                                onChange={(e) => setNewPropAreaPastagemNativa(Number(e.target.value) || 0)}
+                                className="h-8 rounded-lg text-xs font-mono font-bold"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-[10px] text-muted-foreground font-semibold">
+                                Capineira / Canavial (ha)
+                              </Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder="0.0"
+                                value={newPropAreaCapineira || ""}
+                                onChange={(e) => setNewPropAreaCapineira(Number(e.target.value) || 0)}
+                                className="h-8 rounded-lg text-xs font-mono font-bold"
+                              />
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-[10px] text-muted-foreground font-semibold">
+                                Palma Forrageira (ha)
+                              </Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder="0.0"
+                                value={newPropAreaPalma || ""}
+                                onChange={(e) => setNewPropAreaPalma(Number(e.target.value) || 0)}
+                                className="h-8 rounded-lg text-xs font-mono font-bold"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Espécie Forrageira & Rebanho */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="space-y-1.5 sm:col-span-2">
+                            <Label className="text-xs font-bold">
+                              Espécie(s) Forrageira(s) Predominante(s)
+                            </Label>
+                            <Input
+                              placeholder="Ex: Brachiaria brizantha, Mombaça, Buffel, Capiaçu..."
+                              value={newPropEspeciePastagem}
+                              onChange={(e) => setNewPropEspeciePastagem(e.target.value)}
+                              className="h-9 rounded-xl text-xs"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-bold">
+                              Total Rebanho (Cabeças)
+                            </Label>
+                            <Input
+                              type="number"
+                              placeholder="Ex: 20"
+                              value={newPropRebanhoCabecas || ""}
+                              onChange={(e) => {
+                                const v = Number(e.target.value) || 0;
+                                setNewPropRebanhoCabecas(v);
+                                if (!newPropRebanhoTotalUa || newPropRebanhoTotalUa === 0) {
+                                  setNewPropRebanhoTotalUa(Math.round(v * 0.8 * 10) / 10);
+                                }
+                              }}
+                              className="h-9 rounded-xl text-xs font-mono font-bold"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Estiagem, Suplementação & Parecer Técnico */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-bold">
+                              Período de Estiagem Crítica (Meses de Seca)
+                            </Label>
+                            <Select
+                              value={String(newPropPeriodoEstiagem || 6)}
+                              onValueChange={(val) => setNewPropPeriodoEstiagem(Number(val) || 6)}
+                            >
+                              <SelectTrigger className="rounded-xl h-9 text-xs">
+                                <SelectValue placeholder="Meses de seca" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="3">3 Meses de Seca</SelectItem>
+                                <SelectItem value="4">4 Meses de Seca</SelectItem>
+                                <SelectItem value="5">5 Meses de Seca</SelectItem>
+                                <SelectItem value="6">6 Meses (Padrão Semiárido/Cerrado)</SelectItem>
+                                <SelectItem value="7">7 Meses de Seca</SelectItem>
+                                <SelectItem value="8">8 Meses de Seca Severa</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-bold">
+                              Estratégia de Reserva & Suplementação
+                            </Label>
+                            <Input
+                              placeholder="Ex: Capineira/Palma no cocho + Silagem + Sal mineral proteinado"
+                              value={newPropEstrategiaSuplementacao}
+                              onChange={(e) => setNewPropEstrategiaSuplementacao(e.target.value)}
+                              className="h-9 rounded-xl text-xs"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Parecer Técnico de Capacidade de Suporte */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold flex items-center justify-between">
+                            <span>Parecer de Capacidade de Suporte (Normativo BNB):</span>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] font-bold ${
+                                computedTaxaLotacao <= 1.2
+                                  ? "border-emerald-500/40 text-emerald-700 bg-emerald-50/50"
+                                  : computedTaxaLotacao <= 2.0
+                                  ? "border-amber-500/40 text-amber-700 bg-amber-50/50"
+                                  : "border-rose-500/40 text-rose-700 bg-rose-50/50"
+                              }`}
+                            >
+                              {computedTaxaLotacao <= 1.2
+                                ? "Capacidade Forrageira Suficiente"
+                                : computedTaxaLotacao <= 2.0
+                                ? "Intensivo com Suplementação"
+                                : "Atenção: Sobrecarga de Lotação"}
+                            </Badge>
+                          </Label>
+                          <Textarea
+                            rows={3}
+                            placeholder="Descreva a avaliação da oferta forrageira x rebanho..."
+                            value={newPropParecerSuporte}
+                            onChange={(e) => setNewPropParecerSuporte(e.target.value)}
+                            className="rounded-xl text-xs resize-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* 6. Documentos do Projeto */}
                 <Card className="rounded-3xl border border-border/60 shadow-sm bg-card">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <CardTitle className="text-sm font-extrabold flex items-center gap-2">
                       <FolderCheck className="h-4 w-4 text-teal-600" />
-                      5. Documentação do Projeto & Anexos
+                      6. Documentação do Projeto & Anexos
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Anexe os arquivos comprobatórios do produtor e o projeto técnico simplificado
@@ -2352,6 +2937,24 @@ export default function ProjetistaDashboard() {
                     </p>
                   </div>
                   <div>
+                    <span className="text-muted-foreground block text-[10px]">Município / Propriedade:</span>
+                    <p className="font-semibold text-foreground truncate">
+                      {parsedProposalData.municipio || "Não informado"}
+                      {parsedProposalData.localizacao ? ` - ${parsedProposalData.localizacao}` : ""}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Área do Imóvel / Posse:</span>
+                    <p className="font-semibold text-foreground truncate">
+                      {parsedProposalData.dadosProponente?.areaTotalHa
+                        ? `${parsedProposalData.dadosProponente.areaTotalHa} ha`
+                        : "Área não identificada"}
+                      {parsedProposalData.dadosProponente?.condicaoPosse
+                        ? ` (${parsedProposalData.dadosProponente.condicaoPosse})`
+                        : ""}
+                    </p>
+                  </div>
+                  <div>
                     <span className="text-muted-foreground block text-[10px]">Linha de Crédito:</span>
                     <p className="font-semibold text-teal-700 dark:text-teal-300 truncate">
                       {parsedProposalData.linhaCredito || "Custeio Agrícola"}
@@ -2364,6 +2967,57 @@ export default function ProjetistaDashboard() {
                     </p>
                   </div>
                 </div>
+
+                {/* Bloco de Suporte Forrageiro Detectado */}
+                {parsedProposalData.suporteForrageiro &&
+                  (parsedProposalData.suporteForrageiro.temPecuaria ||
+                    parsedProposalData.suporteForrageiro.areaTotalForrageiraHa > 0 ||
+                    parsedProposalData.suporteForrageiro.rebanhoCabecas > 0) && (
+                    <div className="pt-2 border-t border-emerald-500/20 p-2.5 rounded-xl bg-emerald-500/10 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-extrabold text-emerald-900 dark:text-emerald-200 flex items-center gap-1">
+                          <Sprout className="h-3.5 w-3.5 text-emerald-600" />
+                          Suporte Forrageiro & Dimensionamento Detectado:
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="text-[9px] font-bold border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
+                        >
+                          {parsedProposalData.suporteForrageiro.taxaLotacaoUaHa > 0
+                            ? `${parsedProposalData.suporteForrageiro.taxaLotacaoUaHa} UA/ha`
+                            : "Pecuária Identificada"}
+                        </Badge>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+                        <div>
+                          <span className="text-muted-foreground text-[9px] block">Área Pasto:</span>
+                          <span className="font-mono font-bold">
+                            {parsedProposalData.suporteForrageiro.areaTotalForrageiraHa || 0} ha
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground text-[9px] block">Rebanho:</span>
+                          <span className="font-mono font-bold">
+                            {parsedProposalData.suporteForrageiro.rebanhoCabecas || 0} cab (
+                            {parsedProposalData.suporteForrageiro.rebanhoTotalUa || 0} UA)
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground text-[9px] block">Estiagem:</span>
+                          <span className="font-mono font-bold">
+                            {parsedProposalData.suporteForrageiro.periodoEstiagemMeses || 6} meses
+                          </span>
+                        </div>
+                      </div>
+
+                      {parsedProposalData.suporteForrageiro.parecerCapacidadeSuporte && (
+                        <p className="text-[10px] text-emerald-800 dark:text-emerald-200 italic leading-snug">
+                          "{parsedProposalData.suporteForrageiro.parecerCapacidadeSuporte}"
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                 {parsedProposalData.items && parsedProposalData.items.length > 0 && (
                   <div className="pt-2 border-t border-emerald-500/20 space-y-1">
@@ -2434,7 +3088,7 @@ export default function ProjetistaDashboard() {
             <div className="space-y-4 py-2 text-xs">
               <div className="bg-muted/40 p-4 rounded-2xl border border-border/60 space-y-2">
                 <span className="font-bold uppercase tracking-wider text-muted-foreground text-[10px]">
-                  Dados do Produtor Rural
+                  Dados do Produtor Rural & Propriedade
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
@@ -2449,12 +3103,71 @@ export default function ProjetistaDashboard() {
                       {selectedProposal.producer_cpf || "Não informado"}
                     </p>
                   </div>
+
+                  {selectedProposal.dados_proponente?.rg && (
+                    <div>
+                      <span className="text-muted-foreground">RG / Órgão Emissor:</span>
+                      <p className="font-mono font-semibold text-foreground">
+                        {selectedProposal.dados_proponente.rg}
+                        {selectedProposal.dados_proponente.orgao_emissor ? ` - ${selectedProposal.dados_proponente.orgao_emissor}` : ""}
+                      </p>
+                    </div>
+                  )}
+
+                  {(selectedProposal.dados_proponente?.data_nascimento || selectedProposal.data_nascimento) && (
+                    <div>
+                      <span className="text-muted-foreground">Data de Nascimento:</span>
+                      <p className="font-mono font-semibold text-foreground">
+                        {selectedProposal.dados_proponente?.data_nascimento || selectedProposal.data_nascimento}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedProposal.dados_proponente?.estado_civil && (
+                    <div>
+                      <span className="text-muted-foreground">Estado Civil:</span>
+                      <p className="font-semibold text-foreground">
+                        {selectedProposal.dados_proponente.estado_civil}
+                        {selectedProposal.dados_proponente.nome_conjuge ? ` (Cônjuge: ${selectedProposal.dados_proponente.nome_conjuge})` : ""}
+                      </p>
+                    </div>
+                  )}
+
                   <div>
                     <span className="text-muted-foreground">Município:</span>
                     <p className="font-semibold text-foreground">
                       {selectedProposal.municipio || "Não informado"}
                     </p>
                   </div>
+
+                  {selectedProposal.localizacao && (
+                    <div>
+                      <span className="text-muted-foreground">Propriedade / Imóvel:</span>
+                      <p className="font-semibold text-foreground">
+                        {selectedProposal.localizacao}
+                        {selectedProposal.dados_proponente?.area_total_ha ? ` (${selectedProposal.dados_proponente.area_total_ha} ha)` : ""}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedProposal.dados_proponente?.condicao_posse && (
+                    <div>
+                      <span className="text-muted-foreground">Condição de Posse:</span>
+                      <p className="font-semibold text-foreground">
+                        {selectedProposal.dados_proponente.condicao_posse}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedProposal.dados_proponente?.car && (
+                    <div className="sm:col-span-2">
+                      <span className="text-muted-foreground">CAR (Cadastro Ambiental Rural):</span>
+                      <p className="font-mono text-xs font-semibold text-foreground">
+                        {selectedProposal.dados_proponente.car}
+                      </p>
+                    </div>
+                  )}
+
                   <div>
                     <span className="text-muted-foreground">Linha de Crédito:</span>
                     <p className="font-semibold text-teal-700 dark:text-teal-300">
@@ -2495,6 +3208,62 @@ export default function ProjetistaDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Suporte Forrageiro se existente na proposta */}
+              {selectedProposal.suporte_forrageiro && (
+                <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/25 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 text-[10px] flex items-center gap-1.5">
+                      <Sprout className="h-3.5 w-3.5 text-emerald-600" />
+                      Suporte Forrageiro & Dimensionamento Pecuário
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-mono font-bold border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
+                    >
+                      {selectedProposal.suporte_forrageiro.taxa_lotacao_ua_ha || selectedProposal.suporte_forrageiro.taxaLotacaoUaHa || 0} UA/ha
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1">
+                    <div>
+                      <span className="text-muted-foreground text-[10px] block">Área Forrageira:</span>
+                      <p className="font-mono font-bold text-foreground">
+                        {selectedProposal.suporte_forrageiro.area_total_forrageira_ha || selectedProposal.suporte_forrageiro.areaTotalForrageiraHa || 0} ha
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground text-[10px] block">Rebanho Total:</span>
+                      <p className="font-mono font-bold text-foreground">
+                        {selectedProposal.suporte_forrageiro.rebanho_cabecas || selectedProposal.suporte_forrageiro.rebanhoCabecas || 0} cab.
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground text-[10px] block">Total de UA:</span>
+                      <p className="font-mono font-bold text-foreground">
+                        {selectedProposal.suporte_forrageiro.rebanho_total_ua || selectedProposal.suporte_forrageiro.rebanhoTotalUa || 0} UA
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground text-[10px] block">Meses Estiagem:</span>
+                      <p className="font-mono font-bold text-foreground">
+                        {selectedProposal.suporte_forrageiro.periodo_estiagem_meses || selectedProposal.suporte_forrageiro.periodoEstiagemMeses || 6} meses
+                      </p>
+                    </div>
+                  </div>
+
+                  {(selectedProposal.suporte_forrageiro.parecer_capacidade_suporte || selectedProposal.suporte_forrageiro.parecerCapacidadeSuporte) && (
+                    <div className="pt-2 border-t border-emerald-500/20">
+                      <span className="text-[10px] font-bold text-muted-foreground block">
+                        Parecer de Capacidade Forrageira:
+                      </span>
+                      <p className="text-xs text-foreground font-medium italic mt-0.5">
+                        "{selectedProposal.suporte_forrageiro.parecer_capacidade_suporte || selectedProposal.suporte_forrageiro.parecerCapacidadeSuporte}"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {selectedProposal.pendencias && (
                 <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/30 space-y-1">

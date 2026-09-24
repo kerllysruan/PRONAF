@@ -26,6 +26,81 @@ export interface ExcelInversoesResult {
   error?: string;
 }
 
+export interface DadosProponenteData {
+  nome?: string;
+  cpf?: string;
+  rg?: string;
+  orgaoEmissor?: string;
+  ufRg?: string;
+  dataNascimento?: string;
+  estadoCivil?: string;
+  nomeConjuge?: string;
+  cpfConjuge?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
+  municipio?: string;
+  uf?: string;
+  cep?: string;
+  nomePropriedade?: string;
+  localidade?: string;
+  condicaoPosse?: string; // Proprietário, Assentado, Posseiro, Arrendatário, Parceiro, Comodatário
+  areaTotalHa?: number;
+  areaExploradaHa?: number;
+  dapCaf?: string;
+  validadeDapCaf?: string;
+  car?: string;
+  nirf?: string;
+  ccir?: string;
+  matricula?: string;
+  banco?: string;
+  agencia?: string;
+  conta?: string;
+}
+
+export interface PastagemItem {
+  tipo: string;
+  especie?: string;
+  areaHa: number;
+  producaoMsTonHaAno?: number;
+  producaoTotalTonAno?: number;
+  estadoConservacao?: string;
+}
+
+export interface RebanhoItem {
+  categoria: string;
+  cabecas: number;
+  fatorUa: number;
+  totalUa: number;
+}
+
+export interface SuporteForrageiroData {
+  temPecuaria: boolean;
+  areaPastagemNativaHa: number;
+  areaPastagemCultivadaHa: number;
+  areaCapineiraHa: number;
+  areaPalmaHa: number;
+  areaOutrasForrageirasHa: number;
+  areaTotalForrageiraHa: number;
+  especiePastagem?: string;
+  
+  // Rebanho
+  rebanhoCabecas: number;
+  rebanhoTotalUa: number;
+  taxaLotacaoUaHa: number; // UA / ha
+  
+  // Balanço de Matéria Seca (MS)
+  producaoTotalMsAno?: number; // ton MS/ano
+  consumoTotalMsAno?: number; // ton MS/ano
+  saldoMsAno?: number; // producao - consumo
+  periodoEstiagemMeses?: number; // meses de seca (ex: 6)
+  estrategiaSuplementacao?: string; // Silagem, Feno, Palma, Concentrado
+  parecerCapacidadeSuporte?: string; // Avaliação de adequação técnica
+  
+  pastagensDetalhadas?: PastagemItem[];
+  rebanhoDetalhado?: RebanhoItem[];
+}
+
 export interface ExcelProposalParsed {
   success: boolean;
   producerName?: string;
@@ -38,6 +113,11 @@ export interface ExcelProposalParsed {
   pronafLineId?: string;
   atividade?: string;
   valorSolicitado?: number;
+
+  // Dados completos extraídos
+  dadosProponente?: DadosProponenteData;
+  suporteForrageiro?: SuporteForrageiroData;
+
   items: InversaoItem[];
   custoAssessoria: number;
   totalItens: number;
@@ -402,6 +482,807 @@ export function matchPronafLineId(text: string): { id: string; label: string } {
   return { id: "custeio", label: "Custeio Agrícola" };
 }
 
+export function parseExcelDate(val: any): string {
+  if (!val) return "";
+  if (val instanceof Date) {
+    return val.toLocaleDateString("pt-BR");
+  }
+  if (typeof val === "number" && val > 1000 && val < 60000) {
+    const excelEpoch = new Date(1899, 11, 30);
+    const d = new Date(excelEpoch.getTime() + val * 86400000);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString("pt-BR");
+    }
+  }
+  const str = String(val).trim();
+  const dmyMatch = str.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/);
+  if (dmyMatch) {
+    return `${dmyMatch[1].padStart(2, "0")}/${dmyMatch[2].padStart(2, "0")}/${dmyMatch[3]}`;
+  }
+  const ymdMatch = str.match(/^(\d{4})[\/\.-](\d{1,2})[\/\.-](\d{1,2})/);
+  if (ymdMatch) {
+    return `${ymdMatch[3].padStart(2, "0")}/${ymdMatch[2].padStart(2, "0")}/${ymdMatch[1]}`;
+  }
+  return str;
+}
+
+export function parseHectares(val: any): number {
+  if (val === null || val === undefined || val === "") return 0;
+  if (typeof val === "number") return val;
+  const str = String(val)
+    .replace(/ha/gi, "")
+    .replace(/hectares?/gi, "")
+    .trim();
+  return parseMoney(str);
+}
+
+export function extractDadosProponente(
+  wb: XLSX.WorkBook,
+  rowsBdPRONAF_C?: any[][]
+): DadosProponenteData {
+  const dados: DadosProponenteData = {};
+
+  // 1. Tenta extrair de BdPRONAF_C se disponível
+  if (rowsBdPRONAF_C && rowsBdPRONAF_C.length > 120) {
+    const r121 = rowsBdPRONAF_C[121] || [];
+    for (let c = 0; c < Math.min(25, r121.length); c++) {
+      const val = r121[c];
+      if (val === null || val === undefined || String(val).trim() === "") continue;
+      const strVal = String(val).trim();
+      const normVal = normalizeText(strVal);
+
+      // CPF (11 dígitos)
+      const digitsOnly = strVal.replace(/\D/g, "");
+      if (digitsOnly.length === 11) {
+        if (!dados.cpf) {
+          dados.cpf = digitsOnly;
+        } else if (!dados.cpfConjuge && digitsOnly !== dados.cpf) {
+          dados.cpfConjuge = digitsOnly;
+        }
+      }
+
+      // Município / UF (Ex: GOVERNADOR NUNES FREIRE-MA)
+      if (
+        c === 6 ||
+        (strVal.includes("-") &&
+          /[-/]\s*(MA|PI|CE|BA|PB|PE|RN|SE|AL|MG|TO|PA|GO|MT|MS|PR|SC|RS|SP|RJ|ES|RO|AC|AM|RR|AP|DF)$/i.test(
+            strVal
+          ))
+      ) {
+        const parts = strVal.split(/[-/]/);
+        if (parts.length >= 2) {
+          dados.municipio = parts[0].trim().toUpperCase();
+          dados.uf = parts[1].trim().toUpperCase();
+        } else if (!dados.municipio) {
+          dados.municipio = strVal.toUpperCase();
+        }
+      }
+
+      // Nome do Produtor
+      if (
+        !dados.nome &&
+        strVal.length > 5 &&
+        strVal.includes(" ") &&
+        !/\d/.test(strVal) &&
+        !normVal.includes("FAZENDA") &&
+        !normVal.includes("SITIO") &&
+        !normVal.includes("ASSENTAMENTO") &&
+        !normVal.includes("GLEBA") &&
+        !normVal.includes("GOVERNADOR")
+      ) {
+        dados.nome = strVal.toUpperCase();
+      }
+
+      // Nome da Propriedade / Localidade
+      if (
+        !dados.nomePropriedade &&
+        (normVal.includes("FAZENDA") ||
+          normVal.includes("SITIO") ||
+          normVal.includes("GLEBA") ||
+          normVal.includes("POVOADO") ||
+          normVal.includes("ASSENTAMENTO") ||
+          normVal.includes("COMUNIDADE") ||
+          normVal.includes("PROJETO") ||
+          normVal.includes("CHACARA") ||
+          normVal.includes("LOTE"))
+      ) {
+        dados.nomePropriedade = strVal.toUpperCase();
+        dados.localidade = strVal.toUpperCase();
+      }
+
+      // Estado Civil
+      if (!dados.estadoCivil) {
+        if (normVal === "CASADO" || normVal === "CASADA") dados.estadoCivil = "Casado(a)";
+        else if (normVal === "SOLTEIRO" || normVal === "SOLTEIRA") dados.estadoCivil = "Solteiro(a)";
+        else if (normVal.includes("UNIAO") || normVal.includes("ESTAVEL")) dados.estadoCivil = "União Estável";
+        else if (normVal === "DIVORCIADO" || normVal === "DIVORCIADA") dados.estadoCivil = "Divorciado(a)";
+        else if (normVal === "VIUVO" || normVal === "VIUVA") dados.estadoCivil = "Viúvo(a)";
+      }
+
+      // Condição de Posse
+      if (!dados.condicaoPosse) {
+        if (normVal.includes("PROPRIET")) dados.condicaoPosse = "Proprietário";
+        else if (normVal.includes("ASSENT")) dados.condicaoPosse = "Assentado";
+        else if (normVal.includes("POSSE")) dados.condicaoPosse = "Posseiro";
+        else if (normVal.includes("ARREND")) dados.condicaoPosse = "Arrendatário";
+        else if (normVal.includes("COMOD")) dados.condicaoPosse = "Comodatário";
+        else if (normVal.includes("PARC")) dados.condicaoPosse = "Parceiro";
+      }
+
+      // Área em Hectares
+      if (!dados.areaTotalHa && typeof val === "number" && val > 0 && val < 10000 && c >= 10 && c <= 18) {
+        dados.areaTotalHa = val;
+      }
+    }
+  }
+
+  // 2. Varredura ampla em todas as abas
+  for (const sheetName of wb.SheetNames) {
+    const sheet = wb.Sheets[sheetName];
+    const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (!rows || rows.length === 0) continue;
+
+    for (let r = 0; r < Math.min(120, rows.length); r++) {
+      const row = rows[r] || [];
+      for (let c = 0; c < Math.min(30, row.length); c++) {
+        const cell = row[c];
+        if (cell === null || cell === undefined) continue;
+
+        const strVal = String(cell).trim();
+        const norm = normalizeText(strVal);
+
+        const getNextVal = () => {
+          const nextInRow =
+            row[c + 1] !== undefined && row[c + 1] !== null && String(row[c + 1]).trim() !== ""
+              ? row[c + 1]
+              : row[c + 2];
+          if (nextInRow !== undefined && nextInRow !== null && String(nextInRow).trim() !== "")
+            return nextInRow;
+          const nextInCol = rows[r + 1] ? rows[r + 1][c] : null;
+          return nextInCol !== undefined && nextInCol !== null && String(nextInCol).trim() !== ""
+            ? nextInCol
+            : "";
+        };
+
+        // Nome / Produtor
+        if (
+          !dados.nome &&
+          (norm === "NOME" ||
+            norm === "NOME:" ||
+            norm === "PRODUTOR" ||
+            norm === "PRODUTOR:" ||
+            norm === "PROPONENTE" ||
+            norm === "PROPONENTE:" ||
+            norm === "BENEFICIARIO" ||
+            norm === "BENEFICIARIO:" ||
+            norm === "CLIENTE" ||
+            norm === "TITULAR")
+        ) {
+          const next = String(getNextVal()).trim();
+          if (next && next.length > 3 && next.includes(" ") && !/\d/.test(next)) {
+            dados.nome = next.toUpperCase();
+          }
+        }
+
+        // CPF
+        if (!dados.cpf) {
+          const cpfMatch = strVal.match(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/);
+          if (cpfMatch) {
+            dados.cpf = cpfMatch[0].replace(/\D/g, "");
+          } else if (norm === "CPF" || norm === "CPF:" || norm === "CPF/MF") {
+            const next = String(getNextVal()).replace(/\D/g, "");
+            if (next.length === 11) dados.cpf = next;
+          }
+        }
+
+        // RG / Identidade
+        if (
+          !dados.rg &&
+          (norm === "RG" ||
+            norm === "RG:" ||
+            norm === "IDENTIDADE" ||
+            norm === "DOC. IDENTIDADE" ||
+            norm === "DOC IDENTIDADE" ||
+            norm === "DOCUMENTO IDENTIDADE")
+        ) {
+          const next = String(getNextVal()).trim();
+          if (next && next.length >= 4) {
+            dados.rg = next;
+          }
+        }
+
+        // Órgão Emissor / SSP
+        if (
+          !dados.orgaoEmissor &&
+          (norm.includes("ORGAO EMISSOR") ||
+            norm.includes("ORG EMISSOR") ||
+            norm.includes("EXPEDIDOR") ||
+            norm === "SSP" ||
+            norm === "ORG.")
+        ) {
+          const next = String(getNextVal()).trim();
+          if (next) dados.orgaoEmissor = next.toUpperCase();
+        }
+
+        // Data de Nascimento
+        if (
+          !dados.dataNascimento &&
+          (norm.includes("DATA NASC") ||
+            norm.includes("DT NASC") ||
+            norm.includes("NASCIMENTO") ||
+            norm === "DT. NASC." ||
+            norm === "DATA DE NASCIMENTO")
+        ) {
+          const next = getNextVal();
+          const parsedD = parseExcelDate(next);
+          if (parsedD) dados.dataNascimento = parsedD;
+        }
+
+        // Estado Civil
+        if (
+          !dados.estadoCivil &&
+          (norm === "ESTADO CIVIL" || norm === "ESTADO CIVIL:" || norm === "EST. CIVIL")
+        ) {
+          const next = normalizeText(getNextVal());
+          if (next.includes("CASAD")) dados.estadoCivil = "Casado(a)";
+          else if (next.includes("SOLTEIR")) dados.estadoCivil = "Solteiro(a)";
+          else if (next.includes("UNIAO") || next.includes("ESTAVEL")) dados.estadoCivil = "União Estável";
+          else if (next.includes("DIVORC")) dados.estadoCivil = "Divorciado(a)";
+          else if (next.includes("VIUV")) dados.estadoCivil = "Viúvo(a)";
+        }
+
+        // Cônjuge
+        if (
+          !dados.nomeConjuge &&
+          (norm === "CONJUGE" ||
+            norm === "CONJUGE:" ||
+            norm === "ESPOSA" ||
+            norm === "ESPOSO" ||
+            norm === "NOME DO CONJUGE")
+        ) {
+          const next = String(getNextVal()).trim();
+          if (next && next.length > 3 && !/\d/.test(next)) {
+            dados.nomeConjuge = next.toUpperCase();
+          }
+        }
+        if (
+          !dados.cpfConjuge &&
+          (norm.includes("CPF CONJUGE") ||
+            norm.includes("CPF DO CONJUGE") ||
+            norm.includes("CPF ESPOS"))
+        ) {
+          const next = String(getNextVal()).replace(/\D/g, "");
+          if (next.length === 11) dados.cpfConjuge = next;
+        }
+
+        // Telefone
+        if (
+          !dados.telefone &&
+          (norm.includes("TELEFONE") ||
+            norm.includes("FONE") ||
+            norm.includes("WHATSAPP") ||
+            norm.includes("CELULAR"))
+        ) {
+          const next = String(getNextVal()).replace(/\D/g, "");
+          if (next.length >= 10 && next.length <= 11) {
+            dados.telefone = next;
+          }
+        }
+
+        // Município / UF
+        if (
+          !dados.municipio &&
+          (norm === "MUNICIPIO" ||
+            norm === "MUNICIPIO:" ||
+            norm === "CIDADE" ||
+            norm === "CIDADE:")
+        ) {
+          const next = String(getNextVal()).trim();
+          if (next && next.length > 2 && !/\d/.test(next)) {
+            dados.municipio = next.toUpperCase();
+          }
+        }
+        if (!dados.uf && (norm === "UF" || norm === "UF:" || norm === "ESTADO" || norm === "ESTADO:")) {
+          const next = String(getNextVal()).trim().toUpperCase();
+          if (next.length === 2) dados.uf = next;
+        }
+
+        // Propriedade / Imóvel / Localidade
+        if (
+          !dados.nomePropriedade &&
+          (norm === "PROPRIEDADE" ||
+            norm === "PROPRIEDADE:" ||
+            norm === "IMOVEL" ||
+            norm === "IMOVEL:" ||
+            norm === "DENOMINACAO" ||
+            norm === "NOME DO IMOVEL" ||
+            norm === "FAZENDA / SITIO" ||
+            norm === "LOCALIZACAO")
+        ) {
+          const next = String(getNextVal()).trim();
+          if (next && next.length > 2) {
+            dados.nomePropriedade = next.toUpperCase();
+            if (!dados.localidade) dados.localidade = next.toUpperCase();
+          }
+        }
+
+        // Condição de Posse
+        if (
+          !dados.condicaoPosse &&
+          (norm.includes("CONDICAO") ||
+            norm.includes("POSSE") ||
+            norm.includes("VINCULO COM A TERRA") ||
+            norm === "COND. POSSE")
+        ) {
+          const next = normalizeText(getNextVal());
+          if (next.includes("PROPRIET")) dados.condicaoPosse = "Proprietário";
+          else if (next.includes("ASSENT")) dados.condicaoPosse = "Assentado";
+          else if (next.includes("POSSE")) dados.condicaoPosse = "Posseiro";
+          else if (next.includes("ARREND")) dados.condicaoPosse = "Arrendatário";
+          else if (next.includes("COMOD")) dados.condicaoPosse = "Comodatário";
+          else if (next.includes("PARC")) dados.condicaoPosse = "Parceiro";
+        }
+
+        // Área Total (ha)
+        if (
+          !dados.areaTotalHa &&
+          (norm === "AREA TOTAL" ||
+            norm === "AREA TOTAL (HA)" ||
+            norm === "AREA DO IMOVEL" ||
+            norm === "AREA TOTAL:" ||
+            norm === "SUPERFICIE TOTAL")
+        ) {
+          const next = getNextVal();
+          const parsed = parseHectares(next);
+          if (parsed > 0) dados.areaTotalHa = parsed;
+        }
+
+        // Área Explorada (ha)
+        if (
+          !dados.areaExploradaHa &&
+          (norm.includes("AREA EXPLORADA") ||
+            norm.includes("AREA PRODUTIVA") ||
+            norm.includes("AREA AGRICOLA") ||
+            norm.includes("AREA UTILIZADA"))
+        ) {
+          const next = getNextVal();
+          const parsed = parseHectares(next);
+          if (parsed > 0) dados.areaExploradaHa = parsed;
+        }
+
+        // DAP / CAF
+        if (
+          !dados.dapCaf &&
+          (norm.includes("DAP") || norm.includes("CAF") || norm.includes("DECLARACAO DE APTIDAO"))
+        ) {
+          const next = String(getNextVal()).trim();
+          if (next && next.length > 3) dados.dapCaf = next;
+        }
+
+        // CAR
+        if (!dados.car && (norm === "CAR" || norm === "CAR:" || norm.includes("CADASTRO AMBIENTAL"))) {
+          const next = String(getNextVal()).trim();
+          if (next && next.length > 5) dados.car = next;
+        }
+
+        // NIRF / CCIR
+        if (!dados.nirf && (norm === "NIRF" || norm === "NIRF:")) {
+          const next = String(getNextVal()).trim();
+          if (next) dados.nirf = next;
+        }
+        if (!dados.ccir && (norm === "CCIR" || norm === "CCIR:")) {
+          const next = String(getNextVal()).trim();
+          if (next) dados.ccir = next;
+        }
+
+        // Agência / Conta
+        if (!dados.agencia && (norm === "AGENCIA" || norm === "AGENCIA:" || norm === "AG.")) {
+          const next = String(getNextVal()).trim();
+          if (next) dados.agencia = next;
+        }
+        if (
+          !dados.conta &&
+          (norm === "CONTA" || norm === "CONTA:" || norm === "C/C" || norm === "CONTA CORRENTE")
+        ) {
+          const next = String(getNextVal()).trim();
+          if (next) dados.conta = next;
+        }
+      }
+    }
+  }
+
+  return dados;
+}
+
+export function extractSuporteForrageiro(
+  wb: XLSX.WorkBook,
+  items: InversaoItem[],
+  rowsBdPRONAF_C?: any[][]
+): SuporteForrageiroData {
+  let temPecuaria = false;
+  let areaPastagemNativaHa = 0;
+  let areaPastagemCultivadaHa = 0;
+  let areaCapineiraHa = 0;
+  let areaPalmaHa = 0;
+  let areaOutrasForrageirasHa = 0;
+  let especiePastagem = "";
+  let rebanhoCabecas = 0;
+  let rebanhoTotalUa = 0;
+  let taxaLotacaoUaHa = 0;
+  let producaoTotalMsAno = 0;
+  let consumoTotalMsAno = 0;
+  let saldoMsAno = 0;
+  let periodoEstiagemMeses = 6;
+  let estrategiaSuplementacao = "";
+  let parecerCapacidadeSuporte = "";
+
+  const pastagensDetalhadas: PastagemItem[] = [];
+  const rebanhoDetalhado: RebanhoItem[] = [];
+
+  const scanForageInSheet = (rows: any[][]) => {
+    for (let r = 0; r < Math.min(150, rows.length); r++) {
+      const row = rows[r] || [];
+      for (let c = 0; c < Math.min(30, row.length); c++) {
+        const cell = row[c];
+        if (cell === null || cell === undefined) continue;
+
+        const strVal = String(cell).trim();
+        const norm = normalizeText(strVal);
+
+        const getNextNum = (): number => {
+          const nextInRow =
+            row[c + 1] !== undefined && row[c + 1] !== null && String(row[c + 1]).trim() !== ""
+              ? row[c + 1]
+              : row[c + 2];
+          let num = parseMoney(nextInRow);
+          if (num === 0 && rows[r + 1]) {
+            num = parseMoney(rows[r + 1][c]);
+          }
+          return num;
+        };
+
+        // Pastagem Nativa
+        if (norm.includes("PASTO NATIV") || norm.includes("PASTAGEM NATIV") || norm.includes("CAMPO NATIV")) {
+          temPecuaria = true;
+          const val = getNextNum();
+          if (val > 0 && areaPastagemNativaHa === 0) areaPastagemNativaHa = val;
+        }
+
+        // Pastagem Cultivada / Formada
+        if (
+          norm.includes("PASTO CULTIVAD") ||
+          norm.includes("PASTAGEM CULTIVAD") ||
+          norm.includes("PASTO FORMAD") ||
+          norm.includes("PASTAGEM FORMAD") ||
+          norm.includes("BRACHIARIA") ||
+          norm.includes("BRAQUIARIA") ||
+          norm.includes("MOMBACA") ||
+          norm.includes("MASSAI") ||
+          norm.includes("TANZANIA") ||
+          norm.includes("BUFFEL") ||
+          norm.includes("ANDROPOGON")
+        ) {
+          temPecuaria = true;
+          const val = getNextNum();
+          if (val > 0 && areaPastagemCultivadaHa === 0) {
+            areaPastagemCultivadaHa = val;
+          }
+          if (!especiePastagem) {
+            if (norm.includes("BRACHIARIA") || norm.includes("BRAQUIARIA"))
+              especiePastagem = "Brachiaria brizantha / decumbens";
+            else if (norm.includes("MOMBACA")) especiePastagem = "Panicum maximum cv. Mombaça";
+            else if (norm.includes("MASSAI")) especiePastagem = "Panicum maximum cv. Massai";
+            else if (norm.includes("BUFFEL")) especiePastagem = "Cenchrus ciliaris (Capim Buffel)";
+            else if (norm.includes("TANZANIA")) especiePastagem = "Panicum maximum cv. Tanzânia";
+            else if (norm.includes("ANDROPOGON")) especiePastagem = "Andropogon gayanus";
+          }
+        }
+
+        // Capineira / Canavial
+        if (
+          norm.includes("CAPINEIRA") ||
+          norm.includes("CANAVIAL") ||
+          norm.includes("CAPIACU") ||
+          norm.includes("CAPIM ELEFANTE") ||
+          norm.includes("CANA-DE-ACUCAR") ||
+          norm.includes("CANA DE ACUCAR")
+        ) {
+          temPecuaria = true;
+          const val = getNextNum();
+          if (val > 0 && areaCapineiraHa === 0) areaCapineiraHa = val;
+        }
+
+        // Palma Forrageira
+        if (
+          norm.includes("PALMA") ||
+          norm.includes("PALMA FORRAGEIRA") ||
+          norm.includes("PALMA ADENSADA") ||
+          norm.includes("ORELHA DE ELEFANTE")
+        ) {
+          temPecuaria = true;
+          const val = getNextNum();
+          if (val > 0 && areaPalmaHa === 0) areaPalmaHa = val;
+        }
+
+        // Rebanho / Cabeças
+        if (
+          norm.includes("TOTAL DE CABECAS") ||
+          norm.includes("REBANHO TOTAL") ||
+          norm.includes("TOTAL DO REBANHO") ||
+          norm === "EFETIVO DO REBANHO" ||
+          norm === "REBANHO (CAB)"
+        ) {
+          temPecuaria = true;
+          const val = getNextNum();
+          if (val > 0 && rebanhoCabecas === 0) rebanhoCabecas = Math.round(val);
+        }
+
+        // UA (Unidades Animais)
+        if (
+          norm === "TOTAL UA" ||
+          norm === "UA TOTAL" ||
+          norm === "UNIDADES ANIMAIS" ||
+          norm === "UA" ||
+          norm.includes("TOTAL DE UA")
+        ) {
+          temPecuaria = true;
+          const val = getNextNum();
+          if (val > 0 && rebanhoTotalUa === 0) rebanhoTotalUa = Math.round(val * 10) / 10;
+        }
+
+        // Taxa de Lotação
+        if (
+          norm.includes("TAXA DE LOTACAO") ||
+          norm.includes("LOTACAO (UA/HA)") ||
+          norm === "UA/HA" ||
+          norm.includes("LOTACAO PROJETADA")
+        ) {
+          temPecuaria = true;
+          const val = getNextNum();
+          if (val > 0 && taxaLotacaoUaHa === 0) taxaLotacaoUaHa = Math.round(val * 100) / 100;
+        }
+
+        // Balanço MS
+        if (
+          norm.includes("PRODUCAO DE MS") ||
+          norm.includes("PRODUCAO TOTAL MS") ||
+          norm.includes("OFERTA DE MS")
+        ) {
+          const val = getNextNum();
+          if (val > 0 && producaoTotalMsAno === 0) producaoTotalMsAno = Math.round(val * 10) / 10;
+        }
+        if (
+          norm.includes("CONSUMO DE MS") ||
+          norm.includes("DEMANDA DE MS") ||
+          norm.includes("DEMANDA TOTAL MS")
+        ) {
+          const val = getNextNum();
+          if (val > 0 && consumoTotalMsAno === 0) consumoTotalMsAno = Math.round(val * 10) / 10;
+        }
+        if (
+          norm.includes("PERIODO DE ESTIAGEM") ||
+          norm.includes("MESES DE SECA") ||
+          norm.includes("PERIODO SECO")
+        ) {
+          const val = getNextNum();
+          if (val > 0 && val <= 12) periodoEstiagemMeses = Math.round(val);
+        }
+      }
+    }
+  };
+
+  // Prioriza abas que têm nome relacionado a forragem / pasto / rebanho
+  const forageSheetNames = wb.SheetNames.filter((s) => {
+    const norm = normalizeText(s);
+    return (
+      norm.includes("FORRAG") ||
+      norm.includes("SUPORTE") ||
+      norm.includes("BALANC") ||
+      norm.includes("PAST") ||
+      norm.includes("REBANHO") ||
+      norm.includes("PECUAR") ||
+      norm.includes("DIMENSION")
+    );
+  });
+
+  for (const sName of forageSheetNames) {
+    const sheet = wb.Sheets[sName];
+    const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (rows && rows.length > 0) scanForageInSheet(rows);
+  }
+
+  // Se não achou tudo, varre as outras abas
+  for (const sName of wb.SheetNames) {
+    if (forageSheetNames.includes(sName)) continue;
+    const sheet = wb.Sheets[sName];
+    const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (rows && rows.length > 0) scanForageInSheet(rows);
+  }
+
+  // 3. Inspeção dos Itens de Inversão
+  let animalItemsCount = 0;
+  for (const item of items) {
+    const normName = normalizeText(item.nome);
+
+    // Animais
+    if (
+      normName.includes("MATRIZ") ||
+      normName.includes("VACA") ||
+      normName.includes("NOVILHA") ||
+      normName.includes("BEZERRO") ||
+      normName.includes("TOURO") ||
+      normName.includes("REPRODUTOR") ||
+      normName.includes("BOVINO") ||
+      normName.includes("GARROTE") ||
+      normName.includes("CABRA") ||
+      normName.includes("OVELHA") ||
+      normName.includes("OVINO") ||
+      normName.includes("CAPRINO")
+    ) {
+      temPecuaria = true;
+      animalItemsCount += item.quant || 1;
+    }
+
+    // Pastagem / Forragem em itens
+    if (
+      normName.includes("SEMENTE DE CAPIM") ||
+      normName.includes("FORMACAO DE PAST") ||
+      normName.includes("RECUPERACAO DE PAST") ||
+      normName.includes("BRACHIARIA") ||
+      normName.includes("MOMBACA") ||
+      normName.includes("MASSAI") ||
+      normName.includes("BUFFEL")
+    ) {
+      temPecuaria = true;
+      if (!especiePastagem) {
+        if (normName.includes("BRACHIARIA")) especiePastagem = "Brachiaria brizantha";
+        else if (normName.includes("MOMBACA")) especiePastagem = "Panicum maximum cv. Mombaça";
+        else if (normName.includes("MASSAI")) especiePastagem = "Panicum maximum cv. Massai";
+        else if (normName.includes("BUFFEL")) especiePastagem = "Capim Buffel";
+      }
+      if (areaPastagemCultivadaHa === 0) {
+        if (item.unid === "HECT" || item.unid === "HA") {
+          areaPastagemCultivadaHa = item.quant;
+        } else {
+          const m = item.nome.match(/(\d+([.,]\d+)?)\s*(ha|hect)/i);
+          if (m) areaPastagemCultivadaHa = parseMoney(m[1]);
+        }
+      }
+    }
+
+    // Capineira / Palma
+    if (normName.includes("PALMA") || normName.includes("PALMA FORRAGEIRA")) {
+      temPecuaria = true;
+      if (areaPalmaHa === 0) {
+        if (item.unid === "HECT" || item.unid === "HA") areaPalmaHa = item.quant;
+        else {
+          const m = item.nome.match(/(\d+([.,]\d+)?)\s*(ha|hect)/i);
+          if (m) areaPalmaHa = parseMoney(m[1]);
+        }
+      }
+    }
+
+    if (
+      normName.includes("CAPINEIRA") ||
+      normName.includes("CAPIACU") ||
+      normName.includes("CAPIM ELEFANTE")
+    ) {
+      temPecuaria = true;
+      if (areaCapineiraHa === 0) {
+        if (item.unid === "HECT" || item.unid === "HA") areaCapineiraHa = item.quant;
+        else {
+          const m = item.nome.match(/(\d+([.,]\d+)?)\s*(ha|hect)/i);
+          if (m) areaCapineiraHa = parseMoney(m[1]);
+        }
+      }
+    }
+
+    if (
+      normName.includes("SILAGEM") ||
+      normName.includes("FENO") ||
+      normName.includes("TRITURADOR") ||
+      normName.includes("ENSILADEIRA") ||
+      normName.includes("PICADEIRA")
+    ) {
+      temPecuaria = true;
+      if (!estrategiaSuplementacao) {
+        estrategiaSuplementacao = normName.includes("SILAGEM")
+          ? "Silagem e Forragem Picada"
+          : "Feno e Suplementação Volumosa";
+      }
+    }
+  }
+
+  if (rebanhoCabecas === 0 && animalItemsCount > 0) {
+    rebanhoCabecas = animalItemsCount;
+  }
+
+  // 4. Cálculos Automáticos de Coerência
+  const areaTotalForrageiraHa =
+    Math.round(
+      (areaPastagemNativaHa +
+        areaPastagemCultivadaHa +
+        areaCapineiraHa +
+        areaPalmaHa +
+        areaOutrasForrageirasHa) *
+        100
+    ) / 100;
+
+  if (rebanhoCabecas > 0 && rebanhoTotalUa === 0) {
+    rebanhoTotalUa = Math.round(rebanhoCabecas * 0.8 * 10) / 10;
+  }
+
+  if (areaTotalForrageiraHa > 0 && rebanhoTotalUa > 0 && taxaLotacaoUaHa === 0) {
+    taxaLotacaoUaHa = Math.round((rebanhoTotalUa / areaTotalForrageiraHa) * 100) / 100;
+  }
+
+  if (producaoTotalMsAno === 0 && areaTotalForrageiraHa > 0) {
+    producaoTotalMsAno =
+      Math.round(
+        (areaPastagemCultivadaHa * 5.5 +
+          areaPastagemNativaHa * 2.0 +
+          areaCapineiraHa * 25.0 +
+          areaPalmaHa * 18.0) *
+          10
+      ) / 10;
+  }
+
+  if (consumoTotalMsAno === 0 && rebanhoTotalUa > 0) {
+    consumoTotalMsAno = Math.round(rebanhoTotalUa * 3.65 * 10) / 10;
+  }
+
+  saldoMsAno = Math.round((producaoTotalMsAno - consumoTotalMsAno) * 10) / 10;
+
+  if (!estrategiaSuplementacao) {
+    if (areaPalmaHa > 0 || areaCapineiraHa > 0) {
+      estrategiaSuplementacao = "Capineira / Palma Forrageira no período seco e suplementação mineral";
+    } else {
+      estrategiaSuplementacao = "Pastejo diferido e suplementação com volumoso / sal proteinado no período seco";
+    }
+  }
+
+  if (temPecuaria || areaTotalForrageiraHa > 0 || rebanhoCabecas > 0) {
+    if (taxaLotacaoUaHa > 0 && taxaLotacaoUaHa <= 1.2) {
+      parecerCapacidadeSuporte =
+        "Suporte Forrageiro Equilibrado: Capacidade de suporte adequada ao bioma local e taxa de lotação sustentável com folga de forragem.";
+    } else if (
+      taxaLotacaoUaHa <= 2.0 &&
+      (areaCapineiraHa > 0 || areaPalmaHa > 0 || producaoTotalMsAno >= consumoTotalMsAno)
+    ) {
+      parecerCapacidadeSuporte =
+        "Lotação Intensificada: Capacidade atendida com suporte de volumoso complementar (capineira/palma) dimensionado para a estiagem.";
+    } else if (taxaLotacaoUaHa > 2.0) {
+      parecerCapacidadeSuporte =
+        "Alerta de Lotação Alta: Requer manejo rotacionado intensivo e fornecimento contínuo de suplementação forrageira externa durante a estiagem.";
+    } else {
+      parecerCapacidadeSuporte =
+        "Capacidade de Suporte compatível com o plano técnico de produção pecuária do PRONAF.";
+    }
+  }
+
+  return {
+    temPecuaria,
+    areaPastagemNativaHa,
+    areaPastagemCultivadaHa,
+    areaCapineiraHa,
+    areaPalmaHa,
+    areaOutrasForrageirasHa,
+    areaTotalForrageiraHa,
+    especiePastagem: especiePastagem || undefined,
+    rebanhoCabecas,
+    rebanhoTotalUa,
+    taxaLotacaoUaHa,
+    producaoTotalMsAno,
+    consumoTotalMsAno,
+    saldoMsAno,
+    periodoEstiagemMeses,
+    estrategiaSuplementacao,
+    parecerCapacidadeSuporte,
+    pastagensDetalhadas,
+    rebanhoDetalhado,
+  };
+}
+
 export async function parseExcelProposalFull(
   fileOrBuffer: File | ArrayBuffer | Uint8Array,
   options?: {
@@ -455,52 +1336,61 @@ export async function parseExcelProposalFull(
 
     const wb = XLSX.read(decryptedBuffer, { type: "buffer" });
 
-    let producerName = "";
-    let producerCpf = "";
-    let producerPhone = "";
-    let municipio = "";
-    let localizacao = "";
-    let dapCaf = "";
+    const rowsBdPRONAF_C: any[][] | undefined = wb.SheetNames.includes("BdPRONAF_C")
+      ? XLSX.utils.sheet_to_json(wb.Sheets["BdPRONAF_C"], { header: 1 })
+      : undefined;
+
+    const dadosProponente = extractDadosProponente(wb, rowsBdPRONAF_C);
+    const suporteForrageiro = extractSuporteForrageiro(wb, inversoesResult.items, rowsBdPRONAF_C);
+
+    let producerName = dadosProponente.nome || "";
+    let producerCpf = dadosProponente.cpf || "";
+    let producerPhone = dadosProponente.telefone || "";
+    let municipio = dadosProponente.municipio || "";
+    let localizacao = dadosProponente.nomePropriedade || dadosProponente.localidade || "";
+    let dapCaf = dadosProponente.dapCaf || "";
     let linhaCredito = "";
     let pronafLineId = "";
     let atividade = "";
     let valorSolicitado = 0;
 
     // Se tiver BdPRONAF_C
-    if (wb.SheetNames.includes("BdPRONAF_C")) {
-      const sheet = wb.Sheets["BdPRONAF_C"];
-      const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (rowsBdPRONAF_C && rowsBdPRONAF_C[121]) {
+      const r121 = rowsBdPRONAF_C[121];
+      if (r121[6] && !municipio) {
+        municipio = String(r121[6]).trim();
+      }
+      for (let c = 0; c < 22; c++) {
+        const val = String(r121[c] || "").trim();
+        if (!val) continue;
 
-      if (rows[121]) {
-        const r121 = rows[121];
-        if (r121[6]) {
-          municipio = String(r121[6]).trim();
+        const digitsOnly = val.replace(/\D/g, "");
+        if (digitsOnly.length === 11 && !producerCpf) {
+          producerCpf = digitsOnly;
+          continue;
         }
-        for (let c = 0; c < 22; c++) {
-          const val = String(r121[c] || "").trim();
-          if (!val) continue;
 
-          const digitsOnly = val.replace(/\D/g, "");
-          if (digitsOnly.length === 11 && !producerCpf) {
-            producerCpf = digitsOnly;
-            continue;
-          }
+        if (!producerName && val.length > 5 && val.includes(" ") && !/\d/.test(val)) {
+          producerName = val;
+          continue;
+        }
 
-          if (!producerName && val.length > 5 && val.includes(" ") && !/\d/.test(val)) {
-            producerName = val;
-            continue;
-          }
-
-          const normV = normalizeText(val);
-          if (!localizacao && (normV.includes("FAZENDA") || normV.includes("SITIO") || normV.includes("GLEBA") || normV.includes("POVOADO") || normV.includes("ASSENTAMENTO"))) {
-            localizacao = val;
-            continue;
-          }
+        const normV = normalizeText(val);
+        if (
+          !localizacao &&
+          (normV.includes("FAZENDA") ||
+            normV.includes("SITIO") ||
+            normV.includes("GLEBA") ||
+            normV.includes("POVOADO") ||
+            normV.includes("ASSENTAMENTO"))
+        ) {
+          localizacao = val;
+          continue;
         }
       }
     }
 
-    // Varredura em todas as abas
+    // Varredura de parâmetros adicionais da proposta em todas as abas
     for (const sheetName of wb.SheetNames) {
       const sheet = wb.Sheets[sheetName];
       const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -515,61 +1405,13 @@ export async function parseExcelProposalFull(
           const strVal = String(cell).trim();
           const norm = normalizeText(strVal);
 
-          // CPF
-          if (!producerCpf) {
-            const cpfRegex = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/;
-            const match = strVal.match(cpfRegex);
-            if (match) {
-              producerCpf = match[0].replace(/\D/g, "");
-            } else if (norm.includes("CPF") && row[c + 1]) {
-              const nextVal = String(row[c + 1]).replace(/\D/g, "");
-              if (nextVal.length === 11) producerCpf = nextVal;
-            }
-          }
-
-          // Produtor / Proponente
-          if (!producerName && (norm.includes("PRODUTOR") || norm.includes("PROPONENTE") || norm.includes("BENEFICIARIO") || norm.includes("CLIENTE") || norm === "NOME" || norm === "NOME:")) {
-            const nextVal = String(row[c + 1] || row[c + 2] || "").trim();
-            if (nextVal && nextVal.length > 3 && nextVal.includes(" ") && !/\d/.test(nextVal)) {
-              producerName = nextVal;
-            }
-          }
-
-          // Telefone
-          if (!producerPhone && (norm.includes("FONE") || norm.includes("TELEFONE") || norm.includes("WHATSAPP") || norm.includes("CELULAR"))) {
-            const nextVal = String(row[c + 1] || "").trim();
-            const phoneDigits = nextVal.replace(/\D/g, "");
-            if (phoneDigits.length >= 10 && phoneDigits.length <= 11) {
-              producerPhone = phoneDigits;
-            }
-          }
-
-          // Município
-          if (!municipio && (norm.includes("MUNICIPIO") || norm.includes("CIDADE"))) {
-            const nextVal = String(row[c + 1] || "").trim();
-            if (nextVal && nextVal.length > 2 && !/\d/.test(nextVal)) {
-              municipio = nextVal;
-            }
-          }
-
-          // Localização
-          if (!localizacao && (norm.includes("PROPRIEDADE") || norm.includes("IMOVEL") || norm.includes("LOCALIZACAO") || norm.includes("DENOMINACAO") || norm.includes("COMUNIDADE"))) {
-            const nextVal = String(row[c + 1] || "").trim();
-            if (nextVal && nextVal.length > 2) {
-              localizacao = nextVal;
-            }
-          }
-
-          // DAP / CAF
-          if (!dapCaf && (norm.includes("DAP") || norm.includes("CAF"))) {
-            const nextVal = String(row[c + 1] || "").trim();
-            if (nextVal && nextVal.length > 3) {
-              dapCaf = nextVal;
-            }
-          }
-
           // Linha de Crédito
-          if (!linhaCredito && (norm.includes("LINHA") || norm.includes("PROGRAMA") || norm.includes("ENQUADRAMENTO"))) {
+          if (
+            !linhaCredito &&
+            (norm.includes("LINHA") ||
+              norm.includes("PROGRAMA") ||
+              norm.includes("ENQUADRAMENTO"))
+          ) {
             const nextVal = String(row[c + 1] || "").trim();
             if (nextVal && nextVal.length > 2) {
               const matched = matchPronafLineId(nextVal);
@@ -579,7 +1421,13 @@ export async function parseExcelProposalFull(
           }
 
           // Atividade
-          if (!atividade && (norm.includes("ATIVIDADE") || norm.includes("FINALIDADE") || norm.includes("CULTURA") || norm.includes("EXPLORACAO"))) {
+          if (
+            !atividade &&
+            (norm.includes("ATIVIDADE") ||
+              norm.includes("FINALIDADE") ||
+              norm.includes("CULTURA") ||
+              norm.includes("EXPLORACAO"))
+          ) {
             const nextVal = String(row[c + 1] || "").trim();
             if (nextVal && nextVal.length > 2) {
               atividade = nextVal;
@@ -587,7 +1435,13 @@ export async function parseExcelProposalFull(
           }
 
           // Valor Solicitado
-          if (valorSolicitado === 0 && (norm.includes("VALOR SOLICITADO") || norm.includes("VALOR FINANCIADO") || norm.includes("VALOR DO PROJETO") || norm.includes("VALOR TOTAL"))) {
+          if (
+            valorSolicitado === 0 &&
+            (norm.includes("VALOR SOLICITADO") ||
+              norm.includes("VALOR FINANCIADO") ||
+              norm.includes("VALOR DO PROJETO") ||
+              norm.includes("VALOR TOTAL"))
+          ) {
             const nextVal = row[c + 1];
             const parsed = parseMoney(nextVal);
             if (parsed > 0) {
@@ -607,6 +1461,10 @@ export async function parseExcelProposalFull(
       linhaCredito = "Pronaf Grupo A (Res. 368)";
     }
 
+    if (!atividade && suporteForrageiro.temPecuaria) {
+      atividade = "Bovinocultura / Pecuária Familiar";
+    }
+
     return {
       success: inversoesResult.success,
       producerName: producerName.toUpperCase() || undefined,
@@ -619,6 +1477,8 @@ export async function parseExcelProposalFull(
       pronafLineId: pronafLineId || undefined,
       atividade: atividade || undefined,
       valorSolicitado: valorSolicitado > 0 ? valorSolicitado : undefined,
+      dadosProponente,
+      suporteForrageiro,
       items: inversoesResult.items,
       custoAssessoria: inversoesResult.custoAssessoria,
       totalItens: inversoesResult.totalItens,
