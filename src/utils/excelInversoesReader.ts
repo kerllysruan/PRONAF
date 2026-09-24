@@ -27,35 +27,71 @@ export interface ExcelInversoesResult {
 }
 
 export interface DadosProponenteData {
+  tipoCliente?: string;
   nome?: string;
+  apelido?: string;
   cpf?: string;
   rg?: string;
+  dataEmissaoRg?: string;
   orgaoEmissor?: string;
   ufRg?: string;
+  tipoDocumento?: string;
   dataNascimento?: string;
+  naturalidade?: string;
+  sexo?: string;
   estadoCivil?: string;
+  grauInstrucao?: string;
+  profissao?: string;
+  atividadePrincipal?: string;
+  rendaMensal?: number | string;
+  nomeMae?: string;
+  nomePai?: string;
+  porte?: string;
   nomeConjuge?: string;
   cpfConjuge?: string;
+  dataNascimentoConjuge?: string;
+  rgConjuge?: string;
+  orgaoEmissorConjuge?: string;
+  ufConjuge?: string;
+  profissaoConjuge?: string;
   telefone?: string;
   email?: string;
+  tipoLogradouro?: string;
   endereco?: string;
+  complemento?: string;
+  bairro?: string;
   municipio?: string;
   uf?: string;
   cep?: string;
   nomePropriedade?: string;
   localidade?: string;
-  condicaoPosse?: string; // Proprietário, Assentado, Posseiro, Arrendatário, Parceiro, Comodatário
+  condicaoPosse?: string; // Proprietário, Assentado, Posseiro, Arrendatário, Parceiro, Comodatário, Anuência
+  tipoProprietario?: string;
+  nomeProprietario?: string;
+  cpfProprietario?: string;
   areaTotalHa?: number;
   areaExploradaHa?: number;
+  areaPastagemHa?: number;
+  areaReservaHa?: number;
   dapCaf?: string;
   validadeDapCaf?: string;
   car?: string;
   nirf?: string;
+  sncr?: string;
   ccir?: string;
   matricula?: string;
   banco?: string;
   agencia?: string;
   conta?: string;
+  roteiroAcesso?: string;
+  comentariosSolosAguada?: string;
+  parecerTecnico?: string;
+  elaborador?: string;
+  cpfElaborador?: string;
+  agenciaBnb?: string;
+  objetivo?: string;
+  linhaCredito?: string;
+  custoAssessoria?: number;
 }
 
 export interface PastagemItem {
@@ -111,7 +147,13 @@ export interface ExcelProposalParsed {
   dapCaf?: string;
   linhaCredito?: string;
   pronafLineId?: string;
+  agenciaBnb?: string;
   atividade?: string;
+  objetivo?: string;
+  parecerTecnico?: string;
+  roteiroAcesso?: string;
+  elaborador?: string;
+  cpfElaborador?: string;
   valorSolicitado?: number;
 
   // Dados completos extraídos
@@ -200,8 +242,8 @@ export async function parseExcelInversoes(
     if (isEncrypted) {
       const passwords = [
         options?.customPassword,
-        "senhasBNxI",
         "senhasBN",
+        "senhasBNxI",
         "senhasBNXI",
         "senhaBNxI",
         "senhaBNXI",
@@ -522,98 +564,124 @@ export function extractDadosProponente(
 ): DadosProponenteData {
   const dados: DadosProponenteData = {};
 
-  // 1. Tenta extrair de BdPRONAF_C se disponível
-  if (rowsBdPRONAF_C && rowsBdPRONAF_C.length > 120) {
-    const r121 = rowsBdPRONAF_C[121] || [];
-    for (let c = 0; c < Math.min(25, r121.length); c++) {
-      const val = r121[c];
-      if (val === null || val === undefined || String(val).trim() === "") continue;
-      const strVal = String(val).trim();
-      const normVal = normalizeText(strVal);
+  // 1. Tenta extrair de BdPRONAF_C se disponível (formato oficial SEAP / BNB)
+  if (rowsBdPRONAF_C && rowsBdPRONAF_C.length > 11) {
+    const r11 = rowsBdPRONAF_C[11] || []; // Linha 12: Cliente & Cônjuge
+    const r21 = rowsBdPRONAF_C[21] || []; // Linha 22: Imóvel & Posse
+    const r121 = rowsBdPRONAF_C[121] || []; // Linha 122: Operação & Parecer
 
-      // CPF (11 dígitos)
-      const digitsOnly = strVal.replace(/\D/g, "");
-      if (digitsOnly.length === 11) {
-        if (!dados.cpf) {
-          dados.cpf = digitsOnly;
-        } else if (!dados.cpfConjuge && digitsOnly !== dados.cpf) {
-          dados.cpfConjuge = digitsOnly;
-        }
-      }
+    // Proponente (Linha 12)
+    if (r11[4]) dados.tipoCliente = String(r11[4]).trim();
+    if (r11[5]) dados.nome = String(r11[5]).trim().toUpperCase();
+    if (r11[6]) dados.apelido = String(r11[6]).trim().toUpperCase();
+    if (r11[7]) {
+      const clean = String(r11[7]).replace(/\D/g, "");
+      dados.cpf = clean.length === 11 ? clean : String(r11[7]).trim();
+    }
+    if (r11[8]) dados.dataNascimento = parseExcelDate(r11[8]);
+    if (r11[9]) dados.rg = String(r11[9]).trim();
+    if (r11[10]) dados.dataEmissaoRg = parseExcelDate(r11[10]);
+    if (r11[12]) dados.tipoDocumento = String(r11[12]).trim();
+    if (r11[13]) dados.orgaoEmissor = String(r11[13]).trim().toUpperCase();
+    if (r11[14]) dados.ufRg = String(r11[14]).trim().toUpperCase();
+    if (r11[16]) dados.naturalidade = String(r11[16]).trim().toUpperCase();
+    if (r11[17]) dados.sexo = String(r11[17]).trim();
+    if (r11[18]) dados.estadoCivil = String(r11[18]).trim();
+    if (r11[19]) dados.grauInstrucao = String(r11[19]).trim();
+    if (r11[20]) dados.profissao = String(r11[20]).trim();
+    if (r11[21]) dados.atividadePrincipal = String(r11[21]).trim();
+    if (r11[22]) dados.rendaMensal = parseMoney(r11[22]);
+    if (r11[24]) dados.nomePai = String(r11[24]).trim().toUpperCase();
+    if (r11[25]) dados.nomeMae = String(r11[25]).trim().toUpperCase();
+    if (r11[27]) dados.porte = String(r11[27]).trim();
+    if (r11[28]) dados.dapCaf = String(r11[28]).trim();
 
-      // Município / UF (Ex: GOVERNADOR NUNES FREIRE-MA)
-      if (
-        c === 6 ||
-        (strVal.includes("-") &&
-          /[-/]\s*(MA|PI|CE|BA|PB|PE|RN|SE|AL|MG|TO|PA|GO|MT|MS|PR|SC|RS|SP|RJ|ES|RO|AC|AM|RR|AP|DF)$/i.test(
-            strVal
-          ))
-      ) {
-        const parts = strVal.split(/[-/]/);
-        if (parts.length >= 2) {
-          dados.municipio = parts[0].trim().toUpperCase();
-          dados.uf = parts[1].trim().toUpperCase();
-        } else if (!dados.municipio) {
-          dados.municipio = strVal.toUpperCase();
-        }
-      }
-
-      // Nome do Produtor
-      if (
-        !dados.nome &&
-        strVal.length > 5 &&
-        strVal.includes(" ") &&
-        !/\d/.test(strVal) &&
-        !normVal.includes("FAZENDA") &&
-        !normVal.includes("SITIO") &&
-        !normVal.includes("ASSENTAMENTO") &&
-        !normVal.includes("GLEBA") &&
-        !normVal.includes("GOVERNADOR")
-      ) {
-        dados.nome = strVal.toUpperCase();
-      }
-
-      // Nome da Propriedade / Localidade
-      if (
-        !dados.nomePropriedade &&
-        (normVal.includes("FAZENDA") ||
-          normVal.includes("SITIO") ||
-          normVal.includes("GLEBA") ||
-          normVal.includes("POVOADO") ||
-          normVal.includes("ASSENTAMENTO") ||
-          normVal.includes("COMUNIDADE") ||
-          normVal.includes("PROJETO") ||
-          normVal.includes("CHACARA") ||
-          normVal.includes("LOTE"))
-      ) {
-        dados.nomePropriedade = strVal.toUpperCase();
-        dados.localidade = strVal.toUpperCase();
-      }
-
-      // Estado Civil
-      if (!dados.estadoCivil) {
-        if (normVal === "CASADO" || normVal === "CASADA") dados.estadoCivil = "Casado(a)";
-        else if (normVal === "SOLTEIRO" || normVal === "SOLTEIRA") dados.estadoCivil = "Solteiro(a)";
-        else if (normVal.includes("UNIAO") || normVal.includes("ESTAVEL")) dados.estadoCivil = "União Estável";
-        else if (normVal === "DIVORCIADO" || normVal === "DIVORCIADA") dados.estadoCivil = "Divorciado(a)";
-        else if (normVal === "VIUVO" || normVal === "VIUVA") dados.estadoCivil = "Viúvo(a)";
-      }
-
-      // Condição de Posse
-      if (!dados.condicaoPosse) {
-        if (normVal.includes("PROPRIET")) dados.condicaoPosse = "Proprietário";
-        else if (normVal.includes("ASSENT")) dados.condicaoPosse = "Assentado";
-        else if (normVal.includes("POSSE")) dados.condicaoPosse = "Posseiro";
-        else if (normVal.includes("ARREND")) dados.condicaoPosse = "Arrendatário";
-        else if (normVal.includes("COMOD")) dados.condicaoPosse = "Comodatário";
-        else if (normVal.includes("PARC")) dados.condicaoPosse = "Parceiro";
-      }
-
-      // Área em Hectares
-      if (!dados.areaTotalHa && typeof val === "number" && val > 0 && val < 10000 && c >= 10 && c <= 18) {
-        dados.areaTotalHa = val;
+    // Endereço / Localização do Proponente (Linha 12)
+    if (r11[34]) dados.tipoLogradouro = String(r11[34]).trim();
+    if (r11[35]) dados.endereco = String(r11[35]).trim().toUpperCase();
+    if (r11[37]) dados.complemento = String(r11[37]).trim();
+    if (r11[38]) dados.bairro = String(r11[38]).trim().toUpperCase();
+    if (r11[39]) dados.cep = String(r11[39]).trim();
+    if (r11[40]) {
+      const munStr = String(r11[40]).trim();
+      if (munStr.includes("-")) {
+        const parts = munStr.split(/[-/]/);
+        dados.municipio = parts[0].trim().toUpperCase();
+        dados.uf = parts[1].trim().toUpperCase();
+      } else {
+        dados.municipio = munStr.toUpperCase();
       }
     }
+
+    // Telefone (Linha 12)
+    const ddd = r11[41] ? String(r11[41]).replace(/\D/g, "") : "";
+    const numTel = r11[42] ? String(r11[42]).replace(/\D/g, "") : "";
+    if (numTel) {
+      dados.telefone = ddd ? `(${ddd}) ${numTel}` : numTel;
+    }
+
+    // Posse & Roteiro de Acesso (Linha 12)
+    if (r11[58]) dados.condicaoPosse = String(r11[58]).trim();
+    if (r11[62]) dados.roteiroAcesso = String(r11[62]).trim();
+
+    // Cônjuge (Linha 12)
+    if (r11[63]) dados.nomeConjuge = String(r11[63]).trim().toUpperCase();
+    if (r11[64]) {
+      const cleanConj = String(r11[64]).replace(/\D/g, "");
+      dados.cpfConjuge = cleanConj.length === 11 ? cleanConj : cleanConj.padStart(11, "0");
+    }
+    if (r11[65]) dados.dataNascimentoConjuge = parseExcelDate(r11[65]);
+    if (r11[66]) dados.rgConjuge = String(r11[66]).trim();
+    if (r11[68]) dados.orgaoEmissorConjuge = String(r11[68]).trim().toUpperCase();
+    if (r11[69]) dados.ufConjuge = String(r11[69]).trim().toUpperCase();
+    if (r11[74]) dados.profissaoConjuge = String(r11[74]).trim();
+
+    // Imóvel & Posse (Linha 22)
+    if (r21[4]) {
+      dados.nomePropriedade = String(r21[4]).trim().toUpperCase();
+      if (!dados.localidade) dados.localidade = dados.nomePropriedade;
+    }
+    if (r21[5] && !dados.municipio) {
+      const munParts = String(r21[5]).split(/[-/]/);
+      dados.municipio = munParts[0].trim().toUpperCase();
+      if (munParts[1] && !dados.uf) dados.uf = munParts[1].trim().toUpperCase();
+    }
+    if (r21[6]) dados.areaTotalHa = parseHectares(r21[6]);
+    if (r21[10]) dados.comentariosSolosAguada = String(r21[10]).trim();
+    if (r21[55]) dados.nirf = String(r21[55]).trim();
+    if (r21[57]) dados.sncr = String(r21[57]).trim();
+    if (r21[58]) dados.car = String(r21[58]).trim().toUpperCase();
+    if (r21[59]) dados.tipoProprietario = String(r21[59]).trim();
+    if (r21[60]) dados.nomeProprietario = String(r21[60]).trim().toUpperCase();
+    if (r21[61]) dados.cpfProprietario = String(r21[61]).trim();
+
+    // Coberturas, Reserva e Pastagens (Linhas 21 a 55)
+    for (let r = 21; r < Math.min(55, rowsBdPRONAF_C.length); r++) {
+      const row = rowsBdPRONAF_C[r];
+      if (!row) continue;
+      const descCultura = row[13] ? String(row[13]).trim() : "";
+      const areaCultura = parseHectares(row[14]);
+      const normCultura = normalizeText(descCultura);
+
+      if (normCultura.includes("RESERVA") || normCultura.includes("FLORESTAL") || normCultura.includes("PRESERV")) {
+        if (areaCultura > 0) dados.areaReservaHa = areaCultura;
+      } else if (normCultura.includes("PAST") || normCultura.includes("CAPIM") || normCultura.includes("BRACHIAR") || normCultura.includes("MOMBAC")) {
+        if (areaCultura > 0) {
+          dados.areaPastagemHa = (dados.areaPastagemHa || 0) + areaCultura;
+        }
+      } else if (areaCultura > 0 && !normCultura.includes("INAPROVEIT")) {
+        dados.areaExploradaHa = (dados.areaExploradaHa || 0) + areaCultura;
+      }
+    }
+
+    // Operação e Parecer Técnico (Linha 122)
+    if (r121[5]) dados.linhaCredito = String(r121[5]).trim();
+    if (r121[6]) dados.agenciaBnb = String(r121[6]).trim().toUpperCase();
+    if (r121[8] && !dados.atividadePrincipal) dados.atividadePrincipal = String(r121[8]).trim();
+    if (r121[13]) dados.elaborador = String(r121[13]).trim().toUpperCase();
+    if (r121[14]) dados.cpfElaborador = String(r121[14]).trim();
+    if (r121[15]) dados.objetivo = String(r121[15]).trim();
+    if (r121[55]) dados.parecerTecnico = String(r121[55]).trim();
   }
 
   // 2. Varredura ampla em todas as abas
@@ -1316,8 +1384,8 @@ export async function parseExcelProposalFull(
     if (isEncrypted) {
       const passwords = [
         options?.customPassword,
-        "senhasBNxI",
         "senhasBN",
+        "senhasBNxI",
         "senhasBNXI",
         "senhaBNxI",
         "senhaBNXI",
@@ -1347,105 +1415,94 @@ export async function parseExcelProposalFull(
     let producerCpf = dadosProponente.cpf || "";
     let producerPhone = dadosProponente.telefone || "";
     let municipio = dadosProponente.municipio || "";
-    let localizacao = dadosProponente.nomePropriedade || dadosProponente.localidade || "";
+    let localizacao = dadosProponente.nomePropriedade || dadosProponente.localidade || dadosProponente.endereco || "";
     let dapCaf = dadosProponente.dapCaf || "";
-    let linhaCredito = "";
+    let linhaCredito = dadosProponente.linhaCredito || "";
     let pronafLineId = "";
-    let atividade = "";
+    let agenciaBnb = dadosProponente.agenciaBnb || "";
+    let atividade = dadosProponente.atividadePrincipal || "";
+    let objetivo = dadosProponente.objetivo || "";
+    let parecerTecnico = dadosProponente.parecerTecnico || "";
+    let roteiroAcesso = dadosProponente.roteiroAcesso || "";
+    let elaborador = dadosProponente.elaborador || "";
+    let cpfElaborador = dadosProponente.cpfElaborador || "";
     let valorSolicitado = 0;
 
-    // Se tiver BdPRONAF_C
+    // Se tiver BdPRONAF_C, captura linha de crédito e agência diretamente da linha 122 se ainda não definido
     if (rowsBdPRONAF_C && rowsBdPRONAF_C[121]) {
       const r121 = rowsBdPRONAF_C[121];
-      if (r121[6] && !municipio) {
-        municipio = String(r121[6]).trim();
-      }
-      for (let c = 0; c < 22; c++) {
-        const val = String(r121[c] || "").trim();
-        if (!val) continue;
-
-        const digitsOnly = val.replace(/\D/g, "");
-        if (digitsOnly.length === 11 && !producerCpf) {
-          producerCpf = digitsOnly;
-          continue;
-        }
-
-        if (!producerName && val.length > 5 && val.includes(" ") && !/\d/.test(val)) {
-          producerName = val;
-          continue;
-        }
-
-        const normV = normalizeText(val);
-        if (
-          !localizacao &&
-          (normV.includes("FAZENDA") ||
-            normV.includes("SITIO") ||
-            normV.includes("GLEBA") ||
-            normV.includes("POVOADO") ||
-            normV.includes("ASSENTAMENTO"))
-        ) {
-          localizacao = val;
-          continue;
-        }
-      }
+      if (!linhaCredito && r121[5]) linhaCredito = String(r121[5]).trim();
+      if (!agenciaBnb && r121[6]) agenciaBnb = String(r121[6]).trim();
+      if (!atividade && r121[8]) atividade = String(r121[8]).trim();
+      if (!elaborador && r121[13]) elaborador = String(r121[13]).trim();
+      if (!cpfElaborador && r121[14]) cpfElaborador = String(r121[14]).trim();
+      if (!objetivo && r121[15]) objetivo = String(r121[15]).trim();
+      if (!parecerTecnico && r121[55]) parecerTecnico = String(r121[55]).trim();
     }
 
-    // Varredura de parâmetros adicionais da proposta em todas as abas
-    for (const sheetName of wb.SheetNames) {
-      const sheet = wb.Sheets[sheetName];
-      const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-      if (!rows || rows.length === 0) continue;
+    if (linhaCredito) {
+      const matched = matchPronafLineId(linhaCredito);
+      pronafLineId = matched.id;
+    }
 
-      for (let r = 0; r < Math.min(100, rows.length); r++) {
-        const row = rows[r] || [];
-        for (let c = 0; c < Math.min(25, row.length); c++) {
-          const cell = row[c];
-          if (cell === null || cell === undefined) continue;
+    // Varredura de parâmetros adicionais em outras planilhas genéricas caso não seja SEAP
+    if (!producerName || !producerCpf) {
+      for (const sheetName of wb.SheetNames) {
+        const sheet = wb.Sheets[sheetName];
+        const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        if (!rows || rows.length === 0) continue;
 
-          const strVal = String(cell).trim();
-          const norm = normalizeText(strVal);
+        for (let r = 0; r < Math.min(100, rows.length); r++) {
+          const row = rows[r] || [];
+          for (let c = 0; c < Math.min(25, row.length); c++) {
+            const cell = row[c];
+            if (cell === null || cell === undefined) continue;
 
-          // Linha de Crédito
-          if (
-            !linhaCredito &&
-            (norm.includes("LINHA") ||
-              norm.includes("PROGRAMA") ||
-              norm.includes("ENQUADRAMENTO"))
-          ) {
-            const nextVal = String(row[c + 1] || "").trim();
-            if (nextVal && nextVal.length > 2) {
-              const matched = matchPronafLineId(nextVal);
-              linhaCredito = matched.label;
-              pronafLineId = matched.id;
+            const strVal = String(cell).trim();
+            const norm = normalizeText(strVal);
+
+            // Linha de Crédito
+            if (
+              !linhaCredito &&
+              (norm.includes("LINHA") ||
+                norm.includes("PROGRAMA") ||
+                norm.includes("ENQUADRAMENTO"))
+            ) {
+              const nextVal = String(row[c + 1] || "").trim();
+              if (nextVal && nextVal.length > 2) {
+                const matched = matchPronafLineId(nextVal);
+                linhaCredito = matched.label;
+                pronafLineId = matched.id;
+              }
             }
-          }
 
-          // Atividade
-          if (
-            !atividade &&
-            (norm.includes("ATIVIDADE") ||
-              norm.includes("FINALIDADE") ||
-              norm.includes("CULTURA") ||
-              norm.includes("EXPLORACAO"))
-          ) {
-            const nextVal = String(row[c + 1] || "").trim();
-            if (nextVal && nextVal.length > 2) {
-              atividade = nextVal;
+            // Atividade
+            if (
+              !atividade &&
+              (norm.includes("ATIVIDADE") ||
+                norm.includes("FINALIDADE") ||
+                norm.includes("CULTURA") ||
+                norm.includes("EXPLORACAO"))
+            ) {
+              const nextVal = String(row[c + 1] || "").trim();
+              if (nextVal && nextVal.length > 2) {
+                atividade = nextVal;
+              }
             }
-          }
 
-          // Valor Solicitado
-          if (
-            valorSolicitado === 0 &&
-            (norm.includes("VALOR SOLICITADO") ||
-              norm.includes("VALOR FINANCIADO") ||
-              norm.includes("VALOR DO PROJETO") ||
-              norm.includes("VALOR TOTAL"))
-          ) {
-            const nextVal = row[c + 1];
-            const parsed = parseMoney(nextVal);
-            if (parsed > 0) {
-              valorSolicitado = parsed;
+            // Valor Solicitado
+            if (
+              valorSolicitado === 0 &&
+              (norm.includes("VALOR SOLICITADO") ||
+                norm.includes("VALOR FINANCIADO") ||
+                norm.includes("VALOR DO PROJETO") ||
+                norm.includes("VALOR TOTAL"))
+            ) {
+              const nextVal = row[c + 1];
+              const parsed = parseMoney(nextVal);
+              if (parsed > 0) {
+                valorSolicitado = parsed;
+              }
             }
           }
         }
@@ -1475,7 +1532,13 @@ export async function parseExcelProposalFull(
       dapCaf: dapCaf || undefined,
       linhaCredito: linhaCredito || undefined,
       pronafLineId: pronafLineId || undefined,
+      agenciaBnb: agenciaBnb || undefined,
       atividade: atividade || undefined,
+      objetivo: objetivo || undefined,
+      parecerTecnico: parecerTecnico || undefined,
+      roteiroAcesso: roteiroAcesso || undefined,
+      elaborador: elaborador || undefined,
+      cpfElaborador: cpfElaborador || undefined,
       valorSolicitado: valorSolicitado > 0 ? valorSolicitado : undefined,
       dadosProponente,
       suporteForrageiro,

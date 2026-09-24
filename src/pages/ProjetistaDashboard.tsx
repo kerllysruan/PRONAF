@@ -224,7 +224,7 @@ export default function ProjetistaDashboard() {
   // ── Importação Inteligente de Planilha Excel ────────────────────────────────
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [importPassword, setImportPassword] = useState("senhasBNxI");
+  const [importPassword, setImportPassword] = useState("senhasBN");
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [parsedProposalData, setParsedProposalData] = useState<ExcelProposalParsed | null>(null);
   const [hidePromptBanner, setHidePromptBanner] = useState(false);
@@ -232,31 +232,70 @@ export default function ProjetistaDashboard() {
 
   // ── Formulário de Envio de Nova Proposta ────────────────────────────────────
   const [newPropProducerName, setNewPropProducerName] = useState("");
+  const [newPropApelido, setNewPropApelido] = useState("");
   const [newPropProducerCpf, setNewPropProducerCpf] = useState("");
   const [newPropProducerPhone, setNewPropProducerPhone] = useState("");
   const [newPropMunicipio, setNewPropMunicipio] = useState("");
+  const [newPropUf, setNewPropUf] = useState("MA");
   const [newPropLocalizacao, setNewPropLocalizacao] = useState("");
   const [newPropDapCaf, setNewPropDapCaf] = useState("");
   const [newPropAgenciaId, setNewPropAgenciaId] = useState("");
   const [newPropLinha, setNewPropLinha] = useState("custeio");
   const [newPropAtividade, setNewPropAtividade] = useState("");
+  const [newPropObjetivo, setNewPropObjetivo] = useState("Implantação");
   const [newPropValorSolicitado, setNewPropValorSolicitado] = useState<number>(0);
+  const [newPropCustoAssessoria, setNewPropCustoAssessoria] = useState<number>(0);
   const [newPropInversoes, setNewPropInversoes] = useState<InversaoFormItem[]>([]);
   const [newPropParecer, setNewPropParecer] = useState("");
   const [submittingNewProp, setSubmittingNewProp] = useState(false);
 
-  // ── Dados Expandidos do Proponente ──────────────────────────────────────────
+  // ── Dados Pessoais & Documentais do Produtor (Ficha 100% SEAP/BNB) ──────────
+  const [newPropTipoCliente, setNewPropTipoCliente] = useState("Pessoa Física");
   const [newPropRg, setNewPropRg] = useState("");
   const [newPropOrgaoEmissor, setNewPropOrgaoEmissor] = useState("");
+  const [newPropUfRg, setNewPropUfRg] = useState("");
+  const [newPropDataEmissaoRg, setNewPropDataEmissaoRg] = useState("");
+  const [newPropTipoDocumento, setNewPropTipoDocumento] = useState("Cédula de Identidade (RG)");
   const [newPropDataNascimento, setNewPropDataNascimento] = useState("");
+  const [newPropNaturalidade, setNewPropNaturalidade] = useState("");
+  const [newPropSexo, setNewPropSexo] = useState("Masculino");
   const [newPropEstadoCivil, setNewPropEstadoCivil] = useState("Casado(a)");
+  const [newPropGrauInstrucao, setNewPropGrauInstrucao] = useState("Alfabetizado(a)");
+  const [newPropProfissao, setNewPropProfissao] = useState("Agricultor(a)");
+  const [newPropRendaMensal, setNewPropRendaMensal] = useState<number | string>("");
+  const [newPropNomeMae, setNewPropNomeMae] = useState("");
+  const [newPropNomePai, setNewPropNomePai] = useState("");
+  const [newPropPorte, setNewPropPorte] = useState("PRONAFIANO GRUPO A - ASSOCIADO/COOPERADO");
+
+  // ── Endereço & Residência do Produtor ───────────────────────────────────────
+  const [newPropEndereco, setNewPropEndereco] = useState("");
+  const [newPropComplemento, setNewPropComplemento] = useState("PRINCIPAL");
+  const [newPropBairro, setNewPropBairro] = useState("ZONA RURAL");
+  const [newPropCep, setNewPropCep] = useState("");
+
+  // ── Cônjuge / Companheiro(a) ───────────────────────────────────────────────
   const [newPropNomeConjuge, setNewPropNomeConjuge] = useState("");
   const [newPropCpfConjuge, setNewPropCpfConjuge] = useState("");
+  const [newPropDataNascimentoConjuge, setNewPropDataNascimentoConjuge] = useState("");
+  const [newPropRgConjuge, setNewPropRgConjuge] = useState("");
+  const [newPropOrgaoEmissorConjuge, setNewPropOrgaoEmissorConjuge] = useState("");
+  const [newPropUfConjuge, setNewPropUfConjuge] = useState("");
+  const [newPropProfissaoConjuge, setNewPropProfissaoConjuge] = useState("Agricultor(a)");
+
+  // ── Dados do Imóvel, Posse & Recursos Naturais ──────────────────────────────
   const [newPropCondicaoPosse, setNewPropCondicaoPosse] = useState("Proprietário");
+  const [newPropTipoProprietario, setNewPropTipoProprietario] = useState("P.Física");
+  const [newPropNomeProprietario, setNewPropNomeProprietario] = useState("");
+  const [newPropCpfProprietario, setNewPropCpfProprietario] = useState("");
   const [newPropAreaTotalHa, setNewPropAreaTotalHa] = useState<number>(0);
   const [newPropAreaExploradaHa, setNewPropAreaExploradaHa] = useState<number>(0);
+  const [newPropAreaPastagemHa, setNewPropAreaPastagemHa] = useState<number>(0);
+  const [newPropAreaReservaHa, setNewPropAreaReservaHa] = useState<number>(0);
   const [newPropCar, setNewPropCar] = useState("");
-  const [newPropNirfCcir, setNewPropNirfCcir] = useState("");
+  const [newPropNirf, setNewPropNirf] = useState("");
+  const [newPropCcir, setNewPropCcir] = useState("");
+  const [newPropRoteiroAcesso, setNewPropRoteiroAcesso] = useState("");
+  const [newPropSolosAguada, setNewPropSolosAguada] = useState("");
   const [newPropBanco, setNewPropBanco] = useState("004 - Banco do Nordeste (BNB)");
   const [newPropAgenciaConta, setNewPropAgenciaConta] = useState("");
 
@@ -610,20 +649,78 @@ export default function ProjetistaDashboard() {
       setNewPropValorSolicitado(parsedProposalData.totalGeral);
     }
 
+    if (parsedProposalData.agenciaBnb && agencies.length > 0) {
+      const cleanAg = normalizeText(parsedProposalData.agenciaBnb)
+        .replace(/[-/]\s*[A-Z]{2}$/, "")
+        .trim();
+      const foundAg = agencies.find((ag) => {
+        const agNorm = normalizeText(ag.name);
+        return agNorm.includes(cleanAg) || cleanAg.includes(agNorm);
+      });
+      if (foundAg) setNewPropAgenciaId(foundAg.id);
+    }
+    if (parsedProposalData.objetivo) {
+      setNewPropObjetivo(parsedProposalData.objetivo);
+    }
+    if (parsedProposalData.parecerTecnico) {
+      setNewPropParecer(parsedProposalData.parecerTecnico);
+    }
+    if (parsedProposalData.roteiroAcesso) {
+      setNewPropRoteiroAcesso(parsedProposalData.roteiroAcesso);
+    }
+    if (parsedProposalData.custoAssessoria !== undefined && parsedProposalData.custoAssessoria > 0) {
+      setNewPropCustoAssessoria(parsedProposalData.custoAssessoria);
+    }
+
     // Preenche dados expandidos do proponente
     const dp = parsedProposalData.dadosProponente;
     if (dp) {
+      if (dp.apelido) setNewPropApelido(dp.apelido);
+      if (dp.tipoCliente) setNewPropTipoCliente(dp.tipoCliente);
       if (dp.rg) setNewPropRg(dp.rg);
       if (dp.orgaoEmissor) setNewPropOrgaoEmissor(dp.orgaoEmissor);
+      if (dp.ufRg) setNewPropUfRg(dp.ufRg);
+      if (dp.dataEmissaoRg) setNewPropDataEmissaoRg(dp.dataEmissaoRg);
+      if (dp.tipoDocumento) setNewPropTipoDocumento(dp.tipoDocumento);
       if (dp.dataNascimento) setNewPropDataNascimento(dp.dataNascimento);
+      if (dp.naturalidade) setNewPropNaturalidade(dp.naturalidade);
+      if (dp.sexo) setNewPropSexo(dp.sexo);
       if (dp.estadoCivil) setNewPropEstadoCivil(dp.estadoCivil);
+      if (dp.grauInstrucao) setNewPropGrauInstrucao(dp.grauInstrucao);
+      if (dp.profissao) setNewPropProfissao(dp.profissao);
+      if (dp.rendaMensal) setNewPropRendaMensal(dp.rendaMensal);
+      if (dp.nomeMae) setNewPropNomeMae(dp.nomeMae);
+      if (dp.nomePai) setNewPropNomePai(dp.nomePai);
+      if (dp.porte) setNewPropPorte(dp.porte);
+
+      if (dp.endereco) setNewPropEndereco(dp.endereco);
+      if (dp.complemento) setNewPropComplemento(dp.complemento);
+      if (dp.bairro) setNewPropBairro(dp.bairro);
+      if (dp.cep) setNewPropCep(dp.cep);
+      if (dp.uf) setNewPropUf(dp.uf);
+
       if (dp.nomeConjuge) setNewPropNomeConjuge(dp.nomeConjuge);
       if (dp.cpfConjuge) setNewPropCpfConjuge(formatCPF(dp.cpfConjuge));
+      if (dp.dataNascimentoConjuge) setNewPropDataNascimentoConjuge(dp.dataNascimentoConjuge);
+      if (dp.rgConjuge) setNewPropRgConjuge(dp.rgConjuge);
+      if (dp.orgaoEmissorConjuge) setNewPropOrgaoEmissorConjuge(dp.orgaoEmissorConjuge);
+      if (dp.ufConjuge) setNewPropUfConjuge(dp.ufConjuge);
+      if (dp.profissaoConjuge) setNewPropProfissaoConjuge(dp.profissaoConjuge);
+
       if (dp.condicaoPosse) setNewPropCondicaoPosse(dp.condicaoPosse);
+      if (dp.tipoProprietario) setNewPropTipoProprietario(dp.tipoProprietario);
+      if (dp.nomeProprietario) setNewPropNomeProprietario(dp.nomeProprietario);
+      if (dp.cpfProprietario) setNewPropCpfProprietario(formatCPF(dp.cpfProprietario));
       if (dp.areaTotalHa && dp.areaTotalHa > 0) setNewPropAreaTotalHa(dp.areaTotalHa);
       if (dp.areaExploradaHa && dp.areaExploradaHa > 0) setNewPropAreaExploradaHa(dp.areaExploradaHa);
+      if (dp.areaPastagemHa && dp.areaPastagemHa > 0) setNewPropAreaPastagemHa(dp.areaPastagemHa);
+      if (dp.areaReservaHa && dp.areaReservaHa > 0) setNewPropAreaReservaHa(dp.areaReservaHa);
       if (dp.car) setNewPropCar(dp.car);
-      if (dp.nirf || dp.ccir) setNewPropNirfCcir(dp.nirf || dp.ccir || "");
+      if (dp.nirf) setNewPropNirf(dp.nirf);
+      if (dp.sncr || dp.ccir) setNewPropCcir(dp.sncr || dp.ccir || "");
+      if (dp.roteiroAcesso) setNewPropRoteiroAcesso(dp.roteiroAcesso);
+      if (dp.comentariosSolosAguada) setNewPropSolosAguada(dp.comentariosSolosAguada);
+      if (dp.banco) setNewPropBanco(dp.banco);
       if (dp.agencia || dp.conta) {
         setNewPropAgenciaConta(`Ag: ${dp.agencia || ""} / C/C: ${dp.conta || ""}`);
       }
@@ -804,24 +901,57 @@ export default function ProjetistaDashboard() {
 
       const dadosProponentePayload = {
         nome: newPropProducerName.trim().toUpperCase(),
+        apelido: newPropApelido.trim().toUpperCase() || null,
+        tipo_cliente: newPropTipoCliente || null,
         cpf: cleanCpf,
         rg: newPropRg.trim() || null,
         orgao_emissor: newPropOrgaoEmissor.trim().toUpperCase() || null,
+        uf_rg: newPropUfRg.trim().toUpperCase() || null,
+        data_emissao_rg: newPropDataEmissaoRg.trim() || null,
+        tipo_documento: newPropTipoDocumento || null,
         data_nascimento: newPropDataNascimento.trim() || null,
+        naturalidade: newPropNaturalidade.trim().toUpperCase() || null,
+        sexo: newPropSexo || null,
         estado_civil: newPropEstadoCivil || null,
-        nome_conjuge: newPropNomeConjuge.trim().toUpperCase() || null,
-        cpf_conjuge: newPropCpfConjuge.replace(/\D/g, "") || null,
+        grau_instrucao: newPropGrauInstrucao || null,
+        profissao: newPropProfissao.trim() || null,
+        renda_mensal: Number(newPropRendaMensal) || null,
+        nome_mae: newPropNomeMae.trim().toUpperCase() || null,
+        nome_pai: newPropNomePai.trim().toUpperCase() || null,
+        porte: newPropPorte || null,
+        endereco: newPropEndereco.trim().toUpperCase() || null,
+        complemento: newPropComplemento.trim() || null,
+        bairro: newPropBairro.trim().toUpperCase() || null,
+        cep: newPropCep.trim() || null,
         telefone: newPropProducerPhone.trim() || null,
         municipio: newPropMunicipio.trim().toUpperCase() || null,
+        uf: newPropUf.trim().toUpperCase() || null,
         propriedade: newPropLocalizacao.trim().toUpperCase() || null,
         condicao_posse: newPropCondicaoPosse || null,
+        tipo_proprietario: newPropTipoProprietario || null,
+        nome_proprietario: newPropNomeProprietario.trim().toUpperCase() || null,
+        cpf_proprietario: newPropCpfProprietario.replace(/\D/g, "") || null,
         area_total_ha: Number(newPropAreaTotalHa) || 0,
         area_explorada_ha: Number(newPropAreaExploradaHa) || 0,
+        area_pastagem_ha: Number(newPropAreaPastagemHa) || 0,
+        area_reserva_ha: Number(newPropAreaReservaHa) || 0,
         dap_caf: newPropDapCaf.trim() || null,
         car: newPropCar.trim() || null,
-        nirf_ccir: newPropNirfCcir.trim() || null,
+        nirf: newPropNirf.trim() || null,
+        ccir: newPropCcir.trim() || null,
+        roteiro_acesso: newPropRoteiroAcesso.trim() || null,
+        solos_aguada: newPropSolosAguada.trim() || null,
+        objetivo: newPropObjetivo || null,
+        custo_assessoria: Number(newPropCustoAssessoria) || 0,
         banco: newPropBanco || null,
         agencia_conta: newPropAgenciaConta.trim() || null,
+        nome_conjuge: newPropNomeConjuge.trim().toUpperCase() || null,
+        cpf_conjuge: newPropCpfConjuge.replace(/\D/g, "") || null,
+        data_nascimento_conjuge: newPropDataNascimentoConjuge.trim() || null,
+        rg_conjuge: newPropRgConjuge.trim() || null,
+        orgao_emissor_conjuge: newPropOrgaoEmissorConjuge.trim().toUpperCase() || null,
+        uf_conjuge: newPropUfConjuge.trim().toUpperCase() || null,
+        profissao_conjuge: newPropProfissaoConjuge.trim() || null,
       };
 
       const suporteForrageiroPayload =
@@ -1640,7 +1770,7 @@ export default function ProjetistaDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Coluna 1 & 2: Formulário Principal */}
               <div className="lg:col-span-2 space-y-6">
-                {/* 1. Dados do Produtor Rural */}
+                {/* 1. Identificação do Produtor Rural */}
                 <Card className="rounded-3xl border border-border/60 shadow-sm bg-card">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <CardTitle className="text-sm font-extrabold flex items-center gap-2">
@@ -1648,11 +1778,11 @@ export default function ProjetistaDashboard() {
                       1. Identificação do Produtor Rural (Beneficiário)
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Dados pessoais e de localização da propriedade onde o projeto será implantado
+                      Dados pessoais, civis, filiação e endereço completo do proponente do crédito
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-5 space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="space-y-1.5 sm:col-span-2">
                         <Label className="text-xs font-bold">
                           Nome Completo do Produtor <span className="text-destructive">*</span>
@@ -1661,6 +1791,16 @@ export default function ProjetistaDashboard() {
                           placeholder="Ex: João da Silva Ferreira"
                           value={newPropProducerName}
                           onChange={(e) => setNewPropProducerName(e.target.value)}
+                          className="rounded-xl h-10 text-xs font-semibold"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Apelido / Nome Social</Label>
+                        <Input
+                          placeholder="Ex: Joãozinho"
+                          value={newPropApelido}
+                          onChange={(e) => setNewPropApelido(e.target.value)}
                           className="rounded-xl h-10 text-xs"
                         />
                       </div>
@@ -1674,26 +1814,38 @@ export default function ProjetistaDashboard() {
                           value={newPropProducerCpf}
                           onChange={(e) => setNewPropProducerCpf(formatCPF(e.target.value))}
                           maxLength={14}
+                          className="rounded-xl h-10 text-xs font-mono font-bold"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Data de Nascimento</Label>
+                        <Input
+                          placeholder="DD/MM/AAAA"
+                          value={newPropDataNascimento}
+                          onChange={(e) => setNewPropDataNascimento(e.target.value)}
                           className="rounded-xl h-10 text-xs font-mono"
                         />
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-bold">Telefone / WhatsApp</Label>
-                        <Input
-                          placeholder="(98) 99999-9999"
-                          value={newPropProducerPhone}
-                          onChange={(e) => setNewPropProducerPhone(formatPhone(e.target.value))}
-                          maxLength={15}
-                          className="rounded-xl h-10 text-xs font-mono"
-                        />
+                        <Label className="text-xs font-bold">Sexo</Label>
+                        <Select value={newPropSexo} onValueChange={setNewPropSexo}>
+                          <SelectTrigger className="rounded-xl h-10 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Masculino">Masculino</SelectItem>
+                            <SelectItem value="Feminino">Feminino</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
-                      {/* RG & Órgão Emissor */}
+                      {/* Documento de Identidade */}
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-bold">RG do Produtor</Label>
+                        <Label className="text-xs font-bold">RG / Nº Documento</Label>
                         <Input
-                          placeholder="Ex: 00000000000-0"
+                          placeholder="Ex: 00000000000"
                           value={newPropRg}
                           onChange={(e) => setNewPropRg(e.target.value)}
                           className="rounded-xl h-10 text-xs font-mono"
@@ -1710,17 +1862,17 @@ export default function ProjetistaDashboard() {
                         />
                       </div>
 
-                      {/* Data de Nascimento & Estado Civil */}
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-bold">Data de Nascimento</Label>
+                        <Label className="text-xs font-bold">Naturalidade</Label>
                         <Input
-                          placeholder="DD/MM/AAAA"
-                          value={newPropDataNascimento}
-                          onChange={(e) => setNewPropDataNascimento(e.target.value)}
-                          className="rounded-xl h-10 text-xs font-mono"
+                          placeholder="Ex: Turiaçu - MA"
+                          value={newPropNaturalidade}
+                          onChange={(e) => setNewPropNaturalidade(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
                         />
                       </div>
 
+                      {/* Estado Civil, Grau de Instrução & Profissão */}
                       <div className="space-y-1.5">
                         <Label className="text-xs font-bold">Estado Civil</Label>
                         <Select value={newPropEstadoCivil} onValueChange={setNewPropEstadoCivil}>
@@ -1728,6 +1880,8 @@ export default function ProjetistaDashboard() {
                             <SelectValue placeholder="Selecione o estado civil" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="Casado(a) comunhão parcial de bens">Casado(a) comunhão parcial</SelectItem>
+                            <SelectItem value="Casado(a) comunhão total de bens">Casado(a) comunhão total</SelectItem>
                             <SelectItem value="Casado(a)">Casado(a)</SelectItem>
                             <SelectItem value="Solteiro(a)">Solteiro(a)</SelectItem>
                             <SelectItem value="União Estável">União Estável</SelectItem>
@@ -1737,59 +1891,230 @@ export default function ProjetistaDashboard() {
                         </Select>
                       </div>
 
-                      {/* Cônjuge se Casado ou União Estável */}
-                      {(newPropEstadoCivil.includes("Casad") || newPropEstadoCivil.includes("Uni")) && (
-                        <>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold">Nome Completo do Cônjuge</Label>
-                            <Input
-                              placeholder="Nome do cônjuge / companheiro(a)"
-                              value={newPropNomeConjuge}
-                              onChange={(e) => setNewPropNomeConjuge(e.target.value)}
-                              className="rounded-xl h-10 text-xs"
-                            />
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-bold">CPF do Cônjuge</Label>
-                            <Input
-                              placeholder="000.000.000-00"
-                              value={newPropCpfConjuge}
-                              onChange={(e) => setNewPropCpfConjuge(formatCPF(e.target.value))}
-                              maxLength={14}
-                              className="rounded-xl h-10 text-xs font-mono"
-                            />
-                          </div>
-                        </>
-                      )}
-
-                      {/* Município & Propriedade */}
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-bold">Município da Propriedade</Label>
+                        <Label className="text-xs font-bold">Grau de Instrução</Label>
                         <Input
-                          placeholder="Ex: Governador Nunes Freire"
+                          placeholder="Ex: Alfabetizado(a)"
+                          value={newPropGrauInstrucao}
+                          onChange={(e) => setNewPropGrauInstrucao(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Profissão</Label>
+                        <Input
+                          placeholder="Ex: Agricultor(a)"
+                          value={newPropProfissao}
+                          onChange={(e) => setNewPropProfissao(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
+
+                      {/* Filiação & Enquadramento */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Nome da Mãe</Label>
+                        <Input
+                          placeholder="Nome da mãe do produtor"
+                          value={newPropNomeMae}
+                          onChange={(e) => setNewPropNomeMae(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Nome do Pai</Label>
+                        <Input
+                          placeholder="Nome do pai do produtor"
+                          value={newPropNomePai}
+                          onChange={(e) => setNewPropNomePai(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Renda Mensal (R$)</Label>
+                        <Input
+                          type="number"
+                          placeholder="0,00"
+                          value={newPropRendaMensal || ""}
+                          onChange={(e) => setNewPropRendaMensal(e.target.value)}
+                          className="rounded-xl h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <Label className="text-xs font-bold">Enquadramento / Porte PRONAF</Label>
+                        <Input
+                          placeholder="Ex: PRONAFIANO GRUPO A - ASSOCIADO/COOPERADO"
+                          value={newPropPorte}
+                          onChange={(e) => setNewPropPorte(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Número da DAP / CAF</Label>
+                        <Input
+                          placeholder="Ex: CAF-MA-0012345/2026"
+                          value={newPropDapCaf}
+                          onChange={(e) => setNewPropDapCaf(e.target.value)}
+                          className="rounded-xl h-10 text-xs font-mono font-bold"
+                        />
+                      </div>
+
+                      {/* Endereço & Contato */}
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <Label className="text-xs font-bold">Endereço / Comunidade / Logradouro</Label>
+                        <Input
+                          placeholder="Ex: Povoado Torozinho - Gleba 2"
+                          value={newPropEndereco}
+                          onChange={(e) => setNewPropEndereco(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Telefone / WhatsApp</Label>
+                        <Input
+                          placeholder="(98) 99999-9999"
+                          value={newPropProducerPhone}
+                          onChange={(e) => setNewPropProducerPhone(formatPhone(e.target.value))}
+                          maxLength={15}
+                          className="rounded-xl h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Bairro / Zona</Label>
+                        <Input
+                          placeholder="Ex: Zona Rural"
+                          value={newPropBairro}
+                          onChange={(e) => setNewPropBairro(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">CEP</Label>
+                        <Input
+                          placeholder="00000-000"
+                          value={newPropCep}
+                          onChange={(e) => setNewPropCep(e.target.value)}
+                          className="rounded-xl h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Município / UF do Produtor</Label>
+                        <Input
+                          placeholder="Ex: Turiaçu - MA"
                           value={newPropMunicipio}
                           onChange={(e) => setNewPropMunicipio(e.target.value)}
                           className="rounded-xl h-10 text-xs"
                         />
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-bold">Nome da Propriedade / Localidade</Label>
+                {/* 2. Cônjuge / Companheiro(a) */}
+                {(newPropEstadoCivil.includes("Casad") || newPropEstadoCivil.includes("Uni")) && (
+                  <Card className="rounded-3xl border border-border/60 shadow-sm bg-card">
+                    <CardHeader className="pb-3 border-b border-border/40">
+                      <CardTitle className="text-sm font-extrabold flex items-center gap-2">
+                        <User className="h-4 w-4 text-teal-600" />
+                        2. Cônjuge / Companheiro(a)
+                      </CardTitle>
+                      <CardDescription className="text-xs">
+                        Qualificação civil do parceiro(a) com anuência e composição de renda
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-5 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1.5 sm:col-span-2">
+                          <Label className="text-xs font-bold">Nome Completo do Cônjuge</Label>
+                          <Input
+                            placeholder="Nome do cônjuge / companheiro(a)"
+                            value={newPropNomeConjuge}
+                            onChange={(e) => setNewPropNomeConjuge(e.target.value)}
+                            className="rounded-xl h-10 text-xs font-semibold"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold">CPF do Cônjuge</Label>
+                          <Input
+                            placeholder="000.000.000-00"
+                            value={newPropCpfConjuge}
+                            onChange={(e) => setNewPropCpfConjuge(formatCPF(e.target.value))}
+                            maxLength={14}
+                            className="rounded-xl h-10 text-xs font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold">Data de Nascimento</Label>
+                          <Input
+                            placeholder="DD/MM/AAAA"
+                            value={newPropDataNascimentoConjuge}
+                            onChange={(e) => setNewPropDataNascimentoConjuge(e.target.value)}
+                            className="rounded-xl h-10 text-xs font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold">RG do Cônjuge</Label>
+                          <Input
+                            placeholder="Ex: 0000000000"
+                            value={newPropRgConjuge}
+                            onChange={(e) => setNewPropRgConjuge(e.target.value)}
+                            className="rounded-xl h-10 text-xs font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold">Órgão Emissor / UF</Label>
+                          <Input
+                            placeholder="Ex: SSP/MA"
+                            value={newPropOrgaoEmissorConjuge}
+                            onChange={(e) => setNewPropOrgaoEmissorConjuge(e.target.value.toUpperCase())}
+                            className="rounded-xl h-10 text-xs uppercase"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* 3. Dados do Imóvel, Posse & Recursos Naturais */}
+                <Card className="rounded-3xl border border-border/60 shadow-sm bg-card">
+                  <CardHeader className="pb-3 border-b border-border/40">
+                    <CardTitle className="text-sm font-extrabold flex items-center gap-2">
+                      <Trees className="h-4 w-4 text-emerald-600" />
+                      3. Dados do Imóvel, Posse & Recursos Hídricos
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Denominação, áreas em hectares, CAR, regime fundiário, solos e itinerário de acesso
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-5 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <Label className="text-xs font-bold">Denominação da Propriedade / Assentamento</Label>
                         <Input
-                          placeholder="Ex: Sítio Boa Esperança - Gleba 2"
+                          placeholder="Ex: Sítio São José - PA Mira Flores"
                           value={newPropLocalizacao}
                           onChange={(e) => setNewPropLocalizacao(e.target.value)}
-                          className="rounded-xl h-10 text-xs"
+                          className="rounded-xl h-10 text-xs font-semibold"
                         />
                       </div>
 
-                      {/* Condição de Posse & Áreas */}
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-bold">Condição de Posse da Terra</Label>
+                        <Label className="text-xs font-bold">Condição de Posse</Label>
                         <Select value={newPropCondicaoPosse} onValueChange={setNewPropCondicaoPosse}>
                           <SelectTrigger className="rounded-xl h-10 text-xs">
-                            <SelectValue placeholder="Selecione a condição de posse" />
+                            <SelectValue placeholder="Condição de posse" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Proprietário">Proprietário</SelectItem>
@@ -1798,42 +2123,28 @@ export default function ProjetistaDashboard() {
                             <SelectItem value="Arrendatário">Arrendatário</SelectItem>
                             <SelectItem value="Parceiro">Parceiro</SelectItem>
                             <SelectItem value="Comodatário">Comodatário</SelectItem>
+                            <SelectItem value="Anuência">Anuência Familiar</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-bold">Área Total (ha)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="Ex: 25.5"
-                            value={newPropAreaTotalHa || ""}
-                            onChange={(e) => setNewPropAreaTotalHa(Number(e.target.value) || 0)}
-                            className="rounded-xl h-10 text-xs font-mono font-bold"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-bold">Área Explorada (ha)</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            placeholder="Ex: 15.0"
-                            value={newPropAreaExploradaHa || ""}
-                            onChange={(e) => setNewPropAreaExploradaHa(Number(e.target.value) || 0)}
-                            className="rounded-xl h-10 text-xs font-mono font-bold"
-                          />
-                        </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Nome do Titular da Terra</Label>
+                        <Input
+                          placeholder="Nome do proprietário / anuente"
+                          value={newPropNomeProprietario}
+                          onChange={(e) => setNewPropNomeProprietario(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
                       </div>
 
-                      {/* Documentos Fundiários: CAF, CAR e NIRF/CCIR */}
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-bold">Número da DAP / CAF</Label>
+                        <Label className="text-xs font-bold">CPF do Proprietário</Label>
                         <Input
-                          placeholder="Ex: CAF-MA-0012345/2026"
-                          value={newPropDapCaf}
-                          onChange={(e) => setNewPropDapCaf(e.target.value)}
+                          placeholder="000.000.000-00"
+                          value={newPropCpfProprietario}
+                          onChange={(e) => setNewPropCpfProprietario(formatCPF(e.target.value))}
+                          maxLength={14}
                           className="rounded-xl h-10 text-xs font-mono"
                         />
                       </div>
@@ -1841,19 +2152,66 @@ export default function ProjetistaDashboard() {
                       <div className="space-y-1.5">
                         <Label className="text-xs font-bold">CAR (Cadastro Ambiental Rural)</Label>
                         <Input
-                          placeholder="Ex: MA-2104502-..."
+                          placeholder="Ex: MA2112407..."
                           value={newPropCar}
                           onChange={(e) => setNewPropCar(e.target.value.toUpperCase())}
                           className="rounded-xl h-10 text-xs font-mono uppercase"
                         />
                       </div>
 
+                      {/* Áreas em Hectares */}
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-bold">NIRF / CCIR / Matrícula</Label>
+                        <Label className="text-xs font-bold">Área Total (ha)</Label>
                         <Input
-                          placeholder="Ex: NIRF: 1234567-8 / CCIR: 987654"
-                          value={newPropNirfCcir}
-                          onChange={(e) => setNewPropNirfCcir(e.target.value)}
+                          type="number"
+                          step="0.01"
+                          placeholder="Ex: 25.5"
+                          value={newPropAreaTotalHa || ""}
+                          onChange={(e) => setNewPropAreaTotalHa(Number(e.target.value) || 0)}
+                          className="rounded-xl h-10 text-xs font-mono font-bold"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Área Explorada (ha)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Ex: 15.0"
+                          value={newPropAreaExploradaHa || ""}
+                          onChange={(e) => setNewPropAreaExploradaHa(Number(e.target.value) || 0)}
+                          className="rounded-xl h-10 text-xs font-mono font-bold"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Área de Reserva / Preservação (ha)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="Ex: 10.0"
+                          value={newPropAreaReservaHa || ""}
+                          onChange={(e) => setNewPropAreaReservaHa(Number(e.target.value) || 0)}
+                          className="rounded-xl h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">NIRF</Label>
+                        <Input
+                          placeholder="Ex: 1234567-8"
+                          value={newPropNirf}
+                          onChange={(e) => setNewPropNirf(e.target.value)}
+                          className="rounded-xl h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">SNCR / CCIR / Matrícula</Label>
+                        <Input
+                          placeholder="Ex: 987654"
+                          value={newPropCcir}
+                          onChange={(e) => setNewPropCcir(e.target.value)}
                           className="rounded-xl h-10 text-xs font-mono"
                         />
                       </div>
@@ -1867,19 +2225,42 @@ export default function ProjetistaDashboard() {
                           className="rounded-xl h-10 text-xs font-mono"
                         />
                       </div>
+
+                      {/* Roteiro e Solos/Aguada */}
+                      <div className="space-y-1.5 sm:col-span-3">
+                        <Label className="text-xs font-bold">Roteiro / Itinerário de Acesso à Propriedade</Label>
+                        <Textarea
+                          rows={2}
+                          placeholder="Ex: Saindo da sede do município cerca de 26 km até a comunidade..."
+                          value={newPropRoteiroAcesso}
+                          onChange={(e) => setNewPropRoteiroAcesso(e.target.value)}
+                          className="rounded-xl text-xs resize-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 sm:col-span-3">
+                        <Label className="text-xs font-bold">Solos, Recursos Hídricos & Aguadas</Label>
+                        <Textarea
+                          rows={2}
+                          placeholder="Ex: Solos médios arenosos de boa fertilidade; imóvel dotado por igarapé e aguada natural..."
+                          value={newPropSolosAguada}
+                          onChange={(e) => setNewPropSolosAguada(e.target.value)}
+                          className="rounded-xl text-xs resize-none"
+                        />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* 2. Enquadramento da Linha & Agência */}
+                {/* 4. Enquadramento da Linha & Agência */}
                 <Card className="rounded-3xl border border-border/60 shadow-sm bg-card">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <CardTitle className="text-sm font-extrabold flex items-center gap-2">
                       <Building2 className="h-4 w-4 text-teal-600" />
-                      2. Linha de Crédito PRONAF & Agência de Atendimento
+                      4. Linha de Crédito PRONAF & Agência de Atendimento
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Enquadramento normativo e teto máximo financiado da safra
+                      Enquadramento normativo, agência BNB de vinculação e objetivo da proposta
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-5 space-y-4">
@@ -1920,12 +2301,22 @@ export default function ProjetistaDashboard() {
                         </Select>
                       </div>
 
-                      <div className="space-y-1.5 sm:col-span-2">
+                      <div className="space-y-1.5">
                         <Label className="text-xs font-bold">Atividade / Finalidade do Crédito</Label>
                         <Input
-                          placeholder="Ex: Aquisição de Matrizes Bovinas Leiteiras e Pastagem"
+                          placeholder="Ex: Bovinocultura Extensiva / Corte / Leite"
                           value={newPropAtividade}
                           onChange={(e) => setNewPropAtividade(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Objetivo do Projeto</Label>
+                        <Input
+                          placeholder="Ex: Implantação / Expansão / Manutenção"
+                          value={newPropObjetivo}
+                          onChange={(e) => setNewPropObjetivo(e.target.value)}
                           className="rounded-xl h-10 text-xs"
                         />
                       </div>
@@ -1948,31 +2339,53 @@ export default function ProjetistaDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* 3. Valor Solicitado & Validação */}
+                {/* 5. Valor Solicitado & Validação */}
                 <Card className="rounded-3xl border border-border/60 shadow-sm bg-card">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <CardTitle className="text-sm font-extrabold flex items-center gap-2">
                       <DollarSign className="h-4 w-4 text-teal-600" />
-                      3. Valor a Financiar & Validação de Teto
+                      5. Valor a Financiar & Validação de Teto
                     </CardTitle>
                     <CardDescription className="text-xs">
                       O valor solicitado é validado em tempo real contra o regulamento do PRONAF
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-5 space-y-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold">
-                        Valor Solicitado a Financiar (R$) <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        type="number"
-                        placeholder="Ex: 50000"
-                        value={newPropValorSolicitado || ""}
-                        onChange={(e) => setNewPropValorSolicitado(Number(e.target.value) || 0)}
-                        className={`rounded-xl h-12 text-base font-black font-mono ${
-                          isValorAcimaDoTeto ? "border-destructive text-destructive bg-destructive/5" : ""
-                        }`}
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">
+                          Valor Solicitado a Financiar (R$) <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          type="number"
+                          placeholder="Ex: 50000"
+                          value={newPropValorSolicitado || ""}
+                          onChange={(e) => setNewPropValorSolicitado(Number(e.target.value) || 0)}
+                          className={`rounded-xl h-12 text-base font-black font-mono ${
+                            isValorAcimaDoTeto ? "border-destructive text-destructive bg-destructive/5" : ""
+                          }`}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Assessoria Técnica (ATER)</Label>
+                        <Select
+                          value={String(newPropCustoAssessoria)}
+                          onValueChange={(val) => setNewPropCustoAssessoria(Number(val))}
+                        >
+                          <SelectTrigger className="rounded-xl h-12 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1" className="text-xs font-medium">
+                              Inclusa no Financiamento (5% ATER)
+                            </SelectItem>
+                            <SelectItem value="0" className="text-xs font-medium">
+                              Sem Retenção de Assessoria (0%)
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
                     {/* Status de Teto */}
@@ -2019,14 +2432,14 @@ export default function ProjetistaDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* 4. Plano de Inversões Detalhado */}
+                {/* 6. Plano de Inversões Detalhado */}
                 <Card className="rounded-3xl border border-border/60 shadow-sm bg-card">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
                         <CardTitle className="text-sm font-extrabold flex items-center gap-2">
                           <Calculator className="h-4 w-4 text-teal-600" />
-                          4. Plano de Inversões (Itens Orçados)
+                          6. Plano de Inversões (Itens Orçados)
                         </CardTitle>
                         <CardDescription className="text-xs">
                           Adicione os itens do projeto utilizando os preços de referência da tabela BNB
@@ -2189,14 +2602,14 @@ export default function ProjetistaDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* 5. Suporte Forrageiro & Dimensionamento Pecuário */}
+                {/* 7. Suporte Forrageiro & Dimensionamento Pecuário */}
                 <Card className="rounded-3xl border border-border/60 shadow-sm bg-card overflow-hidden">
                   <CardHeader className="pb-3 border-b border-border/40 bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-transparent">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <CardTitle className="text-sm font-extrabold flex items-center gap-2">
                           <Sprout className="h-4 w-4 text-emerald-600" />
-                          5. Suporte Forrageiro & Dimensionamento Pecuário
+                          7. Suporte Forrageiro & Dimensionamento Pecuário
                         </CardTitle>
                         <CardDescription className="text-xs">
                           Cálculo de capacidade forrageira, rebanho em UA, taxa de lotação e balanço de alimentação no período de estiagem
@@ -2449,12 +2862,12 @@ export default function ProjetistaDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* 6. Documentos do Projeto */}
+                {/* 8. Documentos do Projeto */}
                 <Card className="rounded-3xl border border-border/60 shadow-sm bg-card">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <CardTitle className="text-sm font-extrabold flex items-center gap-2">
                       <FolderCheck className="h-4 w-4 text-teal-600" />
-                      6. Documentação do Projeto & Anexos
+                      8. Documentação do Projeto & Anexos
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Anexe os arquivos comprobatórios do produtor e o projeto técnico simplificado
@@ -2585,12 +2998,12 @@ export default function ProjetistaDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* 6. Parecer Técnico */}
+                {/* 9. Parecer Técnico */}
                 <Card className="rounded-3xl border border-border/60 shadow-sm bg-card">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <CardTitle className="text-sm font-extrabold flex items-center gap-2">
                       <FileText className="h-4 w-4 text-teal-600" />
-                      6. Parecer Técnico e Justificativa Agronômica
+                      9. Parecer Técnico e Justificativa Agronômica
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Descreva a capacidade de pagamento, viabilidade técnica e notas para o analista
@@ -3073,149 +3486,385 @@ export default function ProjetistaDashboard() {
 
       {/* ── Modal Detalhes da Proposta ────────────────────────── */}
       <Dialog open={!!selectedProposal} onOpenChange={(open) => !open && setSelectedProposal(null)}>
-        <DialogContent className="max-w-xl rounded-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl rounded-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-heading font-extrabold text-lg flex items-center gap-2 text-foreground">
               <Briefcase className="h-5 w-5 text-teal-600" />
-              Detalhes da Proposta de Crédito
+              Dossiê Completo da Proposta de Crédito
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Informações completas do produtor e situação cadastral no banco
+              Visualização integral de todos os dados do produtor, imóvel, itens orçados e enquadramento normativo
             </DialogDescription>
           </DialogHeader>
 
           {selectedProposal && (
             <div className="space-y-4 py-2 text-xs">
-              <div className="bg-muted/40 p-4 rounded-2xl border border-border/60 space-y-2">
-                <span className="font-bold uppercase tracking-wider text-muted-foreground text-[10px]">
-                  Dados do Produtor Rural & Propriedade
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {/* 1. Produtor Rural */}
+              <div className="bg-muted/40 p-4 rounded-2xl border border-border/60 space-y-3">
+                <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                  <span className="font-extrabold uppercase tracking-wider text-muted-foreground text-[10px] flex items-center gap-1.5">
+                    <User className="h-3.5 w-3.5 text-teal-600" />
+                    1. Identificação do Produtor Rural (Beneficiário)
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-bold">
+                    {selectedProposal.dados_proponente?.tipo_cliente || "Pessoa Física"}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <span className="text-muted-foreground">Nome:</span>
+                    <span className="text-muted-foreground block text-[10px]">Nome Completo:</span>
                     <p className="font-extrabold text-foreground text-sm">
                       {selectedProposal.producer_name}
                     </p>
                   </div>
+
                   <div>
-                    <span className="text-muted-foreground">CPF:</span>
+                    <span className="text-muted-foreground block text-[10px]">CPF:</span>
                     <p className="font-mono font-bold text-foreground">
                       {selectedProposal.producer_cpf || "Não informado"}
                     </p>
                   </div>
 
-                  {selectedProposal.dados_proponente?.rg && (
-                    <div>
-                      <span className="text-muted-foreground">RG / Órgão Emissor:</span>
-                      <p className="font-mono font-semibold text-foreground">
-                        {selectedProposal.dados_proponente.rg}
-                        {selectedProposal.dados_proponente.orgao_emissor ? ` - ${selectedProposal.dados_proponente.orgao_emissor}` : ""}
-                      </p>
-                    </div>
-                  )}
-
-                  {(selectedProposal.dados_proponente?.data_nascimento || selectedProposal.data_nascimento) && (
-                    <div>
-                      <span className="text-muted-foreground">Data de Nascimento:</span>
-                      <p className="font-mono font-semibold text-foreground">
-                        {selectedProposal.dados_proponente?.data_nascimento || selectedProposal.data_nascimento}
-                      </p>
-                    </div>
-                  )}
-
-                  {selectedProposal.dados_proponente?.estado_civil && (
-                    <div>
-                      <span className="text-muted-foreground">Estado Civil:</span>
-                      <p className="font-semibold text-foreground">
-                        {selectedProposal.dados_proponente.estado_civil}
-                        {selectedProposal.dados_proponente.nome_conjuge ? ` (Cônjuge: ${selectedProposal.dados_proponente.nome_conjuge})` : ""}
-                      </p>
-                    </div>
-                  )}
-
                   <div>
-                    <span className="text-muted-foreground">Município:</span>
+                    <span className="text-muted-foreground block text-[10px]">Apelido:</span>
                     <p className="font-semibold text-foreground">
-                      {selectedProposal.municipio || "Não informado"}
+                      {selectedProposal.dados_proponente?.apelido || "—"}
                     </p>
                   </div>
 
-                  {selectedProposal.localizacao && (
-                    <div>
-                      <span className="text-muted-foreground">Propriedade / Imóvel:</span>
-                      <p className="font-semibold text-foreground">
-                        {selectedProposal.localizacao}
-                        {selectedProposal.dados_proponente?.area_total_ha ? ` (${selectedProposal.dados_proponente.area_total_ha} ha)` : ""}
-                      </p>
-                    </div>
-                  )}
-
-                  {selectedProposal.dados_proponente?.condicao_posse && (
-                    <div>
-                      <span className="text-muted-foreground">Condição de Posse:</span>
-                      <p className="font-semibold text-foreground">
-                        {selectedProposal.dados_proponente.condicao_posse}
-                      </p>
-                    </div>
-                  )}
-
-                  {selectedProposal.dados_proponente?.car && (
-                    <div className="sm:col-span-2">
-                      <span className="text-muted-foreground">CAR (Cadastro Ambiental Rural):</span>
-                      <p className="font-mono text-xs font-semibold text-foreground">
-                        {selectedProposal.dados_proponente.car}
-                      </p>
-                    </div>
-                  )}
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">RG / Órgão / UF:</span>
+                    <p className="font-mono font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.rg || "—"}
+                      {selectedProposal.dados_proponente?.orgao_emissor ? ` ${selectedProposal.dados_proponente.orgao_emissor}` : ""}
+                      {selectedProposal.dados_proponente?.uf_rg ? `/${selectedProposal.dados_proponente.uf_rg}` : ""}
+                    </p>
+                  </div>
 
                   <div>
-                    <span className="text-muted-foreground">Linha de Crédito:</span>
-                    <p className="font-semibold text-teal-700 dark:text-teal-300">
-                      {selectedProposal.linha_credito || selectedProposal.credit_program || "PRONAF"}
+                    <span className="text-muted-foreground block text-[10px]">Data de Emissão RG:</span>
+                    <p className="font-mono font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.data_emissao_rg || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Data de Nascimento:</span>
+                    <p className="font-mono font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.data_nascimento || selectedProposal.data_nascimento || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Naturalidade:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.naturalidade || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Sexo:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.sexo || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Estado Civil:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.estado_civil || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Grau de Instrução:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.grau_instrucao || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Profissão:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.profissao || "Agricultor(a)"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Renda Mensal Declarada:</span>
+                    <p className="font-mono font-bold text-teal-700 dark:text-teal-300">
+                      {selectedProposal.dados_proponente?.renda_mensal
+                        ? formatCurrency(Number(selectedProposal.dados_proponente.renda_mensal))
+                        : "—"}
+                    </p>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <span className="text-muted-foreground block text-[10px]">Nome da Mãe:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.nome_mae || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Nome do Pai:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.nome_pai || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">DAP / CAF:</span>
+                    <p className="font-mono font-bold text-foreground">
+                      {selectedProposal.dados_proponente?.dap_caf || "—"}
+                    </p>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <span className="text-muted-foreground block text-[10px]">Porte / Enquadramento:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.porte || "PRONAFIANO GRUPO A"}
+                    </p>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <span className="text-muted-foreground block text-[10px]">Endereço / Localidade:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.endereco || selectedProposal.producer_address || "—"}
+                      {selectedProposal.dados_proponente?.complemento ? ` (${selectedProposal.dados_proponente.complemento})` : ""}
+                      {selectedProposal.dados_proponente?.bairro ? ` - ${selectedProposal.dados_proponente.bairro}` : ""}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Município / UF / CEP:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.municipio || selectedProposal.dados_proponente?.municipio || "—"}
+                      {selectedProposal.dados_proponente?.uf ? ` - ${selectedProposal.dados_proponente.uf}` : ""}
+                      {selectedProposal.dados_proponente?.cep ? ` (CEP: ${selectedProposal.dados_proponente.cep})` : ""}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-teal-500/5 p-4 rounded-2xl border border-teal-500/20 space-y-2">
-                <span className="font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 text-[10px]">
-                  Dados Financeiros & Bancários
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {/* 2. Cônjuge (se existir) */}
+              {(selectedProposal.dados_proponente?.nome_conjuge || selectedProposal.dados_proponente?.cpf_conjuge) && (
+                <div className="bg-muted/40 p-4 rounded-2xl border border-border/60 space-y-3">
+                  <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                    <span className="font-extrabold uppercase tracking-wider text-muted-foreground text-[10px] flex items-center gap-1.5">
+                      <Users className="h-3.5 w-3.5 text-teal-600" />
+                      2. Cônjuge / Companheiro(a)
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <span className="text-muted-foreground block text-[10px]">Nome do Cônjuge:</span>
+                      <p className="font-bold text-foreground">
+                        {selectedProposal.dados_proponente.nome_conjuge}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">CPF:</span>
+                      <p className="font-mono font-bold text-foreground">
+                        {selectedProposal.dados_proponente.cpf_conjuge || "—"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Data de Nascimento:</span>
+                      <p className="font-mono font-semibold text-foreground">
+                        {selectedProposal.dados_proponente.data_nascimento_conjuge || "—"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">RG / Órgão / UF:</span>
+                      <p className="font-mono font-semibold text-foreground">
+                        {selectedProposal.dados_proponente.rg_conjuge || "—"}
+                        {selectedProposal.dados_proponente.orgao_emissor_conjuge ? ` ${selectedProposal.dados_proponente.orgao_emissor_conjuge}` : ""}
+                        {selectedProposal.dados_proponente.uf_conjuge ? `/${selectedProposal.dados_proponente.uf_conjuge}` : ""}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Profissão:</span>
+                      <p className="font-semibold text-foreground">
+                        {selectedProposal.dados_proponente.profissao_conjuge || "—"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Imóvel, Posse & Recursos Naturais */}
+              <div className="bg-muted/40 p-4 rounded-2xl border border-border/60 space-y-3">
+                <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                  <span className="font-extrabold uppercase tracking-wider text-muted-foreground text-[10px] flex items-center gap-1.5">
+                    <Trees className="h-3.5 w-3.5 text-emerald-600" />
+                    3. Imóvel, Posse & Recursos Naturais
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-bold">
+                    {selectedProposal.dados_proponente?.condicao_posse || "Condição não especificada"}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <span className="text-muted-foreground">Valor Solicitado:</span>
-                    <p className="font-black text-teal-700 dark:text-teal-300 text-base">
-                      {formatCurrency(Number(selectedProposal.estimated_value) || 0)}
+                    <span className="text-muted-foreground block text-[10px]">Denominação do Imóvel:</span>
+                    <p className="font-bold text-foreground">
+                      {selectedProposal.localizacao || selectedProposal.dados_proponente?.propriedade || "—"}
                     </p>
                   </div>
+
                   <div>
-                    <span className="text-muted-foreground">Número da Proposta:</span>
+                    <span className="text-muted-foreground block text-[10px]">Titular da Terra:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.nome_proprietario || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">CPF do Titular:</span>
+                    <p className="font-mono font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.cpf_proprietario || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Área Total (ha):</span>
                     <p className="font-mono font-bold text-foreground">
-                      {selectedProposal.proposal_number || "Aguardando geração"}
+                      {selectedProposal.dados_proponente?.area_total_ha || 0} ha
                     </p>
                   </div>
+
                   <div>
-                    <span className="text-muted-foreground">Situação Atual:</span>
-                    <Badge variant="outline" className="font-bold text-[10px] mt-0.5">
-                      {selectedProposal.status || selectedProposal.original_csv_status || "Em Análise"}
-                    </Badge>
+                    <span className="text-muted-foreground block text-[10px]">Área Explorada (ha):</span>
+                    <p className="font-mono font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.area_explorada_ha || 0} ha
+                    </p>
                   </div>
+
                   <div>
-                    <span className="text-muted-foreground">Agência Bancária:</span>
+                    <span className="text-muted-foreground block text-[10px]">Área de Reserva Legal (ha):</span>
+                    <p className="font-mono font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.area_reserva_ha || 0} ha
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">CAR (Cadastro Ambiental Rural):</span>
+                    <p className="font-mono text-xs font-semibold text-foreground break-all">
+                      {selectedProposal.dados_proponente?.car || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">NIRF:</span>
+                    <p className="font-mono font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.nirf || "—"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">SNCR / CCIR / Matrícula:</span>
+                    <p className="font-mono font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.ccir || "—"}
+                    </p>
+                  </div>
+
+                  {selectedProposal.dados_proponente?.roteiro_acesso && (
+                    <div className="sm:col-span-3 pt-1">
+                      <span className="text-muted-foreground block text-[10px] font-bold">Roteiro de Acesso:</span>
+                      <p className="text-xs text-foreground bg-card p-2 rounded-xl border border-border/40 mt-1">
+                        {selectedProposal.dados_proponente.roteiro_acesso}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedProposal.dados_proponente?.solos_aguada && (
+                    <div className="sm:col-span-3 pt-1">
+                      <span className="text-muted-foreground block text-[10px] font-bold">Solos & Recursos Hídricos / Aguada:</span>
+                      <p className="text-xs text-foreground bg-card p-2 rounded-xl border border-border/40 mt-1">
+                        {selectedProposal.dados_proponente.solos_aguada}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 4. Enquadramento e Valores Financeiros */}
+              <div className="bg-teal-500/5 p-4 rounded-2xl border border-teal-500/20 space-y-3">
+                <span className="font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 text-[10px] flex items-center gap-1.5">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  4. Dados da Operação & Linha de Crédito
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Linha de Crédito:</span>
+                    <p className="font-bold text-teal-700 dark:text-teal-300">
+                      {selectedProposal.linha_credito || selectedProposal.credit_program || "PRONAF"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Agência BNB:</span>
                     <p className="font-semibold text-foreground">
                       {selectedProposal.agency_name || "Agência Regional"}
                     </p>
                   </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Situação da Proposta:</span>
+                    <Badge variant="outline" className="font-bold text-[10px] mt-0.5">
+                      {selectedProposal.status || selectedProposal.original_csv_status || "Em Análise"}
+                    </Badge>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Valor Financiado:</span>
+                    <p className="font-black text-teal-700 dark:text-teal-300 text-lg">
+                      {formatCurrency(Number(selectedProposal.estimated_value) || 0)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Número da Proposta:</span>
+                    <p className="font-mono font-bold text-foreground">
+                      {selectedProposal.proposal_number || "Aguardando geração"}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Assessoria Técnica (ATER):</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.custo_assessoria === 1
+                        ? "Inclusa (5% ATER)"
+                        : "Sem retenção"}
+                    </p>
+                  </div>
+
+                  {selectedProposal.dados_proponente?.objetivo && (
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Objetivo do Projeto:</span>
+                      <p className="font-semibold text-foreground">
+                        {selectedProposal.dados_proponente.objetivo}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Suporte Forrageiro se existente na proposta */}
+              {/* 5. Suporte Forrageiro se existente na proposta */}
               {selectedProposal.suporte_forrageiro && (
                 <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/25 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 text-[10px] flex items-center gap-1.5">
                       <Sprout className="h-3.5 w-3.5 text-emerald-600" />
-                      Suporte Forrageiro & Dimensionamento Pecuário
+                      5. Suporte Forrageiro & Dimensionamento Pecuário
                     </span>
                     <Badge
                       variant="outline"
@@ -3265,6 +3914,65 @@ export default function ProjetistaDashboard() {
                 </div>
               )}
 
+              {/* 6. Inversões / Itens Orçados */}
+              {selectedProposal.inversoes && selectedProposal.inversoes.length > 0 && (
+                <div className="bg-muted/40 p-4 rounded-2xl border border-border/60 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold uppercase tracking-wider text-muted-foreground text-[10px] flex items-center gap-1.5">
+                      <Calculator className="h-3.5 w-3.5 text-teal-600" />
+                      6. Plano de Inversões ({selectedProposal.inversoes.length} Itens Orçados)
+                    </span>
+                    <span className="font-mono font-extrabold text-teal-700 dark:text-teal-300 text-xs">
+                      Total: {formatCurrency(
+                        selectedProposal.inversoes.reduce(
+                          (acc: number, item: any) => acc + Number(item.valor_total || item.valor || 0),
+                          0
+                        )
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    {selectedProposal.inversoes.map((inv: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-card border border-border/40 text-xs"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="font-mono font-bold text-[10px] text-muted-foreground">
+                            {idx + 1}.
+                          </span>
+                          <span className="font-semibold text-foreground truncate">
+                            {inv.descricao || inv.item || `Item ${idx + 1}`}
+                          </span>
+                          {(inv.quantidade || inv.unidade) && (
+                            <Badge variant="outline" className="text-[9px] font-mono shrink-0">
+                              {inv.quantidade} {inv.unidade}
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="font-mono font-black text-teal-700 dark:text-teal-300 shrink-0 ml-2">
+                          {formatCurrency(Number(inv.valor_total || inv.valor || 0))}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 7. Parecer Técnico */}
+              {selectedProposal.notes && (
+                <div className="bg-muted/30 p-4 rounded-2xl border border-border/40 space-y-1">
+                  <span className="font-extrabold text-foreground text-[10px] uppercase block tracking-wider">
+                    7. Parecer Técnico & Justificativa do Projetista:
+                  </span>
+                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {selectedProposal.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* 8. Pendências se houver */}
               {selectedProposal.pendencias && (
                 <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/30 space-y-1">
                   <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
@@ -3276,36 +3984,6 @@ export default function ProjetistaDashboard() {
                   </p>
                 </div>
               )}
-
-              {selectedProposal.inversoes && selectedProposal.inversoes.length > 0 && (
-                <div className="space-y-2">
-                  <span className="font-bold uppercase tracking-wider text-muted-foreground text-[10px]">
-                    Itens Financiados (Inversões Cadastradas)
-                  </span>
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                    {selectedProposal.inversoes.map((inv: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-2 rounded-xl bg-muted/40 border border-border/40 text-xs"
-                      >
-                        <span className="font-semibold truncate max-w-[280px]">
-                          {inv.descricao || inv.item || `Item ${idx + 1}`}
-                        </span>
-                        <span className="font-mono font-bold text-teal-700 dark:text-teal-300 shrink-0">
-                          {formatCurrency(Number(inv.valor_total || inv.valor || 0))}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {selectedProposal.notes && (
-                <div className="bg-muted/30 p-3 rounded-xl border border-border/40 text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                  <span className="font-bold text-foreground block mb-0.5">Observações & Anexos:</span>
-                  {selectedProposal.notes}
-                </div>
-              )}
             </div>
           )}
 
@@ -3315,7 +3993,7 @@ export default function ProjetistaDashboard() {
               className="rounded-xl text-xs"
               onClick={() => setSelectedProposal(null)}
             >
-              Fechar
+              Fechar Dossiê
             </Button>
 
             {selectedProposal?.pendencias && (
