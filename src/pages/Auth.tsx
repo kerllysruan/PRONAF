@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Wheat, Lock, ArrowRight, Loader2, Fingerprint } from "lucide-react";
+import { Wheat, Lock, ArrowRight, Loader2, Fingerprint, UserCheck } from "lucide-react";
 import { MEDIA_CONFIG } from "@/config/imageConfig";
 
 export default function Auth() {
@@ -20,32 +21,100 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      // 1. Resolve matrícula → email via edge function pública
-      const { data: funcData, error: funcError } = await supabase.functions.invoke(
-        "login-by-matricula",
-        { body: { matricula: matricula.trim().toUpperCase() } }
-      );
+      const cleanInput = matricula.trim();
+      let targetEmail = "";
 
-      if (funcError || funcData?.error) {
-        throw new Error(funcData?.error || funcError?.message || "Matrícula não encontrada");
+      if (cleanInput.includes("@")) {
+        // Digitou e-mail diretamente
+        targetEmail = cleanInput.toLowerCase();
+      } else {
+        // Tentar resolver matrícula via Edge Function
+        try {
+          const { data: funcData, error: funcError } = await supabase.functions.invoke(
+            "login-by-matricula",
+            { body: { matricula: cleanInput.toUpperCase() } }
+          );
+
+          if (!funcError && funcData?.email) {
+            targetEmail = funcData.email;
+          }
+        } catch {
+          // ignore
+        }
+
+        // Se ainda não achou e tem formato de CPF
+        if (!targetEmail) {
+          const digits = cleanInput.replace(/\D/g, "");
+          if (digits.length === 11) {
+            const { data: projByCpf } = await supabase
+              .from("projetistas")
+              .select("email")
+              .eq("cpf", cleanInput)
+              .maybeSingle();
+
+            if (projByCpf?.email) {
+              targetEmail = projByCpf.email;
+            }
+          }
+        }
+
+        // Fallback: tentar o próprio input
+        if (!targetEmail) {
+          targetEmail = cleanInput.toLowerCase();
+        }
       }
 
-      const { email } = funcData as { email: string };
+      // 1. Autenticar com o email + senha
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: targetEmail,
+        password,
+      });
 
-      // 2. Autenticar com o email interno + senha
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) {
         if (signInError.message.toLowerCase().includes("invalid")) {
-          throw new Error("Matrícula ou senha incorretos");
+          throw new Error("Matrícula/E-mail ou senha incorretos");
         }
         throw signInError;
+      }
+
+      // 2. Verificar se é projetista e se está aprovado e ativo
+      const loggedUser = authData?.user;
+      if (loggedUser) {
+        const { data: roleRow } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", loggedUser.id)
+          .maybeSingle();
+
+        if (roleRow?.role === "projetista") {
+          const { data: projRow } = await supabase
+            .from("projetistas")
+            .select("status, motivo_rejeicao, name")
+            .or(`user_id.eq.${loggedUser.id},email.ilike.${loggedUser.email}`)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (projRow && projRow.status !== "ativo") {
+            await supabase.auth.signOut();
+            if (projRow.status === "pendente") {
+              throw new Error(
+                "⏳ Seu cadastro foi recebido com sucesso e está AGUARDANDO VALIDAÇÃO pela equipe técnica. Assim que for ativado pelo administrador, seu acesso será liberado!"
+              );
+            } else {
+              throw new Error(
+                `⛔ Cadastro Inativo: ${projRow.motivo_rejeicao || "Seu credenciamento não está ativo no momento. Contate o suporte."}`
+              );
+            }
+          }
+        }
       }
 
       toast({ title: "✅ Bem-vindo de volta!", description: "Acesso autorizado com sucesso." });
     } catch (error: any) {
       toast({
-        title: "Acesso negado",
-        description: error.message || "Verifique sua matrícula e senha.",
+        title: "Acesso não autorizado",
+        description: error.message || "Verifique sua matrícula/e-mail e senha.",
         variant: "destructive",
       });
     } finally {
@@ -55,7 +124,7 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden relative font-sans">
-      {/* ── BACKGROUND IMAGE: Same Sunrise Dawn Field Image from Animation Entrance ── */}
+      {/* ── BACKGROUND IMAGE ── */}
       <div
         className="absolute inset-0 bg-cover bg-center filter saturate-[1.3] contrast-[1.12] brightness-[1.08] transform scale-100 transition-all duration-1000"
         style={{ backgroundImage: `url(${MEDIA_CONFIG.images.sunriseDawn})` }}
@@ -93,25 +162,25 @@ export default function Auth() {
               Acesso ao Sistema
             </CardTitle>
             <CardDescription className="font-medium text-emerald-200/90 text-xs sm:text-sm">
-              Informe sua matrícula e senha para entrar na plataforma
+              Informe sua matrícula ou e-mail e sua senha para entrar na plataforma
             </CardDescription>
           </CardHeader>
 
-          <CardContent className="px-8 pb-8">
+          <CardContent className="px-8 pb-8 space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Matrícula */}
+              {/* Matrícula ou E-mail */}
               <div className="space-y-1.5">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-amber-300 ml-1">
-                  Matrícula
+                  Matrícula ou E-mail
                 </Label>
                 <div className="relative group">
                   <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-amber-400 group-focus-within:text-amber-300 transition-colors" />
                   <Input
                     id="matricula"
                     value={matricula}
-                    onChange={(e) => setMatricula(e.target.value.toUpperCase())}
-                    placeholder="Ex: F180227"
-                    className="pl-12 h-13 rounded-2xl border-amber-400/30 bg-slate-950/60 text-white placeholder:text-slate-400 focus:bg-slate-950/90 focus:border-amber-400/30 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus-visible:outline-none outline-none caret-amber-400 transition-all font-bold uppercase tracking-widest text-sm"
+                    onChange={(e) => setMatricula(e.target.value)}
+                    placeholder="Matrícula (ex: F180227) ou seu e-mail"
+                    className="pl-12 h-13 rounded-2xl border-amber-400/30 bg-slate-950/60 text-white placeholder:text-slate-400 focus:bg-slate-950/90 focus:border-amber-400/30 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus-visible:outline-none outline-none caret-amber-400 transition-all font-bold text-sm"
                     required
                     autoComplete="username"
                     autoFocus
@@ -156,9 +225,16 @@ export default function Auth() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-[10px] font-bold text-emerald-200/70 uppercase tracking-widest">
-              Acesso seguro · Credenciais gerenciadas pelo administrador
-            </p>
+            {/* Link para Auto-Cadastro de Projetistas */}
+            <div className="pt-2 border-t border-amber-400/20 text-center">
+              <Link
+                to="/cadastro-projetista"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200 transition-colors py-1 hover:underline"
+              >
+                <UserCheck className="h-3.5 w-3.5" />
+                <span>É projetista técnico? Cadastre-se aqui</span>
+              </Link>
+            </div>
           </CardContent>
         </Card>
 

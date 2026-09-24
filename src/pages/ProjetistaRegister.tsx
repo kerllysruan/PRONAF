@@ -35,6 +35,10 @@ import {
   Sparkles,
   ExternalLink,
   ChevronRight,
+  Lock,
+  Eye,
+  EyeOff,
+  KeyRound,
 } from "lucide-react";
 import { MEDIA_CONFIG } from "@/config/imageConfig";
 
@@ -132,6 +136,10 @@ export default function ProjetistaRegister() {
   const [conselhoNumero, setConselhoNumero] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [municipio, setMunicipio] = useState("");
   const [uf, setUf] = useState("MA");
   const [observacoes, setObservacoes] = useState("");
@@ -150,6 +158,7 @@ export default function ProjetistaRegister() {
     protocolo: string;
     crea_cfta: string;
     totalDocs: number;
+    email: string;
   } | null>(null);
 
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -231,7 +240,25 @@ export default function ProjetistaRegister() {
     if (!email.trim() || !email.includes("@")) {
       toast({
         title: "E-mail obrigatório",
-        description: "Informe um endereço de e-mail válido para contato.",
+        description: "Informe um endereço de e-mail válido para criar seu login.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      toast({
+        title: "Senha obrigatória",
+        description: "A senha de acesso deve possuir pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Senhas não coincidem",
+        description: "A senha e a confirmação de senha digitadas são diferentes.",
         variant: "destructive",
       });
       return;
@@ -259,7 +286,7 @@ export default function ProjetistaRegister() {
 
     setSubmitting(true);
     setUploadProgress(5);
-    setCurrentUploadLabel("Iniciando upload dos documentos...");
+    setCurrentUploadLabel("Criando credenciais de login...");
 
     try {
       const timestamp = Date.now();
@@ -268,6 +295,35 @@ export default function ProjetistaRegister() {
       const id = `proj-${timestamp}`;
       const protocolo = `PROJ-${new Date().getFullYear()}-${timestamp.toString().slice(-6)}`;
 
+      // 1. Criar usuário no Supabase Auth
+      let authUserId: string | null = null;
+      try {
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: email.trim().toLowerCase(),
+          password: password,
+          options: {
+            data: {
+              full_name: cleanNome,
+              display_name: cleanNome,
+              role: "projetista",
+              phone: phone.trim(),
+              cpf: cpf.trim(),
+            },
+          },
+        });
+
+        if (signUpError) {
+          if (!signUpError.message.toLowerCase().includes("already registered")) {
+            console.warn("Aviso no signUp:", signUpError.message);
+          }
+        }
+        authUserId = signUpData?.user?.id || null;
+      } catch (authErr: any) {
+        console.warn("Exceção ao criar auth user:", authErr);
+      }
+
+      // 2. Upload de documentos
+      setCurrentUploadLabel("Iniciando upload dos documentos...");
       const uploadedDocsList: any[] = [];
       const keysToUpload = Object.keys(selectedFiles);
       const totalToUpload = keysToUpload.length;
@@ -313,9 +369,10 @@ export default function ProjetistaRegister() {
 
       setCurrentUploadLabel("Registrando dados do projetista...");
 
-      // Inserir registro na tabela public.projetistas
+      // 3. Inserir registro na tabela public.projetistas
       const { error: insertError } = await supabase.from("projetistas").insert({
         id,
+        user_id: authUserId,
         name: cleanNome,
         cpf: cpf.trim(),
         crea_cfta: registroFormatado,
@@ -335,6 +392,9 @@ export default function ProjetistaRegister() {
         throw new Error(insertError.message);
       }
 
+      // 4. Logout de segurança para não manter sessão logada antes da ativação pelo admin
+      await supabase.auth.signOut();
+
       setUploadProgress(100);
       setCurrentUploadLabel("Cadastro enviado com sucesso!");
 
@@ -344,10 +404,11 @@ export default function ProjetistaRegister() {
         protocolo,
         crea_cfta: registroFormatado,
         totalDocs: uploadedDocsList.length,
+        email: email.trim().toLowerCase(),
       });
 
       toast({
-        title: "Cadastro submetido com sucesso! 🎉",
+        title: "Cadastro e Login criados com sucesso! 🎉",
         description: "Seus dados e documentos foram enviados para análise da equipe técnica.",
       });
     } catch (err: any) {
@@ -370,6 +431,8 @@ export default function ProjetistaRegister() {
     setConselhoNumero("");
     setPhone("");
     setEmail("");
+    setPassword("");
+    setConfirmPassword("");
     setMunicipio("");
     setUf("MA");
     setObservacoes("");
@@ -390,13 +453,13 @@ export default function ProjetistaRegister() {
 
             <div className="space-y-2">
               <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 px-3 py-1 font-bold text-xs uppercase tracking-wider">
-                Cadastro Submetido para Validação
+                Cadastro e Login Registrados
               </Badge>
               <h2 className="text-2xl md:text-3xl font-extrabold text-foreground font-heading">
                 Cadastro Enviado com Sucesso!
               </h2>
               <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-                Recebemos suas informações e documentos. Nossa equipe fará a conferência cadastral e a validação do registro profissional no respectivo conselho.
+                Recebemos suas informações, login de acesso e documentos. Nossa equipe fará a conferência cadastral e a validação do seu credenciamento.
               </p>
             </div>
 
@@ -416,19 +479,25 @@ export default function ProjetistaRegister() {
                   <p className="font-bold text-foreground text-sm">{submittedData.name}</p>
                 </div>
                 <div>
+                  <p className="text-muted-foreground">E-mail de Login:</p>
+                  <p className="font-mono font-bold text-teal-700 dark:text-teal-300 text-sm truncate">
+                    {submittedData.email}
+                  </p>
+                </div>
+                <div>
                   <p className="text-muted-foreground">Registro Profissional:</p>
                   <p className="font-bold text-foreground text-sm">{submittedData.crea_cfta}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Documentos Anexados:</p>
                   <p className="font-bold text-teal-600 dark:text-teal-400 text-sm">
-                    {submittedData.totalDocs} arquivo(s) enviados
+                    {submittedData.totalDocs} arquivos enviados
                   </p>
                 </div>
-                <div>
+                <div className="md:col-span-2">
                   <p className="text-muted-foreground">Status Atual:</p>
-                  <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 font-bold text-[11px]">
-                    Aguardando Validação
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20 font-bold text-[11px] mt-0.5">
+                    Aguardando Validação e Ativação
                   </Badge>
                 </div>
               </div>
@@ -438,16 +507,16 @@ export default function ProjetistaRegister() {
             <div className="bg-teal-500/5 rounded-2xl p-4 border border-teal-500/10 text-left text-xs space-y-2 text-muted-foreground">
               <div className="flex items-center gap-2 font-bold text-teal-700 dark:text-teal-300">
                 <ShieldCheck className="h-4 w-4" />
-                Como funciona a ativação?
+                Como funciona o acesso à sua Central de Propostas?
               </div>
               <p>
                 1. O administrador acessa a plataforma em <strong>supergestao.digital/projetistas</strong> para conferência dos documentos anexados.
               </p>
               <p>
-                2. Após a verificação de regularidade no conselho, seu cadastro será <strong>Aprovado e Ativado</strong>.
+                2. Após a validação de regularidade, seu cadastro será <strong>Aprovado e Ativado</strong>.
               </p>
               <p>
-                3. Uma vez ativo, você poderá ser vinculado a propostas de crédito, elaboração de projetos e termos de inversão.
+                3. Você poderá fazer login com seu e-mail <strong>{submittedData.email}</strong> e a senha cadastrada para acessar seu <strong>Painel de Acompanhamento de Propostas</strong>.
               </p>
             </div>
 
@@ -463,8 +532,8 @@ export default function ProjetistaRegister() {
                 asChild
                 className="rounded-xl w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs"
               >
-                <Link to="/">
-                  Ir para a Página Inicial
+                <Link to="/auth">
+                  Ir para a Tela de Login
                   <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Link>
               </Button>
@@ -638,7 +707,85 @@ export default function ProjetistaRegister() {
             </CardContent>
           </Card>
 
-          {/* ── Card 2: Dados Profissionais ───────────────────── */}
+          {/* ── Card 2: Criação de Login de Acesso ─────────────── */}
+          <Card className="rounded-3xl border border-border/60 shadow-lg bg-card overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/40 p-5 md:p-6">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-teal-500/10 text-teal-600 flex items-center justify-center shrink-0">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-base md:text-lg font-extrabold font-heading text-foreground">
+                    2. Criação de Login de Acesso
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Defina sua senha para acessar sua Central de Controle de Propostas após a validação e ativação
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-5 md:p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    Senha de Acesso <span className="text-destructive">*</span>
+                  </label>
+                  <div className="relative">
+                    <Input
+                      required
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      minLength={6}
+                      className="rounded-xl h-11 text-sm pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    Confirmar Senha <span className="text-destructive">*</span>
+                  </label>
+                  <div className="relative">
+                    <Input
+                      required
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Repita sua senha"
+                      minLength={6}
+                      className="rounded-xl h-11 text-sm pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-teal-500/5 border border-teal-500/15 text-xs text-muted-foreground flex items-center gap-2.5">
+                <KeyRound className="h-4 w-4 text-teal-600 shrink-0" />
+                <span>
+                  O seu usuário de login será o e-mail <strong>{email || "(informado acima)"}</strong>. Seu acesso será liberado assim que o cadastro for validado e ativado pela equipe técnica.
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ── Card 3: Dados Profissionais ───────────────────── */}
           <Card className="rounded-3xl border border-border/60 shadow-lg bg-card overflow-hidden">
             <CardHeader className="bg-muted/30 border-b border-border/40 p-5 md:p-6">
               <div className="flex items-center gap-3">
@@ -647,7 +794,7 @@ export default function ProjetistaRegister() {
                 </div>
                 <div>
                   <CardTitle className="text-base md:text-lg font-extrabold font-heading text-foreground">
-                    2. Dados do Registro Profissional
+                    3. Dados do Registro Profissional
                   </CardTitle>
                   <CardDescription className="text-xs">
                     Informações do conselho de classe para ART/TRT e laudos técnicos
@@ -723,13 +870,13 @@ export default function ProjetistaRegister() {
             </CardContent>
           </Card>
 
-          {/* ── Card 3: Cards de Upload de Documentos ─────────── */}
+          {/* ── Card 4: Cards de Upload de Documentos ─────────── */}
           <div className="space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
               <div>
                 <h3 className="text-lg md:text-xl font-extrabold font-heading text-foreground flex items-center gap-2">
                   <FileCheck className="h-5 w-5 text-teal-600" />
-                  3. Envio de Documentos Comprobatórios
+                  4. Envio de Documentos Comprobatórios
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   Anexe os arquivos digitais em formato PDF, PNG ou JPG (até 15MB cada)

@@ -10,6 +10,7 @@ import {
   UserCheck,
   BookOpen,
   FileCheck,
+  Briefcase,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
+  { title: "Painel do Projetista", url: "/painel-projetista", icon: Briefcase, permission: "projetista_only", badge: null as string | null },
   { title: "Dashboard", url: "/", icon: LayoutDashboard, permission: "can_view_dashboard", badge: null as string | null },
   { title: "Propostas Concluídas", url: "/propostas", icon: FileText, permission: "can_view_proposals", badge: "concluded" as string },
   { title: "Estoque", url: "/estoque", icon: Box, permission: "can_view_proposals", badge: "stock" as string },
@@ -40,10 +42,23 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
-  const { permissions, isAdmin, loading } = usePermissions();
+  const { permissions, role, isAdmin, loading } = usePermissions();
   const { pendingStockCount, pendingDocCount, concludedCount } = useAppData();
 
+  const isProjetista = role === "projetista";
+
   const filteredMenuItems = menuItems.filter((item) => {
+    if (item.permission === "projetista_only") {
+      return isProjetista || isAdmin;
+    }
+    if (isProjetista) {
+      return (
+        item.url === "/painel-projetista" ||
+        item.url === "/troca-arquivos" ||
+        item.url === "/automatizador-certidoes" ||
+        item.url === "/documentacao-plataforma"
+      );
+    }
     if (item.permission === "is_admin") return isAdmin;
     return !!permissions[item.permission as keyof typeof permissions];
   });

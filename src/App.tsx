@@ -22,6 +22,7 @@ import ProjetistasControl from "./pages/ProjetistasControl";
 import PlatformDocumentation from "./pages/PlatformDocumentation";
 import CertificatesAutomator from "./pages/CertificatesAutomator";
 import ProjetistaRegister from "./pages/ProjetistaRegister";
+import ProjetistaDashboard from "./pages/ProjetistaDashboard";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Loader2 } from "lucide-react";
 
@@ -50,7 +51,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AuthRoute() {
-  const { user, loading } = useAuth();
+  const { user, loading, role } = useAuth();
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -58,8 +59,32 @@ function AuthRoute() {
       </div>
     );
   }
-  if (user) return <Navigate to="/" replace />;
+  if (user) {
+    if (role === "projetista") {
+      return <Navigate to="/painel-projetista" replace />;
+    }
+    return <Navigate to="/" replace />;
+  }
   return <Auth />;
+}
+
+function HomeRoute() {
+  const { role, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  if (role === "projetista") {
+    return <Navigate to="/painel-projetista" replace />;
+  }
+  return (
+    <PermissionGate permission="can_view_dashboard" showError>
+      <Dashboard />
+    </PermissionGate>
+  );
 }
 
 import { SplashScreen } from "@/components/SplashScreen";
@@ -68,7 +93,8 @@ import { useState } from "react";
 const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<AuthRoute />} />
-    <Route path="/" element={<ProtectedRoute><PermissionGate permission="can_view_dashboard" showError><Dashboard /></PermissionGate></ProtectedRoute>} />
+    <Route path="/" element={<ProtectedRoute><HomeRoute /></ProtectedRoute>} />
+    <Route path="/painel-projetista" element={<ProtectedRoute><ProjetistaDashboard /></ProtectedRoute>} />
     <Route path="/propostas" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><Proposals /></PermissionGate></ProtectedRoute>} />
     <Route path="/estoque" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><StockProposals /></PermissionGate></ProtectedRoute>} />
     <Route path="/troca-arquivos" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><FileExchange /></PermissionGate></ProtectedRoute>} />
