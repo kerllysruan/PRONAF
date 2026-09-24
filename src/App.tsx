@@ -21,6 +21,7 @@ import DocumentationSubmit from "./pages/DocumentationSubmit";
 import ProjetistasControl from "./pages/ProjetistasControl";
 import PlatformDocumentation from "./pages/PlatformDocumentation";
 import CertificatesAutomator from "./pages/CertificatesAutomator";
+import ProjetistaRegister from "./pages/ProjetistaRegister";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Loader2 } from "lucide-react";
 
@@ -72,6 +73,7 @@ const AppRoutes = () => (
     <Route path="/estoque" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><StockProposals /></PermissionGate></ProtectedRoute>} />
     <Route path="/troca-arquivos" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><FileExchange /></PermissionGate></ProtectedRoute>} />
     <Route path="/projetistas" element={<ProtectedRoute><PermissionGate permission="can_view_proposals" showError><ProjetistasControl /></PermissionGate></ProtectedRoute>} />
+    <Route path="/cadastro-projetista" element={<ProjetistaRegister />} />
     <Route path="/enviar-documentacao" element={<DocumentationSubmit />} />
     <Route path="/documentacao" element={<ProtectedRoute><PermissionGate permission="can_view_documentation" showError><Documentation /></PermissionGate></ProtectedRoute>} />
     <Route path="/automatizador-certidoes" element={<ProtectedRoute><PermissionGate permission="can_view_documentation" showError><CertificatesAutomator /></PermissionGate></ProtectedRoute>} />

@@ -3,6 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
+export interface ProjetistaDocumento {
+  tipo: string;
+  titulo: string;
+  nome: string;
+  url: string;
+  file_path: string;
+  tamanho?: number;
+  uploaded_at: string;
+}
+
 export interface Projetista {
   id: string;
   name: string;
@@ -10,8 +20,17 @@ export interface Projetista {
   crea_cfta: string;
   phone?: string;
   email?: string;
-  status: "ativo" | "inativo";
+  municipio?: string;
+  uf?: string;
+  chave_pix?: string;
+  status: "ativo" | "inativo" | "pendente";
+  documentos?: ProjetistaDocumento[];
+  observacoes?: string;
+  motivo_rejeicao?: string;
+  validado_por?: string;
+  validado_em?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export const DEFAULT_PROJETISTAS: Projetista[] = [
@@ -178,8 +197,17 @@ export function useProjetistasControl() {
               crea_cfta: row.crea_cfta || "",
               phone: row.phone || "",
               email: row.email || "",
-              status: (row.status as "ativo" | "inativo") || "ativo",
+              status: (row.status as "ativo" | "inativo" | "pendente") || "ativo",
+              municipio: row.municipio || "",
+              uf: row.uf || "",
+              chave_pix: row.chave_pix || "",
+              documentos: Array.isArray(row.documentos) ? row.documentos : [],
+              observacoes: row.observacoes || "",
+              motivo_rejeicao: row.motivo_rejeicao || "",
+              validado_por: row.validado_por || "",
+              validado_em: row.validado_em || "",
               created_at: row.created_at || new Date().toISOString(),
+              updated_at: row.updated_at || "",
             }));
 
           setProjetistas(list);
@@ -220,7 +248,15 @@ export function useProjetistasControl() {
         crea_cfta: data.crea_cfta.trim().toUpperCase(),
         phone: data.phone?.trim() || "",
         email: data.email?.trim() || "",
+        municipio: data.municipio?.trim() || "",
+        uf: data.uf?.trim().toUpperCase() || "",
+        chave_pix: data.chave_pix?.trim() || "",
         status: data.status || "ativo",
+        documentos: data.documentos || [],
+        observacoes: data.observacoes || "",
+        motivo_rejeicao: data.motivo_rejeicao || "",
+        validado_por: data.validado_por || "",
+        validado_em: data.validado_em || "",
         created_at: new Date().toISOString(),
       };
 
@@ -235,7 +271,12 @@ export function useProjetistasControl() {
           crea_cfta: newProjetista.crea_cfta,
           phone: newProjetista.phone,
           email: newProjetista.email,
+          municipio: newProjetista.municipio,
+          uf: newProjetista.uf,
+          chave_pix: newProjetista.chave_pix,
           status: newProjetista.status,
+          documentos: newProjetista.documentos,
+          observacoes: newProjetista.observacoes,
           created_at: newProjetista.created_at,
         });
       } catch (err) {
@@ -275,7 +316,15 @@ export function useProjetistasControl() {
               }),
               ...(data.phone !== undefined && { phone: data.phone.trim() }),
               ...(data.email !== undefined && { email: data.email.trim() }),
+              ...(data.municipio !== undefined && { municipio: data.municipio.trim() }),
+              ...(data.uf !== undefined && { uf: data.uf.trim().toUpperCase() }),
+              ...(data.chave_pix !== undefined && { chave_pix: data.chave_pix.trim() }),
               ...(data.status && { status: data.status }),
+              ...(data.documentos && { documentos: data.documentos }),
+              ...(data.observacoes !== undefined && { observacoes: data.observacoes }),
+              ...(data.motivo_rejeicao !== undefined && { motivo_rejeicao: data.motivo_rejeicao }),
+              ...(data.validado_por !== undefined && { validado_por: data.validado_por }),
+              ...(data.validado_em !== undefined && { validado_em: data.validado_em }),
             };
           }
           return item;
@@ -293,7 +342,15 @@ export function useProjetistasControl() {
           updatePayload.crea_cfta = data.crea_cfta.trim().toUpperCase();
         if (data.phone !== undefined) updatePayload.phone = data.phone.trim();
         if (data.email !== undefined) updatePayload.email = data.email.trim();
+        if (data.municipio !== undefined) updatePayload.municipio = data.municipio.trim();
+        if (data.uf !== undefined) updatePayload.uf = data.uf.trim().toUpperCase();
+        if (data.chave_pix !== undefined) updatePayload.chave_pix = data.chave_pix.trim();
         if (data.status) updatePayload.status = data.status;
+        if (data.documentos) updatePayload.documentos = data.documentos;
+        if (data.observacoes !== undefined) updatePayload.observacoes = data.observacoes;
+        if (data.motivo_rejeicao !== undefined) updatePayload.motivo_rejeicao = data.motivo_rejeicao;
+        if (data.validado_por !== undefined) updatePayload.validado_por = data.validado_por;
+        if (data.validado_em !== undefined) updatePayload.validado_em = data.validado_em;
 
         const { data: updatedRows, error: updateErr } = await supabase
           .from("projetistas")
@@ -431,6 +488,45 @@ export function useProjetistasControl() {
     [toast]
   );
 
+  // Aprovar e Ativar Projetista
+  const approveProjetista = useCallback(
+    async (id: string, validatorName?: string) => {
+      const now = new Date().toISOString();
+      await updateProjetista(id, {
+        status: "ativo",
+        validado_por: validatorName || "Administrador",
+        validado_em: now,
+        motivo_rejeicao: "",
+      });
+
+      toast({
+        title: "Projetista Aprovado e Ativado! ✅",
+        description: "O profissional agora está ativo e disponível para vinculação a projetos.",
+      });
+    },
+    [updateProjetista, toast]
+  );
+
+  // Recusar / Rejeitar Cadastro de Projetista
+  const rejectProjetista = useCallback(
+    async (id: string, reason: string, validatorName?: string) => {
+      const now = new Date().toISOString();
+      await updateProjetista(id, {
+        status: "inativo",
+        motivo_rejeicao: reason || "Documentação pendente ou dados inconclusivos",
+        validado_por: validatorName || "Administrador",
+        validado_em: now,
+      });
+
+      toast({
+        title: "Cadastro Recusado ❌",
+        description: "O status do projetista foi definido como inativo com o motivo informado.",
+        variant: "destructive",
+      });
+    },
+    [updateProjetista, toast]
+  );
+
   // Restaurar padrão
   const resetToDefault = useCallback(async () => {
     setProjetistas(DEFAULT_PROJETISTAS);
@@ -458,11 +554,20 @@ export function useProjetistasControl() {
     });
   }, [toast]);
 
+  const pendingProjetistas = projetistas.filter((p) => p.status === "pendente");
+  const activeProjetistas = projetistas.filter((p) => p.status === "ativo");
+  const inactiveProjetistas = projetistas.filter((p) => p.status === "inativo");
+
   return {
     projetistas,
+    pendingProjetistas,
+    activeProjetistas,
+    inactiveProjetistas,
     loading,
     addProjetista,
     updateProjetista,
+    approveProjetista,
+    rejectProjetista,
     deleteProjetista,
     resetToDefault,
   };
