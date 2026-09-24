@@ -35,7 +35,6 @@ import {
   Sparkles,
   ExternalLink,
   ChevronRight,
-  CreditCard,
 } from "lucide-react";
 import { MEDIA_CONFIG } from "@/config/imageConfig";
 
@@ -67,8 +66,7 @@ const DOCUMENT_CARDS: DocDefinition[] = [
     key: "certidao_regularidade",
     title: "Certidão de Quitação / Regularidade",
     description: "Certidão emitida pelo CREA ou CFTA comprovando adimplência no ano vigente.",
-    required: false,
-    recommended: true,
+    required: true,
     accept: ".pdf,.png,.jpg,.jpeg",
   },
   {
@@ -76,13 +74,6 @@ const DOCUMENT_CARDS: DocDefinition[] = [
     title: "Comprovante de Endereço",
     description: "Conta de água, energia, telefone ou extrato bancário emitido nos últimos 90 dias.",
     required: true,
-    accept: ".pdf,.png,.jpg,.jpeg",
-  },
-  {
-    key: "diploma_formacao",
-    title: "Diploma / Certificado de Conclusão",
-    description: "Diploma de Engenharia Agronômica, Florestal, Técnico Agrícola ou área afim.",
-    required: false,
     accept: ".pdf,.png,.jpg,.jpeg",
   },
 ];
@@ -143,7 +134,6 @@ export default function ProjetistaRegister() {
   const [email, setEmail] = useState("");
   const [municipio, setMunicipio] = useState("");
   const [uf, setUf] = useState("MA");
-  const [chavePix, setChavePix] = useState("");
   const [observacoes, setObservacoes] = useState("");
 
   // Files State
@@ -238,7 +228,25 @@ export default function ProjetistaRegister() {
       return;
     }
 
-    // Required Docs check
+    if (!email.trim() || !email.includes("@")) {
+      toast({
+        title: "E-mail obrigatório",
+        description: "Informe um endereço de e-mail válido para contato.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!municipio.trim()) {
+      toast({
+        title: "Município obrigatório",
+        description: "Informe o município de atuação.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Required Docs check (todos os 4 documentos são obrigatórios)
     const missingDocs = DOCUMENT_CARDS.filter((d) => d.required && !selectedFiles[d.key]);
     if (missingDocs.length > 0) {
       toast({
@@ -315,7 +323,7 @@ export default function ProjetistaRegister() {
         email: email.trim().toLowerCase(),
         municipio: municipio.trim(),
         uf: uf.trim(),
-        chave_pix: chavePix.trim(),
+        chave_pix: "",
         status: "pendente",
         documentos: uploadedDocsList,
         observacoes: observacoes.trim(),
@@ -364,7 +372,6 @@ export default function ProjetistaRegister() {
     setEmail("");
     setMunicipio("");
     setUf("MA");
-    setChavePix("");
     setObservacoes("");
     setSelectedFiles({});
     setSubmittedData(null);
@@ -582,10 +589,11 @@ export default function ProjetistaRegister() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    E-mail Profissional
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    E-mail Profissional <span className="text-destructive">*</span>
                   </label>
                   <Input
+                    required
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -595,12 +603,13 @@ export default function ProjetistaRegister() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Município de Residência / Atuação
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    Município de Residência / Atuação <span className="text-destructive">*</span>
                   </label>
                   <Input
+                    required
                     value={municipio}
                     onChange={(e) => setMunicipio(e.target.value)}
                     placeholder="Ex: São Luís"
@@ -609,8 +618,8 @@ export default function ProjetistaRegister() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    Estado (UF)
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    Estado (UF) <span className="text-destructive">*</span>
                   </label>
                   <Select value={uf} onValueChange={setUf}>
                     <SelectTrigger className="rounded-xl h-11 text-sm">
@@ -624,18 +633,6 @@ export default function ProjetistaRegister() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-                    Chave PIX <span className="text-[10px] text-muted-foreground font-normal">(Opcional)</span>
-                  </label>
-                  <Input
-                    value={chavePix}
-                    onChange={(e) => setChavePix(e.target.value)}
-                    placeholder="CPF, Telefone, E-mail ou Aleatória"
-                    className="rounded-xl h-11 text-sm font-mono"
-                  />
                 </div>
               </div>
             </CardContent>

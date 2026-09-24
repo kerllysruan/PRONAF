@@ -67,7 +67,6 @@ import {
   MapPin,
   MessageCircle,
   Download,
-  CreditCard,
   AlertCircle,
 } from "lucide-react";
 
@@ -750,13 +749,6 @@ export default function ProjetistasControl() {
                     <span className="text-muted-foreground">E-mail:</span>
                     <p className="font-bold text-foreground truncate">{validatingProjetista.email || "—"}</p>
                   </div>
-
-                  {validatingProjetista.chave_pix && (
-                    <div className="sm:col-span-2">
-                      <span className="text-muted-foreground">Chave PIX:</span>
-                      <p className="font-mono font-bold text-foreground text-xs">{validatingProjetista.chave_pix}</p>
-                    </div>
-                  )}
 
                   {validatingProjetista.observacoes && (
                     <div className="sm:col-span-2 bg-card p-2.5 rounded-xl border border-border/40 text-xs text-muted-foreground">
