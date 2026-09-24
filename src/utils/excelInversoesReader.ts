@@ -26,6 +26,26 @@ export interface ExcelInversoesResult {
   error?: string;
 }
 
+export interface ExcelProposalParsed {
+  success: boolean;
+  producerName?: string;
+  producerCpf?: string;
+  producerPhone?: string;
+  municipio?: string;
+  localizacao?: string;
+  dapCaf?: string;
+  linhaCredito?: string;
+  pronafLineId?: string;
+  atividade?: string;
+  valorSolicitado?: number;
+  items: InversaoItem[];
+  custoAssessoria: number;
+  totalItens: number;
+  totalGeral: number;
+  formatDetected?: string;
+  error?: string;
+}
+
 function normalizeText(str: any): string {
   if (!str) return "";
   return String(str)
@@ -352,4 +372,269 @@ function enrichItemsWithCatalog(
       teto_maximo,
     };
   });
+}
+
+export function matchPronafLineId(text: string): { id: string; label: string } {
+  const norm = normalizeText(text);
+  if (norm.includes("368") || norm.includes("669") || norm.includes("PRONAF A") || norm.includes("GRUPO A")) {
+    return norm.includes("669")
+      ? { id: "pronaf_a_669", label: "Pronaf Grupo A (Res. 669)" }
+      : { id: "pronaf_a_368", label: "Pronaf Grupo A (Res. 368)" };
+  }
+  if (norm.includes("MAIS ALIMENTO")) {
+    return { id: "pronaf_mais_alimento", label: "Pronaf Mais Alimentos" };
+  }
+  if (norm.includes("CARTAO") || norm.includes("CARTÃO")) {
+    return { id: "cartao_bnb", label: "Cartão BNB Agro" };
+  }
+  if (norm.includes("JOVEM") || norm.includes("MULHER")) {
+    return { id: "pronaf_jovem", label: "Pronaf Jovem / Mulher" };
+  }
+  if (norm.includes("RENOV")) {
+    return { id: "custeio_renovacao", label: "Custeio Pecuário / Renovação" };
+  }
+  if (norm.includes("CUSTEIO")) {
+    return { id: "custeio", label: "Custeio Agrícola" };
+  }
+  if (norm.includes("INVEST")) {
+    return { id: "investimento", label: "Pronaf Investimento Geral" };
+  }
+  return { id: "custeio", label: "Custeio Agrícola" };
+}
+
+export async function parseExcelProposalFull(
+  fileOrBuffer: File | ArrayBuffer | Uint8Array,
+  options?: {
+    findReferencia?: (nome: string) => InversaoReferencia | null;
+    uf?: string;
+    customPassword?: string;
+  }
+): Promise<ExcelProposalParsed> {
+  const inversoesResult = await parseExcelInversoes(fileOrBuffer, options);
+
+  try {
+    let arrayBuffer: ArrayBuffer;
+    if (fileOrBuffer instanceof File) {
+      arrayBuffer = await fileOrBuffer.arrayBuffer();
+    } else if (fileOrBuffer instanceof Uint8Array) {
+      arrayBuffer = fileOrBuffer.buffer as ArrayBuffer;
+    } else {
+      arrayBuffer = fileOrBuffer;
+    }
+
+    let fileBuffer = Buffer.from(arrayBuffer);
+
+    let isEncrypted = false;
+    try {
+      isEncrypted = await officeCrypto.isEncrypted(fileBuffer);
+    } catch {
+      isEncrypted = false;
+    }
+
+    let decryptedBuffer: Buffer | Uint8Array = fileBuffer;
+    if (isEncrypted) {
+      const passwords = [
+        options?.customPassword,
+        "senhasBNxI",
+        "senhasBN",
+        "senhasBNXI",
+        "senhaBNxI",
+        "senhaBNXI",
+        "senhasbnxi",
+        "senhasBNx1",
+        "VelvetSweatshop",
+      ].filter(Boolean) as string[];
+
+      for (const pwd of passwords) {
+        try {
+          decryptedBuffer = await officeCrypto.decrypt(fileBuffer, { password: pwd });
+          break;
+        } catch {}
+      }
+    }
+
+    const wb = XLSX.read(decryptedBuffer, { type: "buffer" });
+
+    let producerName = "";
+    let producerCpf = "";
+    let producerPhone = "";
+    let municipio = "";
+    let localizacao = "";
+    let dapCaf = "";
+    let linhaCredito = "";
+    let pronafLineId = "";
+    let atividade = "";
+    let valorSolicitado = 0;
+
+    // Se tiver BdPRONAF_C
+    if (wb.SheetNames.includes("BdPRONAF_C")) {
+      const sheet = wb.Sheets["BdPRONAF_C"];
+      const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      if (rows[121]) {
+        const r121 = rows[121];
+        if (r121[6]) {
+          municipio = String(r121[6]).trim();
+        }
+        for (let c = 0; c < 22; c++) {
+          const val = String(r121[c] || "").trim();
+          if (!val) continue;
+
+          const digitsOnly = val.replace(/\D/g, "");
+          if (digitsOnly.length === 11 && !producerCpf) {
+            producerCpf = digitsOnly;
+            continue;
+          }
+
+          if (!producerName && val.length > 5 && val.includes(" ") && !/\d/.test(val)) {
+            producerName = val;
+            continue;
+          }
+
+          const normV = normalizeText(val);
+          if (!localizacao && (normV.includes("FAZENDA") || normV.includes("SITIO") || normV.includes("GLEBA") || normV.includes("POVOADO") || normV.includes("ASSENTAMENTO"))) {
+            localizacao = val;
+            continue;
+          }
+        }
+      }
+    }
+
+    // Varredura em todas as abas
+    for (const sheetName of wb.SheetNames) {
+      const sheet = wb.Sheets[sheetName];
+      const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      if (!rows || rows.length === 0) continue;
+
+      for (let r = 0; r < Math.min(100, rows.length); r++) {
+        const row = rows[r] || [];
+        for (let c = 0; c < Math.min(25, row.length); c++) {
+          const cell = row[c];
+          if (cell === null || cell === undefined) continue;
+
+          const strVal = String(cell).trim();
+          const norm = normalizeText(strVal);
+
+          // CPF
+          if (!producerCpf) {
+            const cpfRegex = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/;
+            const match = strVal.match(cpfRegex);
+            if (match) {
+              producerCpf = match[0].replace(/\D/g, "");
+            } else if (norm.includes("CPF") && row[c + 1]) {
+              const nextVal = String(row[c + 1]).replace(/\D/g, "");
+              if (nextVal.length === 11) producerCpf = nextVal;
+            }
+          }
+
+          // Produtor / Proponente
+          if (!producerName && (norm.includes("PRODUTOR") || norm.includes("PROPONENTE") || norm.includes("BENEFICIARIO") || norm.includes("CLIENTE") || norm === "NOME" || norm === "NOME:")) {
+            const nextVal = String(row[c + 1] || row[c + 2] || "").trim();
+            if (nextVal && nextVal.length > 3 && nextVal.includes(" ") && !/\d/.test(nextVal)) {
+              producerName = nextVal;
+            }
+          }
+
+          // Telefone
+          if (!producerPhone && (norm.includes("FONE") || norm.includes("TELEFONE") || norm.includes("WHATSAPP") || norm.includes("CELULAR"))) {
+            const nextVal = String(row[c + 1] || "").trim();
+            const phoneDigits = nextVal.replace(/\D/g, "");
+            if (phoneDigits.length >= 10 && phoneDigits.length <= 11) {
+              producerPhone = phoneDigits;
+            }
+          }
+
+          // Município
+          if (!municipio && (norm.includes("MUNICIPIO") || norm.includes("CIDADE"))) {
+            const nextVal = String(row[c + 1] || "").trim();
+            if (nextVal && nextVal.length > 2 && !/\d/.test(nextVal)) {
+              municipio = nextVal;
+            }
+          }
+
+          // Localização
+          if (!localizacao && (norm.includes("PROPRIEDADE") || norm.includes("IMOVEL") || norm.includes("LOCALIZACAO") || norm.includes("DENOMINACAO") || norm.includes("COMUNIDADE"))) {
+            const nextVal = String(row[c + 1] || "").trim();
+            if (nextVal && nextVal.length > 2) {
+              localizacao = nextVal;
+            }
+          }
+
+          // DAP / CAF
+          if (!dapCaf && (norm.includes("DAP") || norm.includes("CAF"))) {
+            const nextVal = String(row[c + 1] || "").trim();
+            if (nextVal && nextVal.length > 3) {
+              dapCaf = nextVal;
+            }
+          }
+
+          // Linha de Crédito
+          if (!linhaCredito && (norm.includes("LINHA") || norm.includes("PROGRAMA") || norm.includes("ENQUADRAMENTO"))) {
+            const nextVal = String(row[c + 1] || "").trim();
+            if (nextVal && nextVal.length > 2) {
+              const matched = matchPronafLineId(nextVal);
+              linhaCredito = matched.label;
+              pronafLineId = matched.id;
+            }
+          }
+
+          // Atividade
+          if (!atividade && (norm.includes("ATIVIDADE") || norm.includes("FINALIDADE") || norm.includes("CULTURA") || norm.includes("EXPLORACAO"))) {
+            const nextVal = String(row[c + 1] || "").trim();
+            if (nextVal && nextVal.length > 2) {
+              atividade = nextVal;
+            }
+          }
+
+          // Valor Solicitado
+          if (valorSolicitado === 0 && (norm.includes("VALOR SOLICITADO") || norm.includes("VALOR FINANCIADO") || norm.includes("VALOR DO PROJETO") || norm.includes("VALOR TOTAL"))) {
+            const nextVal = row[c + 1];
+            const parsed = parseMoney(nextVal);
+            if (parsed > 0) {
+              valorSolicitado = parsed;
+            }
+          }
+        }
+      }
+    }
+
+    if (!valorSolicitado || valorSolicitado === 0) {
+      valorSolicitado = inversoesResult.totalGeral || inversoesResult.totalItens || 0;
+    }
+
+    if (!pronafLineId && inversoesResult.formatDetected?.includes("PRONAF-A")) {
+      pronafLineId = "pronaf_a_368";
+      linhaCredito = "Pronaf Grupo A (Res. 368)";
+    }
+
+    return {
+      success: inversoesResult.success,
+      producerName: producerName.toUpperCase() || undefined,
+      producerCpf: producerCpf || undefined,
+      producerPhone: producerPhone || undefined,
+      municipio: municipio.toUpperCase() || undefined,
+      localizacao: localizacao.toUpperCase() || undefined,
+      dapCaf: dapCaf || undefined,
+      linhaCredito: linhaCredito || undefined,
+      pronafLineId: pronafLineId || undefined,
+      atividade: atividade || undefined,
+      valorSolicitado: valorSolicitado > 0 ? valorSolicitado : undefined,
+      items: inversoesResult.items,
+      custoAssessoria: inversoesResult.custoAssessoria,
+      totalItens: inversoesResult.totalItens,
+      totalGeral: inversoesResult.totalGeral,
+      formatDetected: inversoesResult.formatDetected,
+      error: inversoesResult.error,
+    };
+  } catch (err: any) {
+    return {
+      success: inversoesResult.success,
+      items: inversoesResult.items,
+      custoAssessoria: inversoesResult.custoAssessoria,
+      totalItens: inversoesResult.totalItens,
+      totalGeral: inversoesResult.totalGeral,
+      formatDetected: inversoesResult.formatDetected,
+      error: inversoesResult.error,
+    };
+  }
 }

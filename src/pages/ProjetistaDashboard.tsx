@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -69,10 +69,15 @@ import {
   MessageSquare,
   ArrowRight,
   Check,
+  FileSpreadsheet,
+  Lock,
+  Download,
+  CheckCheck,
 } from "lucide-react";
 import { useInversoesReferencia } from "@/hooks/useInversoesReferencia";
 import { InversaoCombobox } from "@/components/inversoes/InversaoCombobox";
 import { InversaoReferencia } from "@/types/inversoes";
+import type { ExcelProposalParsed } from "@/utils/excelInversoesReader";
 
 // ── Linhas PRONAF Oficiais com Tetos Normativos ─────────────────────────────
 export const PRONAF_LINES = [
@@ -196,7 +201,7 @@ export default function ProjetistaDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Modais
+  // Modais de Propostas
   const [selectedProposal, setSelectedProposal] = useState<ProposalItem | null>(null);
   const [regularizeProposal, setRegularizeProposal] = useState<ProposalItem | null>(null);
   const [regularizeText, setRegularizeText] = useState("");
@@ -205,6 +210,15 @@ export default function ProjetistaDashboard() {
 
   // Modal de sucesso de nova proposta
   const [successProtocol, setSuccessProtocol] = useState<string | null>(null);
+
+  // ── Importação Inteligente de Planilha Excel ────────────────────────────────
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPassword, setImportPassword] = useState("senhasBNxI");
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [parsedProposalData, setParsedProposalData] = useState<ExcelProposalParsed | null>(null);
+  const [hidePromptBanner, setHidePromptBanner] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Formulário de Envio de Nova Proposta ────────────────────────────────────
   const [newPropProducerName, setNewPropProducerName] = useState("");
@@ -336,7 +350,6 @@ export default function ProjetistaDashboard() {
       if (!stockErr && stockData) {
         setProposals(stockData);
       } else {
-        // Fallback: se a query específica falhar, tenta buscar as permitidas por RLS
         const { data: rlsData } = await supabase
           .from("stock_proposals")
           .select("*")
@@ -437,11 +450,131 @@ export default function ProjetistaDashboard() {
     );
   };
 
+  // ── Processar Leitura da Planilha Excel ────────────────────────────────────
+  const handleProcessSpreadsheet = async () => {
+    if (!importFile) {
+      toast({
+        title: "Selecione um arquivo",
+        description: "Escolha uma planilha Excel (.xlsx, .xlsm, .xls) ou CSV.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessingFile(true);
+    try {
+      const { parseExcelProposalFull } = await import("@/utils/excelInversoesReader");
+      const result = await parseExcelProposalFull(importFile, {
+        customPassword: importPassword.trim() || undefined,
+        findReferencia: (nome: string) => {
+          if (!catalogoInversoes) return null;
+          const q = nome.trim().toLowerCase();
+          return (
+            catalogoInversoes.find(
+              (c) =>
+                c.nome_completo.toLowerCase() === q ||
+                c.item.toLowerCase() === q ||
+                q.includes(c.item.toLowerCase())
+            ) || null
+          );
+        },
+        uf: projetistaInfo?.uf || undefined,
+      });
+
+      if (!result.success && (!result.items || result.items.length === 0) && !result.producerName) {
+        toast({
+          title: "Erro ao ler planilha",
+          description: result.error || "Não foi possível extrair dados válidos da planilha enviada.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setParsedProposalData(result);
+      toast({
+        title: "Planilha analisada com sucesso! 📊",
+        description: `Dados identificados (${result.items.length} itens orçados). Revise o resumo abaixo e clique em 'Confirmar e Preencher'.`,
+      });
+    } catch (err: any) {
+      console.error("Erro ao processar planilha:", err);
+      toast({
+        title: "Erro no processamento",
+        description: err.message || "Falha ao processar o arquivo Excel.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingFile(false);
+    }
+  };
+
+  // ── Aplicar Dados Extraídos ao Formulário ──────────────────────────────────
+  const handleApplyImportedData = () => {
+    if (!parsedProposalData) return;
+
+    if (parsedProposalData.producerName) {
+      setNewPropProducerName(parsedProposalData.producerName);
+    }
+    if (parsedProposalData.producerCpf) {
+      setNewPropProducerCpf(formatCPF(parsedProposalData.producerCpf));
+    }
+    if (parsedProposalData.producerPhone) {
+      setNewPropProducerPhone(formatPhone(parsedProposalData.producerPhone));
+    }
+    if (parsedProposalData.municipio) {
+      setNewPropMunicipio(parsedProposalData.municipio);
+    }
+    if (parsedProposalData.localizacao) {
+      setNewPropLocalizacao(parsedProposalData.localizacao);
+    }
+    if (parsedProposalData.dapCaf) {
+      setNewPropDapCaf(parsedProposalData.dapCaf);
+    }
+    if (parsedProposalData.pronafLineId) {
+      setNewPropLinha(parsedProposalData.pronafLineId);
+    }
+    if (parsedProposalData.atividade) {
+      setNewPropAtividade(parsedProposalData.atividade);
+    }
+    if (parsedProposalData.valorSolicitado && parsedProposalData.valorSolicitado > 0) {
+      setNewPropValorSolicitado(parsedProposalData.valorSolicitado);
+    } else if (parsedProposalData.totalGeral > 0) {
+      setNewPropValorSolicitado(parsedProposalData.totalGeral);
+    }
+
+    // Carregar itens de inversão na grade
+    if (parsedProposalData.items && parsedProposalData.items.length > 0) {
+      const convertedItems: InversaoFormItem[] = parsedProposalData.items.map((it, idx) => ({
+        id: `imp-${Date.now()}-${idx}`,
+        item: it.nome,
+        unidade: it.unid || "UNID",
+        quantidade: it.quant,
+        valorUnitario: it.valor_unitario,
+        valorTotal: it.valor,
+        tetoUnitario: it.teto_maximo || undefined,
+        excesso: !!(it.teto_maximo && it.valor_unitario > it.teto_maximo),
+      }));
+      setNewPropInversoes(convertedItems);
+    }
+
+    // Anexa o próprio arquivo Excel como o Projeto Técnico
+    if (importFile) {
+      setDocProjetoTecnico(importFile);
+    }
+
+    setImportModalOpen(false);
+    setParsedProposalData(null);
+    setHidePromptBanner(true);
+
+    toast({
+      title: "Formulário Preenchido! 🎉",
+      description: "Os dados do produtor, valores e inversões foram aplicados ao formulário com sucesso.",
+    });
+  };
+
   // Submissão de Nova Proposta
   const handleSubmitNewProposal = async () => {
     if (!user) return;
 
-    // Validações básicas
     if (!newPropProducerName.trim()) {
       toast({
         title: "Nome do Produtor Obrigatório",
@@ -508,7 +641,6 @@ export default function ProjetistaDashboard() {
       const proposalNumber = `PRONAF-${new Date().getFullYear()}-${timestamp.toString().slice(-6)}`;
       const selectedAgency = agencies.find((a) => a.id === newPropAgenciaId);
 
-      // Upload de Documentos se houver
       const uploadedDocs: { tipo: string; nome: string; url: string }[] = [];
       const filesMap: Record<string, File | null> = {
         projeto_tecnico: docProjetoTecnico,
@@ -542,7 +674,6 @@ export default function ProjetistaDashboard() {
         }
       }
 
-      // Preparar payload de inversões
       const inversoesPayload = newPropInversoes.map((it) => ({
         item: it.item,
         descricao: it.item,
@@ -553,7 +684,6 @@ export default function ProjetistaDashboard() {
         teto_maximo: it.tetoUnitario || null,
       }));
 
-      // Montar notas com links
       let notesCombined = `[PROJETO ENVIADO PELO PROJETISTA]\nAtividade: ${
         newPropAtividade || "Não informada"
       }\nParecer Técnico: ${newPropParecer || "Sem parecer complementar."}`;
@@ -567,7 +697,6 @@ export default function ProjetistaDashboard() {
           uploadedDocs.map((d) => `• ${d.tipo.toUpperCase()}: ${d.nome} (${d.url})`).join("\n");
       }
 
-      // Inserir em stock_proposals
       const { data: insertedProposal, error: insertErr } = await supabase
         .from("stock_proposals")
         .insert([
@@ -621,8 +750,8 @@ export default function ProjetistaDashboard() {
       setDocOrcamentos(null);
       setDocRgCpf(null);
       setDocComprovanteImovel(null);
+      setHidePromptBanner(false);
 
-      // Recarregar lista de propostas
       await loadData();
     } catch (err: any) {
       console.error("Erro ao enviar proposta:", err);
@@ -884,7 +1013,6 @@ export default function ProjetistaDashboard() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Resumo rápido do volume */}
             <div className="hidden lg:flex items-center gap-2 text-xs font-semibold text-muted-foreground bg-card/60 px-3 py-1.5 rounded-xl border border-border/40">
               <span>Volume Total Gerido:</span>
               <span className="font-mono font-black text-teal-700 dark:text-teal-300">
@@ -897,7 +1025,6 @@ export default function ProjetistaDashboard() {
           {/* ABA 1: CENTRAL DE ACOMPANHAMENTO DE PROPOSTAS                     */}
           {/* ═════════════════════════════════════════════════════════════════ */}
           <TabsContent value="acompanhamento" className="space-y-6 mt-0">
-            {/* Banner de Pendências (se houver) */}
             {stats.comPendencia > 0 && (
               <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-rose-500/10 border border-amber-500/40 rounded-3xl p-5 shadow-sm space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1259,7 +1386,55 @@ export default function ProjetistaDashboard() {
           {/* ABA 2: CADASTRO E ENVIO DE NOVA PROPOSTA DE CRÉDITO              */}
           {/* ═════════════════════════════════════════════════════════════════ */}
           <TabsContent value="novo-envio" className="space-y-6 mt-0">
-            <div className="bg-gradient-to-r from-teal-600 to-emerald-700 rounded-3xl p-6 text-white shadow-lg space-y-2">
+            {/* ── CARD INICIAL: Pergunta se deseja importar planilha ─── */}
+            {!hidePromptBanner && (
+              <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 rounded-3xl p-6 text-white shadow-xl space-y-4 border border-emerald-400/30 animate-fade-in">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className="h-14 w-14 rounded-2xl bg-white/20 text-white flex items-center justify-center shrink-0 shadow-inner">
+                      <FileSpreadsheet className="h-7 w-7 text-white" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base md:text-lg font-heading font-black tracking-tight">
+                          Deseja importar a planilha do projeto?
+                        </h3>
+                        <Badge className="bg-emerald-400/30 text-white border-white/30 text-[10px] font-bold">
+                          Preenchimento Automático
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-white/90 leading-relaxed max-w-2xl">
+                        Importe a planilha oficial do <strong>PRONAF / BNB (SEAP)</strong> ou orçamentária (com suporte nativo à senha <code>senhasBNxI</code>) para preencher instantaneamente os dados do produtor, enquadramento da linha, valor a financiar e todos os itens de investimento orçados.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-center">
+                    <Button
+                      onClick={() => {
+                        setImportModalOpen(true);
+                        setParsedProposalData(null);
+                      }}
+                      className="rounded-2xl bg-white hover:bg-white/90 text-teal-800 font-extrabold text-xs px-5 h-11 shadow-lg shadow-black/15 gap-2"
+                    >
+                      <UploadCloud className="h-4 w-4 text-teal-700" />
+                      <span>Sim, Importar Planilha</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      onClick={() => setHidePromptBanner(true)}
+                      className="rounded-2xl text-white/90 hover:text-white hover:bg-white/10 text-xs h-11"
+                    >
+                      Preencher Manualmente
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Banner Informativo com Atalho Persistente */}
+            <div className="bg-gradient-to-r from-teal-700 via-teal-800 to-emerald-800 rounded-3xl p-6 text-white shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
                   <Send className="h-5 w-5 text-white" />
@@ -1273,6 +1448,17 @@ export default function ProjetistaDashboard() {
                   </p>
                 </div>
               </div>
+
+              <Button
+                onClick={() => {
+                  setImportModalOpen(true);
+                  setParsedProposalData(null);
+                }}
+                className="rounded-2xl bg-white text-teal-900 hover:bg-white/90 font-bold text-xs gap-2 shrink-0 shadow-md"
+              >
+                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                <span>Importar Planilha do Projeto</span>
+              </Button>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1524,7 +1710,6 @@ export default function ProjetistaDashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="p-5 space-y-4">
-                    {/* Seletor com Combobox */}
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold">
                         Selecionar Item da Tabela Oficial BNB:
@@ -1536,13 +1721,12 @@ export default function ProjetistaDashboard() {
                       />
                     </div>
 
-                    {/* Lista de Itens Adicionados */}
                     {newPropInversoes.length === 0 ? (
                       <div className="p-6 text-center border-2 border-dashed border-border/60 rounded-2xl text-muted-foreground text-xs space-y-2">
                         <Calculator className="h-8 w-8 mx-auto opacity-30" />
                         <p>Nenhum item adicionado ao plano de investimento.</p>
                         <p className="text-[11px]">
-                          Use o campo de busca acima para selecionar itens da tabela de referência ou adicione manualmente.
+                          Use o campo de busca acima ou importe a planilha do projeto para carregar todos os itens automaticamente.
                         </p>
                       </div>
                     ) : (
@@ -1618,7 +1802,6 @@ export default function ProjetistaDashboard() {
                               </div>
                             </div>
 
-                            {/* Alerta de excesso no item */}
                             {item.excesso && item.tetoUnitario && (
                               <div className="flex items-center justify-between text-[11px] text-rose-600 font-semibold bg-rose-50 dark:bg-rose-950/40 p-2 rounded-xl border border-rose-200 dark:border-rose-800">
                                 <span>
@@ -1639,7 +1822,6 @@ export default function ProjetistaDashboard() {
                       </div>
                     )}
 
-                    {/* Resumo do Orçamento e Batimento */}
                     {newPropInversoes.length > 0 && (
                       <div className="p-4 rounded-2xl bg-card border border-border/70 space-y-2">
                         <div className="flex items-center justify-between text-xs">
@@ -1706,7 +1888,7 @@ export default function ProjetistaDashboard() {
                           id="doc-proj"
                           className="hidden"
                           onChange={(e) => setDocProjetoTecnico(e.target.files?.[0] || null)}
-                          accept=".pdf,.xlsx,.xls"
+                          accept=".pdf,.xlsx,.xls,.xlsm"
                         />
                         <label
                           htmlFor="doc-proj"
@@ -1912,7 +2094,6 @@ export default function ProjetistaDashboard() {
                       </div>
                     </div>
 
-                    {/* Alertas */}
                     {isValorAcimaDoTeto && (
                       <div className="p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-bold flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -1949,7 +2130,6 @@ export default function ProjetistaDashboard() {
           {/* ABA 3: CATÁLOGO DE PREÇOS E TETOS BNB / PRONAF                   */}
           {/* ═════════════════════════════════════════════════════════════════ */}
           <TabsContent value="tabela-precos" className="space-y-6 mt-0">
-            {/* Cards dos Tetos das Linhas PRONAF */}
             <div>
               <div className="mb-3">
                 <h3 className="font-heading font-black text-base text-foreground flex items-center gap-2">
@@ -1979,7 +2159,6 @@ export default function ProjetistaDashboard() {
               </div>
             </div>
 
-            {/* Tabela de Preços Referenciais por Item */}
             <Card className="rounded-3xl border border-border/60 shadow-md bg-card overflow-hidden">
               <CardHeader className="p-5 border-b border-border/40 bg-muted/20">
                 <CardTitle className="text-base font-extrabold flex items-center gap-2">
@@ -2042,6 +2221,202 @@ export default function ProjetistaDashboard() {
         </Tabs>
       </main>
 
+      {/* ── MODAL: Importar Planilha do Projeto ───────────────────── */}
+      <Dialog open={importModalOpen} onOpenChange={setImportModalOpen}>
+        <DialogContent className="max-w-xl rounded-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-heading font-black text-lg flex items-center gap-2 text-foreground">
+              <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
+              Importar Planilha do Projeto (Excel / CSV)
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Carregue a planilha oficial do PRONAF/BNB para extrair automaticamente os dados do produtor e os itens orçados.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            {/* Seletor de Arquivo com Drag & Drop */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Arquivo Excel ou CSV da Operação:</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".xlsx,.xlsm,.xls,.csv,.pronaf_a2"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+                  setImportFile(f);
+                  setParsedProposalData(null);
+                }}
+              />
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className={`p-6 border-2 border-dashed rounded-2xl text-center cursor-pointer transition-colors ${
+                  importFile
+                    ? "border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20"
+                    : "border-border/80 hover:bg-muted/40"
+                }`}
+              >
+                {importFile ? (
+                  <div className="space-y-2">
+                    <FileSpreadsheet className="h-10 w-10 text-emerald-600 mx-auto" />
+                    <p className="font-extrabold text-foreground text-sm">{importFile.name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {(importFile.size / 1024).toFixed(1)} KB • Clique para escolher outro arquivo
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 text-muted-foreground">
+                    <UploadCloud className="h-10 w-10 mx-auto text-teal-600 opacity-60" />
+                    <p className="font-bold text-foreground text-xs">
+                      Clique para selecionar ou arraste o arquivo aqui
+                    </p>
+                    <p className="text-[11px]">
+                      Formatos aceitos: <strong>.xlsx, .xlsm, .xls, .csv</strong>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Campo de Senha (pré-preenchido com senhasBNxI) */}
+            <div className="space-y-1.5 p-3.5 bg-muted/30 rounded-2xl border border-border/50">
+              <div className="flex items-center justify-between">
+                <Label className="text-[11px] font-bold flex items-center gap-1.5">
+                  <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                  Senha de Descriptografia da Planilha:
+                </Label>
+                <Badge variant="outline" className="text-[10px] font-mono">
+                  Padrão BNB: senhasBNxI
+                </Badge>
+              </div>
+              <Input
+                type="text"
+                value={importPassword}
+                onChange={(e) => setImportPassword(e.target.value)}
+                placeholder="senhasBNxI"
+                className="h-9 rounded-xl text-xs font-mono"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Planilhas geradas pelo sistema SEAP/BNB utilizam por padrão a senha <code>senhasBNxI</code>.
+              </p>
+            </div>
+
+            {/* Botão de Processar */}
+            {!parsedProposalData && (
+              <Button
+                onClick={handleProcessSpreadsheet}
+                disabled={!importFile || isProcessingFile}
+                className="w-full rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs h-10 gap-2"
+              >
+                {isProcessingFile ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Lendo e Descriptografando Planilha...</span>
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className="h-4 w-4" />
+                    <span>Analisar Planilha e Extrair Dados</span>
+                  </>
+                )}
+              </Button>
+            )}
+
+            {/* Resultado da Extração */}
+            {parsedProposalData && (
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-3 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-extrabold text-xs">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <span>Planilha Processada com Sucesso!</span>
+                  </div>
+                  {parsedProposalData.formatDetected && (
+                    <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/40 text-emerald-800 dark:text-emerald-300">
+                      {parsedProposalData.formatDetected}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Produtor Encontrado:</span>
+                    <p className="font-extrabold text-foreground truncate">
+                      {parsedProposalData.producerName || "Não identificado"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">CPF:</span>
+                    <p className="font-mono font-bold text-foreground">
+                      {parsedProposalData.producerCpf ? formatCPF(parsedProposalData.producerCpf) : "Não identificado"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Linha de Crédito:</span>
+                    <p className="font-semibold text-teal-700 dark:text-teal-300 truncate">
+                      {parsedProposalData.linhaCredito || "Custeio Agrícola"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px]">Valor da Operação:</span>
+                    <p className="font-black text-teal-700 dark:text-teal-300 font-mono">
+                      {formatCurrency(parsedProposalData.valorSolicitado || parsedProposalData.totalGeral || 0)}
+                    </p>
+                  </div>
+                </div>
+
+                {parsedProposalData.items && parsedProposalData.items.length > 0 && (
+                  <div className="pt-2 border-t border-emerald-500/20 space-y-1">
+                    <span className="text-[10px] font-bold text-emerald-900 dark:text-emerald-200 block">
+                      Itens de Inversão Identificados ({parsedProposalData.items.length} itens):
+                    </span>
+                    <div className="max-h-28 overflow-y-auto space-y-1 pr-1">
+                      {parsedProposalData.items.slice(0, 8).map((it, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between text-[11px] p-1.5 rounded-lg bg-card/60"
+                        >
+                          <span className="truncate max-w-[240px] font-medium">{it.nome}</span>
+                          <span className="font-mono font-bold shrink-0">{formatCurrency(it.valor)}</span>
+                        </div>
+                      ))}
+                      {parsedProposalData.items.length > 8 && (
+                        <p className="text-[10px] text-muted-foreground text-center">
+                          + {parsedProposalData.items.length - 8} outros itens orçados
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/40">
+            <Button
+              variant="ghost"
+              className="rounded-xl text-xs"
+              onClick={() => {
+                setImportModalOpen(false);
+                setParsedProposalData(null);
+              }}
+            >
+              Cancelar
+            </Button>
+
+            {parsedProposalData && (
+              <Button
+                onClick={handleApplyImportedData}
+                className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-extrabold text-xs gap-2"
+              >
+                <CheckCheck className="h-4 w-4" />
+                <span>Confirmar & Preencher Formulário</span>
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Modal Detalhes da Proposta ────────────────────────── */}
       <Dialog open={!!selectedProposal} onOpenChange={(open) => !open && setSelectedProposal(null)}>
         <DialogContent className="max-w-xl rounded-3xl max-h-[90vh] overflow-y-auto">
@@ -2057,7 +2432,6 @@ export default function ProjetistaDashboard() {
 
           {selectedProposal && (
             <div className="space-y-4 py-2 text-xs">
-              {/* Card Produtor */}
               <div className="bg-muted/40 p-4 rounded-2xl border border-border/60 space-y-2">
                 <span className="font-bold uppercase tracking-wider text-muted-foreground text-[10px]">
                   Dados do Produtor Rural
@@ -2090,7 +2464,6 @@ export default function ProjetistaDashboard() {
                 </div>
               </div>
 
-              {/* Card Financiamento */}
               <div className="bg-teal-500/5 p-4 rounded-2xl border border-teal-500/20 space-y-2">
                 <span className="font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 text-[10px]">
                   Dados Financeiros & Bancários
@@ -2123,7 +2496,6 @@ export default function ProjetistaDashboard() {
                 </div>
               </div>
 
-              {/* Pendências se houver */}
               {selectedProposal.pendencias && (
                 <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/30 space-y-1">
                   <div className="flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300">
@@ -2136,7 +2508,6 @@ export default function ProjetistaDashboard() {
                 </div>
               )}
 
-              {/* Inversões Cadastradas */}
               {selectedProposal.inversoes && selectedProposal.inversoes.length > 0 && (
                 <div className="space-y-2">
                   <span className="font-bold uppercase tracking-wider text-muted-foreground text-[10px]">
@@ -2160,7 +2531,6 @@ export default function ProjetistaDashboard() {
                 </div>
               )}
 
-              {/* Observações */}
               {selectedProposal.notes && (
                 <div className="bg-muted/30 p-3 rounded-xl border border-border/40 text-muted-foreground whitespace-pre-wrap leading-relaxed">
                   <span className="font-bold text-foreground block mb-0.5">Observações & Anexos:</span>
