@@ -204,7 +204,7 @@ interface InversaoFormItem {
 export default function ProjetistaDashboard() {
   const { user, signOut, displayName } = useAuth();
   const { toast } = useToast();
-  const { inversoes: catalogoInversoes, loading: loadingCatalogo } = useInversoesReferencia();
+  const { inversoes: catalogoInversoes, loading: loadingCatalogo, findReferencia: hookFindReferencia } = useInversoesReferencia();
 
   // Estados principais
   const [activeTab, setActiveTab] = useState<string>("acompanhamento");
@@ -335,6 +335,15 @@ export default function ProjetistaDashboard() {
   const [newPropCronograma, setNewPropCronograma] = useState<any[]>([]);
   const [newPropOutrasAtividades, setNewPropOutrasAtividades] = useState<any[]>([]);
   const [newPropMembrosFamiliares, setNewPropMembrosFamiliares] = useState<any[]>([]);
+  const [newPropAtividadeAgricola, setNewPropAtividadeAgricola] = useState<any[]>([]);
+  const [newPropAtividadePecuaria, setNewPropAtividadePecuaria] = useState<any[]>([]);
+  const [newPropNumeroEndereco, setNewPropNumeroEndereco] = useState("");
+  const [newPropRealizaInversao, setNewPropRealizaInversao] = useState("");
+  const [newPropCompoeGarantia, setNewPropCompoeGarantia] = useState("");
+  const [newPropValorImovel, setNewPropValorImovel] = useState(0);
+  const [newPropMaquinas, setNewPropMaquinas] = useState<any[]>([]);
+  const [newPropImplementos, setNewPropImplementos] = useState<any[]>([]);
+  const [newPropMoveis, setNewPropMoveis] = useState<any[]>([]);
 
   // Arquivos anexos da nova proposta
   const [docProjetoTecnico, setDocProjetoTecnico] = useState<File | null>(null);
@@ -599,18 +608,7 @@ export default function ProjetistaDashboard() {
       );
       const result = await parseExcelProposalFull(importFile, {
         customPassword: importPassword.trim() || undefined,
-        findReferencia: (nome: string) => {
-          if (!catalogoInversoes) return null;
-          const q = nome.trim().toLowerCase();
-          return (
-            catalogoInversoes.find(
-              (c) =>
-                c.nome_completo.toLowerCase() === q ||
-                c.item.toLowerCase() === q ||
-                q.includes(c.item.toLowerCase())
-            ) || null
-          );
-        },
+        findReferencia: hookFindReferencia,
         uf: projetistaInfo?.uf || undefined,
       });
 
@@ -781,6 +779,15 @@ export default function ProjetistaDashboard() {
         if (dp.financiamento.jurosAnual) setNewPropFinanciamentoJuros(dp.financiamento.jurosAnual);
         if (dp.financiamento.periodicidade) setNewPropFinanciamentoPeriodicidade(dp.financiamento.periodicidade);
       }
+      if (dp.atividadeAgricola) setNewPropAtividadeAgricola(dp.atividadeAgricola);
+      if (dp.atividadePecuaria) setNewPropAtividadePecuaria(dp.atividadePecuaria);
+      if (dp.numeroEndereco) setNewPropNumeroEndereco(dp.numeroEndereco);
+      if (dp.realizaInversao) setNewPropRealizaInversao(dp.realizaInversao);
+      if (dp.compoeGarantia) setNewPropCompoeGarantia(dp.compoeGarantia);
+      if (dp.valorImovel && dp.valorImovel > 0) setNewPropValorImovel(dp.valorImovel);
+      if (dp.maquinas) setNewPropMaquinas(dp.maquinas);
+      if (dp.implementos) setNewPropImplementos(dp.implementos);
+      if (dp.moveis) setNewPropMoveis(dp.moveis);
     }
 
     // Preenche Suporte Forrageiro & Dimensionamento Pecuário
@@ -1028,6 +1035,15 @@ export default function ProjetistaDashboard() {
         cronograma: newPropCronograma.length > 0 ? newPropCronograma : null,
         outras_atividades: newPropOutrasAtividades.length > 0 ? newPropOutrasAtividades : null,
         membros_familiares: newPropMembrosFamiliares.length > 0 ? newPropMembrosFamiliares : null,
+        atividade_agricola: newPropAtividadeAgricola.length > 0 ? newPropAtividadeAgricola : null,
+        atividade_pecuaria: newPropAtividadePecuaria.length > 0 ? newPropAtividadePecuaria : null,
+        numero_endereco: newPropNumeroEndereco || null,
+        realiza_inversao: newPropRealizaInversao || null,
+        compoe_garantia: newPropCompoeGarantia || null,
+        valor_imovel: newPropValorImovel > 0 ? newPropValorImovel : null,
+        maquinas: newPropMaquinas.length > 0 ? newPropMaquinas : null,
+        implementos: newPropImplementos.length > 0 ? newPropImplementos : null,
+        moveis: newPropMoveis.length > 0 ? newPropMoveis : null,
       };
 
       const suporteForrageiroPayload =
@@ -2051,6 +2067,16 @@ export default function ProjetistaDashboard() {
                       </div>
 
                       <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Número (Nº)</Label>
+                        <Input
+                          placeholder="S/N ou número"
+                          value={newPropNumeroEndereco}
+                          onChange={(e) => setNewPropNumeroEndereco(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
                         <Label className="text-xs font-bold">Telefone / WhatsApp</Label>
                         <Input
                           placeholder="(98) 99999-9999"
@@ -2262,6 +2288,35 @@ export default function ProjetistaDashboard() {
                           value={newPropCar}
                           onChange={(e) => setNewPropCar(e.target.value.toUpperCase())}
                           className="rounded-xl h-10 text-xs font-mono uppercase"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Realiza Inversão / Compõe Garantia</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Inversão: Sim/Não"
+                            value={newPropRealizaInversao}
+                            onChange={(e) => setNewPropRealizaInversao(e.target.value)}
+                            className="rounded-xl h-10 text-xs"
+                          />
+                          <Input
+                            placeholder="Garantia: Sim/Não"
+                            value={newPropCompoeGarantia}
+                            onChange={(e) => setNewPropCompoeGarantia(e.target.value)}
+                            className="rounded-xl h-10 text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Valor Avaliado da Terra (R$)</Label>
+                        <Input
+                          type="number"
+                          placeholder="Ex: 1000"
+                          value={newPropValorImovel || ""}
+                          onChange={(e) => setNewPropValorImovel(Number(e.target.value) || 0)}
+                          className="rounded-xl h-10 text-xs font-mono"
                         />
                       </div>
 
@@ -3694,6 +3749,59 @@ export default function ProjetistaDashboard() {
                   </div>
                 )}
 
+                {/* Bloco Atividade Agrícola Detectado */}
+                {parsedProposalData.dadosProponente?.atividadeAgricola && parsedProposalData.dadosProponente.atividadeAgricola.length > 0 && (
+                  <div className="pt-2 border-t border-emerald-500/20 p-2.5 rounded-xl bg-teal-500/10 space-y-1.5">
+                    <span className="text-[10px] font-extrabold text-teal-900 dark:text-teal-200 flex items-center gap-1">
+                      <Sprout className="h-3.5 w-3.5 text-teal-600" />
+                      Atividade Agrícola ({parsedProposalData.dadosProponente.atividadeAgricola.length} Registros):
+                    </span>
+                    <div className="space-y-1 text-[11px]">
+                      {parsedProposalData.dadosProponente.atividadeAgricola.map((ag, idx) => (
+                        <div key={idx} className="p-1.5 rounded-lg bg-card/60 flex justify-between items-center text-[10px]">
+                          <span className="font-medium truncate max-w-[180px]">{ag.descricao}</span>
+                          <span className="font-mono text-muted-foreground">
+                            {ag.dados[1] ? `Área: ${ag.dados[1]} ha` : ""} {ag.dados[2] ? `• UA: ${ag.dados[2]}` : ""}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Bloco Atividade Pecuária Detectado */}
+                {parsedProposalData.dadosProponente?.atividadePecuaria && parsedProposalData.dadosProponente.atividadePecuaria.length > 0 && (
+                  <div className="pt-2 border-t border-emerald-500/20 p-2.5 rounded-xl bg-purple-500/10 space-y-1.5">
+                    <span className="text-[10px] font-extrabold text-purple-900 dark:text-purple-200 flex items-center gap-1">
+                      <Activity className="h-3.5 w-3.5 text-purple-600" />
+                      Atividade Pecuária / Projeções ({parsedProposalData.dadosProponente.atividadePecuaria.length} Linhas de Indicadores):
+                    </span>
+                    <p className="text-[10px] text-muted-foreground">
+                      Parâmetros zootécnicos, descartes, evolução e custos pecuários extraídos com sucesso.
+                    </p>
+                  </div>
+                )}
+
+                {/* Bloco Outras Atividades Detectado */}
+                {parsedProposalData.dadosProponente?.outrasAtividades && parsedProposalData.dadosProponente.outrasAtividades.length > 0 && (
+                  <div className="pt-2 border-t border-emerald-500/20 p-2.5 rounded-xl bg-amber-500/10 space-y-1.5">
+                    <span className="text-[10px] font-extrabold text-amber-900 dark:text-amber-200 flex items-center gap-1">
+                      <Activity className="h-3.5 w-3.5 text-amber-600" />
+                      Outras Atividades & Receitas:
+                    </span>
+                    <div className="space-y-1 text-[11px]">
+                      {parsedProposalData.dadosProponente.outrasAtividades.map((oa, idx) => (
+                        <div key={idx} className="p-1 rounded-lg bg-card/60 flex justify-between items-center text-[10px]">
+                          <span className="font-medium truncate max-w-[150px]">{oa.atividade} ({oa.setor})</span>
+                          <span className="font-mono text-emerald-700 dark:text-emerald-300 font-bold">
+                            {oa.receitaAnual ? formatCurrency(oa.receitaAnual) : "—"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Bloco de Suporte Forrageiro Detectado */}
                 {parsedProposalData.suporteForrageiro &&
                   (parsedProposalData.suporteForrageiro.temPecuaria ||
@@ -3945,6 +4053,7 @@ export default function ProjetistaDashboard() {
                     <span className="text-muted-foreground block text-[10px]">Endereço / Localidade:</span>
                     <p className="font-semibold text-foreground">
                       {selectedProposal.dados_proponente?.endereco || selectedProposal.producer_address || "—"}
+                      {(selectedProposal.dados_proponente?.numero_endereco || selectedProposal.dados_proponente?.numeroEndereco) ? `, Nº ${selectedProposal.dados_proponente?.numero_endereco || selectedProposal.dados_proponente?.numeroEndereco}` : ""}
                       {selectedProposal.dados_proponente?.complemento ? ` (${selectedProposal.dados_proponente.complemento})` : ""}
                       {selectedProposal.dados_proponente?.bairro ? ` - ${selectedProposal.dados_proponente.bairro}` : ""}
                     </p>
@@ -4102,6 +4211,23 @@ export default function ProjetistaDashboard() {
                   </div>
 
                   <div>
+                    <span className="text-muted-foreground block text-[10px]">Realiza Inversão / Garantia:</span>
+                    <p className="font-semibold text-foreground">
+                      {selectedProposal.dados_proponente?.realiza_inversao || selectedProposal.dados_proponente?.realizaInversao ? `Inversão: ${selectedProposal.dados_proponente?.realiza_inversao || selectedProposal.dados_proponente?.realizaInversao}` : "—"}
+                      {(selectedProposal.dados_proponente?.compoe_garantia || selectedProposal.dados_proponente?.compoeGarantia) ? ` | Garantia: ${selectedProposal.dados_proponente?.compoe_garantia || selectedProposal.dados_proponente?.compoeGarantia}` : ""}
+                    </p>
+                  </div>
+
+                  {(selectedProposal.dados_proponente?.valor_imovel || selectedProposal.dados_proponente?.valorImovel) && (
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Valor Avaliado da Terra Nua:</span>
+                      <p className="font-mono font-bold text-teal-700 dark:text-teal-300">
+                        {formatCurrency(Number(selectedProposal.dados_proponente?.valor_imovel || selectedProposal.dados_proponente?.valorImovel))}
+                      </p>
+                    </div>
+                  )}
+
+                  <div>
                     <span className="text-muted-foreground block text-[10px]">NIRF:</span>
                     <p className="font-mono font-semibold text-foreground">
                       {selectedProposal.dados_proponente?.nirf || "—"}
@@ -4185,6 +4311,43 @@ export default function ProjetistaDashboard() {
                             </span>
                             <span className="font-mono font-bold text-teal-700 dark:text-teal-300">
                               {sm.valor ? `${formatCurrency(Number(sm.valor))}/un` : "—"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Máquinas, Implementos e Móveis (se existirem) */}
+                  {(selectedProposal.dados_proponente?.maquinas?.length > 0 ||
+                    selectedProposal.dados_proponente?.implementos?.length > 0 ||
+                    selectedProposal.dados_proponente?.moveis?.length > 0) && (
+                    <div className="sm:col-span-3 pt-2 border-t border-border/40 space-y-2">
+                      <span className="text-muted-foreground block text-[10px] font-bold uppercase tracking-wider">
+                        Máquinas, Equipamentos & Outros Bens:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {selectedProposal.dados_proponente?.maquinas?.map((mq: any, idx: number) => (
+                          <div key={idx} className="p-2 rounded-xl bg-card border border-border/40 text-[11px] flex justify-between items-center">
+                            <span className="font-medium text-foreground truncate">{mq.descricao}</span>
+                            <span className="font-mono font-bold text-teal-700 dark:text-teal-300">
+                              {mq.valor ? formatCurrency(Number(mq.valor)) : "—"}
+                            </span>
+                          </div>
+                        ))}
+                        {selectedProposal.dados_proponente?.implementos?.map((imp: any, idx: number) => (
+                          <div key={idx} className="p-2 rounded-xl bg-card border border-border/40 text-[11px] flex justify-between items-center">
+                            <span className="font-medium text-foreground truncate">{imp.descricao}</span>
+                            <span className="font-mono font-bold text-teal-700 dark:text-teal-300">
+                              {imp.valor ? formatCurrency(Number(imp.valor)) : "—"}
+                            </span>
+                          </div>
+                        ))}
+                        {selectedProposal.dados_proponente?.moveis?.map((mv: any, idx: number) => (
+                          <div key={idx} className="p-2 rounded-xl bg-card border border-border/40 text-[11px] flex justify-between items-center">
+                            <span className="font-medium text-foreground truncate">{mv.descricao}</span>
+                            <span className="font-mono font-bold text-teal-700 dark:text-teal-300">
+                              {mv.valor ? formatCurrency(Number(mv.valor)) : "—"}
                             </span>
                           </div>
                         ))}
@@ -4391,6 +4554,46 @@ export default function ProjetistaDashboard() {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Atividade Agrícola (Pastagens e Culturas) */}
+              {selectedProposal.dados_proponente?.atividade_agricola && selectedProposal.dados_proponente.atividade_agricola.length > 0 && (
+                <div className="bg-teal-500/10 p-4 rounded-2xl border border-teal-500/25 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold uppercase tracking-wider text-teal-900 dark:text-teal-300 text-[10px] flex items-center gap-1.5">
+                      <Sprout className="h-3.5 w-3.5 text-teal-600" />
+                      Atividade Agrícola & Forrageira ({selectedProposal.dados_proponente.atividade_agricola.length} Registros)
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {selectedProposal.dados_proponente.atividade_agricola.map((ag: any, idx: number) => (
+                      <div key={idx} className="p-2.5 rounded-xl bg-card border border-border/40 text-xs flex justify-between items-center">
+                        <span className="font-bold text-foreground">{ag.descricao}</span>
+                        <span className="font-mono text-muted-foreground text-[11px]">
+                          {ag.dados?.[1] ? `Área Inicial: ${ag.dados[1]} ha` : ""} {ag.dados?.[2] ? `• UA: ${ag.dados[2]}` : ""}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Atividade Pecuária (Projeções e Indicadores) */}
+              {selectedProposal.dados_proponente?.atividade_pecuaria && selectedProposal.dados_proponente.atividade_pecuaria.length > 0 && (
+                <div className="bg-purple-500/10 p-4 rounded-2xl border border-purple-500/25 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold uppercase tracking-wider text-purple-900 dark:text-purple-300 text-[10px] flex items-center gap-1.5">
+                      <Activity className="h-3.5 w-3.5 text-purple-600" />
+                      Atividade Pecuária & Parâmetros Zootécnicos ({selectedProposal.dados_proponente.atividade_pecuaria.length} Linhas de Indicadores)
+                    </span>
+                    <Badge variant="outline" className="text-[9px] font-mono border-purple-500/40 text-purple-800 dark:text-purple-300">
+                      Parâmetros Extraídos
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Dados zootécnicos, taxa de descarte, aquisições e parâmetros de projeção registrados com sucesso na proposta.
+                  </p>
                 </div>
               )}
 

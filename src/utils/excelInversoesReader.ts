@@ -104,6 +104,15 @@ export interface DadosProponenteData {
   cronograma?: Array<{ parcela: string; percentual: number; empreendimento: string; codEmpreendimento: string; finalidade: string; areaHa?: number }>;
   outrasAtividades?: Array<{ atividade: string; setor: string; receitaAnual?: number; custoAnual?: number }>;
   membrosFamiliares?: Array<{ nome: string; cpf?: string }>;
+  atividadeAgricola?: Array<{ descricao: string; headers: string[]; dados: string[] }>;
+  atividadePecuaria?: Array<{ headers: string[]; dados: string[] }>;
+  numeroEndereco?: string;
+  realizaInversao?: string;
+  compoeGarantia?: string;
+  valorImovel?: number;
+  maquinas?: Array<{ descricao: string; idade?: string; valor?: number; estado?: string }>;
+  implementos?: Array<{ descricao: string; idade?: string; valor?: number; estado?: string }>;
+  moveis?: Array<{ descricao: string; idade?: string; valor?: number; estado?: string }>;
 }
 
 export interface PastagemItem {
@@ -1509,6 +1518,7 @@ export function parseHtmlPronafProposal(
   const dddTel = clienteFields["DDD TELEFONE"] || clienteFields["DDD"] || "";
   const numTel = clienteFields["Nº TELEFONE"] || clienteFields["TELEFONE"] || "";
   const telefone = dddTel && numTel ? `(${dddTel}) ${numTel}` : numTel;
+  const numeroEndereco = clienteFields["Nº"] || clienteFields["N."] || clienteFields["NUMERO"] || "";
 
   // 2. Endereço Residencial (Correspondência)
   let enderecoCorrespondencia = "";
@@ -1545,11 +1555,17 @@ export function parseHtmlPronafProposal(
   let nomePropriedade = "";
   let areaTotalHa = 0;
   let comentariosSolosAguada = "";
+  let realizaInversao = "";
+  let compoeGarantia = "";
+  let valorImovel = 0;
   if (subblocks["IMOVEL AVALIADO"]) {
     const iaf = parseFieldsFromHtml(subblocks["IMOVEL AVALIADO"]);
     nomePropriedade = iaf["DENOMINACAO"] || "";
     areaTotalHa = parseHectares(iaf["AREA"]);
     comentariosSolosAguada = iaf["COMENTARIOS"] || "";
+    realizaInversao = iaf["REALIZA INVERSAO"] || "";
+    compoeGarantia = iaf["COMPOE GARANTIA"] || "";
+    valorImovel = parseMoney(iaf["VALOR"]);
   }
 
   // 5. Terras e Coberturas
@@ -1600,6 +1616,60 @@ export function parseHtmlPronafProposal(
         estado: ef["ESTADO"],
         depreciacao: ef["DEPREC."],
       });
+    }
+  }
+
+  // 6b. Máquinas
+  const maquinas: Array<{ descricao: string; idade?: string; valor?: number; estado?: string }> = [];
+  if (subblocks["MAQUINAS"]) {
+    const body = subblocks["MAQUINAS"];
+    if (!body.includes('empty-note')) {
+      const recRegex = /<div class="record-index">([^<]*)<\/div>([\s\S]*?)(?=<div class="record-index"|$)/gi;
+      let rm;
+      while ((rm = recRegex.exec(body)) !== null) {
+        const rf = parseFieldsFromHtml(rm[2]);
+        if (rf["DESCRICAO"]) maquinas.push({ descricao: rf["DESCRICAO"], idade: rf["IDADE"], valor: parseMoney(rf["VALOR"]), estado: rf["ESTADO"] });
+      }
+      if (maquinas.length === 0) {
+        const rf = parseFieldsFromHtml(body);
+        if (rf["DESCRICAO"]) maquinas.push({ descricao: rf["DESCRICAO"], idade: rf["IDADE"], valor: parseMoney(rf["VALOR"]), estado: rf["ESTADO"] });
+      }
+    }
+  }
+
+  // 6c. Implementos
+  const implementos: Array<{ descricao: string; idade?: string; valor?: number; estado?: string }> = [];
+  if (subblocks["IMPLEMENTOS"]) {
+    const body = subblocks["IMPLEMENTOS"];
+    if (!body.includes('empty-note')) {
+      const recRegex = /<div class="record-index">([^<]*)<\/div>([\s\S]*?)(?=<div class="record-index"|$)/gi;
+      let rm;
+      while ((rm = recRegex.exec(body)) !== null) {
+        const rf = parseFieldsFromHtml(rm[2]);
+        if (rf["DESCRICAO"]) implementos.push({ descricao: rf["DESCRICAO"], idade: rf["IDADE"], valor: parseMoney(rf["VALOR"]), estado: rf["ESTADO"] });
+      }
+      if (implementos.length === 0) {
+        const rf = parseFieldsFromHtml(body);
+        if (rf["DESCRICAO"]) implementos.push({ descricao: rf["DESCRICAO"], idade: rf["IDADE"], valor: parseMoney(rf["VALOR"]), estado: rf["ESTADO"] });
+      }
+    }
+  }
+
+  // 6d. Móveis
+  const moveisArr: Array<{ descricao: string; idade?: string; valor?: number; estado?: string }> = [];
+  if (subblocks["MOVEIS"]) {
+    const body = subblocks["MOVEIS"];
+    if (!body.includes('empty-note')) {
+      const recRegex = /<div class="record-index">([^<]*)<\/div>([\s\S]*?)(?=<div class="record-index"|$)/gi;
+      let rm;
+      while ((rm = recRegex.exec(body)) !== null) {
+        const rf = parseFieldsFromHtml(rm[2]);
+        if (rf["DESCRICAO"]) moveisArr.push({ descricao: rf["DESCRICAO"], idade: rf["IDADE"], valor: parseMoney(rf["VALOR"]), estado: rf["ESTADO"] });
+      }
+      if (moveisArr.length === 0) {
+        const rf = parseFieldsFromHtml(body);
+        if (rf["DESCRICAO"]) moveisArr.push({ descricao: rf["DESCRICAO"], idade: rf["IDADE"], valor: parseMoney(rf["VALOR"]), estado: rf["ESTADO"] });
+      }
     }
   }
 
@@ -1790,6 +1860,40 @@ export function parseHtmlPronafProposal(
     }
   }
 
+  // 14. Atividade Agrícola
+  const atividadeAgricola: Array<{ descricao: string; headers: string[]; dados: string[] }> = [];
+  const agriMatch = htmlContent.match(/<div class="section-title"[^>]*>Atividade Agr[ií]cola<\/div>[\s\S]*?<table[^>]*>([\s\S]*?)<\/table>/i);
+  if (agriMatch) {
+    const agriRows = parseTableRowsFromHtml(agriMatch[1]);
+    if (agriRows.length > 1) {
+      const headers = agriRows[0];
+      for (let i = 1; i < agriRows.length; i++) {
+        const row = agriRows[i];
+        const desc = row[0] || "";
+        if (desc) {
+          atividadeAgricola.push({ descricao: desc, headers, dados: row });
+        }
+      }
+    }
+  }
+
+  // 15. Atividade Pecuária
+  const atividadePecuaria: Array<{ headers: string[]; dados: string[] }> = [];
+  const pecMatch = htmlContent.match(/<div class="section-title"[^>]*>Atividade Pecu[aá]ria<\/div>[\s\S]*?<table[^>]*>([\s\S]*?)<\/table>/i);
+  if (pecMatch) {
+    const pecRows = parseTableRowsFromHtml(pecMatch[1]);
+    if (pecRows.length > 1) {
+      const headers = pecRows[0];
+      for (let i = 1; i < pecRows.length; i++) {
+        const row = pecRows[i];
+        const hasData = row.some(c => c.trim() !== "");
+        if (hasData) {
+          atividadePecuaria.push({ headers, dados: row });
+        }
+      }
+    }
+  }
+
   // Enriquecer itens com o catálogo do BNB
   const targetUf = options?.uf || uf || undefined;
   const items = enrichItemsWithCatalog(rawItems, options?.findReferencia, targetUf);
@@ -1911,6 +2015,15 @@ export function parseHtmlPronafProposal(
     cronograma: cronograma.length > 0 ? cronograma : undefined,
     outrasAtividades: outrasAtividades.length > 0 ? outrasAtividades : undefined,
     membrosFamiliares: membrosFamiliares.length > 0 ? membrosFamiliares : undefined,
+    atividadeAgricola: atividadeAgricola.length > 0 ? atividadeAgricola : undefined,
+    atividadePecuaria: atividadePecuaria.length > 0 ? atividadePecuaria : undefined,
+    numeroEndereco: numeroEndereco || undefined,
+    realizaInversao: realizaInversao || undefined,
+    compoeGarantia: compoeGarantia || undefined,
+    valorImovel: valorImovel > 0 ? valorImovel : undefined,
+    maquinas: maquinas.length > 0 ? maquinas : undefined,
+    implementos: implementos.length > 0 ? implementos : undefined,
+    moveis: moveisArr.length > 0 ? moveisArr : undefined,
   };
 
   return {
