@@ -332,6 +332,9 @@ export default function ProjetistaDashboard() {
   const [newPropEmpresaElaboradora, setNewPropEmpresaElaboradora] = useState("");
   const [newPropElaborador, setNewPropElaborador] = useState("");
   const [newPropCpfElaborador, setNewPropCpfElaborador] = useState("");
+  const [newPropCronograma, setNewPropCronograma] = useState<any[]>([]);
+  const [newPropOutrasAtividades, setNewPropOutrasAtividades] = useState<any[]>([]);
+  const [newPropMembrosFamiliares, setNewPropMembrosFamiliares] = useState<any[]>([]);
 
   // Arquivos anexos da nova proposta
   const [docProjetoTecnico, setDocProjetoTecnico] = useState<File | null>(null);
@@ -769,6 +772,9 @@ export default function ProjetistaDashboard() {
       if (dp.elaborador) setNewPropElaborador(dp.elaborador);
       if (dp.cpfElaborador) setNewPropCpfElaborador(formatCPF(dp.cpfElaborador));
       if (dp.georreferenciamento) setNewPropGeorreferenciamento(dp.georreferenciamento);
+      if (dp.cronograma) setNewPropCronograma(dp.cronograma);
+      if (dp.outrasAtividades) setNewPropOutrasAtividades(dp.outrasAtividades);
+      if (dp.membrosFamiliares) setNewPropMembrosFamiliares(dp.membrosFamiliares);
       if (dp.financiamento) {
         if (dp.financiamento.prazoMeses) setNewPropFinanciamentoPrazo(dp.financiamento.prazoMeses);
         if (dp.financiamento.carenciaMeses) setNewPropFinanciamentoCarencia(dp.financiamento.carenciaMeses);
@@ -1019,6 +1025,9 @@ export default function ProjetistaDashboard() {
         empresa_elaboradora: newPropEmpresaElaboradora.trim().toUpperCase() || null,
         elaborador: (newPropElaborador || projetistaInfo?.name || displayName || "").trim().toUpperCase() || null,
         cpf_elaborador: (newPropCpfElaborador || projetistaInfo?.cpf || "").replace(/\D/g, "") || null,
+        cronograma: newPropCronograma.length > 0 ? newPropCronograma : null,
+        outras_atividades: newPropOutrasAtividades.length > 0 ? newPropOutrasAtividades : null,
+        membros_familiares: newPropMembrosFamiliares.length > 0 ? newPropMembrosFamiliares : null,
       };
 
       const suporteForrageiroPayload =
@@ -3656,7 +3665,34 @@ export default function ProjetistaDashboard() {
                       </p>
                     </div>
                   )}
+                  {parsedProposalData.dadosProponente?.membrosFamiliares && parsedProposalData.dadosProponente.membrosFamiliares.length > 0 && (
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Membro Familiar / Avalista:</span>
+                      <p className="font-semibold text-foreground truncate">
+                        {parsedProposalData.dadosProponente.membrosFamiliares[0].nome}
+                        {parsedProposalData.dadosProponente.membrosFamiliares[0].cpf ? ` (${formatCPF(parsedProposalData.dadosProponente.membrosFamiliares[0].cpf)})` : ""}
+                      </p>
+                    </div>
+                  )}
                 </div>
+
+                {/* Bloco Cronograma de Liberação Detectado */}
+                {parsedProposalData.dadosProponente?.cronograma && parsedProposalData.dadosProponente.cronograma.length > 0 && (
+                  <div className="pt-2 border-t border-emerald-500/20 p-2.5 rounded-xl bg-blue-500/10 space-y-1.5">
+                    <span className="text-[10px] font-extrabold text-blue-900 dark:text-blue-200 flex items-center gap-1">
+                      <Layers className="h-3.5 w-3.5 text-blue-600" />
+                      Cronograma de Liberação ({parsedProposalData.dadosProponente.cronograma.length} Parcelas):
+                    </span>
+                    <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                      {parsedProposalData.dadosProponente.cronograma.map((cr, idx) => (
+                        <div key={idx} className="p-1 rounded-lg bg-card/60 flex justify-between items-center text-[10px]">
+                          <span className="font-medium truncate max-w-[140px]">{cr.parcela}: {cr.empreendimento}</span>
+                          <span className="font-mono font-bold text-blue-700 dark:text-blue-300">{cr.percentual}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Bloco de Suporte Forrageiro Detectado */}
                 {parsedProposalData.suporteForrageiro &&
@@ -4326,6 +4362,81 @@ export default function ProjetistaDashboard() {
                       </p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Cronograma de Liberação de Recursos */}
+              {selectedProposal.dados_proponente?.cronograma && selectedProposal.dados_proponente.cronograma.length > 0 && (
+                <div className="bg-blue-500/10 p-4 rounded-2xl border border-blue-500/25 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300 text-[10px] flex items-center gap-1.5">
+                      <Layers className="h-3.5 w-3.5 text-blue-600" />
+                      Cronograma de Liberação de Recursos ({selectedProposal.dados_proponente.cronograma.length} Parcelas)
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedProposal.dados_proponente.cronograma.map((cr: any, idx: number) => (
+                      <div key={idx} className="p-2.5 rounded-xl bg-card border border-border/40 text-[11px] flex justify-between items-center">
+                        <div>
+                          <span className="font-bold text-foreground block">
+                            Parcela {cr.parcela}: {cr.empreendimento}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground block">
+                            {cr.finalidade} {cr.areaHa ? `(${cr.areaHa} ha)` : ""} {cr.codEmpreendimento ? `• Cód: ${cr.codEmpreendimento}` : ""}
+                          </span>
+                        </div>
+                        <Badge variant="outline" className="font-mono font-bold border-blue-500/40 text-blue-700 dark:text-blue-300 shrink-0">
+                          {cr.percentual}%
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Outras Atividades e Receitas/Custos */}
+              {selectedProposal.dados_proponente?.outras_atividades && selectedProposal.dados_proponente.outras_atividades.length > 0 && (
+                <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/25 space-y-2">
+                  <span className="font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300 text-[10px] flex items-center gap-1.5">
+                    <Activity className="h-3.5 w-3.5 text-amber-600" />
+                    Atividades Produtivas & Fluxo de Receitas / Custos
+                  </span>
+                  <div className="space-y-1.5">
+                    {selectedProposal.dados_proponente.outras_atividades.map((oa: any, idx: number) => (
+                      <div key={idx} className="p-2.5 rounded-xl bg-card border border-border/40 text-xs flex justify-between items-center">
+                        <div>
+                          <span className="font-semibold text-foreground block">{oa.atividade}</span>
+                          <span className="text-[10px] text-muted-foreground">{oa.setor}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 block text-[11px]">
+                            Receita: {formatCurrency(Number(oa.receitaAnual) || 0)}
+                          </span>
+                          <span className="font-mono text-muted-foreground block text-[10px]">
+                            Custo: {formatCurrency(Number(oa.custoAnual) || 0)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Membro Familiar / Avalista */}
+              {selectedProposal.dados_proponente?.membros_familiares && selectedProposal.dados_proponente.membros_familiares.length > 0 && (
+                <div className="bg-purple-500/10 p-4 rounded-2xl border border-purple-500/25 space-y-2">
+                  <span className="font-bold uppercase tracking-wider text-purple-900 dark:text-purple-300 text-[10px] flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-purple-600" />
+                    Composição Familiar / Membro Avalista Vinculado
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {selectedProposal.dados_proponente.membros_familiares.map((mf: any, idx: number) => (
+                      <div key={idx} className="p-2.5 rounded-xl bg-card border border-border/40 text-xs flex justify-between items-center">
+                        <span className="font-bold text-foreground">{mf.nome}</span>
+                        <span className="font-mono text-muted-foreground text-[11px]">{mf.cpf ? formatCPF(mf.cpf) : "—"}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

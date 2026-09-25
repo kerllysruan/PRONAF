@@ -101,6 +101,9 @@ export interface DadosProponenteData {
   financiamento?: { prazoMeses?: number; carenciaMeses?: number; jurosAnual?: number; periodicidade?: string };
   georreferenciamento?: Array<{ inversao: string; codEmpreendimento?: string; latitude: string; longitude: string }>;
   empresaElaboradora?: string;
+  cronograma?: Array<{ parcela: string; percentual: number; empreendimento: string; codEmpreendimento: string; finalidade: string; areaHa?: number }>;
+  outrasAtividades?: Array<{ atividade: string; setor: string; receitaAnual?: number; custoAnual?: number }>;
+  membrosFamiliares?: Array<{ nome: string; cpf?: string }>;
 }
 
 export interface PastagemItem {
@@ -1722,6 +1725,71 @@ export function parseHtmlPronafProposal(
     }
   }
 
+  // 12. Cronograma de Liberação
+  const cronograma: Array<{ parcela: string; percentual: number; empreendimento: string; codEmpreendimento: string; finalidade: string; areaHa?: number }> = [];
+  const cronoMatch = htmlContent.match(/<div class="section-title"[^>]*>Cronograma<\/div>[\s\S]*?<table[^>]*>([\s\S]*?)<\/table>/i);
+  if (cronoMatch) {
+    const cronoRows = parseTableRowsFromHtml(cronoMatch[1]);
+    for (let i = 1; i < cronoRows.length; i++) {
+      const row = cronoRows[i];
+      const parcela = row[0] || "";
+      const percentual = parseMoney(row[4]) || 0;
+      const emp = row[8] || "";
+      const codEmp = row[10] || "";
+      const finalidade = row[14] || "";
+      const area = parseHectares(row[15]);
+      if (emp || codEmp || parcela) {
+        cronograma.push({
+          parcela,
+          percentual,
+          empreendimento: emp,
+          codEmpreendimento: codEmp,
+          finalidade,
+          areaHa: area > 0 ? area : undefined,
+        });
+      }
+    }
+  }
+
+  // 13. Outras Atividades (Receitas e Custos)
+  const outrasAtividades: Array<{ atividade: string; setor: string; receitaAnual?: number; custoAnual?: number }> = [];
+  const outrasMatch = htmlContent.match(/<div class="section-title"[^>]*>Outras Atividades<\/div>[\s\S]*?<table[^>]*>([\s\S]*?)<\/table>/i);
+  if (outrasMatch) {
+    const outrasRows = parseTableRowsFromHtml(outrasMatch[1]);
+    for (let i = 1; i < outrasRows.length; i++) {
+      const row = outrasRows[i];
+      const ativ = row[0] || "";
+      const setor = row[1] || "";
+      const rec = parseMoney(row[2]);
+      const custo = parseMoney(row[3]);
+      if (ativ) {
+        outrasAtividades.push({
+          atividade: ativ,
+          setor,
+          receitaAnual: rec > 0 ? rec : undefined,
+          custoAnual: custo > 0 ? custo : undefined,
+        });
+      }
+    }
+  }
+
+  // Membro Familiar / Avalista
+  const membrosFamiliares: Array<{ nome: string; cpf?: string }> = [];
+  if (propMatch) {
+    const propRows = parseTableRowsFromHtml(propMatch[1]);
+    if (propRows.length > 1 && propRows[1][29]) {
+      const nomeMembro = propRows[1][29].trim();
+      const cleanCpfMembro = (propRows[1][30] || "").replace(/\D/g, "");
+      const cpfMembro = cleanCpfMembro.length === 10 ? cleanCpfMembro.padStart(11, "0") : cleanCpfMembro;
+      if (nomeMembro) {
+        membrosFamiliares.push({
+          nome: nomeMembro,
+          cpf: cpfMembro || undefined,
+        });
+      }
+    }
+  }
+
   // Enriquecer itens com o catálogo do BNB
   const targetUf = options?.uf || uf || undefined;
   const items = enrichItemsWithCatalog(rawItems, options?.findReferencia, targetUf);
@@ -1840,6 +1908,9 @@ export function parseHtmlPronafProposal(
     financiamento,
     georreferenciamento: georreferenciamento.length > 0 ? georreferenciamento : undefined,
     empresaElaboradora: empresaElaboradora.toUpperCase() || undefined,
+    cronograma: cronograma.length > 0 ? cronograma : undefined,
+    outrasAtividades: outrasAtividades.length > 0 ? outrasAtividades : undefined,
+    membrosFamiliares: membrosFamiliares.length > 0 ? membrosFamiliares : undefined,
   };
 
   return {
