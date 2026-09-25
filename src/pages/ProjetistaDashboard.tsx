@@ -83,11 +83,11 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useInversoesReferencia } from "@/hooks/useInversoesReferencia";
 import { InversaoCombobox } from "@/components/inversoes/InversaoCombobox";
-import {
-  parseExcelProposalFull,
-  type ExcelProposalParsed,
-  type DadosProponenteData,
-  type SuporteForrageiroData,
+import { safeDynamicImport } from "@/utils/dynamicImport";
+import type {
+  ExcelProposalParsed,
+  DadosProponenteData,
+  SuporteForrageiroData,
 } from "@/utils/excelInversoesReader";
 
 // ── Linhas PRONAF Oficiais com Tetos Normativos ─────────────────────────────
@@ -591,6 +591,9 @@ export default function ProjetistaDashboard() {
 
     setIsProcessingFile(true);
     try {
+      const { parseExcelProposalFull } = await safeDynamicImport(() =>
+        import("@/utils/excelInversoesReader")
+      );
       const result = await parseExcelProposalFull(importFile, {
         customPassword: importPassword.trim() || undefined,
         findReferencia: (nome: string) => {

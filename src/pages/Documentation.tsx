@@ -13,7 +13,7 @@ import {
 import { generateWppStatusMessage } from "@/utils/wppMessage";
 import { generateVisitaGerencialText } from "@/utils/visitaGerencial";
 import { useProjetistasControl } from "@/hooks/useProjetistasControl";
-import { parseExcelInversoes } from "@/utils/excelInversoesReader";
+import { safeDynamicImport } from "@/utils/dynamicImport";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -362,6 +362,9 @@ export default function Documentation() {
     e.target.value = "";
     setIsImportingParecerExcel(true);
     try {
+      const { parseExcelInversoes } = await safeDynamicImport(() =>
+        import("@/utils/excelInversoesReader")
+      );
       const result = await parseExcelInversoes(file);
       if (result.success && result.items.length > 0) {
         setParecerInversoes(

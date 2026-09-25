@@ -14,7 +14,7 @@ import {
 import { InversaoCombobox } from "@/components/inversoes/InversaoCombobox";
 import { useInversoesReferencia } from "@/hooks/useInversoesReferencia";
 import { InversaoItem, InversaoReferencia } from "@/types/inversoes";
-import { parseExcelInversoes } from "@/utils/excelInversoesReader";
+import { safeDynamicImport } from "@/utils/dynamicImport";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -358,6 +358,9 @@ export default function DocumentationSubmit() {
 
     setIsImportingExcel(true);
     try {
+      const { parseExcelInversoes } = await safeDynamicImport(() =>
+        import("@/utils/excelInversoesReader")
+      );
       const result = await parseExcelInversoes(file, {
         findReferencia,
         uf: propostaUf,
@@ -695,7 +698,10 @@ export default function DocumentationSubmit() {
         const isVazio = inversoes.length === 0 || (inversoes.length === 1 && !inversoes[0].nome && inversoes[0].valor === 0);
         if (isVazio) {
           setIsImportingExcel(true);
-          parseExcelInversoes(file, { findReferencia, uf: propostaUf })
+          safeDynamicImport(() => import("@/utils/excelInversoesReader"))
+            .then(({ parseExcelInversoes }) =>
+              parseExcelInversoes(file, { findReferencia, uf: propostaUf })
+            )
             .then((result) => {
               if (result.success && result.items.length > 0) {
                 setInversoes(result.items);
