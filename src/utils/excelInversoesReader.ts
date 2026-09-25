@@ -92,6 +92,15 @@ export interface DadosProponenteData {
   objetivo?: string;
   linhaCredito?: string;
   custoAssessoria?: number;
+  tituloEleitoral?: string;
+  beneficiarioPoliticasPublicas?: string;
+  enderecoCorrespondencia?: string;
+  edificacoes?: Array<{ descricao: string; idade?: string; valor?: number; estado?: string; depreciacao?: string }>;
+  semoventes?: Array<{ categoria: string; quantidade?: number; raca?: string; valor?: number }>;
+  terrasCoberturas?: Array<{ descricao: string; areaHa?: number; idadeMeses?: string; valorUnitario?: number }>;
+  financiamento?: { prazoMeses?: number; carenciaMeses?: number; jurosAnual?: number; periodicidade?: string };
+  georreferenciamento?: Array<{ inversao: string; codEmpreendimento?: string; latitude: string; longitude: string }>;
+  empresaElaboradora?: string;
 }
 
 export interface PastagemItem {
@@ -229,6 +238,22 @@ export async function parseExcelInversoes(
     }
 
     let fileBuffer = Buffer.from(arrayBuffer);
+
+    // 0. Checa se o arquivo é uma exportação HTML do PRONAF-C
+    const previewText = fileBuffer.slice(0, 4000).toString("utf-8");
+    if (isPronafHtml(previewText)) {
+      const fullHtml = fileBuffer.toString("utf-8");
+      const htmlProp = parseHtmlPronafProposal(fullHtml, options);
+      return {
+        success: htmlProp.success,
+        items: htmlProp.items,
+        custoAssessoria: htmlProp.custoAssessoria,
+        totalItens: htmlProp.totalItens,
+        totalGeral: htmlProp.totalGeral,
+        formatDetected: htmlProp.formatDetected,
+        error: htmlProp.error,
+      };
+    }
 
     // 1. Checa se o arquivo é protegido por senha
     let isEncrypted = false;
@@ -576,7 +601,7 @@ export function extractDadosProponente(
     if (r11[6]) dados.apelido = String(r11[6]).trim().toUpperCase();
     if (r11[7]) {
       const clean = String(r11[7]).replace(/\D/g, "");
-      dados.cpf = clean.length === 11 ? clean : String(r11[7]).trim();
+      dados.cpf = clean.length === 10 ? clean.padStart(11, "0") : (clean.length === 11 ? clean : String(r11[7]).trim());
     }
     if (r11[8]) dados.dataNascimento = parseExcelDate(r11[8]);
     if (r11[9]) dados.rg = String(r11[9]).trim();
@@ -584,6 +609,7 @@ export function extractDadosProponente(
     if (r11[12]) dados.tipoDocumento = String(r11[12]).trim();
     if (r11[13]) dados.orgaoEmissor = String(r11[13]).trim().toUpperCase();
     if (r11[14]) dados.ufRg = String(r11[14]).trim().toUpperCase();
+    if (r11[15]) dados.tituloEleitoral = String(r11[15]).trim();
     if (r11[16]) dados.naturalidade = String(r11[16]).trim().toUpperCase();
     if (r11[17]) dados.sexo = String(r11[17]).trim();
     if (r11[18]) dados.estadoCivil = String(r11[18]).trim();
@@ -591,6 +617,7 @@ export function extractDadosProponente(
     if (r11[20]) dados.profissao = String(r11[20]).trim();
     if (r11[21]) dados.atividadePrincipal = String(r11[21]).trim();
     if (r11[22]) dados.rendaMensal = parseMoney(r11[22]);
+    if (r11[23]) dados.beneficiarioPoliticasPublicas = String(r11[23]).trim();
     if (r11[24]) dados.nomePai = String(r11[24]).trim().toUpperCase();
     if (r11[25]) dados.nomeMae = String(r11[25]).trim().toUpperCase();
     if (r11[27]) dados.porte = String(r11[27]).trim();
@@ -653,7 +680,10 @@ export function extractDadosProponente(
     if (r21[58]) dados.car = String(r21[58]).trim().toUpperCase();
     if (r21[59]) dados.tipoProprietario = String(r21[59]).trim();
     if (r21[60]) dados.nomeProprietario = String(r21[60]).trim().toUpperCase();
-    if (r21[61]) dados.cpfProprietario = String(r21[61]).trim();
+    if (r21[61]) {
+      const cleanProp = String(r21[61]).replace(/\D/g, "");
+      dados.cpfProprietario = cleanProp.length === 10 ? cleanProp.padStart(11, "0") : (cleanProp.length === 11 ? cleanProp : String(r21[61]).trim());
+    }
 
     // Coberturas, Reserva e Pastagens (Linhas 21 a 55)
     for (let r = 21; r < Math.min(55, rowsBdPRONAF_C.length); r++) {
@@ -679,7 +709,10 @@ export function extractDadosProponente(
     if (r121[6]) dados.agenciaBnb = String(r121[6]).trim().toUpperCase();
     if (r121[8] && !dados.atividadePrincipal) dados.atividadePrincipal = String(r121[8]).trim();
     if (r121[13]) dados.elaborador = String(r121[13]).trim().toUpperCase();
-    if (r121[14]) dados.cpfElaborador = String(r121[14]).trim();
+    if (r121[14]) {
+      const cleanElab = String(r121[14]).replace(/\D/g, "");
+      dados.cpfElaborador = cleanElab.length === 10 ? cleanElab.padStart(11, "0") : (cleanElab.length === 11 ? cleanElab : String(r121[14]).trim());
+    }
     if (r121[15]) dados.objetivo = String(r121[15]).trim();
     if (r121[55]) dados.parecerTecnico = String(r121[55]).trim();
   }
@@ -1351,6 +1384,492 @@ export function extractSuporteForrageiro(
   };
 }
 
+export function isPronafHtml(contentOrBuffer: string | Buffer | ArrayBuffer | Uint8Array): boolean {
+  let text = "";
+  if (typeof contentOrBuffer === "string") {
+    text = contentOrBuffer.slice(0, 4000);
+  } else if (contentOrBuffer instanceof ArrayBuffer || contentOrBuffer instanceof Uint8Array) {
+    text = new TextDecoder("utf-8").decode(
+      new Uint8Array(contentOrBuffer instanceof ArrayBuffer ? contentOrBuffer : contentOrBuffer.buffer).slice(0, 4000)
+    );
+  } else if (Buffer.isBuffer(contentOrBuffer)) {
+    text = contentOrBuffer.toString("utf-8", 0, 4000);
+  }
+  const lower = text.toLowerCase();
+  return (
+    lower.includes("<!doctype html") ||
+    lower.includes("<html") ||
+    lower.includes("planilha pronaf-c") ||
+    lower.includes("guia de exportacao de dados") ||
+    lower.includes("guia de exportação de dados") ||
+    (lower.includes("flabel") && lower.includes("fvalue"))
+  );
+}
+
+function parseFieldsFromHtml(blockHtml: string): Record<string, string> {
+  const fields: Record<string, string> = {};
+  const regex = /<div class="field"><span class="flabel">([^<]*)<\/span><span class="fvalue">([\s\S]*?)<\/span><\/div>/gi;
+  let match;
+  while ((match = regex.exec(blockHtml)) !== null) {
+    const label = normalizeText(match[1]);
+    const val = match[2].trim();
+    fields[label] = val;
+  }
+  return fields;
+}
+
+function extractSubblocksFromHtml(html: string): Record<string, string> {
+  const subblocks: Record<string, string> = {};
+  const regex = /<div class="subblock-title"[^>]*>([^<]*)<\/div>([\s\S]*?)(?=<div class="subblock-title"|<div class="section-title"|<\/body>|$)/gi;
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    const title = normalizeText(match[1]);
+    const body = match[2];
+    subblocks[title] = body;
+  }
+  return subblocks;
+}
+
+function parseTableRowsFromHtml(sectionHtml: string): string[][] {
+  const rows: string[][] = [];
+  const trRegex = /<tr>([\s\S]*?)<\/tr>/gi;
+  let trMatch;
+  while ((trMatch = trRegex.exec(sectionHtml)) !== null) {
+    const trContent = trMatch[1];
+    const cellRegex = /<(?:td|th)[^>]*>([\s\S]*?)<\/(?:td|th)>/gi;
+    const cells: string[] = [];
+    let cellMatch;
+    while ((cellMatch = cellRegex.exec(trContent)) !== null) {
+      cells.push(cellMatch[1].trim());
+    }
+    if (cells.length > 0) {
+      rows.push(cells);
+    }
+  }
+  return rows;
+}
+
+export function parseHtmlPronafProposal(
+  htmlContent: string,
+  options?: {
+    findReferencia?: (nome: string) => InversaoReferencia | null;
+    uf?: string;
+  }
+): ExcelProposalParsed {
+  const subblocks = extractSubblocksFromHtml(htmlContent);
+
+  // 1. Dados do Cliente
+  const clienteFields = subblocks["DADOS DO CLIENTE"]
+    ? parseFieldsFromHtml(subblocks["DADOS DO CLIENTE"])
+    : parseFieldsFromHtml(htmlContent);
+
+  const tipoCliente = clienteFields["TIPO CLIENTE"] || "Pessoa Física";
+  const nome = clienteFields["NOME"] || "";
+  const apelido = clienteFields["APELIDO"] || "";
+  const rawCpf = clienteFields["C.P.F."] || clienteFields["CPF"] || "";
+  const cleanCpf = rawCpf.replace(/\D/g, "");
+  const cpf = cleanCpf.length === 10 ? cleanCpf.padStart(11, "0") : cleanCpf;
+  const dataNascimento = clienteFields["DATA NASTO"] || clienteFields["DATA NASCIMENTO"] || "";
+  const rg = clienteFields["Nº DOCUMENTO"] || clienteFields["RG"] || "";
+  const dataEmissaoRg = clienteFields["DATA EMISSAO DOCUMENTO"] || clienteFields["DATA EMISSAO RG"] || "";
+  const tipoDocumento = clienteFields["TIPO DE DOCUMENTO"] || "Cédula de Identidade (RG)";
+  const orgaoEmissor = clienteFields["ORGAO EMISSOR"] || "";
+  const ufRg = clienteFields["UF ORGAO EMISSOR"] || clienteFields["UF RG"] || "";
+  const tituloEleitoral = clienteFields["TITULO ELEITORAL"] || "";
+  const naturalidade = clienteFields["NATURALIDADE"] || "";
+  const sexo = clienteFields["SEXO"] || "";
+  const estadoCivil = clienteFields["ESTADO CIVIL"] || "";
+  const grauInstrucao = clienteFields["GRAU DE INSTRUCAO"] || "";
+  const profissao = clienteFields["PROFISSAO"] || "Agricultor(a)";
+  let atividadePrincipal = clienteFields["ATIVIDADE"] || clienteFields["ATIVIDADE PRINCIPAL"] || "";
+  const rendaMensal = parseMoney(clienteFields["RENDA MENSAL"]);
+  const beneficiarioPoliticasPublicas = clienteFields["BENEFICIARIO POLITICAS PUBLICAS"] || "";
+  const nomePai = clienteFields["PAI"] || clienteFields["NOME PAI"] || "";
+  const nomeMae = clienteFields["MAE"] || clienteFields["NOME MAE"] || "";
+  const porte = clienteFields["PORTE"] || "";
+  const dapCaf = clienteFields["DAP"] || clienteFields["CAF"] || clienteFields["DAP/CAF"] || "";
+
+  // Endereço do Proponente / Propriedade
+  const tipoLogradouro = clienteFields["TIPO LOGRADOURO"] || "";
+  const endereco = clienteFields["ENDERECO"] || "";
+  const complemento = clienteFields["COMPLEMENTO"] || "";
+  const bairro = clienteFields["BAIRRO"] || "";
+  const cep = clienteFields["CEP"] || "";
+  const munUfRaw = clienteFields["MUNICIPIO"] || "";
+  let municipio = munUfRaw;
+  let uf = "";
+  if (munUfRaw.includes("-")) {
+    const parts = munUfRaw.split("-");
+    municipio = parts[0].trim();
+    uf = parts[1].trim();
+  }
+  const dddTel = clienteFields["DDD TELEFONE"] || clienteFields["DDD"] || "";
+  const numTel = clienteFields["Nº TELEFONE"] || clienteFields["TELEFONE"] || "";
+  const telefone = dddTel && numTel ? `(${dddTel}) ${numTel}` : numTel;
+
+  // 2. Endereço Residencial (Correspondência)
+  let enderecoCorrespondencia = "";
+  if (subblocks["ENDERECO RESIDENCIAL (CORRESPONDENCIA)"]) {
+    const cf = parseFieldsFromHtml(subblocks["ENDERECO RESIDENCIAL (CORRESPONDENCIA)"]);
+    const parts: string[] = [];
+    if (cf["TIPO LOG"] || cf["ENDERECO"]) {
+      parts.push(`${cf["TIPO LOG"] ? cf["TIPO LOG"] + " " : ""}${cf["ENDERECO"] || ""}`.trim());
+    }
+    if (cf["Nº"]) parts.push(`Nº ${cf["Nº"]}`);
+    if (cf["COMPLEMENTO"]) parts.push(cf["COMPLEMENTO"]);
+    if (cf["BAIRRO"]) parts.push(cf["BAIRRO"]);
+    if (cf["CEP"]) parts.push(`CEP ${cf["CEP"]}`);
+    if (cf["MUNICIPIO"]) parts.push(cf["MUNICIPIO"]);
+    if (cf["DDD"] && cf["TELEFONE"]) parts.push(`Tel: (${cf["DDD"]}) ${cf["TELEFONE"]}`);
+    enderecoCorrespondencia = parts.join(", ");
+  }
+
+  // 3. Imóvel / Endereço do Imóvel & Posse
+  let condicaoPosse = "";
+  let nomeProprietario = "";
+  let cpfProprietario = "";
+  let roteiroAcesso = "";
+  if (subblocks["IMOVEL / ENDERECO DO IMOVEL"]) {
+    const ipf = parseFieldsFromHtml(subblocks["IMOVEL / ENDERECO DO IMOVEL"]);
+    condicaoPosse = ipf["USO"] || "";
+    nomeProprietario = ipf["PROPRIETARIO"] || "";
+    const cleanPropCpf = (ipf["CPF"] || "").replace(/\D/g, "");
+    cpfProprietario = cleanPropCpf.length === 10 ? cleanPropCpf.padStart(11, "0") : cleanPropCpf;
+    roteiroAcesso = ipf["INTINERARIO"] || ipf["ITINERARIO"] || "";
+  }
+
+  // 4. Avaliação / Imóvel Avaliado
+  let nomePropriedade = "";
+  let areaTotalHa = 0;
+  let comentariosSolosAguada = "";
+  if (subblocks["IMOVEL AVALIADO"]) {
+    const iaf = parseFieldsFromHtml(subblocks["IMOVEL AVALIADO"]);
+    nomePropriedade = iaf["DENOMINACAO"] || "";
+    areaTotalHa = parseHectares(iaf["AREA"]);
+    comentariosSolosAguada = iaf["COMENTARIOS"] || "";
+  }
+
+  // 5. Terras e Coberturas
+  const terrasCoberturas: Array<{ descricao: string; areaHa?: number; idadeMeses?: string; valorUnitario?: number }> = [];
+  let areaPastagemHa = 0;
+  let areaReservaHa = 0;
+  let areaExploradaHa = 0;
+  if (subblocks["TERRAS E COBERTURAS"]) {
+    const body = subblocks["TERRAS E COBERTURAS"];
+    const recRegex = /<div class="record-index">([^<]*)<\/div>([\s\S]*?)(?=<div class="record-index"|$)/gi;
+    let rm;
+    while ((rm = recRegex.exec(body)) !== null) {
+      const rf = parseFieldsFromHtml(rm[2]);
+      const desc = rf["DESCRICAO"] || "";
+      const area = parseHectares(rf["AREA"]);
+      const idade = rf["IDADE"] || "";
+      const vu = parseMoney(rf["VALOR UNIT."]);
+      if (desc && area > 0) {
+        terrasCoberturas.push({
+          descricao: desc,
+          areaHa: area,
+          idadeMeses: idade,
+          valorUnitario: vu > 0 ? vu : undefined,
+        });
+
+        const normDesc = normalizeText(desc);
+        if (normDesc.includes("RESERVA") || normDesc.includes("FLOREST")) {
+          areaReservaHa += area;
+        } else if (normDesc.includes("PAST") || normDesc.includes("CAPIM") || normDesc.includes("BRACHIAR") || normDesc.includes("MOMBAC")) {
+          areaPastagemHa += area;
+          areaExploradaHa += area;
+        } else {
+          areaExploradaHa += area;
+        }
+      }
+    }
+  }
+
+  // 6. Edificações
+  const edificacoes: Array<{ descricao: string; idade?: string; valor?: number; estado?: string; depreciacao?: string }> = [];
+  if (subblocks["EDIFICACOES"]) {
+    const ef = parseFieldsFromHtml(subblocks["EDIFICACOES"]);
+    if (ef["DESCRICAO"]) {
+      edificacoes.push({
+        descricao: ef["DESCRICAO"],
+        idade: ef["IDADE"],
+        valor: parseMoney(ef["VALOR"]),
+        estado: ef["ESTADO"],
+        depreciacao: ef["DEPREC."],
+      });
+    }
+  }
+
+  // 7. Semoventes Existentes
+  const semoventes: Array<{ categoria: string; quantidade?: number; raca?: string; valor?: number }> = [];
+  let totalCabecasExistentes = 0;
+  if (subblocks["SEMOVENTES"]) {
+    const body = subblocks["SEMOVENTES"];
+    const recRegex = /<div class="record-index">([^<]*)<\/div>([\s\S]*?)(?=<div class="record-index"|$)/gi;
+    let rm;
+    while ((rm = recRegex.exec(body)) !== null) {
+      const rf = parseFieldsFromHtml(rm[2]);
+      const cat = rf["CATEGORIAS"] || "";
+      const qtd = parseInt(rf["QUANT."] || "0", 10);
+      const raca = rf["RACA"] || "";
+      const val = parseMoney(rf["VALOR"]);
+      if (cat && qtd > 0) {
+        semoventes.push({
+          categoria: cat,
+          quantidade: qtd,
+          raca: raca || undefined,
+          valor: val > 0 ? val : undefined,
+        });
+        totalCabecasExistentes += qtd;
+      }
+    }
+  }
+
+  // 8. Imóveis Vinculados ao Plano (CAR)
+  let car = "";
+  if (subblocks["IMOVEIS VINCULADOS AO PLANO"]) {
+    const carf = parseFieldsFromHtml(subblocks["IMOVEIS VINCULADOS AO PLANO"]);
+    car = carf["REGISTRO CAR"] || "";
+  }
+
+  // 9. Seção Proposta (Tabela de Operação e Inversões)
+  let linhaCredito = "";
+  let agenciaBnb = "";
+  let empresaElaboradora = "";
+  let elaborador = "";
+  let cpfElaborador = "";
+  let objetivo = "";
+  let parecerTecnico = "";
+  let justificativaAgronomica = "";
+  let tipoCustoAssessoria = "1";
+  const rawItems: Array<{ quant: number; unid: string; nome: string; valor_unitario: number; valor: number }> = [];
+
+  const propMatch = htmlContent.match(/<div class="section-title"[^>]*>Proposta<\/div>[\s\S]*?<table[^>]*>([\s\S]*?)<\/table>/i);
+  if (propMatch) {
+    const propRows = parseTableRowsFromHtml(propMatch[1]);
+    if (propRows.length > 1) {
+      const r1 = propRows[1];
+      linhaCredito = r1[1] || "";
+      agenciaBnb = r1[2] || "";
+      if (!atividadePrincipal && r1[4]) atividadePrincipal = r1[4];
+      empresaElaboradora = r1[5] || "";
+      elaborador = r1[7] || "";
+      const cleanElabCpf = (r1[8] || "").replace(/\D/g, "");
+      cpfElaborador = cleanElabCpf.length === 10 ? cleanElabCpf.padStart(11, "0") : cleanElabCpf;
+      objetivo = r1[9] || "";
+      justificativaAgronomica = r1[41] || "";
+      parecerTecnico = r1[42] || "";
+      tipoCustoAssessoria = r1[54] || "1";
+
+      for (let i = 1; i < propRows.length; i++) {
+        const row = propRows[i];
+        const discriminacao = row[15] ? row[15].trim() : "";
+        if (!discriminacao) continue;
+
+        const quant = parseMoney(row[17]) || 1;
+        const rawUnid = row[18] ? row[18].trim() : "UNID";
+        const unid = mapUnidade(rawUnid);
+        const valorUnitario = parseMoney(row[20]);
+        const valorTotal = quant * valorUnitario;
+
+        rawItems.push({
+          quant,
+          unid,
+          nome: discriminacao,
+          valor_unitario: valorUnitario,
+          valor: valorTotal,
+        });
+      }
+    }
+  }
+
+  // 10. Seção Financiamento (Prazo, Carência, Juros, Periodicidade)
+  let financiamento = {
+    prazoMeses: 96,
+    carenciaMeses: 24,
+    jurosAnual: 6,
+    periodicidade: "Anual",
+  };
+  const finMatch = htmlContent.match(/<div class="section-title"[^>]*>Financiamento<\/div>[\s\S]*?<table[^>]*>([\s\S]*?)<\/table>/i);
+  if (finMatch) {
+    const finRows = parseTableRowsFromHtml(finMatch[1]);
+    if (finRows.length > 1) {
+      const r = finRows[1];
+      financiamento = {
+        prazoMeses: parseInt(r[0], 10) || 96,
+        carenciaMeses: parseInt(r[1], 10) || 24,
+        jurosAnual: parseMoney(r[2]) || 6,
+        periodicidade: r[3] || "Anual",
+      };
+    }
+  }
+
+  // 11. Georreferenciamento
+  const georreferenciamento: Array<{ inversao: string; codEmpreendimento?: string; latitude: string; longitude: string }> = [];
+  const geoMatch = htmlContent.match(/<div class="section-title"[^>]*>Referências Geográficas do Imóvel \(Georreferenciamento\)<\/div>[\s\S]*?<table[^>]*>([\s\S]*?)<\/table>/i);
+  if (geoMatch) {
+    const geoRows = parseTableRowsFromHtml(geoMatch[1]);
+    for (let i = 1; i < geoRows.length; i++) {
+      const row = geoRows[i];
+      if (row[7] && row[8]) {
+        georreferenciamento.push({
+          inversao: row[1] || "",
+          codEmpreendimento: row[2] || "",
+          latitude: row[7],
+          longitude: row[8],
+        });
+      }
+    }
+  }
+
+  // Enriquecer itens com o catálogo do BNB
+  const targetUf = options?.uf || uf || undefined;
+  const items = enrichItemsWithCatalog(rawItems, options?.findReferencia, targetUf);
+
+  // Cálculos de totais
+  const totalItens = items.reduce((acc, it) => acc + it.valor, 0);
+  const custoAssessoria = (tipoCustoAssessoria === "1" || tipoCustoAssessoria.includes("5"))
+    ? Math.round(totalItens * 0.05 * 100) / 100
+    : 0;
+  const totalGeral = totalItens + custoAssessoria;
+
+  // Linha de Crédito
+  let pronafLineId = "pronaf_mais_alimento";
+  if (linhaCredito) {
+    const matched = matchPronafLineId(linhaCredito);
+    pronafLineId = matched.id;
+  }
+
+  // Suporte Forrageiro
+  const temPecuaria = totalCabecasExistentes > 0 || areaPastagemHa > 0 || items.some(it => {
+    const n = normalizeText(it.nome);
+    return n.includes("MATRIZ") || n.includes("REPRODUTOR") || n.includes("PASTAGEM") || n.includes("BOVIN");
+  });
+  const uaCalculada = Math.round(totalCabecasExistentes * 0.4 * 10) / 10;
+  const taxaCalculada = areaPastagemHa > 0 ? Math.round((uaCalculada / areaPastagemHa) * 100) / 100 : 0;
+
+  const pastagensDetalhadas: PastagemItem[] = terrasCoberturas
+    .filter(t => !normalizeText(t.descricao).includes("RESERVA"))
+    .map(t => ({
+      tipo: t.descricao,
+      areaHa: t.areaHa || 0,
+      estadoConservacao: "Bom",
+    }));
+
+  const rebanhoDetalhado: RebanhoItem[] = semoventes.map(s => ({
+    categoria: s.categoria,
+    cabecas: s.quantidade || 0,
+    fatorUa: 0.4,
+    totalUa: Math.round((s.quantidade || 0) * 0.4 * 10) / 10,
+  }));
+
+  const suporteForrageiro: SuporteForrageiroData = {
+    temPecuaria,
+    areaPastagemNativaHa: 0,
+    areaPastagemCultivadaHa: areaPastagemHa,
+    areaCapineiraHa: terrasCoberturas.find(t => normalizeText(t.descricao).includes("ELEFANTE") || normalizeText(t.descricao).includes("CAPINEIRA"))?.areaHa || 0,
+    areaPalmaHa: 0,
+    areaOutrasForrageirasHa: 0,
+    areaTotalForrageiraHa: areaPastagemHa,
+    especiePastagem: terrasCoberturas.filter(t => !normalizeText(t.descricao).includes("RESERVA")).map(t => t.descricao).join(" / ") || "Brachiaria / Capim quicuio",
+    rebanhoCabecas: totalCabecasExistentes,
+    rebanhoTotalUa: uaCalculada,
+    taxaLotacaoUaHa: taxaCalculada,
+    periodoEstiagemMeses: 6,
+    estrategiaSuplementacao: "Capineira, volumoso conservado e pastejo rotacionado com forragem nativa e cultivada.",
+    parecerCapacidadeSuporte: `Área forrageira de ${areaPastagemHa} ha suporta adequadamente o rebanho com taxa de lotação de ${taxaCalculada} UA/ha.`,
+    pastagensDetalhadas,
+    rebanhoDetalhado,
+  };
+
+  const dadosProponente: DadosProponenteData = {
+    tipoCliente,
+    nome: nome.toUpperCase(),
+    apelido: apelido.toUpperCase() || undefined,
+    cpf: cpf || undefined,
+    rg: rg || undefined,
+    dataEmissaoRg: dataEmissaoRg || undefined,
+    orgaoEmissor: orgaoEmissor.toUpperCase() || undefined,
+    ufRg: ufRg.toUpperCase() || undefined,
+    tipoDocumento: tipoDocumento || undefined,
+    dataNascimento: dataNascimento || undefined,
+    naturalidade: naturalidade.toUpperCase() || undefined,
+    sexo: sexo || undefined,
+    estadoCivil: estadoCivil || undefined,
+    grauInstrucao: grauInstrucao || undefined,
+    profissao: profissao || undefined,
+    atividadePrincipal: atividadePrincipal || undefined,
+    rendaMensal: rendaMensal > 0 ? rendaMensal : undefined,
+    nomeMae: nomeMae.toUpperCase() || undefined,
+    nomePai: nomePai.toUpperCase() || undefined,
+    porte: porte || undefined,
+    telefone: telefone || undefined,
+    tipoLogradouro: tipoLogradouro || undefined,
+    endereco: endereco.toUpperCase() || undefined,
+    complemento: complemento || undefined,
+    bairro: bairro.toUpperCase() || undefined,
+    cep: cep || undefined,
+    municipio: municipio.toUpperCase() || undefined,
+    uf: uf.toUpperCase() || undefined,
+    nomePropriedade: (nomePropriedade || endereco).toUpperCase() || undefined,
+    localidade: (nomePropriedade || bairro || endereco).toUpperCase() || undefined,
+    condicaoPosse: condicaoPosse || undefined,
+    nomeProprietario: nomeProprietario.toUpperCase() || undefined,
+    cpfProprietario: cpfProprietario || undefined,
+    areaTotalHa: areaTotalHa > 0 ? areaTotalHa : undefined,
+    areaExploradaHa: areaExploradaHa > 0 ? Math.round(areaExploradaHa * 100) / 100 : undefined,
+    areaPastagemHa: areaPastagemHa > 0 ? Math.round(areaPastagemHa * 100) / 100 : undefined,
+    areaReservaHa: areaReservaHa > 0 ? Math.round(areaReservaHa * 100) / 100 : undefined,
+    dapCaf: dapCaf || undefined,
+    car: car || undefined,
+    roteiroAcesso: roteiroAcesso || undefined,
+    comentariosSolosAguada: comentariosSolosAguada || undefined,
+    parecerTecnico: parecerTecnico || justificativaAgronomica || undefined,
+    elaborador: elaborador.toUpperCase() || undefined,
+    cpfElaborador: cpfElaborador || undefined,
+    agenciaBnb: agenciaBnb.toUpperCase() || undefined,
+    objetivo: objetivo || undefined,
+    linhaCredito: linhaCredito || undefined,
+    custoAssessoria: 1,
+    tituloEleitoral: tituloEleitoral || undefined,
+    beneficiarioPoliticasPublicas: beneficiarioPoliticasPublicas || undefined,
+    enderecoCorrespondencia: enderecoCorrespondencia || undefined,
+    edificacoes: edificacoes.length > 0 ? edificacoes : undefined,
+    semoventes: semoventes.length > 0 ? semoventes : undefined,
+    terrasCoberturas: terrasCoberturas.length > 0 ? terrasCoberturas : undefined,
+    financiamento,
+    georreferenciamento: georreferenciamento.length > 0 ? georreferenciamento : undefined,
+    empresaElaboradora: empresaElaboradora.toUpperCase() || undefined,
+  };
+
+  return {
+    success: true,
+    producerName: nome.toUpperCase() || undefined,
+    producerCpf: cpf || undefined,
+    producerPhone: telefone || undefined,
+    municipio: municipio.toUpperCase() || undefined,
+    localizacao: (nomePropriedade || endereco).toUpperCase() || undefined,
+    dapCaf: dapCaf || undefined,
+    linhaCredito: linhaCredito || undefined,
+    pronafLineId: pronafLineId || undefined,
+    agenciaBnb: agenciaBnb.toUpperCase() || undefined,
+    atividade: atividadePrincipal || undefined,
+    objetivo: objetivo || undefined,
+    parecerTecnico: parecerTecnico || justificativaAgronomica || undefined,
+    roteiroAcesso: roteiroAcesso || undefined,
+    elaborador: elaborador.toUpperCase() || undefined,
+    cpfElaborador: cpfElaborador || undefined,
+    valorSolicitado: totalGeral > 0 ? totalGeral : undefined,
+    dadosProponente,
+    suporteForrageiro,
+    items,
+    custoAssessoria,
+    totalItens,
+    totalGeral,
+    formatDetected: "PRONAF-C (Exportação HTML v2.0)",
+  };
+}
+
 export async function parseExcelProposalFull(
   fileOrBuffer: File | ArrayBuffer | Uint8Array,
   options?: {
@@ -1359,7 +1878,13 @@ export async function parseExcelProposalFull(
     customPassword?: string;
   }
 ): Promise<ExcelProposalParsed> {
-  const inversoesResult = await parseExcelInversoes(fileOrBuffer, options);
+  let inversoesResult: ExcelInversoesResult = {
+    success: false,
+    items: [],
+    custoAssessoria: 0,
+    totalItens: 0,
+    totalGeral: 0,
+  };
 
   try {
     let arrayBuffer: ArrayBuffer;
@@ -1372,6 +1897,15 @@ export async function parseExcelProposalFull(
     }
 
     let fileBuffer = Buffer.from(arrayBuffer);
+
+    // 0. Checa se o arquivo é uma exportação HTML do PRONAF-C
+    const previewText = fileBuffer.slice(0, 4000).toString("utf-8");
+    if (isPronafHtml(previewText)) {
+      const fullHtml = fileBuffer.toString("utf-8");
+      return parseHtmlPronafProposal(fullHtml, options);
+    }
+
+    inversoesResult = await parseExcelInversoes(arrayBuffer, options);
 
     let isEncrypted = false;
     try {

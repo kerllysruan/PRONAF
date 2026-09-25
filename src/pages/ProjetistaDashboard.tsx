@@ -313,6 +313,22 @@ export default function ProjetistaDashboard() {
   const [newPropEstrategiaSuplementacao, setNewPropEstrategiaSuplementacao] = useState("");
   const [newPropParecerSuporte, setNewPropParecerSuporte] = useState("");
 
+  // ── Novos Campos Expandidos PRONAF-C ────────────────────────────────────────
+  const [newPropTituloEleitoral, setNewPropTituloEleitoral] = useState("");
+  const [newPropBeneficiarioPoliticas, setNewPropBeneficiarioPoliticas] = useState("Cliente não Beneficiário de Políticas Públicas");
+  const [newPropEnderecoCorrespondencia, setNewPropEnderecoCorrespondencia] = useState("");
+  const [newPropEdificacoes, setNewPropEdificacoes] = useState<any[]>([]);
+  const [newPropSemoventes, setNewPropSemoventes] = useState<any[]>([]);
+  const [newPropTerrasCoberturas, setNewPropTerrasCoberturas] = useState<any[]>([]);
+  const [newPropFinanciamentoPrazo, setNewPropFinanciamentoPrazo] = useState<number>(96);
+  const [newPropFinanciamentoCarencia, setNewPropFinanciamentoCarencia] = useState<number>(24);
+  const [newPropFinanciamentoJuros, setNewPropFinanciamentoJuros] = useState<number>(6);
+  const [newPropFinanciamentoPeriodicidade, setNewPropFinanciamentoPeriodicidade] = useState("Anual");
+  const [newPropGeorreferenciamento, setNewPropGeorreferenciamento] = useState<any[]>([]);
+  const [newPropEmpresaElaboradora, setNewPropEmpresaElaboradora] = useState("");
+  const [newPropElaborador, setNewPropElaborador] = useState("");
+  const [newPropCpfElaborador, setNewPropCpfElaborador] = useState("");
+
   // Arquivos anexos da nova proposta
   const [docProjetoTecnico, setDocProjetoTecnico] = useState<File | null>(null);
   const [docDapCaf, setDocDapCaf] = useState<File | null>(null);
@@ -724,6 +740,23 @@ export default function ProjetistaDashboard() {
       if (dp.agencia || dp.conta) {
         setNewPropAgenciaConta(`Ag: ${dp.agencia || ""} / C/C: ${dp.conta || ""}`);
       }
+
+      if (dp.tituloEleitoral) setNewPropTituloEleitoral(dp.tituloEleitoral);
+      if (dp.beneficiarioPoliticasPublicas) setNewPropBeneficiarioPoliticas(dp.beneficiarioPoliticasPublicas);
+      if (dp.enderecoCorrespondencia) setNewPropEnderecoCorrespondencia(dp.enderecoCorrespondencia);
+      if (dp.edificacoes) setNewPropEdificacoes(dp.edificacoes);
+      if (dp.semoventes) setNewPropSemoventes(dp.semoventes);
+      if (dp.terrasCoberturas) setNewPropTerrasCoberturas(dp.terrasCoberturas);
+      if (dp.empresaElaboradora) setNewPropEmpresaElaboradora(dp.empresaElaboradora);
+      if (dp.elaborador) setNewPropElaborador(dp.elaborador);
+      if (dp.cpfElaborador) setNewPropCpfElaborador(formatCPF(dp.cpfElaborador));
+      if (dp.georreferenciamento) setNewPropGeorreferenciamento(dp.georreferenciamento);
+      if (dp.financiamento) {
+        if (dp.financiamento.prazoMeses) setNewPropFinanciamentoPrazo(dp.financiamento.prazoMeses);
+        if (dp.financiamento.carenciaMeses) setNewPropFinanciamentoCarencia(dp.financiamento.carenciaMeses);
+        if (dp.financiamento.jurosAnual) setNewPropFinanciamentoJuros(dp.financiamento.jurosAnual);
+        if (dp.financiamento.periodicidade) setNewPropFinanciamentoPeriodicidade(dp.financiamento.periodicidade);
+      }
     }
 
     // Preenche Suporte Forrageiro & Dimensionamento Pecuário
@@ -952,6 +985,22 @@ export default function ProjetistaDashboard() {
         orgao_emissor_conjuge: newPropOrgaoEmissorConjuge.trim().toUpperCase() || null,
         uf_conjuge: newPropUfConjuge.trim().toUpperCase() || null,
         profissao_conjuge: newPropProfissaoConjuge.trim() || null,
+        titulo_eleitoral: newPropTituloEleitoral.trim() || null,
+        beneficiario_politicas_publicas: newPropBeneficiarioPoliticas.trim() || null,
+        endereco_correspondencia: newPropEnderecoCorrespondencia.trim() || null,
+        edificacoes: newPropEdificacoes.length > 0 ? newPropEdificacoes : null,
+        semoventes: newPropSemoventes.length > 0 ? newPropSemoventes : null,
+        terras_coberturas: newPropTerrasCoberturas.length > 0 ? newPropTerrasCoberturas : null,
+        financiamento: {
+          prazo_meses: Number(newPropFinanciamentoPrazo) || 96,
+          carencia_meses: Number(newPropFinanciamentoCarencia) || 24,
+          juros_anual: Number(newPropFinanciamentoJuros) || 6,
+          periodicidade: newPropFinanciamentoPeriodicidade || "Anual",
+        },
+        georreferenciamento: newPropGeorreferenciamento.length > 0 ? newPropGeorreferenciamento : null,
+        empresa_elaboradora: newPropEmpresaElaboradora.trim().toUpperCase() || null,
+        elaborador: (newPropElaborador || projetistaInfo?.name || displayName || "").trim().toUpperCase() || null,
+        cpf_elaborador: (newPropCpfElaborador || projetistaInfo?.cpf || "").replace(/\D/g, "") || null,
       };
 
       const suporteForrageiroPayload =
@@ -2014,6 +2063,36 @@ export default function ProjetistaDashboard() {
                           className="rounded-xl h-10 text-xs"
                         />
                       </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold">Título Eleitoral</Label>
+                        <Input
+                          placeholder="Nº do Título Eleitoral"
+                          value={newPropTituloEleitoral}
+                          onChange={(e) => setNewPropTituloEleitoral(e.target.value)}
+                          className="rounded-xl h-10 text-xs font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <Label className="text-xs font-bold">Beneficiário de Políticas Públicas</Label>
+                        <Input
+                          placeholder="Ex: Cliente não Beneficiário de Políticas Públicas"
+                          value={newPropBeneficiarioPoliticas}
+                          onChange={(e) => setNewPropBeneficiarioPoliticas(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 sm:col-span-3">
+                        <Label className="text-xs font-bold">Endereço Residencial / Correspondência</Label>
+                        <Input
+                          placeholder="Ex: Rua / Av., Nº, Complemento, Bairro, CEP, Município"
+                          value={newPropEnderecoCorrespondencia}
+                          onChange={(e) => setNewPropEnderecoCorrespondencia(e.target.value)}
+                          className="rounded-xl h-10 text-xs"
+                        />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -2248,6 +2327,85 @@ export default function ProjetistaDashboard() {
                           className="rounded-xl text-xs resize-none"
                         />
                       </div>
+
+                      {/* Resumo de Patrimônio Avaliado e Georreferenciamento (se importado do PRONAF-C) */}
+                      {(newPropTerrasCoberturas.length > 0 ||
+                        newPropEdificacoes.length > 0 ||
+                        newPropSemoventes.length > 0 ||
+                        newPropGeorreferenciamento.length > 0) && (
+                        <div className="sm:col-span-3 pt-3 border-t border-border/40 space-y-3">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 block">
+                            Inventário Patrimonial & Georreferenciamento Extraído do Plano
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            {newPropTerrasCoberturas.length > 0 && (
+                              <div className="p-3 rounded-xl bg-muted/40 border border-border/60 space-y-1.5">
+                                <span className="font-bold text-[10px] uppercase text-muted-foreground block">
+                                  Terras e Coberturas ({newPropTerrasCoberturas.length} registros)
+                                </span>
+                                {newPropTerrasCoberturas.map((tc, idx) => (
+                                  <div key={idx} className="flex items-center justify-between text-[11px]">
+                                    <span className="font-semibold text-foreground">{tc.descricao}</span>
+                                    <Badge variant="outline" className="font-mono text-[10px]">
+                                      {tc.areaHa} ha
+                                    </Badge>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {newPropEdificacoes.length > 0 && (
+                              <div className="p-3 rounded-xl bg-muted/40 border border-border/60 space-y-1.5">
+                                <span className="font-bold text-[10px] uppercase text-muted-foreground block">
+                                  Edificações & Benfeitorias ({newPropEdificacoes.length} registros)
+                                </span>
+                                {newPropEdificacoes.map((ed, idx) => (
+                                  <div key={idx} className="flex items-center justify-between text-[11px]">
+                                    <span className="font-semibold text-foreground truncate max-w-[180px]" title={ed.descricao}>
+                                      {ed.descricao} ({ed.estado || "Regular"})
+                                    </span>
+                                    <span className="font-mono font-bold text-teal-700 dark:text-teal-300">
+                                      {ed.valor ? formatCurrency(Number(ed.valor)) : "—"}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {newPropSemoventes.length > 0 && (
+                              <div className="p-3 rounded-xl bg-muted/40 border border-border/60 space-y-1.5">
+                                <span className="font-bold text-[10px] uppercase text-muted-foreground block">
+                                  Semoventes Existentes ({newPropSemoventes.length} categorias)
+                                </span>
+                                {newPropSemoventes.map((sm, idx) => (
+                                  <div key={idx} className="flex items-center justify-between text-[11px]">
+                                    <span className="font-semibold text-foreground">
+                                      {sm.quantidade}x {sm.categoria} {sm.raca ? `(${sm.raca})` : ""}
+                                    </span>
+                                    <span className="font-mono font-bold text-teal-700 dark:text-teal-300">
+                                      {sm.valor ? `${formatCurrency(Number(sm.valor))}/un` : "—"}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {newPropGeorreferenciamento.length > 0 && (
+                              <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-1.5">
+                                <span className="font-bold text-[10px] uppercase text-emerald-800 dark:text-emerald-300 block">
+                                  Georreferenciamento ({newPropGeorreferenciamento.length} coordenadas GPS)
+                                </span>
+                                <p className="text-[11px] font-mono text-muted-foreground">
+                                  Vértice 1: Lat {newPropGeorreferenciamento[0].latitude} | Long {newPropGeorreferenciamento[0].longitude}
+                                </p>
+                                <p className="text-[10px] text-emerald-700 dark:text-emerald-300 font-semibold">
+                                  ✓ Glebas georreferenciadas vinculadas aos itens de inversão
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -2385,6 +2543,91 @@ export default function ProjetistaDashboard() {
                             </SelectItem>
                           </SelectContent>
                         </Select>
+                      </div>
+                    </div>
+
+                    {/* Condições de Financiamento & Elaboração (Cronograma de Reembolso) */}
+                    <div className="pt-3 border-t border-border/40 space-y-3">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block">
+                        Condições de Reembolso & Responsável Técnico (PRONAF)
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-bold">Prazo Total (Meses)</Label>
+                          <Input
+                            type="number"
+                            value={newPropFinanciamentoPrazo}
+                            onChange={(e) => setNewPropFinanciamentoPrazo(Number(e.target.value) || 96)}
+                            className="rounded-xl h-9 text-xs font-mono"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-bold">Carência (Meses)</Label>
+                          <Input
+                            type="number"
+                            value={newPropFinanciamentoCarencia}
+                            onChange={(e) => setNewPropFinanciamentoCarencia(Number(e.target.value) || 24)}
+                            className="rounded-xl h-9 text-xs font-mono"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-bold">Taxa de Juros (% a.a.)</Label>
+                          <Input
+                            type="number"
+                            step="0.1"
+                            value={newPropFinanciamentoJuros}
+                            onChange={(e) => setNewPropFinanciamentoJuros(Number(e.target.value) || 6)}
+                            className="rounded-xl h-9 text-xs font-mono"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-bold">Periodicidade</Label>
+                          <Select
+                            value={newPropFinanciamentoPeriodicidade}
+                            onValueChange={setNewPropFinanciamentoPeriodicidade}
+                          >
+                            <SelectTrigger className="rounded-xl h-9 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Anual">Anual</SelectItem>
+                              <SelectItem value="Semestral">Semestral</SelectItem>
+                              <SelectItem value="Mensal">Mensal</SelectItem>
+                              <SelectItem value="Parcela Única">Parcela Única</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-bold">Empresa Elaboradora / ATER</Label>
+                          <Input
+                            placeholder="Nome da empresa elaboradora"
+                            value={newPropEmpresaElaboradora}
+                            onChange={(e) => setNewPropEmpresaElaboradora(e.target.value)}
+                            className="rounded-xl h-9 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-bold">Projetista / Elaborador Responsável</Label>
+                          <Input
+                            placeholder="Nome completo do elaborador"
+                            value={newPropElaborador}
+                            onChange={(e) => setNewPropElaborador(e.target.value)}
+                            className="rounded-xl h-9 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px] font-bold">CPF do Elaborador</Label>
+                          <Input
+                            placeholder="000.000.000-00"
+                            value={newPropCpfElaborador}
+                            onChange={(e) => setNewPropCpfElaborador(formatCPF(e.target.value))}
+                            maxLength={14}
+                            className="rounded-xl h-9 text-xs font-mono"
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -3225,22 +3468,22 @@ export default function ProjetistaDashboard() {
           <DialogHeader>
             <DialogTitle className="font-heading font-black text-lg flex items-center gap-2 text-foreground">
               <FileSpreadsheet className="h-5 w-5 text-emerald-600" />
-              Importar Planilha do Projeto (Excel / CSV)
+              Importar Planilha / Exportação do Projeto (PRONAF-A / PRONAF-C / HTML)
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Carregue a planilha oficial do PRONAF/BNB para extrair automaticamente os dados do produtor e os itens orçados.
+              Carregue a planilha oficial do PRONAF/BNB (.xlsx, .xls, .pronaf_c) ou a Guia de Exportação (.html) para preencher automaticamente 100% dos campos do produtor, imóvel, semoventes, financiamento e itens orçados.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2 text-xs">
             {/* Seletor de Arquivo com Drag & Drop */}
             <div className="space-y-1.5">
-              <Label className="text-xs font-bold">Arquivo Excel ou CSV da Operação:</Label>
+              <Label className="text-xs font-bold">Arquivo da Operação (Excel, PRONAF-C ou HTML):</Label>
               <input
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept=".xlsx,.xlsm,.xls,.csv,.pronaf_a2"
+                accept=".xlsx,.xlsm,.xls,.csv,.pronaf_a,.pronaf_a2,.pronaf_c,.html,.htm"
                 onChange={(e) => {
                   const f = e.target.files?.[0] || null;
                   setImportFile(f);
@@ -3270,7 +3513,7 @@ export default function ProjetistaDashboard() {
                       Clique para selecionar ou arraste o arquivo aqui
                     </p>
                     <p className="text-[11px]">
-                      Formatos aceitos: <strong>.xlsx, .xlsm, .xls, .csv</strong>
+                      Formatos aceitos: <strong>.xlsx, .xlsm, .xls, .pronaf_c, .html, .htm, .csv</strong>
                     </p>
                   </div>
                 )}
@@ -3296,7 +3539,7 @@ export default function ProjetistaDashboard() {
                 className="h-9 rounded-xl text-xs font-mono"
               />
               <p className="text-[10px] text-muted-foreground">
-                Planilhas geradas pelo sistema SEAP/BNB utilizam por padrão a senha <code>senhasBNxI</code>.
+                Planilhas protegidas do SEAP/BNB utilizam <code>senhasBNxI</code> (arquivos HTML não precisam de senha).
               </p>
             </div>
 
@@ -3310,12 +3553,12 @@ export default function ProjetistaDashboard() {
                 {isProcessingFile ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>Lendo e Descriptografando Planilha...</span>
+                    <span>Lendo e Analisando Dados...</span>
                   </>
                 ) : (
                   <>
                     <FileSpreadsheet className="h-4 w-4" />
-                    <span>Analisar Planilha e Extrair Dados</span>
+                    <span>Analisar Arquivo e Extrair Dados</span>
                   </>
                 )}
               </Button>
@@ -3327,7 +3570,7 @@ export default function ProjetistaDashboard() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-extrabold text-xs">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    <span>Planilha Processada com Sucesso!</span>
+                    <span>Dados Processados com Sucesso!</span>
                   </div>
                   {parsedProposalData.formatDetected && (
                     <Badge variant="outline" className="text-[10px] font-bold border-emerald-500/40 text-emerald-800 dark:text-emerald-300">
@@ -3379,6 +3622,22 @@ export default function ProjetistaDashboard() {
                       {formatCurrency(parsedProposalData.valorSolicitado || parsedProposalData.totalGeral || 0)}
                     </p>
                   </div>
+                  {parsedProposalData.dadosProponente?.tituloEleitoral && (
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Título Eleitoral:</span>
+                      <p className="font-mono font-semibold text-foreground">
+                        {parsedProposalData.dadosProponente.tituloEleitoral}
+                      </p>
+                    </div>
+                  )}
+                  {parsedProposalData.dadosProponente?.financiamento && (
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Financiamento (Prazo/Carência/Juros):</span>
+                      <p className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                        {parsedProposalData.dadosProponente.financiamento.prazoMeses}m / {parsedProposalData.dadosProponente.financiamento.carenciaMeses}m ({parsedProposalData.dadosProponente.financiamento.jurosAnual}% a.a.)
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Bloco de Suporte Forrageiro Detectado */}
@@ -3645,6 +3904,33 @@ export default function ProjetistaDashboard() {
                       {selectedProposal.dados_proponente?.cep ? ` (CEP: ${selectedProposal.dados_proponente.cep})` : ""}
                     </p>
                   </div>
+
+                  {selectedProposal.dados_proponente?.titulo_eleitoral && (
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Título Eleitoral:</span>
+                      <p className="font-mono font-semibold text-foreground">
+                        {selectedProposal.dados_proponente.titulo_eleitoral}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedProposal.dados_proponente?.beneficiario_politicas_publicas && (
+                    <div className="sm:col-span-2">
+                      <span className="text-muted-foreground block text-[10px]">Beneficiário de Políticas Públicas:</span>
+                      <p className="font-semibold text-foreground">
+                        {selectedProposal.dados_proponente.beneficiario_politicas_publicas}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedProposal.dados_proponente?.endereco_correspondencia && (
+                    <div className="sm:col-span-3 pt-1 border-t border-border/30">
+                      <span className="text-muted-foreground block text-[10px] font-bold">Endereço Residencial (Correspondência):</span>
+                      <p className="font-medium text-foreground bg-card p-2 rounded-xl border border-border/40 mt-0.5">
+                        {selectedProposal.dados_proponente.endereco_correspondencia}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -3792,6 +4078,82 @@ export default function ProjetistaDashboard() {
                       </p>
                     </div>
                   )}
+
+                  {/* Terras e Coberturas */}
+                  {selectedProposal.dados_proponente?.terras_coberturas && selectedProposal.dados_proponente.terras_coberturas.length > 0 && (
+                    <div className="sm:col-span-3 pt-2 border-t border-border/40 space-y-1.5">
+                      <span className="text-muted-foreground block text-[10px] font-bold uppercase tracking-wider">
+                        Terras e Coberturas Avaliadas:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {selectedProposal.dados_proponente.terras_coberturas.map((tc: any, idx: number) => (
+                          <div key={idx} className="p-2 rounded-xl bg-card border border-border/40 text-[11px] flex justify-between items-center">
+                            <span className="font-medium text-foreground">{tc.descricao}</span>
+                            <Badge variant="outline" className="font-mono text-[10px]">{tc.areaHa} ha</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Edificações / Benfeitorias */}
+                  {selectedProposal.dados_proponente?.edificacoes && selectedProposal.dados_proponente.edificacoes.length > 0 && (
+                    <div className="sm:col-span-3 pt-2 border-t border-border/40 space-y-1.5">
+                      <span className="text-muted-foreground block text-[10px] font-bold uppercase tracking-wider">
+                        Edificações & Benfeitorias Existentes:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {selectedProposal.dados_proponente.edificacoes.map((ed: any, idx: number) => (
+                          <div key={idx} className="p-2 rounded-xl bg-card border border-border/40 text-[11px] flex justify-between items-center">
+                            <span className="font-medium text-foreground truncate max-w-[200px]" title={ed.descricao}>
+                              {ed.descricao} ({ed.estado || "Regular"})
+                            </span>
+                            <span className="font-mono font-bold text-teal-700 dark:text-teal-300">
+                              {ed.valor ? formatCurrency(Number(ed.valor)) : "—"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Semoventes Existentes */}
+                  {selectedProposal.dados_proponente?.semoventes && selectedProposal.dados_proponente.semoventes.length > 0 && (
+                    <div className="sm:col-span-3 pt-2 border-t border-border/40 space-y-1.5">
+                      <span className="text-muted-foreground block text-[10px] font-bold uppercase tracking-wider">
+                        Semoventes Existentes no Imóvel:
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {selectedProposal.dados_proponente.semoventes.map((sm: any, idx: number) => (
+                          <div key={idx} className="p-2 rounded-xl bg-card border border-border/40 text-[11px] flex justify-between items-center">
+                            <span className="font-medium text-foreground">
+                              {sm.quantidade}x {sm.categoria} {sm.raca ? `(${sm.raca})` : ""}
+                            </span>
+                            <span className="font-mono font-bold text-teal-700 dark:text-teal-300">
+                              {sm.valor ? `${formatCurrency(Number(sm.valor))}/un` : "—"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Georreferenciamento */}
+                  {selectedProposal.dados_proponente?.georreferenciamento && selectedProposal.dados_proponente.georreferenciamento.length > 0 && (
+                    <div className="sm:col-span-3 pt-2 border-t border-border/40 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">
+                          Georreferenciamento de Glebas ({selectedProposal.dados_proponente.georreferenciamento.length} Vértices GPS):
+                        </span>
+                        <Badge variant="outline" className="text-[9px] font-mono border-emerald-500/40 text-emerald-800 dark:text-emerald-300">
+                          {selectedProposal.dados_proponente.georreferenciamento[0].inversao}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] font-mono text-muted-foreground">
+                        Coordenadas Vértice 1: Lat {selectedProposal.dados_proponente.georreferenciamento[0].latitude} | Long {selectedProposal.dados_proponente.georreferenciamento[0].longitude}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -3799,7 +4161,7 @@ export default function ProjetistaDashboard() {
               <div className="bg-teal-500/5 p-4 rounded-2xl border border-teal-500/20 space-y-3">
                 <span className="font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 text-[10px] flex items-center gap-1.5">
                   <DollarSign className="h-3.5 w-3.5" />
-                  4. Dados da Operação & Linha de Crédito
+                  4. Dados da Operação, Financiamento & Elaboração
                 </span>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -3853,6 +4215,41 @@ export default function ProjetistaDashboard() {
                       <p className="font-semibold text-foreground">
                         {selectedProposal.dados_proponente.objetivo}
                       </p>
+                    </div>
+                  )}
+
+                  {selectedProposal.dados_proponente?.financiamento && (
+                    <>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Prazo / Carência:</span>
+                        <p className="font-mono font-bold text-foreground">
+                          {selectedProposal.dados_proponente.financiamento.prazo_meses || selectedProposal.dados_proponente.financiamento.prazoMeses || 96} meses / Carência: {selectedProposal.dados_proponente.financiamento.carencia_meses || selectedProposal.dados_proponente.financiamento.carenciaMeses || 24}m
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Juros / Periodicidade:</span>
+                        <p className="font-mono font-bold text-teal-700 dark:text-teal-300">
+                          {selectedProposal.dados_proponente.financiamento.juros_anual || selectedProposal.dados_proponente.financiamento.jurosAnual || 6}% a.a. ({selectedProposal.dados_proponente.financiamento.periodicidade || "Anual"})
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {(selectedProposal.dados_proponente?.elaborador || selectedProposal.dados_proponente?.empresa_elaboradora) && (
+                    <div className="sm:col-span-3 pt-1 border-t border-teal-500/20 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Empresa Elaboradora:</span>
+                        <p className="font-semibold text-foreground">
+                          {selectedProposal.dados_proponente.empresa_elaboradora || selectedProposal.dados_proponente.elaborador}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Elaborador / Projetista Responsável:</span>
+                        <p className="font-semibold text-foreground">
+                          {selectedProposal.dados_proponente.elaborador || selectedProposal.projetista}
+                          {selectedProposal.dados_proponente.cpf_elaborador ? ` (CPF: ${formatCPF(selectedProposal.dados_proponente.cpf_elaborador)})` : ""}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
