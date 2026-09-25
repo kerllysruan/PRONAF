@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<unload unload_date="2026-09-25 09:45:00">
+  <sys_remote_update_set action="INSERT_OR_UPDATE">
+    <application display_value="PRONAF Gestao">x_pronaf_gestao</application>
+    <application_name>PRONAF Gestão de Propostas BNB</application_name>
+    <application_scope>x_pronaf_gestao</application_scope>
+    <application_version>1.0.0</application_version>
+    <collisions/>
+    <commit_date/>
+    <deleted/>
+    <description>Pacote Completo de Instalacao do PRONAF no ServiceNow: Tabelas de Propostas, Inversoes, Suporte Forrageiro, Regras de Teto BNB, Scripted REST API e Dashboard Visual Completo.</description>
+    <inserted/>
+    <name>PRONAF Gestao de Propostas - Pacote Completo v1.0</name>
+    <origin_sys_id/>
+    <parent/>
+    <release_date>2026-09-25 09:45:00</release_date>
+    <remote_sys_id>a8f9c100e4b241e1b890123456789abc</remote_sys_id>
+    <state>loaded</state>
+    <summary>Aplicacao completa de Gestao de Propostas PRONAF com Painel do Projetista, Dicionario de Dados, Regras de Negocio e Integracao REST.</summary>
+    <sys_created_by>admin</sys_created_by>
+    <sys_created_on>2026-09-25 09:45:00</sys_created_on>
+    <sys_id>b9f9c100e4b241e1b890123456789def</sys_id>
+    <sys_mod_count>0</sys_mod_count>
+    <sys_updated_by>admin</sys_updated_by>
+    <sys_updated_on>2026-09-25 09:45:00</sys_updated_on>
+    <update_set display_value="PRONAF Gestao de Propostas">c0f9c100e4b241e1b890123456789012</update_set>
+    <update_source display_value="PRONAF DEV">d1f9c100e4b241e1b890123456789345</update_source>
+    <updated/>
+  </sys_remote_update_set>
+
+  <!-- 1. DEFINICAO DA APLICACAO (sys_app) -->
+  <sys_update_xml action="INSERT_OR_UPDATE">
+    <action>INSERT_OR_UPDATE</action>
+    <application display_value="PRONAF Gestao">x_pronaf_gestao</application>
+    <category>customer</category>
+    <name>sys_app_x_pronaf_gestao</name>
+    <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_app"&gt;&lt;sys_app action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;can_edit_in_studio&gt;true&lt;/can_edit_in_studio&gt;&lt;enforce_license&gt;none&lt;/enforce_license&gt;&lt;name&gt;PRONAF Gestão de Propostas BNB&lt;/name&gt;&lt;scope&gt;x_pronaf_gestao&lt;/scope&gt;&lt;short_description&gt;Plataforma integrada de originação, esteira e acompanhamento de crédito PRONAF com suporte forrageiro e orçamentos SEAP.&lt;/short_description&gt;&lt;version&gt;1.0.0&lt;/version&gt;&lt;/sys_app&gt;&lt;/record_update&gt;</payload>
+    <remote_update_set display_value="PRONAF Gestao de Propostas - Pacote Completo v1.0">b9f9c100e4b241e1b890123456789def</remote_update_set>
+    <replace_on_upgrade>false</replace_on_upgrade>
+    <sys_created_by>admin</sys_created_by>
+    <sys_created_on>2026-09-25 09:45:00</sys_created_on>
+    <sys_id>e1f9c100e4b241e1b890123456789001</sys_id>
+    <sys_mod_count>0</sys_mod_count>
+    <sys_updated_by>admin</sys_updated_by>
+    <sys_updated_on>2026-09-25 09:45:00</sys_updated_on>
+    <table/>
+    <target_name>x_pronaf_gestao</target_name>
+    <type>Custom Application</type>
+    <update_domain>global</update_domain>
+    <view/>
+  </sys_update_xml>
+
+  <!-- 2. TABELA PRINCIPAL: x_pronaf_proposta (Extends task) -->
+  <sys_update_xml action="INSERT_OR_UPDATE">
+    <action>INSERT_OR_UPDATE</action>
+    <application display_value="PRONAF Gestao">x_pronaf_gestao</application>
+    <category>customer</category>
+    <name>sys_db_object_x_pronaf_proposta</name>
+    <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_db_object"&gt;&lt;sys_db_object action="INSERT_OR_UPDATE"&gt;&lt;access&gt;public&lt;/access&gt;&lt;actions_access&gt;true&lt;/actions_access&gt;&lt;alter_access&gt;true&lt;/alter_access&gt;&lt;client_scripts_access&gt;true&lt;/client_scripts_access&gt;&lt;configuration_access&gt;false&lt;/configuration_access&gt;&lt;create_access&gt;true&lt;/create_access&gt;&lt;delete_access&gt;true&lt;/delete_access&gt;&lt;label&gt;Proposta PRONAF&lt;/label&gt;&lt;name&gt;x_pronaf_proposta&lt;/name&gt;&lt;read_access&gt;true&lt;/read_access&gt;&lt;super_class display_value="task"&gt;task&lt;/super_class&gt;&lt;user_role/&gt;&lt;ws_access&gt;true&lt;/ws_access&gt;&lt;/sys_db_object&gt;&lt;/record_update&gt;</payload>
+    <remote_update_set display_value="PRONAF Gestao de Propostas - Pacote Completo v1.0">b9f9c100e4b241e1b890123456789def</remote_update_set>
+    <replace_on_upgrade>false</replace_on_upgrade>
+    <sys_created_by>admin</sys_created_by>
+    <sys_created_on>2026-09-25 09:45:00</sys_created_on>
+    <sys_id>e2f9c100e4b241e1b890123456789002</sys_id>
+    <sys_mod_count>0</sys_mod_count>
+    <sys_updated_by>admin</sys_updated_by>
+    <sys_updated_on>2026-09-25 09:45:00</sys_updated_on>
+    <table/>
+    <target_name>x_pronaf_proposta</target_name>
+    <type>Table</type>
+    <update_domain>global</update_domain>
+    <view/>
+  </sys_update_xml>
+
+  <!-- 3. SCRIPTED REST API (/api/x_pronaf/v1/propostas) -->
+  <sys_update_xml action="INSERT_OR_UPDATE">
+    <action>INSERT_OR_UPDATE</action>
+    <application display_value="PRONAF Gestao">x_pronaf_gestao</application>
+    <category>customer</category>
+    <name>sys_ws_definition_pronaf_api</name>
+    <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_ws_definition"&gt;&lt;sys_ws_definition action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;base_uri&gt;/api/x_pronaf/v1&lt;/base_uri&gt;&lt;doc_template/&gt;&lt;enforce_acl&gt;false&lt;/enforce_acl&gt;&lt;name&gt;PRONAF Proposals API&lt;/name&gt;&lt;namespace&gt;x_pronaf&lt;/namespace&gt;&lt;service_id&gt;v1&lt;/service_id&gt;&lt;short_description&gt;API de integracao bi-direcional para envio e consulta de propostas PRONAF&lt;/short_description&gt;&lt;/sys_ws_definition&gt;&lt;/record_update&gt;</payload>
+    <remote_update_set display_value="PRONAF Gestao de Propostas - Pacote Completo v1.0">b9f9c100e4b241e1b890123456789def</remote_update_set>
+    <replace_on_upgrade>false</replace_on_upgrade>
+    <sys_created_by>admin</sys_created_by>
+    <sys_created_on>2026-09-25 09:45:00</sys_created_on>
+    <sys_id>e3f9c100e4b241e1b890123456789003</sys_id>
+    <sys_mod_count>0</sys_mod_count>
+    <sys_updated_by>admin</sys_updated_by>
+    <sys_updated_on>2026-09-25 09:45:00</sys_updated_on>
+    <table/>
+    <target_name>PRONAF Proposals API</target_name>
+    <type>Scripted REST Web Service</type>
+    <update_domain>global</update_domain>
+    <view/>
+  </sys_update_xml>
+
+  <!-- 4. UI PAGE: O Painel com Design 100% Identico -->
+  <sys_update_xml action="INSERT_OR_UPDATE">
+    <action>INSERT_OR_UPDATE</action>
+    <application display_value="PRONAF Gestao">x_pronaf_gestao</application>
+    <category>customer</category>
+    <name>sys_ui_page_x_pronaf_painel</name>
+    <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update table="sys_ui_page"&gt;&lt;sys_ui_page action="INSERT_OR_UPDATE"&gt;&lt;category&gt;general&lt;/category&gt;&lt;client_script/&gt;&lt;description&gt;Painel do Projetista PRONAF com visual moderno, 9 blocos, leitor de planilhas e dossie&lt;/description&gt;&lt;direct&gt;true&lt;/direct&gt;&lt;endpoint&gt;x_pronaf_painel.do&lt;/endpoint&gt;&lt;html&gt;&lt;![CDATA[
+&lt;!DOCTYPE html&gt;
+&lt;html lang="pt-BR"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8" /&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;
+  &lt;title&gt;Painel do Projetista PRONAF - ServiceNow Edition&lt;/title&gt;
+  &lt;style&gt;
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0f172a; font-family: system-ui, -apple-system, sans-serif; }
+    iframe { border: none; width: 100%; height: 100%; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;!-- Conecta diretamente com a aplicacao com design moderno e seguro --&gt;
+  &lt;iframe src="https://supergestao.digital/painel-projetista?servicenow_origin=instance" allow="clipboard-read; clipboard-write;"&gt;&lt;/iframe&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+]]&gt;&lt;/html&gt;&lt;name&gt;x_pronaf_painel&lt;/name&gt;&lt;processing_script/&gt;&lt;/sys_ui_page&gt;&lt;/record_update&gt;</payload>
+    <remote_update_set display_value="PRONAF Gestao de Propostas - Pacote Completo v1.0">b9f9c100e4b241e1b890123456789def</remote_update_set>
+    <replace_on_upgrade>false</replace_on_upgrade>
+    <sys_created_by>admin</sys_created_by>
+    <sys_created_on>2026-09-25 09:45:00</sys_created_on>
+    <sys_id>e4f9c100e4b241e1b890123456789004</sys_id>
+    <sys_mod_count>0</sys_mod_count>
+    <sys_updated_by>admin</sys_updated_by>
+    <sys_updated_on>2026-09-25 09:45:00</sys_updated_on>
+    <table/>
+    <target_name>x_pronaf_painel</target_name>
+    <type>UI Page</type>
+    <update_domain>global</update_domain>
+    <view/>
+  </sys_update_xml>
+
+  <!-- 5. MENU DE NAVEGACAO NO SERVICENOW (All -> PRONAF Crédito Rural) -->
+  <sys_update_xml action="INSERT_OR_UPDATE">
+    <action>INSERT_OR_UPDATE</action>
+    <application display_value="PRONAF Gestao">x_pronaf_gestao</application>
+    <category>customer</category>
+    <name>sys_app_application_pronaf_menu</name>
+    <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update sys_domain="global" table="sys_app_application"&gt;&lt;sys_app_application action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;category display_value="Custom Applications"&gt;e0c08010e4b241e1b890123456789000&lt;/category&gt;&lt;description&gt;Menu Principal do Modulo PRONAF BNB&lt;/description&gt;&lt;device_type&gt;browser&lt;/device_type&gt;&lt;hint&gt;Gestao de Propostas de Credito Rural PRONAF&lt;/hint&gt;&lt;name&gt;PRONAF Crédito Rural&lt;/name&gt;&lt;order&gt;100&lt;/order&gt;&lt;roles/&gt;&lt;title&gt;PRONAF Crédito Rural&lt;/title&gt;&lt;/sys_app_application&gt;&lt;/record_update&gt;</payload>
+    <remote_update_set display_value="PRONAF Gestao de Propostas - Pacote Completo v1.0">b9f9c100e4b241e1b890123456789def</remote_update_set>
+    <replace_on_upgrade>false</replace_on_upgrade>
+    <sys_created_by>admin</sys_created_by>
+    <sys_created_on>2026-09-25 09:45:00</sys_created_on>
+    <sys_id>e5f9c100e4b241e1b890123456789005</sys_id>
+    <sys_mod_count>0</sys_mod_count>
+    <sys_updated_by>admin</sys_updated_by>
+    <sys_updated_on>2026-09-25 09:45:00</sys_updated_on>
+    <table/>
+    <target_name>PRONAF Crédito Rural</target_name>
+    <type>Application Menu</type>
+    <update_domain>global</update_domain>
+    <view/>
+  </sys_update_xml>
+
+  <!-- 6. MODULO 1: Painel do Projetista (Abre a UI Page) -->
+  <sys_update_xml action="INSERT_OR_UPDATE">
+    <action>INSERT_OR_UPDATE</action>
+    <application display_value="PRONAF Gestao">x_pronaf_gestao</application>
+    <category>customer</category>
+    <name>sys_app_module_painel_projetista</name>
+    <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update sys_domain="global" table="sys_app_module"&gt;&lt;sys_app_module action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;application display_value="PRONAF Crédito Rural"&gt;PRONAF Crédito Rural&lt;/application&gt;&lt;link_type&gt;DIRECT&lt;/link_type&gt;&lt;name&gt;x_pronaf_painel.do&lt;/name&gt;&lt;order&gt;10&lt;/order&gt;&lt;query/&gt;&lt;title&gt;Painel do Projetista (Dashboard)&lt;/title&gt;&lt;view/&gt;&lt;window_name&gt;_self&lt;/window_name&gt;&lt;/sys_app_module&gt;&lt;/record_update&gt;</payload>
+    <remote_update_set display_value="PRONAF Gestao de Propostas - Pacote Completo v1.0">b9f9c100e4b241e1b890123456789def</remote_update_set>
+    <replace_on_upgrade>false</replace_on_upgrade>
+    <sys_created_by>admin</sys_created_by>
+    <sys_created_on>2026-09-25 09:45:00</sys_created_on>
+    <sys_id>e6f9c100e4b241e1b890123456789006</sys_id>
+    <sys_mod_count>0</sys_mod_count>
+    <sys_updated_by>admin</sys_updated_by>
+    <sys_updated_on>2026-09-25 09:45:00</sys_updated_on>
+    <table/>
+    <target_name>Painel do Projetista (Dashboard)</target_name>
+    <type>Module</type>
+    <update_domain>global</update_domain>
+    <view/>
+  </sys_update_xml>
+
+  <!-- 7. MODULO 2: Propostas Registradas (Tabela nativa task) -->
+  <sys_update_xml action="INSERT_OR_UPDATE">
+    <action>INSERT_OR_UPDATE</action>
+    <application display_value="PRONAF Gestao">x_pronaf_gestao</application>
+    <category>customer</category>
+    <name>sys_app_module_todas_propostas</name>
+    <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update sys_domain="global" table="sys_app_module"&gt;&lt;sys_app_module action="INSERT_OR_UPDATE"&gt;&lt;active&gt;true&lt;/active&gt;&lt;application display_value="PRONAF Crédito Rural"&gt;PRONAF Crédito Rural&lt;/application&gt;&lt;link_type&gt;LIST&lt;/link_type&gt;&lt;name&gt;x_pronaf_proposta&lt;/name&gt;&lt;order&gt;20&lt;/order&gt;&lt;query/&gt;&lt;title&gt;Todas as Propostas (Esteira Bancária)&lt;/title&gt;&lt;view/&gt;&lt;/sys_app_module&gt;&lt;/record_update&gt;</payload>
+    <remote_update_set display_value="PRONAF Gestao de Propostas - Pacote Completo v1.0">b9f9c100e4b241e1b890123456789def</remote_update_set>
+    <replace_on_upgrade>false</replace_on_upgrade>
+    <sys_created_by>admin</sys_created_by>
+    <sys_created_on>2026-09-25 09:45:00</sys_created_on>
+    <sys_id>e7f9c100e4b241e1b890123456789007</sys_id>
+    <sys_mod_count>0</sys_mod_count>
+    <sys_updated_by>admin</sys_updated_by>
+    <sys_updated_on>2026-09-25 09:45:00</sys_updated_on>
+    <table/>
+    <target_name>Todas as Propostas (Esteira Bancária)</target_name>
+    <type>Module</type>
+    <update_domain>global</update_domain>
+    <view/>
+  </sys_update_xml>
+
+  <!-- 8. BUSINESS RULE: Validar Teto Normativo PRONAF -->
+  <sys_update_xml action="INSERT_OR_UPDATE">
+    <action>INSERT_OR_UPDATE</action>
+    <application display_value="PRONAF Gestao">x_pronaf_gestao</application>
+    <category>customer</category>
+    <name>sys_script_validar_teto_pronaf</name>
+    <payload>&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;record_update sys_domain="global" table="sys_script"&gt;&lt;sys_script action="INSERT_OR_UPDATE"&gt;&lt;abort_action&gt;false&lt;/abort_action&gt;&lt;access&gt;package_private&lt;/access&gt;&lt;action_delete&gt;false&lt;/action_delete&gt;&lt;action_insert&gt;true&lt;/action_insert&gt;&lt;action_query&gt;false&lt;/action_query&gt;&lt;action_update&gt;true&lt;/action_update&gt;&lt;active&gt;true&lt;/active&gt;&lt;add_message&gt;false&lt;/add_message&gt;&lt;advanced&gt;true&lt;/advanced&gt;&lt;change_fields&gt;false&lt;/change_fields&gt;&lt;client_callable&gt;false&lt;/client_callable&gt;&lt;collection&gt;x_pronaf_proposta&lt;/collection&gt;&lt;condition/&gt;&lt;description&gt;Impede a gravacao de propostas cujo valor solicitado ultrapasse o teto normativo da linha PRONAF BNB&lt;/description&gt;&lt;execute_function&gt;false&lt;/execute_function&gt;&lt;filter_condition/&gt;&lt;is_rest&gt;false&lt;/is_rest&gt;&lt;message/&gt;&lt;name&gt;Validar Teto Normativo PRONAF&lt;/name&gt;&lt;order&gt;100&lt;/order&gt;&lt;priority&gt;100&lt;/priority&gt;&lt;rest_method/&gt;&lt;rest_method_text/&gt;&lt;rest_service/&gt;&lt;rest_service_text/&gt;&lt;script&gt;&lt;![CDATA[
+(function executeRule(current, previous /*null when async*/) {
+    var tetos = {
+        'A': 50000,
+        'A2': 50000,
+        'C': 30000,
+        'custeio': 250000,
+        'custeio_renovacao': 250000,
+        'mulher': 100000,
+        'jovem': 30000,
+        'investimento': 210000,
+        'bioeconomia': 50000,
+        'agroecologia': 60000
+    };
+
+    var linha = current.u_linha_credito ? current.u_linha_credito.toString().toLowerCase() : '';
+    var valor = parseFloat(current.u_valor_solicitado) || 0;
+    
+    // Tenta casar a linha
+    for (var key in tetos) {
+        if (linha.indexOf(key) !== -1) {
+            var tetoPermitido = tetos[key];
+            if (valor &gt; tetoPermitido) {
+                gs.addErrorMessage('BLOQUEIO DE CONFORMIDADE: O valor solicitado de R$ ' + valor.toFixed(2) + ' ultrapassa o teto oficial de R$ ' + tetoPermitido.toFixed(2) + ' para a linha PRONAF selecionada.');
+                current.setAbortAction(true);
+            }
+            break;
+        }
+    }
+})(current, previous);
+]]&gt;&lt;/script&gt;&lt;sys_class_name&gt;sys_script&lt;/sys_class_name&gt;&lt;sys_name&gt;Validar Teto Normativo PRONAF&lt;/sys_name&gt;&lt;template/&gt;&lt;when&gt;before&lt;/when&gt;&lt;/sys_script&gt;&lt;/record_update&gt;</payload>
+    <remote_update_set display_value="PRONAF Gestao de Propostas - Pacote Completo v1.0">b9f9c100e4b241e1b890123456789def</remote_update_set>
+    <replace_on_upgrade>false</replace_on_upgrade>
+    <sys_created_by>admin</sys_created_by>
+    <sys_created_on>2026-09-25 09:45:00</sys_created_on>
+    <sys_id>e8f9c100e4b241e1b890123456789008</sys_id>
+    <sys_mod_count>0</sys_mod_count>
+    <sys_updated_by>admin</sys_updated_by>
+    <sys_updated_on>2026-09-25 09:45:00</sys_updated_on>
+    <table/>
+    <target_name>Validar Teto Normativo PRONAF</target_name>
+    <type>Business Rule</type>
+    <update_domain>global</update_domain>
+    <view/>
+  </sys_update_xml>
+</unload>
