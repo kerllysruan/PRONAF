@@ -83,8 +83,12 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useInversoesReferencia } from "@/hooks/useInversoesReferencia";
 import { InversaoCombobox } from "@/components/inversoes/InversaoCombobox";
-import { InversaoReferencia } from "@/types/inversoes";
-import type { ExcelProposalParsed, DadosProponenteData, SuporteForrageiroData } from "@/utils/excelInversoesReader";
+import {
+  parseExcelProposalFull,
+  type ExcelProposalParsed,
+  type DadosProponenteData,
+  type SuporteForrageiroData,
+} from "@/utils/excelInversoesReader";
 
 // ── Linhas PRONAF Oficiais com Tetos Normativos ─────────────────────────────
 export const PRONAF_LINES = [
@@ -587,7 +591,6 @@ export default function ProjetistaDashboard() {
 
     setIsProcessingFile(true);
     try {
-      const { parseExcelProposalFull } = await import("@/utils/excelInversoesReader");
       const result = await parseExcelProposalFull(importFile, {
         customPassword: importPassword.trim() || undefined,
         findReferencia: (nome: string) => {
@@ -621,6 +624,18 @@ export default function ProjetistaDashboard() {
       });
     } catch (err: any) {
       console.error("Erro ao processar planilha:", err);
+      if (
+        err?.message?.includes("dynamically imported module") ||
+        err?.message?.includes("Failed to fetch") ||
+        err?.name === "ChunkLoadError"
+      ) {
+        toast({
+          title: "Atualização Detectada",
+          description: "O sistema foi atualizado no servidor. Recarregando a página...",
+        });
+        setTimeout(() => window.location.reload(), 1200);
+        return;
+      }
       toast({
         title: "Erro no processamento",
         description: err.message || "Falha ao processar o arquivo Excel.",

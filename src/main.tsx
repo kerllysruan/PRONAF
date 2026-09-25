@@ -8,6 +8,13 @@ if (typeof globalThis !== "undefined") {
   (globalThis as any).Buffer = Buffer;
   (globalThis as any).global = globalThis;
 }
+// Auto-reload on deployment chunk update errors (stale hash recovery)
+if (typeof window !== "undefined") {
+  window.addEventListener("vite:preloadError", (event) => {
+    console.warn("Vite preload error: chunk desatualizado pós-deploy. Recarregando página...", event);
+    window.location.reload();
+  });
+}
 
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
