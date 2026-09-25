@@ -638,6 +638,7 @@ export function extractDadosProponente(
     // Endereço / Localização do Proponente (Linha 12)
     if (r11[34]) dados.tipoLogradouro = String(r11[34]).trim();
     if (r11[35]) dados.endereco = String(r11[35]).trim().toUpperCase();
+    if (r11[36]) dados.numeroEndereco = String(r11[36]).trim();
     if (r11[37]) dados.complemento = String(r11[37]).trim();
     if (r11[38]) dados.bairro = String(r11[38]).trim().toUpperCase();
     if (r11[39]) dados.cep = String(r11[39]).trim();
@@ -657,6 +658,21 @@ export function extractDadosProponente(
     const numTel = r11[42] ? String(r11[42]).replace(/\D/g, "") : "";
     if (numTel) {
       dados.telefone = ddd ? `(${ddd}) ${numTel}` : numTel;
+    }
+
+    // Endereço Residencial (Correspondência) se diferente (Linha 12)
+    if (r11[44]) {
+      const partsCorr: string[] = [];
+      if (r11[43] || r11[44]) {
+        partsCorr.push(`${r11[43] ? String(r11[43]).trim() + " " : ""}${String(r11[44]).trim()}`.trim());
+      }
+      if (r11[45]) partsCorr.push(`Nº ${String(r11[45]).trim()}`);
+      if (r11[46]) partsCorr.push(String(r11[46]).trim());
+      if (r11[47]) partsCorr.push(String(r11[47]).trim());
+      if (r11[48]) partsCorr.push(`CEP ${String(r11[48]).trim()}`);
+      if (r11[49]) partsCorr.push(String(r11[49]).trim());
+      if (r11[50]) partsCorr.push(`Tel: ${String(r11[50]).trim()}`);
+      if (partsCorr.length > 0) dados.enderecoCorrespondencia = partsCorr.join(", ");
     }
 
     // Posse & Roteiro de Acesso (Linha 12)
@@ -686,6 +702,9 @@ export function extractDadosProponente(
       if (munParts[1] && !dados.uf) dados.uf = munParts[1].trim().toUpperCase();
     }
     if (r21[6]) dados.areaTotalHa = parseHectares(r21[6]);
+    if (r21[7]) dados.realizaInversao = String(r21[7]).trim();
+    if (r21[8]) dados.compoeGarantia = String(r21[8]).trim();
+    if (r21[9]) dados.valorImovel = parseMoney(r21[9]);
     if (r21[10]) dados.comentariosSolosAguada = String(r21[10]).trim();
     if (r21[55]) dados.nirf = String(r21[55]).trim();
     if (r21[57]) dados.sncr = String(r21[57]).trim();
@@ -698,12 +717,22 @@ export function extractDadosProponente(
     }
 
     // Coberturas, Reserva e Pastagens (Linhas 21 a 55)
+    dados.terrasCoberturas = [];
     for (let r = 21; r < Math.min(55, rowsBdPRONAF_C.length); r++) {
       const row = rowsBdPRONAF_C[r];
       if (!row) continue;
       const descCultura = row[13] ? String(row[13]).trim() : "";
       const areaCultura = parseHectares(row[14]);
       const normCultura = normalizeText(descCultura);
+
+      if (descCultura && areaCultura > 0) {
+        dados.terrasCoberturas.push({
+          descricao: descCultura,
+          areaHa: areaCultura,
+          idadeMeses: row[15] ? String(row[15]).trim() : undefined,
+          valorUnitario: row[16] ? parseMoney(row[16]) : undefined,
+        });
+      }
 
       if (normCultura.includes("RESERVA") || normCultura.includes("FLORESTAL") || normCultura.includes("PRESERV")) {
         if (areaCultura > 0) dados.areaReservaHa = areaCultura;
@@ -715,6 +744,43 @@ export function extractDadosProponente(
         dados.areaExploradaHa = (dados.areaExploradaHa || 0) + areaCultura;
       }
     }
+    if (dados.terrasCoberturas.length === 0) delete (dados as any).terrasCoberturas;
+
+    // Edificações (Linhas 55 a 75)
+    dados.edificacoes = [];
+    for (let r = 55; r < Math.min(75, rowsBdPRONAF_C.length); r++) {
+      const row = rowsBdPRONAF_C[r];
+      if (!row) continue;
+      const descEd = row[13] || row[14];
+      if (descEd && String(descEd).trim().length > 2) {
+        dados.edificacoes.push({
+          descricao: String(descEd).trim(),
+          idade: row[15] ? String(row[15]).trim() : undefined,
+          valor: row[16] ? parseMoney(row[16]) : undefined,
+          estado: row[17] ? String(row[17]).trim() : "Regular",
+          depreciacao: row[18] ? String(row[18]).trim() : undefined,
+        });
+      }
+    }
+    if (dados.edificacoes.length === 0) delete (dados as any).edificacoes;
+
+    // Semoventes (Linhas 75 a 115)
+    dados.semoventes = [];
+    for (let r = 75; r < Math.min(115, rowsBdPRONAF_C.length); r++) {
+      const row = rowsBdPRONAF_C[r];
+      if (!row) continue;
+      const cat = row[13] || row[14];
+      const qtd = parseInt(row[15] || row[16] || "0", 10);
+      if (cat && qtd > 0) {
+        dados.semoventes.push({
+          categoria: String(cat).trim(),
+          quantidade: qtd,
+          raca: row[17] ? String(row[17]).trim() : undefined,
+          valor: row[18] ? parseMoney(row[18]) : undefined,
+        });
+      }
+    }
+    if (dados.semoventes.length === 0) delete (dados as any).semoventes;
 
     // Operação e Parecer Técnico (Linha 122)
     if (r121[5]) dados.linhaCredito = String(r121[5]).trim();
@@ -726,7 +792,27 @@ export function extractDadosProponente(
       dados.cpfElaborador = cleanElab.length === 10 ? cleanElab.padStart(11, "0") : (cleanElab.length === 11 ? cleanElab : String(r121[14]).trim());
     }
     if (r121[15]) dados.objetivo = String(r121[15]).trim();
-    if (r121[55]) dados.parecerTecnico = String(r121[55]).trim();
+    if (r121[41] && !dados.roteiroAcesso) dados.roteiroAcesso = String(r121[41]).trim();
+    if (r121[42] || r121[55]) dados.parecerTecnico = String(r121[42] || r121[55]).trim();
+
+    // Membro Familiar / Avalista (Linha 122)
+    if (r121[29] && String(r121[29]).trim()) {
+      const cleanCpfMembro = String(r121[30] || "").replace(/\D/g, "");
+      dados.membrosFamiliares = [{
+        nome: String(r121[29]).trim().toUpperCase(),
+        cpf: cleanCpfMembro.length === 10 ? cleanCpfMembro.padStart(11, "0") : (cleanCpfMembro || undefined),
+      }];
+    }
+
+    // Financiamento (Prazo, Carência, Juros, Periodicidade)
+    if (!dados.financiamento) {
+      dados.financiamento = {
+        prazoMeses: parseInt(r121[50] || "96", 10) || 96,
+        carenciaMeses: parseInt(r121[51] || "24", 10) || 24,
+        jurosAnual: parseMoney(r121[52]) || 6,
+        periodicidade: r121[53] ? String(r121[53]).trim() : "Anual",
+      };
+    }
   }
 
   // 2. Varredura ampla em todas as abas
@@ -1000,7 +1086,131 @@ export function extractDadosProponente(
           const next = String(getNextVal()).trim();
           if (next) dados.conta = next;
         }
+
+        // Número do Endereço
+        if (!dados.numeroEndereco && (norm === "Nº" || norm === "NUMERO" || norm === "N." || norm === "NUMERO:" || norm === "NR")) {
+          const next = String(getNextVal()).trim();
+          if (next && next.length < 15) dados.numeroEndereco = next;
+        }
+
+        // Realiza Inversão / Compõe Garantia / Valor Avaliado
+        if (!dados.realizaInversao && (norm.includes("REALIZA INVERSAO") || norm.includes("FAZ INVERSAO"))) {
+          const next = String(getNextVal()).trim();
+          if (next) dados.realizaInversao = next;
+        }
+        if (!dados.compoeGarantia && (norm.includes("COMPOE GARANTIA") || norm.includes("GARANTIA"))) {
+          const next = String(getNextVal()).trim();
+          if (next) dados.compoeGarantia = next;
+        }
+        if (!dados.valorImovel && (norm.includes("VALOR AVALIADO") || norm.includes("VALOR DA TERRA") || norm.includes("VALOR DO IMOVEL"))) {
+          const next = getNextVal();
+          const parsed = parseMoney(next);
+          if (parsed > 0) dados.valorImovel = parsed;
+        }
       }
+    }
+  }
+
+  // 3. Varredura de abas especializadas do Workbook (PRONAF A2 / PRONAF-C)
+  for (const sheetName of wb.SheetNames) {
+    const normSheet = normalizeText(sheetName);
+    const sheet = wb.Sheets[sheetName];
+    const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (!rows || rows.length < 2) continue;
+
+    // A. Cronograma de Liberação
+    if (!dados.cronograma && (normSheet.includes("CRONOGRAM") || normSheet.includes("LIBERAC"))) {
+      const crono: Array<{ parcela: string; percentual: number; empreendimento: string; codEmpreendimento: string; finalidade: string; areaHa?: number }> = [];
+      let headRow = 0;
+      for (let r = 0; r < Math.min(10, rows.length); r++) {
+        const rowStr = (rows[r] || []).map(c => normalizeText(c)).join(" ");
+        if (rowStr.includes("PARC") || rowStr.includes("EMPREEND") || rowStr.includes("PERC")) {
+          headRow = r;
+          break;
+        }
+      }
+      for (let r = headRow + 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        const parcela = row[0] ? String(row[0]).trim() : "";
+        const percentual = parseMoney(row[4] || row[1] || row[2]);
+        const empreendimento = row[8] ? String(row[8]).trim() : (row[2] ? String(row[2]).trim() : (row[1] ? String(row[1]).trim() : ""));
+        const codEmpreendimento = row[10] ? String(row[10]).trim() : "";
+        const finalidade = row[14] ? String(row[14]).trim() : "";
+        const areaHa = parseHectares(row[15]);
+        if (parcela || empreendimento) {
+          crono.push({ parcela, percentual, empreendimento, codEmpreendimento, finalidade, areaHa: areaHa > 0 ? areaHa : undefined });
+        }
+      }
+      if (crono.length > 0) dados.cronograma = crono;
+    }
+
+    // B. Atividade Agrícola
+    if (!dados.atividadeAgricola && (normSheet.includes("AGRICOL") || normSheet.includes("CULTUR") || normSheet.includes("FORRAG"))) {
+      const agri: Array<{ descricao: string; headers: string[]; dados: string[] }> = [];
+      const headers = (rows[0] || []).map(c => String(c || "").trim());
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        const desc = row[0] ? String(row[0]).trim() : "";
+        if (desc && !normalizeText(desc).startsWith("TOTAL")) {
+          agri.push({ descricao: desc, headers, dados: row.map(c => String(c || "").trim()) });
+        }
+      }
+      if (agri.length > 0) dados.atividadeAgricola = agri;
+    }
+
+    // C. Atividade Pecuária
+    if (!dados.atividadePecuaria && (normSheet.includes("PECUAR") || normSheet.includes("REBANHO") || normSheet.includes("ZOOTEC"))) {
+      const pec: Array<{ headers: string[]; dados: string[] }> = [];
+      const headers = (rows[0] || []).map(c => String(c || "").trim());
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        if (row.some(c => c !== undefined && c !== null && String(c).trim() !== "")) {
+          pec.push({ headers, dados: row.map(c => String(c || "").trim()) });
+        }
+      }
+      if (pec.length > 0) dados.atividadePecuaria = pec;
+    }
+
+    // D. Outras Atividades
+    if (!dados.outrasAtividades && (normSheet.includes("OUTRAS") || normSheet.includes("RECEITA") || normSheet.includes("FLUXO"))) {
+      const outras: Array<{ atividade: string; setor: string; receitaAnual?: number; custoAnual?: number }> = [];
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        const ativ = row[0] ? String(row[0]).trim() : "";
+        const setor = row[1] ? String(row[1]).trim() : "";
+        const rec = parseMoney(row[2]);
+        const custo = parseMoney(row[3]);
+        if (ativ && !normalizeText(ativ).startsWith("TOTAL")) {
+          outras.push({ atividade: ativ, setor, receitaAnual: rec > 0 ? rec : undefined, custoAnual: custo > 0 ? custo : undefined });
+        }
+      }
+      if (outras.length > 0) dados.outrasAtividades = outras;
+    }
+
+    // E. Georreferenciamento / Glebas
+    if (!dados.georreferenciamento && (normSheet.includes("GEO") || normSheet.includes("GLEBA") || normSheet.includes("COORD"))) {
+      const geo: Array<{ inversao: string; codEmpreendimento?: string; latitude: string; longitude: string }> = [];
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        let lat = "";
+        let lng = "";
+        for (let c = 0; c < row.length; c++) {
+          const val = String(row[c] || "").trim();
+          if (/^-[0-9]{1,2}[.,][0-9]+/.test(val)) {
+            if (!lat) lat = val;
+            else if (!lng) lng = val;
+          }
+        }
+        if (lat && lng) {
+          geo.push({
+            inversao: row[1] ? String(row[1]).trim() : (row[0] ? String(row[0]).trim() : "Área Georreferenciada"),
+            codEmpreendimento: row[2] ? String(row[2]).trim() : undefined,
+            latitude: lat,
+            longitude: lng,
+          });
+        }
+      }
+      if (geo.length > 0) dados.georreferenciamento = geo;
     }
   }
 

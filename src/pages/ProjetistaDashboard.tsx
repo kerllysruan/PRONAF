@@ -3565,7 +3565,7 @@ export default function ProjetistaDashboard() {
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept=".xlsx,.xlsm,.xls,.csv,.pronaf_a,.pronaf_a2,.pronaf_c,.html,.htm"
+                accept=".xlsx,.xlsm,.xls,.csv,.pronaf,.a2,.pronaf_a,.pronaf_a2,.pronaf_c,.html,.htm,*"
                 onChange={(e) => {
                   const f = e.target.files?.[0] || null;
                   setImportFile(f);
@@ -3595,7 +3595,7 @@ export default function ProjetistaDashboard() {
                       Clique para selecionar ou arraste o arquivo aqui
                     </p>
                     <p className="text-[11px]">
-                      Formatos aceitos: <strong>.xlsx, .xlsm, .xls, .pronaf_c, .html, .htm, .csv</strong>
+                      Formatos aceitos: <strong>.PRONAF A2, .xlsx, .xls, .pronaf, .a2, .pronaf_c, .html, .csv</strong>
                     </p>
                   </div>
                 )}
