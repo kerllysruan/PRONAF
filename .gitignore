@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Planilhas do banco e arquivos gerados (nao subir)
+.env
+*.xlsm
+*.xls
+*.SEAP
