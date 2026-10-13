@@ -1,0 +1,815 @@
+aba,celula,linha,coluna,rotulo_linha,cabecalho_coluna,validacao_tipo,validacao_formula1,formula2_limite,mensagem_erro,valor_padrao
+Proposta,Q4,4,Q,Cliente :,,,,,,Sim
+Proposta,E5,5,E,Data da Proposta :,,date,37622,,Data inválida. Informe uma data válida no formato dd/mm/aaaa. Ex.: 03/12/2004,
+Proposta,F5,5,F,Data da Proposta :,,date,37622,,Data inválida. Informe uma data válida no formato dd/mm/aaaa. Ex.: 03/12/2004,
+Proposta,J5,5,J,Objetivo do Crédito:,,list,visaoOBJ,,Informação inválida. Escolha uma das opções listadas na célula,
+Proposta,K5,5,K,Objetivo do Crédito:,,list,visaoOBJ,,Informação inválida. Escolha uma das opções listadas na célula,
+Proposta,Q5,5,Q,Previsão do Contrato:,,,,,,Não
+Proposta,AK5,5,AK,Previsão do Contrato:,,,,,,Tabela para exportação SEAP
+Proposta,AM5,5,AM,Previsão do Contrato:,,,,,,Validando Prog
+Proposta,AN5,5,AN,Previsão do Contrato:,,,,,,Nome Programa
+Proposta,E6,6,E,Programa :,,list,visaoPRG,,,
+Proposta,F6,6,F,Programa :,,list,visaoPRG,,,
+Proposta,G6,6,G,Programa :,,list,visaoPRG,,,
+Proposta,H6,6,H,Programa :,Objetivo do Crédito:,list,visaoPRG,,,
+Proposta,I6,6,I,Programa :,,list,visaoPRG,,,
+Proposta,J6,6,J,Programa :,,list,visaoPRG,,,
+Proposta,Y6,6,Y,Programa :,,,,,,3
+Proposta,AK6,6,AK,1,,,,,,Programa
+Proposta,E7,7,E,Agência :,,list,visaoAGC,,,
+Proposta,F7,7,F,Agência :,,list,visaoAGC,,,
+Proposta,G7,7,G,Agência :,,list,visaoAGC,,,
+Proposta,H7,7,H,Agência :,Objetivo do Crédito:,list,visaoAGC,,,
+Proposta,I7,7,I,Agência :,,list,visaoAGC,,,
+Proposta,J7,7,J,Agência :,,list,visaoAGC,,,
+Proposta,AF7,7,AF,"FNE/PRONAF GRUPO ""C"" (369)",,,,,,1
+Proposta,AK7,7,AK,"FNE/PRONAF GRUPO ""C"" (369)",,,,,,Fonte Recursos
+Proposta,E8,8,E,Região :,,list,"""Semi-árido,Fora do Semi-árido""",,Opção inválida. Clique em &lt;Cancelar&gt; e selecione uma das opções listadas na célula.,
+Proposta,F8,8,F,Região :,,list,"""Semi-árido,Fora do Semi-árido""",,Opção inválida. Clique em &lt;Cancelar&gt; e selecione uma das opções listadas na célula.,
+Proposta,G8,8,G,Região :,,list,"""Semi-árido,Fora do Semi-árido""",,Opção inválida. Clique em &lt;Cancelar&gt; e selecione uma das opções listadas na célula.,
+Proposta,H8,8,H,Região :,Objetivo do Crédito:,list,"""Semi-árido,Fora do Semi-árido""",,Opção inválida. Clique em &lt;Cancelar&gt; e selecione uma das opções listadas na célula.,
+Proposta,I8,8,I,Região :,,list,"""Semi-árido,Fora do Semi-árido""",,Opção inválida. Clique em &lt;Cancelar&gt; e selecione uma das opções listadas na célula.,
+Proposta,J8,8,J,Região :,,list,"""Semi-árido,Fora do Semi-árido""",,Opção inválida. Clique em &lt;Cancelar&gt; e selecione uma das opções listadas na célula.,
+Proposta,Y8,8,Y,Região :,,,,,,Semi-árido
+Proposta,AF8,8,AF,"FNE/PRONAF GRUPO ""D"" - FNE (370)",,,,,,2
+Proposta,AK8,8,AK,"FNE/PRONAF GRUPO ""D"" - FNE (370)",,,,,,Agencia
+Proposta,E9,9,E,Atividade Principal :,,list,visaoATIV,,,
+Proposta,F9,9,F,Atividade Principal :,,list,visaoATIV,,,
+Proposta,G9,9,G,Atividade Principal :,,list,visaoATIV,,,
+Proposta,H9,9,H,Atividade Principal :,Objetivo do Crédito:,list,visaoATIV,,,
+Proposta,I9,9,I,Atividade Principal :,,list,visaoATIV,,,
+Proposta,J9,9,J,Atividade Principal :,,list,visaoATIV,,,
+Proposta,P9,9,P,Município com Decreto de Emergência?,,list,"""Sim,Não""",,,
+Proposta,Y9,9,Y,Município com Decreto de Emergência?,,,,,,Fora do Semiárido
+Proposta,AK9,9,AK,3,,,,,,Cod. Agencia
+Proposta,A10,10,A,,,,,,,Decreto
+Proposta,E10,10,E,Finalidade do Crédito:,,list,$Q$10,,,
+Proposta,F10,10,F,Finalidade do Crédito:,,list,$Q$10,,,
+Proposta,G10,10,G,Finalidade do Crédito:,,list,$Q$10,,,
+Proposta,H10,10,H,Finalidade do Crédito:,Objetivo do Crédito:,list,$Q$10,,,
+Proposta,I10,10,I,Finalidade do Crédito:,,list,$Q$10,,,
+Proposta,J10,10,J,Finalidade do Crédito:,,list,$Q$10,,,
+Proposta,K10,10,K,Finalidade do Crédito:,Município com Decreto de Emergência?,list,$Q$10,,,
+Proposta,L10,10,L,Finalidade do Crédito:,Previsão do Contrato:,list,$Q$10,,,
+Proposta,Q10,10,Q,Finalidade do Crédito:,,,,,,INVESTIMENTOS FIXOS
+Proposta,P12,12,P,Produção de Base Agroecológia/Orgânica?,,list,"""Sim,Não""",,,
+Proposta,Z12,12,Z,Produção de Base Agroecológia/Orgânica?,,,,,,1
+Proposta,AK12,12,AK,7,,,,,,Atividade
+Proposta,P13,13,P,Proposta com origem nos planos de ação territorial?,,list,"""Sim,Não""",,,
+Proposta,AK13,13,AK,Proposta com origem nos planos de ação territorial?,,,,,,Objetivo
+Proposta,AK14,14,AK,Elaborador:,,,,,,Finalidade
+Proposta,AL14,14,AL,Elaborador:,,,,,,2
+Proposta,AK15,15,AK,C.P.F :,,,,,,Aplicação de Recursos
+Proposta,A16,16,A,,,,,,,Verdadeiro
+Proposta,AK17,17,AK,Imóvel onde serão realizadas as inversões,,,,,,Prazo máximo
+Proposta,AO18,18,AO,Nº do Imóvel,,,,,,Controle de operação Rurais- Informações do imóvel 11
+Proposta,A19,19,A,,,,,,,Não
+Proposta,AM19,19,AM,,,,,,,Número de Outorga de Água da Propriedade
+Proposta,AN19,19,AN,,,,,,,Percentual de Preservação da Propriedade Acima do Limite Legal
+Proposta,AO19,19,AO,,,,,,,NIRF
+Proposta,AS19,19,AS,CAR,,,,,,Tipo Pessoa
+Proposta,AT19,19,AT,CAR,,,,,,Nome Proprietário
+Proposta,AU19,19,AU,CAR,,,,,,CPF/CNPJ
+Proposta,AV19,19,AV,CAR,,,,,,Critica Nome
+Proposta,AW19,19,AW,CAR,,,,,,Critica CPF/CNPJ
+Proposta,A22,22,A,,,,,,,Sim
+Proposta,H22,22,H,,Município-UF,list,visaoMUNI,,,
+Proposta,I22,22,I,,,list,visaoMUNI,,,
+Proposta,J22,22,J,,,list,visaoMUNI,,,
+Proposta,K22,22,K,,Proposta com origem nos planos de ação territorial?,list,visaoMUNI,,,
+Proposta,L22,22,L,,,list,visaoMUNI,,,
+Proposta,R26,26,R,Total,,,,,,Rec. Próprio
+Proposta,S26,26,S,Total,,,,,,Irrigação
+Proposta,AA26,26,AA,Total,,,,,,Unidade
+Proposta,AB26,26,AB,Total,,,,,,PCRECPROPR.
+Proposta,AC26,26,AC,Total,,,,,,PCRECTERC.
+Proposta,AE26,26,AE,Total,,,,,,Cd_uso
+Proposta,AF26,26,AF,Total,,,,,,Cd_gar_evolutiva
+Proposta,AG26,26,AG,Total,,,,,,idx_taxa
+Proposta,AH26,26,AH,Total,,,,,,tp_uso
+Proposta,AI26,26,AI,Total,,,,,,valor
+Proposta,A27,27,A,,,,,,,Não
+Proposta,D27,27,D,1,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E27,27,E,1,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F27,27,F,1,Quant.,decimal,0,,Valor inválido,
+Proposta,G27,27,G,1,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H27,27,H,1,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I27,27,I,1,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J27,27,J,1,Unitário,decimal,0,,Valor inválido,
+Proposta,L27,27,L,1,Unitário,decimal,J27,,Valor inválido,
+Proposta,W27,27,W,1,,,,,,0
+Proposta,AG27,27,AG,1,,,,,,0
+Proposta,D28,28,D,2,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E28,28,E,2,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F28,28,F,2,Quant.,decimal,0,,Valor inválido,
+Proposta,G28,28,G,2,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H28,28,H,2,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I28,28,I,2,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J28,28,J,2,Unitário,decimal,0,,Valor inválido,
+Proposta,K28,28,K,2,,decimal,0,,Valor inválido,
+Proposta,L28,28,L,2,Unitário,decimal,J27,,Valor inválido,
+Proposta,M28,28,M,2,Região,decimal,J27,,Valor inválido,
+Proposta,W28,28,W,2,,,,,,0
+Proposta,AG28,28,AG,2,,,,,,0
+Proposta,D29,29,D,3,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E29,29,E,3,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F29,29,F,3,Quant.,decimal,0,,Valor inválido,
+Proposta,G29,29,G,3,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H29,29,H,3,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I29,29,I,3,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J29,29,J,3,Unitário,decimal,0,,Valor inválido,
+Proposta,K29,29,K,3,,decimal,0,,Valor inválido,
+Proposta,L29,29,L,3,Unitário,decimal,J27,,Valor inválido,
+Proposta,M29,29,M,3,Região,decimal,J27,,Valor inválido,
+Proposta,W29,29,W,3,,,,,,0
+Proposta,AG29,29,AG,3,,,,,,0
+Proposta,D30,30,D,4,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E30,30,E,4,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F30,30,F,4,Quant.,decimal,0,,Valor inválido,
+Proposta,G30,30,G,4,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H30,30,H,4,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I30,30,I,4,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J30,30,J,4,Unitário,decimal,0,,Valor inválido,
+Proposta,L30,30,L,4,Unitário,decimal,J27,,Valor inválido,
+Proposta,M30,30,M,4,Região,decimal,J27,,Valor inválido,
+Proposta,W30,30,W,4,,,,,,0
+Proposta,AG30,30,AG,4,,,,,,0
+Proposta,D31,31,D,5,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E31,31,E,5,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F31,31,F,5,Quant.,decimal,0,,Valor inválido,
+Proposta,G31,31,G,5,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H31,31,H,5,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I31,31,I,5,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J31,31,J,5,Unitário,decimal,0,,Valor inválido,
+Proposta,L31,31,L,5,Unitário,decimal,J27,,Valor inválido,
+Proposta,M31,31,M,5,Região,decimal,J27,,Valor inválido,
+Proposta,W31,31,W,5,,,,,,0
+Proposta,AG31,31,AG,5,,,,,,0
+Proposta,D32,32,D,6,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E32,32,E,6,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F32,32,F,6,Quant.,decimal,0,,Valor inválido,
+Proposta,G32,32,G,6,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H32,32,H,6,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I32,32,I,6,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J32,32,J,6,Unitário,decimal,0,,Valor inválido,
+Proposta,K32,32,K,6,,decimal,0,,Valor inválido,
+Proposta,L32,32,L,6,Unitário,decimal,J27,,Valor inválido,
+Proposta,M32,32,M,6,,decimal,J27,,Valor inválido,
+Proposta,W32,32,W,6,,,,,,0
+Proposta,AG32,32,AG,6,,,,,,0
+Proposta,D33,33,D,7,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E33,33,E,7,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F33,33,F,7,Quant.,decimal,0,,Valor inválido,
+Proposta,G33,33,G,7,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H33,33,H,7,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I33,33,I,7,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J33,33,J,7,Unitário,decimal,0,,Valor inválido,
+Proposta,K33,33,K,7,,decimal,0,,Valor inválido,
+Proposta,L33,33,L,7,Unitário,decimal,J27,,Valor inválido,
+Proposta,M33,33,M,7,,decimal,J27,,Valor inválido,
+Proposta,W33,33,W,7,,,,,,0
+Proposta,AG33,33,AG,7,,,,,,0
+Proposta,D34,34,D,8,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E34,34,E,8,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F34,34,F,8,Quant.,decimal,0,,Valor inválido,
+Proposta,G34,34,G,8,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H34,34,H,8,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I34,34,I,8,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J34,34,J,8,Unitário,decimal,0,,Valor inválido,
+Proposta,K34,34,K,8,,decimal,0,,Valor inválido,
+Proposta,L34,34,L,8,Unitário,decimal,J27,,Valor inválido,
+Proposta,M34,34,M,8,,decimal,J27,,Valor inválido,
+Proposta,W34,34,W,8,,,,,,0
+Proposta,AG34,34,AG,8,,,,,,0
+Proposta,D35,35,D,9,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E35,35,E,9,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F35,35,F,9,Quant.,decimal,0,,Valor inválido,
+Proposta,G35,35,G,9,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H35,35,H,9,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I35,35,I,9,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J35,35,J,9,Unitário,decimal,0,,Valor inválido,
+Proposta,K35,35,K,9,,decimal,0,,Valor inválido,
+Proposta,L35,35,L,9,Unitário,decimal,J27,,Valor inválido,
+Proposta,M35,35,M,9,,decimal,J27,,Valor inválido,
+Proposta,W35,35,W,9,,,,,,0
+Proposta,AG35,35,AG,9,,,,,,0
+Proposta,D36,36,D,10,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E36,36,E,10,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F36,36,F,10,Quant.,decimal,0,,Valor inválido,
+Proposta,G36,36,G,10,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H36,36,H,10,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I36,36,I,10,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J36,36,J,10,Unitário,decimal,0,,Valor inválido,
+Proposta,L36,36,L,10,Unitário,decimal,J27,,Valor inválido,
+Proposta,M36,36,M,10,,decimal,J27,,Valor inválido,
+Proposta,W36,36,W,10,,,,,,0
+Proposta,AG36,36,AG,10,,,,,,0
+Proposta,D37,37,D,11,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E37,37,E,11,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F37,37,F,11,Quant.,decimal,0,,Valor inválido,
+Proposta,G37,37,G,11,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H37,37,H,11,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I37,37,I,11,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J37,37,J,11,Unitário,decimal,0,,Valor inválido,
+Proposta,L37,37,L,11,Unitário,decimal,J27,,Valor inválido,
+Proposta,M37,37,M,11,,decimal,J27,,Valor inválido,
+Proposta,W37,37,W,11,,,,,,0
+Proposta,AG37,37,AG,11,,,,,,0
+Proposta,D38,38,D,12,Discriminação,textLength,70,,Máximo de 70 caracteres,
+Proposta,E38,38,E,12,Compõe Garantia?,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F38,38,F,12,Quant.,decimal,0,,Valor inválido,
+Proposta,G38,38,G,12,Unid.,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H38,38,H,12,Uso,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I38,38,I,12,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J38,38,J,12,Unitário,decimal,0,,Valor inválido,
+Proposta,K38,38,K,12,,decimal,0,,Valor inválido,
+Proposta,L38,38,L,12,Unitário,decimal,J27,,Valor inválido,
+Proposta,M38,38,M,12,,decimal,J27,,Valor inválido,
+Proposta,W38,38,W,12,,,,,,0
+Proposta,AG38,38,AG,12,,,,,,0
+Proposta,D39,39,D,13,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E39,39,E,13,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F39,39,F,13,,decimal,0,,Valor inválido,
+Proposta,G39,39,G,13,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H39,39,H,13,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I39,39,I,13,Imóvel,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J39,39,J,13,Unitário,decimal,0,,Valor inválido,
+Proposta,K39,39,K,13,,decimal,0,,Valor inválido,
+Proposta,L39,39,L,13,Unitário,decimal,J27,,Valor inválido,
+Proposta,M39,39,M,13,,decimal,J27,,Valor inválido,
+Proposta,W39,39,W,13,,,,,,0
+Proposta,AG39,39,AG,13,,,,,,0
+Proposta,D40,40,D,14,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E40,40,E,14,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F40,40,F,14,,decimal,0,,Valor inválido,
+Proposta,G40,40,G,14,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H40,40,H,14,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I40,40,I,14,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J40,40,J,14,,decimal,0,,Valor inválido,
+Proposta,K40,40,K,14,,decimal,0,,Valor inválido,
+Proposta,L40,40,L,14,,decimal,J27,,Valor inválido,
+Proposta,M40,40,M,14,,decimal,J27,,Valor inválido,
+Proposta,W40,40,W,14,,,,,,0
+Proposta,AG40,40,AG,14,,,,,,0
+Proposta,D41,41,D,15,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E41,41,E,15,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F41,41,F,15,,decimal,0,,Valor inválido,
+Proposta,G41,41,G,15,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H41,41,H,15,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I41,41,I,15,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J41,41,J,15,,decimal,0,,Valor inválido,
+Proposta,K41,41,K,15,,decimal,0,,Valor inválido,
+Proposta,L41,41,L,15,,decimal,J27,,Valor inválido,
+Proposta,M41,41,M,15,,decimal,J27,,Valor inválido,
+Proposta,W41,41,W,15,,,,,,0
+Proposta,AG41,41,AG,15,,,,,,0
+Proposta,D42,42,D,16,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E42,42,E,16,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F42,42,F,16,,decimal,0,,Valor inválido,
+Proposta,G42,42,G,16,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H42,42,H,16,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I42,42,I,16,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J42,42,J,16,,decimal,0,,Valor inválido,
+Proposta,K42,42,K,16,,decimal,0,,Valor inválido,
+Proposta,L42,42,L,16,,decimal,J27,,Valor inválido,
+Proposta,M42,42,M,16,,decimal,J27,,Valor inválido,
+Proposta,W42,42,W,16,,,,,,0
+Proposta,AG42,42,AG,16,,,,,,0
+Proposta,D43,43,D,17,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E43,43,E,17,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F43,43,F,17,,decimal,0,,Valor inválido,
+Proposta,G43,43,G,17,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H43,43,H,17,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I43,43,I,17,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J43,43,J,17,,decimal,0,,Valor inválido,
+Proposta,K43,43,K,17,,decimal,0,,Valor inválido,
+Proposta,L43,43,L,17,,decimal,J27,,Valor inválido,
+Proposta,M43,43,M,17,,decimal,J27,,Valor inválido,
+Proposta,W43,43,W,17,,,,,,0
+Proposta,AG43,43,AG,17,,,,,,0
+Proposta,D44,44,D,18,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E44,44,E,18,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F44,44,F,18,,decimal,0,,Valor inválido,
+Proposta,G44,44,G,18,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H44,44,H,18,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I44,44,I,18,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J44,44,J,18,,decimal,0,,Valor inválido,
+Proposta,K44,44,K,18,,decimal,0,,Valor inválido,
+Proposta,L44,44,L,18,,decimal,J27,,Valor inválido,
+Proposta,M44,44,M,18,,decimal,J27,,Valor inválido,
+Proposta,W44,44,W,18,,,,,,0
+Proposta,AG44,44,AG,18,,,,,,0
+Proposta,D45,45,D,19,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E45,45,E,19,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F45,45,F,19,,decimal,0,,Valor inválido,
+Proposta,G45,45,G,19,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H45,45,H,19,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I45,45,I,19,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J45,45,J,19,,decimal,0,,Valor inválido,
+Proposta,K45,45,K,19,,decimal,0,,Valor inválido,
+Proposta,L45,45,L,19,,decimal,J27,,Valor inválido,
+Proposta,M45,45,M,19,,decimal,J27,,Valor inválido,
+Proposta,W45,45,W,19,,,,,,0
+Proposta,AG45,45,AG,19,,,,,,0
+Proposta,D46,46,D,20,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E46,46,E,20,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F46,46,F,20,,decimal,0,,Valor inválido,
+Proposta,G46,46,G,20,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H46,46,H,20,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I46,46,I,20,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J46,46,J,20,,decimal,0,,Valor inválido,
+Proposta,K46,46,K,20,,decimal,0,,Valor inválido,
+Proposta,L46,46,L,20,,decimal,J27,,Valor inválido,
+Proposta,M46,46,M,20,,decimal,J27,,Valor inválido,
+Proposta,W46,46,W,20,,,,,,0
+Proposta,AG46,46,AG,20,,,,,,0
+Proposta,D47,47,D,21,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E47,47,E,21,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F47,47,F,21,,decimal,0,,Valor inválido,
+Proposta,G47,47,G,21,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H47,47,H,21,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I47,47,I,21,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J47,47,J,21,,decimal,0,,Valor inválido,
+Proposta,K47,47,K,21,,decimal,0,,Valor inválido,
+Proposta,L47,47,L,21,,decimal,J27,,Valor inválido,
+Proposta,M47,47,M,21,,decimal,J27,,Valor inválido,
+Proposta,W47,47,W,21,,,,,,0
+Proposta,AG47,47,AG,21,,,,,,0
+Proposta,D48,48,D,22,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E48,48,E,22,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F48,48,F,22,,decimal,0,,Valor inválido,
+Proposta,G48,48,G,22,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H48,48,H,22,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I48,48,I,22,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J48,48,J,22,,decimal,0,,Valor inválido,
+Proposta,K48,48,K,22,,decimal,0,,Valor inválido,
+Proposta,L48,48,L,22,,decimal,J27,,Valor inválido,
+Proposta,M48,48,M,22,,decimal,J27,,Valor inválido,
+Proposta,W48,48,W,22,,,,,,0
+Proposta,AG48,48,AG,22,,,,,,0
+Proposta,D49,49,D,23,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E49,49,E,23,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F49,49,F,23,,decimal,0,,Valor inválido,
+Proposta,G49,49,G,23,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H49,49,H,23,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I49,49,I,23,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J49,49,J,23,,decimal,0,,Valor inválido,
+Proposta,K49,49,K,23,,decimal,0,,Valor inválido,
+Proposta,L49,49,L,23,,decimal,J27,,Valor inválido,
+Proposta,M49,49,M,23,,decimal,J27,,Valor inválido,
+Proposta,W49,49,W,23,,,,,,0
+Proposta,AG49,49,AG,23,,,,,,0
+Proposta,D50,50,D,24,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E50,50,E,24,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F50,50,F,24,,decimal,0,,Valor inválido,
+Proposta,G50,50,G,24,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H50,50,H,24,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I50,50,I,24,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J50,50,J,24,,decimal,0,,Valor inválido,
+Proposta,K50,50,K,24,,decimal,0,,Valor inválido,
+Proposta,L50,50,L,24,,decimal,J27,,Valor inválido,
+Proposta,M50,50,M,24,,decimal,J27,,Valor inválido,
+Proposta,W50,50,W,24,,,,,,0
+Proposta,AG50,50,AG,24,,,,,,0
+Proposta,D51,51,D,25,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E51,51,E,25,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F51,51,F,25,,decimal,0,,Valor inválido,
+Proposta,G51,51,G,25,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H51,51,H,25,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I51,51,I,25,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J51,51,J,25,,decimal,0,,Valor inválido,
+Proposta,K51,51,K,25,,decimal,0,,Valor inválido,
+Proposta,L51,51,L,25,,decimal,J27,,Valor inválido,
+Proposta,M51,51,M,25,,decimal,J27,,Valor inválido,
+Proposta,W51,51,W,25,,,,,,0
+Proposta,AG51,51,AG,25,,,,,,0
+Proposta,D52,52,D,26,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E52,52,E,26,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F52,52,F,26,,decimal,0,,Valor inválido,
+Proposta,G52,52,G,26,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H52,52,H,26,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I52,52,I,26,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J52,52,J,26,,decimal,0,,Valor inválido,
+Proposta,K52,52,K,26,,decimal,0,,Valor inválido,
+Proposta,L52,52,L,26,,decimal,J27,,Valor inválido,
+Proposta,M52,52,M,26,,decimal,J27,,Valor inválido,
+Proposta,W52,52,W,26,,,,,,0
+Proposta,AG52,52,AG,26,,,,,,0
+Proposta,D53,53,D,27,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E53,53,E,27,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F53,53,F,27,,decimal,0,,Valor inválido,
+Proposta,G53,53,G,27,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H53,53,H,27,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I53,53,I,27,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J53,53,J,27,,decimal,0,,Valor inválido,
+Proposta,K53,53,K,27,,decimal,0,,Valor inválido,
+Proposta,L53,53,L,27,,decimal,J27,,Valor inválido,
+Proposta,M53,53,M,27,,decimal,J27,,Valor inválido,
+Proposta,W53,53,W,27,,,,,,0
+Proposta,AG53,53,AG,27,,,,,,0
+Proposta,D54,54,D,28,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E54,54,E,28,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F54,54,F,28,,decimal,0,,Valor inválido,
+Proposta,G54,54,G,28,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H54,54,H,28,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I54,54,I,28,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J54,54,J,28,,decimal,0,,Valor inválido,
+Proposta,K54,54,K,28,,decimal,0,,Valor inválido,
+Proposta,L54,54,L,28,,decimal,J27,,Valor inválido,
+Proposta,M54,54,M,28,,decimal,J27,,Valor inválido,
+Proposta,W54,54,W,28,,,,,,0
+Proposta,AG54,54,AG,28,,,,,,0
+Proposta,D55,55,D,29,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E55,55,E,29,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F55,55,F,29,,decimal,0,,Valor inválido,
+Proposta,G55,55,G,29,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H55,55,H,29,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I55,55,I,29,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J55,55,J,29,,decimal,0,,Valor inválido,
+Proposta,K55,55,K,29,,decimal,0,,Valor inválido,
+Proposta,L55,55,L,29,,decimal,J27,,Valor inválido,
+Proposta,M55,55,M,29,,decimal,J27,,Valor inválido,
+Proposta,W55,55,W,29,,,,,,0
+Proposta,AG55,55,AG,29,,,,,,0
+Proposta,D56,56,D,30,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E56,56,E,30,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F56,56,F,30,,decimal,0,,Valor inválido,
+Proposta,G56,56,G,30,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H56,56,H,30,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I56,56,I,30,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J56,56,J,30,,decimal,0,,Valor inválido,
+Proposta,K56,56,K,30,,decimal,0,,Valor inválido,
+Proposta,L56,56,L,30,,decimal,J27,,Valor inválido,
+Proposta,M56,56,M,30,,decimal,J27,,Valor inválido,
+Proposta,W56,56,W,30,,,,,,0
+Proposta,AG56,56,AG,30,,,,,,0
+Proposta,D57,57,D,31,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E57,57,E,31,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F57,57,F,31,,decimal,0,,Valor inválido,
+Proposta,G57,57,G,31,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H57,57,H,31,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I57,57,I,31,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J57,57,J,31,,decimal,0,,Valor inválido,
+Proposta,K57,57,K,31,,decimal,0,,Valor inválido,
+Proposta,L57,57,L,31,,decimal,J27,,Valor inválido,
+Proposta,M57,57,M,31,,decimal,J27,,Valor inválido,
+Proposta,W57,57,W,31,,,,,,0
+Proposta,AG57,57,AG,31,,,,,,0
+Proposta,D58,58,D,32,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E58,58,E,32,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F58,58,F,32,,decimal,0,,Valor inválido,
+Proposta,G58,58,G,32,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H58,58,H,32,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I58,58,I,32,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J58,58,J,32,,decimal,0,,Valor inválido,
+Proposta,K58,58,K,32,,decimal,0,,Valor inválido,
+Proposta,L58,58,L,32,,decimal,J27,,Valor inválido,
+Proposta,M58,58,M,32,,decimal,J27,,Valor inválido,
+Proposta,W58,58,W,32,,,,,,0
+Proposta,AG58,58,AG,32,,,,,,0
+Proposta,D59,59,D,33,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E59,59,E,33,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F59,59,F,33,,decimal,0,,Valor inválido,
+Proposta,G59,59,G,33,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H59,59,H,33,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I59,59,I,33,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J59,59,J,33,,decimal,0,,Valor inválido,
+Proposta,K59,59,K,33,,decimal,0,,Valor inválido,
+Proposta,L59,59,L,33,,decimal,J27,,Valor inválido,
+Proposta,M59,59,M,33,,decimal,J27,,Valor inválido,
+Proposta,W59,59,W,33,,,,,,0
+Proposta,AG59,59,AG,33,,,,,,0
+Proposta,D60,60,D,34,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E60,60,E,34,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F60,60,F,34,,decimal,0,,Valor inválido,
+Proposta,G60,60,G,34,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H60,60,H,34,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I60,60,I,34,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J60,60,J,34,,decimal,0,,Valor inválido,
+Proposta,K60,60,K,34,,decimal,0,,Valor inválido,
+Proposta,L60,60,L,34,,decimal,J27,,Valor inválido,
+Proposta,M60,60,M,34,,decimal,J27,,Valor inválido,
+Proposta,W60,60,W,34,,,,,,0
+Proposta,AG60,60,AG,34,,,,,,0
+Proposta,D61,61,D,35,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E61,61,E,35,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F61,61,F,35,,decimal,0,,Valor inválido,
+Proposta,G61,61,G,35,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H61,61,H,35,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I61,61,I,35,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J61,61,J,35,,decimal,0,,Valor inválido,
+Proposta,K61,61,K,35,,decimal,0,,Valor inválido,
+Proposta,L61,61,L,35,,decimal,J27,,Valor inválido,
+Proposta,M61,61,M,35,,decimal,J27,,Valor inválido,
+Proposta,W61,61,W,35,,,,,,0
+Proposta,AG61,61,AG,35,,,,,,0
+Proposta,D62,62,D,36,,textLength,70,,Máximo de 70 caracteres,
+Proposta,E62,62,E,36,,list,visaoSIM_NAO,,Máximo de 70 caracteres,
+Proposta,F62,62,F,36,,decimal,0,,Valor inválido,
+Proposta,G62,62,G,36,,list,visaoUND,,Clique em &lt;Cancelar&gt; e escolha uma das opções listadas na célula,
+Proposta,H62,62,H,36,,list,visaoUSO,,Clique em &lt;cancelar&gt; e escolha uma das opções listadas na célula.,
+Proposta,I62,62,I,36,,list,Imoveis_Inversao,,"Informe um nº de imóvel válido, conforme exibido acima",
+Proposta,J62,62,J,36,,decimal,0,,Valor inválido,
+Proposta,K62,62,K,36,,decimal,0,,Valor inválido,
+Proposta,L62,62,L,36,,decimal,J27,,Valor inválido,
+Proposta,M62,62,M,36,,decimal,J27,,Valor inválido,
+Proposta,W62,62,W,36,,,,,,0
+Proposta,AG62,62,AG,36,,,,,,0
+Proposta,AH63,63,AH,SUBTOTAL do Investimento .......................................................,,,,,,0
+Proposta,AI63,63,AI,SUBTOTAL do Investimento .......................................................,,,,,,0
+Proposta,J64,64,J,Custeio Agrícola vinculado ao investimento,,decimal,0,,,
+Proposta,K64,64,K,Custeio Agrícola vinculado ao investimento,,decimal,0,,,
+Proposta,L64,64,L,Custeio Agrícola vinculado ao investimento,,decimal,J64,,,
+Proposta,M64,64,M,Custeio Agrícola vinculado ao investimento,,decimal,J64,,,
+Proposta,W64,64,W,Custeio Agrícola vinculado ao investimento,,,,,,0
+Proposta,AE64,64,AE,Custeio Agrícola vinculado ao investimento,,,,,,17
+Proposta,AG64,64,AG,Custeio Agrícola vinculado ao investimento,,,,,,0
+Proposta,J65,65,J,Custeio Pecuário vinculado ao investimento,,decimal,0,,,
+Proposta,K65,65,K,Custeio Pecuário vinculado ao investimento,,decimal,0,,,
+Proposta,L65,65,L,Custeio Pecuário vinculado ao investimento,,decimal,J64,,,
+Proposta,M65,65,M,Custeio Pecuário vinculado ao investimento,,decimal,J64,,,
+Proposta,W65,65,W,Custeio Pecuário vinculado ao investimento,,,,,,0
+Proposta,AE65,65,AE,Custeio Pecuário vinculado ao investimento,,,,,,17
+Proposta,AG65,65,AG,Custeio Pecuário vinculado ao investimento,,,,,,0
+Proposta,AH66,66,AH,SUBTOTAL do Financiamento ......................................................,,,,,,0
+Proposta,AI66,66,AI,SUBTOTAL do Financiamento ......................................................,,,,,,0
+Proposta,AH67,67,AH,Investimento,,,,,,0
+Proposta,AI67,67,AI,Investimento,,,,,,0
+Proposta,AE68,68,AE,Total,,,,,,Cd_uso
+Proposta,AG68,68,AG,Total,,,,,,idx_taxa
+Proposta,AH68,68,AH,Total,,,,,,0
+Proposta,AI68,68,AI,Total,,,,,,0
+Proposta,D69,69,D,,SUBTOTAL do Financiamento ......................................................,,,,,Custo de Assessoria Empresarial e Técnica
+Proposta,H69,69,H,,,decimal,0,"IF(H71=1,2,IF(AL6=615,3300,0.02*O66))",Valor incompatível com o Programa de crédito,
+Proposta,I69,69,I,,,decimal,0,"IF(H71=1,2,IF(AL6=615,3300,0.02*O66))",Valor incompatível com o Programa de crédito,
+Proposta,L69,69,L,,Próprios,decimal,0,,,
+Proposta,M69,69,M,,,decimal,0,,,
+Proposta,Q69,69,Q,,,,,,,0
+Proposta,W69,69,W,,,,,,,0
+Proposta,AE69,69,AE,,,,,,,12
+Proposta,AH69,69,AH,,,,,,,3
+Proposta,A70,70,A,,,,,,,Sim
+Proposta,AG70,70,AG,0,,,,,,1
+Proposta,AI70,70,AI,0,,,,,,52795985004
+Proposta,D71,71,D,,Tx. Elaboração + Assistência Técnica (Ref.Itens de Irrigação),,,,,1
+Proposta,H71,71,H,,0,,,,,1
+Proposta,AG71,71,AG,,,,,,,0
+Proposta,G84,84,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J84,84,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M84,84,M,,,custom,T84=1,,Período inválido,
+Proposta,P84,84,P,,,custom,U84=1,,Período inválido.,
+Proposta,G85,85,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J85,85,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M85,85,M,,,custom,T84=1,,Período inválido,
+Proposta,P85,85,P,,,custom,U84=1,,Período inválido.,
+Proposta,G86,86,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J86,86,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M86,86,M,,,custom,T84=1,,Período inválido,
+Proposta,P86,86,P,,,custom,U84=1,,Período inválido.,
+Proposta,G87,87,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J87,87,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M87,87,M,,,custom,T84=1,,Período inválido,
+Proposta,P87,87,P,,,custom,U84=1,,Período inválido.,
+Proposta,G88,88,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J88,88,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M88,88,M,,,custom,T84=1,,Período inválido,
+Proposta,P88,88,P,,,custom,U84=1,,Período inválido.,
+Proposta,G89,89,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J89,89,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M89,89,M,,,custom,T84=1,,Período inválido,
+Proposta,P89,89,P,,,custom,U84=1,,Período inválido.,
+Proposta,G90,90,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J90,90,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M90,90,M,,,custom,T84=1,,Período inválido,
+Proposta,P90,90,P,,,custom,U84=1,,Período inválido.,
+Proposta,G91,91,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J91,91,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M91,91,M,,,custom,T84=1,,Período inválido,
+Proposta,P91,91,P,,,custom,U84=1,,Período inválido.,
+Proposta,G92,92,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J92,92,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M92,92,M,,,custom,T84=1,,Período inválido,
+Proposta,P92,92,P,,,custom,U84=1,,Período inválido.,
+Proposta,G93,93,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J93,93,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M93,93,M,,,custom,T84=1,,Período inválido,
+Proposta,P93,93,P,,,custom,U84=1,,Período inválido.,
+Proposta,G94,94,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J94,94,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M94,94,M,,,custom,T84=1,,Período inválido,
+Proposta,P94,94,P,,,custom,U84=1,,Período inválido.,
+Proposta,G95,95,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J95,95,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M95,95,M,,,custom,T84=1,,Período inválido,
+Proposta,P95,95,P,,,custom,U84=1,,Período inválido.,
+Proposta,G96,96,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J96,96,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M96,96,M,,,custom,T84=1,,Período inválido,
+Proposta,P96,96,P,,,custom,U84=1,,Período inválido.,
+Proposta,G97,97,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J97,97,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M97,97,M,,,custom,T84=1,,Período inválido,
+Proposta,P97,97,P,,,custom,U84=1,,Período inválido.,
+Proposta,G98,98,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J98,98,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M98,98,M,,,custom,T84=1,,Período inválido,
+Proposta,P98,98,P,,,custom,U84=1,,Período inválido.,
+Proposta,G99,99,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J99,99,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M99,99,M,,,custom,T84=1,,Período inválido,
+Proposta,P99,99,P,,,custom,U84=1,,Período inválido.,
+Proposta,G100,100,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J100,100,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M100,100,M,,,custom,T84=1,,Período inválido,
+Proposta,P100,100,P,,,custom,U84=1,,Período inválido.,
+Proposta,G101,101,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J101,101,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M101,101,M,,,custom,T84=1,,Período inválido,
+Proposta,P101,101,P,,,custom,U84=1,,Período inválido.,
+Proposta,G102,102,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J102,102,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M102,102,M,,,custom,T84=1,,Período inválido,
+Proposta,P102,102,P,,,custom,U84=1,,Período inválido.,
+Proposta,G103,103,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J103,103,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M103,103,M,,,custom,T84=1,,Período inválido,
+Proposta,P103,103,P,,,custom,U84=1,,Período inválido.,
+Proposta,G104,104,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J104,104,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M104,104,M,,,custom,T84=1,,Período inválido,
+Proposta,P104,104,P,,,custom,U84=1,,Período inválido.,
+Proposta,G105,105,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J105,105,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M105,105,M,,,custom,T84=1,,Período inválido,
+Proposta,P105,105,P,,,custom,U84=1,,Período inválido.,
+Proposta,G106,106,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J106,106,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M106,106,M,,,custom,T84=1,,Período inválido,
+Proposta,P106,106,P,,,custom,U84=1,,Período inválido.,
+Proposta,G107,107,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J107,107,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M107,107,M,,,custom,T84=1,,Período inválido,
+Proposta,P107,107,P,,,custom,U84=1,,Período inválido.,
+Proposta,G108,108,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J108,108,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M108,108,M,,,custom,T84=1,,Período inválido,
+Proposta,P108,108,P,,,custom,U84=1,,Período inválido.,
+Proposta,G109,109,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J109,109,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M109,109,M,,,custom,T84=1,,Período inválido,
+Proposta,P109,109,P,,,custom,U84=1,,Período inválido.,
+Proposta,G110,110,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J110,110,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M110,110,M,,,custom,T84=1,,Período inválido,
+Proposta,P110,110,P,,,custom,U84=1,,Período inválido.,
+Proposta,G111,111,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J111,111,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M111,111,M,,,custom,T84=1,,Período inválido,
+Proposta,P111,111,P,,,custom,U84=1,,Período inválido.,
+Proposta,G112,112,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J112,112,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M112,112,M,,,custom,T84=1,,Período inválido,
+Proposta,P112,112,P,,,custom,U84=1,,Período inválido.,
+Proposta,G113,113,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J113,113,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M113,113,M,,,custom,T84=1,,Período inválido,
+Proposta,P113,113,P,,,custom,U84=1,,Período inválido.,
+Proposta,G114,114,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J114,114,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M114,114,M,,,custom,T84=1,,Período inválido,
+Proposta,P114,114,P,,,custom,U84=1,,Período inválido.,
+Proposta,G115,115,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J115,115,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M115,115,M,,,custom,T84=1,,Período inválido,
+Proposta,P115,115,P,,,custom,U84=1,,Período inválido.,
+Proposta,G116,116,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J116,116,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M116,116,M,,,custom,T84=1,,Período inválido,
+Proposta,P116,116,P,,,custom,U84=1,,Período inválido.,
+Proposta,G117,117,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J117,117,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M117,117,M,,,custom,T84=1,,Período inválido,
+Proposta,P117,117,P,,,custom,U84=1,,Período inválido.,
+Proposta,G118,118,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J118,118,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M118,118,M,,,custom,T84=1,,Período inválido,
+Proposta,P118,118,P,,,custom,U84=1,,Período inválido.,
+Proposta,G119,119,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J119,119,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M119,119,M,,,custom,T84=1,,Período inválido,
+Proposta,P119,119,P,,,custom,U84=1,,Período inválido.,
+Proposta,G120,120,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J120,120,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M120,120,M,,,custom,T84=1,,Período inválido,
+Proposta,P120,120,P,,,custom,U84=1,,Período inválido.,
+Proposta,G121,121,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J121,121,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M121,121,M,,,custom,T84=1,,Período inválido,
+Proposta,P121,121,P,,,custom,U84=1,,Período inválido.,
+Proposta,G122,122,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J122,122,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M122,122,M,,,custom,T84=1,,Período inválido,
+Proposta,P122,122,P,,,custom,U84=1,,Período inválido.,
+Proposta,G123,123,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J123,123,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M123,123,M,,,custom,T84=1,,Período inválido,
+Proposta,P123,123,P,,,custom,U84=1,,Período inválido.,
+Proposta,G124,124,G,,,custom,R84=1,,Período inválido ou a data é inferior a data prevista do contrato (data da proposta + 30dd),
+Proposta,J124,124,J,,,custom,$S$84=1,,Período inválido.,
+Proposta,M124,124,M,,,custom,T84=1,,Período inválido,
+Proposta,P124,124,P,,,custom,U84=1,,Período inválido.,
+Proposta,M125,125,M,,,custom,M125=1,,Formato inválido.,
+Proposta,R128,128,R,Data de Contratação,,,,,,Área Real
+Proposta,T128,128,T,Data de Contratação,,,,,,Área Legal
+Proposta,Y128,128,Y,Data de Contratação,,,,,,Agente
+Proposta,Z128,128,Z,Data de Contratação,,,,,,Valor
+Proposta,F129,129,F,1,Agente Financ.,list,"""BNB,Outros""",,,
+Proposta,I129,129,I,1,Mesma Ativ. Cônjuge?,list,"""Sim,Não""",,Essa campo deve ser preenchido com um Sim ou Não.,
+Proposta,J129,129,J,1,Pertence à Titular?,list,"""Sim,Não""",,Essa campo deve ser preenchido com um Sim ou Não.,
+Proposta,L129,129,L,1,Carência (em meses),whole,0,,,
+Proposta,R129,129,R,1,,,,,,100
+Proposta,A130,130,A,,,,,,,Não
+Proposta,F130,130,F,1,Agente Financ.,list,"""BNB,Outros""",,,
+Proposta,I130,130,I,1,Mesma Ativ. Cônjuge?,list,"""Sim,Não""",,Essa campo deve ser preenchido com um Sim ou Não.,
+Proposta,J130,130,J,1,Pertence à Titular?,list,"""Sim,Não""",,Essa campo deve ser preenchido com um Sim ou Não.,
+Proposta,L130,130,L,1,Carência (em meses),whole,0,,,
+Proposta,F131,131,F,1,Agente Financ.,list,"""BNB,Outros""",,,
+Proposta,I131,131,I,1,Mesma Ativ. Cônjuge?,list,"""Sim,Não""",,Essa campo deve ser preenchido com um Sim ou Não.,
+Proposta,J131,131,J,1,Pertence à Titular?,list,"""Sim,Não""",,Essa campo deve ser preenchido com um Sim ou Não.,
+Proposta,L131,131,L,1,Carência (em meses),whole,0,,,
+Proposta,F132,132,F,1,Agente Financ.,list,"""BNB,Outros""",,,
+Proposta,I132,132,I,1,Mesma Ativ. Cônjuge?,list,"""Sim,Não""",,Essa campo deve ser preenchido com um Sim ou Não.,
+Proposta,J132,132,J,1,Pertence à Titular?,list,"""Sim,Não""",,Essa campo deve ser preenchido com um Sim ou Não.,
+Proposta,L132,132,L,1,Carência (em meses),whole,0,,,
+Proposta,F133,133,F,1,Agente Financ.,list,"""BNB,Outros""",,,
+Proposta,I133,133,I,1,Mesma Ativ. Cônjuge?,list,"""Sim,Não""",,Essa campo deve ser preenchido com um Sim ou Não.,
+Proposta,J133,133,J,1,Pertence à Titular?,list,"""Sim,Não""",,Essa campo deve ser preenchido com um Sim ou Não.,
+Proposta,L133,133,L,1,Carência (em meses),whole,0,,,
+Proposta,Z135,135,Z,Garantias Fidejussórias,,,,,,CD_TP_COO
+Proposta,K136,136,K,,Juros  % a.a.,,,,,Conjuge
+Proposta,Y136,136,Y,,,,,,,1
+Proposta,E137,137,E,C.P.F :,,custom,$Q$137=0,,O CPF informado é inválido.,
+Proposta,F137,137,F,C.P.F :,Agente Financ.,custom,$Q$137=0,,O CPF informado é inválido.,
+Proposta,G137,137,G,C.P.F :,Saldo Devedor,,,,,CNPJ:
+Proposta,H137,137,H,C.P.F :,,custom,$R$137=0,,CNPJ inválido,
+Proposta,I137,137,I,C.P.F :,Mesma Ativ. Cônjuge?,custom,$R$137=0,,CNPJ inválido,
+Proposta,K137,137,K,C.P.F :,Juros  % a.a.,,,,,C.P.F.:
+Proposta,M137,137,M,C.P.F :,,custom,S137=0,,O CPF informado é inválido.,
+Proposta,N137,137,N,C.P.F :,Prazo Restante (meses),custom,S137=0,,O CPF informado é inválido.,
+Proposta,O137,137,O,C.P.F :,Data de Contratação,custom,S137=0,,O CPF informado é inválido.,
+Proposta,P137,137,P,C.P.F :,,custom,S137=0,,O CPF informado é inválido.,
+Proposta,K138,138,K,,Juros  % a.a.,,,,,Cônjuge
+Proposta,Y138,138,Y,,,,,,,1
+Proposta,E139,139,E,C.P.F :,,custom,$Q$139=0,,O CPF informado é inválido.,
+Proposta,F139,139,F,C.P.F :,Agente Financ.,custom,$Q$139=0,,O CPF informado é inválido.,
+Proposta,G139,139,G,C.P.F :,Saldo Devedor,,,,,CNPJ:
+Proposta,H139,139,H,C.P.F :,,custom,$R$139=0,,CNPJ inválido,
+Proposta,I139,139,I,C.P.F :,Mesma Ativ. Cônjuge?,custom,$R$139=0,,CNPJ inválido,
+Proposta,K139,139,K,C.P.F :,Juros  % a.a.,,,,,C.P.F.:
+Proposta,M139,139,M,C.P.F :,,custom,S137=0,,O CPF informado é inválido.,
+Proposta,N139,139,N,C.P.F :,Prazo Restante (meses),custom,S137=0,,O CPF informado é inválido.,
+Proposta,O139,139,O,C.P.F :,Data de Contratação,custom,S137=0,,O CPF informado é inválido.,
+Proposta,P139,139,P,C.P.F :,,custom,S137=0,,O CPF informado é inválido.,
+Proposta,Y141,141,Y,Valor,,,,,,G.Real
+Proposta,AB141,141,AB,Valor,,,,,,Garantia/Seq
+Proposta,AC141,141,AC,Valor,,,,,,Orig. garant.
+Proposta,AD141,141,AD,Valor,,,,,,Cd_Gar
+Proposta,AE141,141,AE,Valor,,,,,,pc_par_coo
+Proposta,D155,155,D,,Nr. De Empregados - Atual,whole,0,,Valor inválido,
+Proposta,E155,155,E,,Empregados - Ano Estab.,whole,0,,Valor inválido,
+Proposta,F155,155,F,,,whole,0,,Valor inválido,
+Proposta,G155,155,G,,,whole,0,,Valor inválido,
+Proposta,H155,155,H,,Evolutivas,whole,0,,Valor inválido,
+Proposta,I155,155,I,,,whole,0,,Valor inválido,
+Proposta,Q157,157,Q,Comentários / Objetivos / Justificativas,,,,,,72
+Proposta,Q159,159,Q,Parecer Técnico,,,,,,46
+Proposta,Y161,161,Y,DECLARAÇÕES,,,,,,1
+Proposta,L166,166,L,1,"Com bônus de R$ 200,00",list,visaoSIM_NAO,,,
+Proposta,M166,166,M,1,Invest./Empreg.-Ano Estab.,list,visaoSIM_NAO,,,
+Proposta,N166,166,N,1," bônus de R$ 700,00",list,visaoSIM_NAO,,,
+Proposta,L167,167,L,1,"Com bônus de R$ 200,00",list,visaoSIM_NAO,,,
+Proposta,M167,167,M,1,Invest./Empreg.-Ano Estab.,list,visaoSIM_NAO,,,
+Proposta,N167,167,N,1," bônus de R$ 700,00",list,visaoSIM_NAO,,,
+Proposta,L168,168,L,1,"Com bônus de R$ 200,00",list,visaoSIM_NAO,,,
+Proposta,M168,168,M,1,,list,visaoSIM_NAO,,,
+Proposta,N168,168,N,1," bônus de R$ 700,00",list,visaoSIM_NAO,,,
+Proposta,L169,169,L,1,"Com bônus de R$ 200,00",list,visaoSIM_NAO,,,
+Proposta,M169,169,M,1,,list,visaoSIM_NAO,,,
+Proposta,N169,169,N,1," bônus de R$ 700,00",list,visaoSIM_NAO,,,
+Proposta,L170,170,L,1,"Com bônus de R$ 200,00",list,visaoSIM_NAO,,,
+Proposta,M170,170,M,1,,list,visaoSIM_NAO,,,
+Proposta,N170,170,N,1," bônus de R$ 700,00",list,visaoSIM_NAO,,,
+Proposta,L171,171,L,1,"Com bônus de R$ 200,00",list,visaoSIM_NAO,,,
+Proposta,M171,171,M,1,,list,visaoSIM_NAO,,,
+Proposta,N171,171,N,1," bônus de R$ 700,00",list,visaoSIM_NAO,,,
+Proposta,L172,172,L,1,"Com bônus de R$ 200,00",list,visaoSIM_NAO,,,
+Proposta,M172,172,M,1,,list,visaoSIM_NAO,,,
+Proposta,N172,172,N,1," bônus de R$ 700,00",list,visaoSIM_NAO,,,
+Proposta,L173,173,L,1,"Com bônus de R$ 200,00",list,visaoSIM_NAO,,,
+Proposta,M173,173,M,1,,list,visaoSIM_NAO,,,
+Proposta,N173,173,N,1," bônus de R$ 700,00",list,visaoSIM_NAO,,,
+Proposta,Q179,179,Q,,,,,,," operação de investimento no âmbito do PRONAF-Grupo C e não recebi o benefício de rebate/bônus de R$ 700,00 em operações anteriores a essa operação, no âmbito do PRONAF nem do antigo PRONAF Especial."
+Proposta,AN184,184,AN,"         Declaro(amos), por este meio, sob as penas da lei e na melhor forma de ",,,,,,4
+Proposta,P185,185,P,"        Declaro(amos), por este meio, sob as penas da lei e na melhor forma de d",,whole,1900,2100,Informe um ano válido. ,
+Proposta,AN189,189,AN,"        ENQUADRO-ME em pelo menos uma das situações abaixo, atualmente ou nos úl",,,,,,2
+Proposta,AN193,193,AN,Nos termos do § 3º do art. 2º da Resolução do Conselho Monetário Nacional (CMN) ,,,,,,1

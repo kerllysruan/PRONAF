@@ -1,0 +1,83 @@
+cell,rotulo,obrig,validador_Y,dv_tipo,dv_f1,dv_f2,erro
+E12,Tipo Cliente:,,"IF(E12=""Pessoa Física"",1,IF(E12=""Pessoa Jurídica"",2,1))",list,"""Pessoa Física,Pessoa Jurídica""",,
+E13,Nome:,1,"IF(OR(TRIM(E13)="""",LEN(E13)>55),-1,IF(ValidaNome(E13,""F""),1,-1))",,,,O nome informado não é válido ou excede o limite de caracteres._x000a_(Máximo 55 caractere
+E14,Apelido:,0,,textLength,20,,Máximo de 20 caracteres
+E15,C.P.F.:,1,"IF(E15<>"""",1,-1)",,,,
+E16,Data de Nascimento:,1,"IF(E16="""",-1,1)",date,TODAY(),,Data inválida.
+E17,Nº do Documento:,1,"IF(E17="""",-1,1)",,,,
+E18,Data de Emissão Docum.:,,,date,TODAY(),,Data inválida.
+E20,Tipo de Documento:,1,"IF(OR(E20="""",ISERROR(VLOOKUP(E20,visaoDOC_COD,2,0))),-1,VLOOKUP(E20,visaoDOC_COD,2,0))",list,visaoDOC,,Selecione uma das opções listadas na célula
+E21,Órgão Emissor Docum.:,1,"IF(E21="""",-1,1)",,,,
+E22,UF Órgão Emissor Docum.:,1,"IF(OR(E22="""",ISERROR(VLOOKUP(E22,visaoUF,1,0))),-1,VLOOKUP(E22,visaoUF,1,0))",list,visaoUF,,Selecione uma das opções listadas na célula
+E23,Título Eleitoral:,0,,,,,
+E24,Naturalidade:,1,"IF(ISERROR(VLOOKUP(E24,visaoMUNI_COD,3,0)),-1,RIGHT(E24,2))",list,VisaoNaturalidade,,
+E25,Sexo:,1,"IF(E25="""",-1,1)",list,"""Masculino,Feminino""",,
+E26,Estado Civil:,1,"IF(ISERROR(VLOOKUP(E26,visaoCIVIL_COD,2,0)),-1,VLOOKUP(E26,visaoCIVIL_COD,2,0))",list,visaoCIVIL,,
+E27,Grau de Instrução:,0,,list,visaoESCOLA,,Selecione uma das opções listadas na célula
+E28,Profissão:,0,"IF(OR(E28="""",ISERROR(VLOOKUP(E28,visaoPROF_COD,2,0))),-1,VLOOKUP(E28,visaoPROF_COD,2,0))",list,visaoPROF,,Selecione uma das opções listadas na célula.
+E29,Atividade:,1,"IF(ISERROR(VLOOKUP(E29,visaoATIV_COD,2,0)),-1,VLOOKUP(E29,visaoATIV_COD,2,0))",list,visaoATIV,,
+E30,Renda Mensal:,1,"IF(E30="""",-1,1)",decimal,0,,Informe apenas valores.
+E31,Beneficiário Políticas Públicas:,1,"IF(ISERROR(VLOOKUP(E31,Benef_Politica_Pub_COD,2,0)),-1,VLOOKUP(E31,Benef_Politica_Pub_COD,2,0))",list,Benef_Politica_Pub_Descr,,Selecione corretamente uma das opções!
+E32,Nome do Pai:,0,"IF(OR(TRIM(E32)="""",LEN(E32)>55),-1,IF(ValidaNome(E32,""F""),1,-1))",,,,
+E33,Nome da Mãe:,1,"IF(OR(TRIM(E33)="""",LEN(E33)>55),-1,IF(ValidaNome(E33,""F""),1,-1))",,,,
+E35,Porte:,1,"IF(ISERROR(VLOOKUP(E35,visaoPOR_PRONAF_COD,2,0)),-1,VLOOKUP(E35,visaoPOR_PRONAF_COD,2,0))",list,visaoPOR_PRONAF,,
+E36,Nº da DAP:,1,"IF(TRIM(E36)="""",-1,1)",,,,
+E37,Capital Integralizado:,,,,,,
+E44,Tipo de Logradouro:,1,"IF(ISERROR(VLOOKUP(E44,visaoTP_LOG_COD,2,0)),-1,VLOOKUP(E44,visaoTP_LOG_COD,2,0))",list,visaoTP_LOG,,
+E45,Endereço:,1,"IF(OR(E45="""",LEN(E45)>45),-1,IF(ValidaNome(E45,""J""),1,-1))",,,,
+E46,Nº:,1,"IF(OR(UPPER(TRIM(E46))=""S/N"",ISNUMBER(E46)),1,-1)",custom,Y46=1,,Digite um número ou &quot;S/N&quot; (sem as aspas) para caso de sem número._x000a_Ex.: 570
+E47,Complemento:,0,,,,,
+E48,Bairro:,1,"IF(E48="""",-1,1)",,,,
+E49,CEP:,1,"IF(E49="""",-1,1)",whole,99999999,,CEP inconsistente
+E50,Município:,1,"IF(OR(E50="""",ISERROR(VLOOKUP(E50,visaoMUNI_COD,2,0))),-1,VLOOKUP(E50,visaoMUNI_COD,2,0))",list,visaoMUNI,,
+E51,DDD Telefone:,0,,whole,1,9999,Somente caracteres numéricos permitir até 04 caracteres.
+E52,Nº Telefone:,0,,whole,0,999999999,Somente caracteres numéricos permitir até 09 caracteres.
+E58,Tipo de Logradouro:,1,"IF(ISERROR(VLOOKUP(E58,visaoTP_LOG_COD,2,0)),-1,VLOOKUP(E58,visaoTP_LOG_COD,2,0))",list,visaoTP_LOG,,
+E59,Endereço:,1,"IF(OR(E59="""",LEN(E59)>45),-1,IF(ValidaNome(E59,""J""),1,-1))",,,,
+E60,Nº:,1,"IF(OR(UPPER(TRIM(E60))=""S/N"",ISNUMBER(E60)),1,-1)",custom,Y46=1,,Digite um número ou &quot;S/N&quot; (sem as aspas) para caso de sem número._x000a_Ex.: 570
+E61,Complemento:,0,,,,,
+E62,Bairro:,1,"IF(E62="""",-1,1)",,,,
+E63,CEP:,1,"IF(E63="""",-1,1)",whole,99999999,,CEP inconsistente
+E64,Município:,1,"IF(OR(E64="""",ISERROR(VLOOKUP(E64,visaoMUNI_COD,2,0))),-1,VLOOKUP(E64,visaoMUNI_COD,2,0))",list,visaoMUNI,,
+E65,DDD Telefone:,0,,whole,1,9999,Somente caracteres numéricos permitir até 04 caracteres.
+E66,Nº Telefone:,0,,whole,0,999999999,Somente caracteres numéricos permitir até 09 caracteres.
+E73,Tipo de Uso do imóvel:,1,"IF(ISERROR(VLOOKUP(E73,visaoPOSSE,1,0)),-1,VLOOKUP(E73,visaoPOSSE,1,0))",list,visaoPOSSE,,Opção inválida. Clique em &lt;Cancelar&gt; e selecione uma das opções listadas na célula
+E74,Proprietário do imóvel:,1,"IF(E74="""",-1,IF(ValidaNome(E74,""J""),1,-1))",textLength,55,,O nome deve ter no máximo de 55 caracteres
+E75,CPF/CNPJ do Proprietário:,1,"IF(OR(TRIM(E75)="""",ISERROR(VALUE(E75))),-1,IF(Verifica_CPF(E75),1,IF(Verifica_CGC(E75),1,-1)))",,,,
+E77,Itinerário:,,,,,,
+E82,Nome:,0,"IF(OR(TRIM(E82)="""",LEN(E82)>55),-1,IF(ValidaNome(E82,""F""),1,-1))",custom,Y70=1,,O nome informado não é válido ou excede o limite de caracteres._x000a_(Máximo 55 caractere
+E83,C.P.F. Cônjuge/Comp.:,0,"IF(OR(TRIM(E83)="""",E83=E15,ISERROR(VALUE(E83))),-1,IF(Verifica_CPF(E83),1,-1))",,,,
+E84,Data de Nascimento:,0,"IF(E84="""",-1,1)",date,TODAY(),,Data inválida
+E85,Nº do Documento:,0,"IF(E85="""",-1,1)",,,,
+E86,Tipo de Documento:,0,"IF(OR(E86="""",ISERROR(VLOOKUP(E86,visaoDOC_COD,2,0))),-1,VLOOKUP(E86,visaoDOC_COD,2,0))",list,visaoDOC,,Selecione uma das opções listadas no campo
+E87,Órgão Emissor:,0,"IF(TRIM(E87)="""",-1,1)",,,,
+E88,UF Órgão Emissor:,0,"IF(OR(E88="""",ISERROR(VLOOKUP(E88,visaoUF,1,0))),-1,VLOOKUP(E88,visaoUF,1,0))",list,visaoUF,,
+E89,Data de Emissão:,0,"IF(E89="""",-1,1)",date,E84,,Data inválida
+E90,Sexo:,0,"IF(E90="""",-1,1)",list,"""Masculino,Feminino""",,Clique em &lt;Cancelar&gt; e selecione uma das opções listadas na célula
+E91,Estado Civil:,0,"IF(OR(TRIM(E91)="""",ISERROR(VLOOKUP(E91,visaoCIVIL_COD,2,0))),-1,VLOOKUP(E91,visaoCIVIL_COD,2,0))",list,visaoCIVIL,,Clique em &lt;Cancelar&gt; e selecione uma das opções listadas na célula
+E92,Grau de Instrução:,0,,list,visaoESCOLA,,Clique em &lt;Cancelar&gt; e selecione uma das opções listadas na célula
+E93,Profissão:,0,"IF(OR(E93="""",ISERROR(VLOOKUP(E93,visaoPROF_COD,2,0))),-1,VLOOKUP(E93,visaoPROF_COD,2,0))",list,visaoPROF,,
+E94,Renda Mensal:,0,,decimal,0,,Valor inválido
+E95,Naturalidade:,0,"IF(ISERROR(VLOOKUP(E95,visaoMUNI_COD,3,0)),-1,RIGHT(E95,2))",list,VisaoNaturalidade,,
+E96,Nome do Pai:,0,"IF(OR(TRIM(E96)="""",LEN(E96)>55),-1,IF(ValidaNome(E96,""F""),1,-1))",custom,Y70=1,,O nome informado não é válido ou excede o limite de caracteres._x000a_(Máximo 55 caractere
+E97,Nome da Mãe:,0,"IF(OR(TRIM(E97)="""",LEN(E97)>55),-1,IF(ValidaNome(E97,""F""),1,-1))",custom,Y70=1,,O nome informado não é válido ou excede o limite de caracteres._x000a_(Máximo 55 caractere
+E106,CPF / CNPJ:,,,,,,
+E107,Nome / Razão Social:,,,,,,
+E108,Participação (%):,,,,,,
+E109,Representa a Empresa? (S/N):,,,list,"""Sim,Não""",,
+E113,CPF / CNPJ:,,,,,,
+E114,Nome / Razão Social:,,,,,,
+E115,Participação (%):,,,,,,
+E116,Representa a Empresa? (S/N):,,,list,"""Sim,Não""",,
+E120,CPF / CNPJ:,,,,,,
+E121,Nome / Razão Social:,,,,,,
+E122,Participação (%):,,,,,,
+E123,Representa a Empresa? (S/N):,,,list,"""Sim,Não""",,
+E127,CPF / CNPJ:,,,,,,
+E128,Nome / Razão Social:,,,,,,
+E129,Participação (%):,,,,,,
+E130,Representa a Empresa? (S/N):,,,list,"""Sim,Não""",,
+E134,CPF / CNPJ:,,,,,,
+E135,Nome / Razão Social:,,,,,,
+E136,Participação (%):,,,,,,
+E137,Representa a Empresa? (S/N):,,,list,"""Sim,Não""",,

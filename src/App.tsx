@@ -23,6 +23,7 @@ import PlatformDocumentation from "./pages/PlatformDocumentation";
 import CertificatesAutomator from "./pages/CertificatesAutomator";
 import ProjetistaRegister from "./pages/ProjetistaRegister";
 import ProjetistaDashboard from "./pages/ProjetistaDashboard";
+import PronafA2Page from "./pages/PLANILHA PRONAF/PronafA2Page";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Loader2 } from "lucide-react";
 
@@ -106,6 +107,7 @@ const AppRoutes = () => (
     <Route path="/controle-acesso" element={<ProtectedRoute><PermissionGate permission="can_view_access_control" showError><AccessControl /></PermissionGate></ProtectedRoute>} />
     <Route path="/admin/agencies" element={<ProtectedRoute><PermissionGate requireAdmin showError><AdminAgencies /></PermissionGate></ProtectedRoute>} />
     <Route path="/documentacao-plataforma" element={<ProtectedRoute><PlatformDocumentation /></ProtectedRoute>} />
+    <Route path="/pronaf-a2" element={<ProtectedRoute><PermissionGate permission="can_view_pronaf_a2" showError><PronafA2Page /></PermissionGate></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

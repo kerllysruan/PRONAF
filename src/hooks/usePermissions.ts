@@ -21,6 +21,7 @@ export interface UserPermissions {
   can_view_agencies: boolean;
   can_manage_agencies: boolean;
   read_only: boolean;
+  can_view_pronaf_a2: boolean;
 }
 
 const DEFAULT_PERMISSIONS: UserPermissions = {
@@ -42,6 +43,7 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   can_view_agencies: true,
   can_manage_agencies: false,
   read_only: true, // Set to true as default for safety
+  can_view_pronaf_a2: false,
 };
 
 export function usePermissions() {

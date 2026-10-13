@@ -1,0 +1,121 @@
+aba,celula,linha,coluna,rotulo_linha,cabecalho_coluna,validacao_tipo,validacao_formula1,formula2_limite,mensagem_erro,valor_padrao
+Ativ. Pecuária,A1,1,A,,,,,,,0
+Ativ. Pecuária,Z6,6,Z,,,,,,,Atividade Econômica
+Ativ. Pecuária,AB6,6,AB,,,,,,,Atividades
+Ativ. Pecuária,AC6,6,AC,,,,,,,cd_rca
+Ativ. Pecuária,AD6,6,AD,,,,,,,qt_mat_est
+Ativ. Pecuária,AE6,6,AE,,,,,,,qt_cab_ope
+Ativ. Pecuária,L7,7,L,,,list,listaBOV_LEITE,,,
+Ativ. Pecuária,M7,7,M,,,list,listaBOV_LEITE,,,
+Ativ. Pecuária,N7,7,N,,,list,listaBOV_LEITE,,,
+Ativ. Pecuária,O7,7,O,,,list,listaBOV_LEITE,,,
+Ativ. Pecuária,AA7,7,AA,,,,,,,Sim
+Ativ. Pecuária,AC7,7,AC,,,,,,,32
+Ativ. Pecuária,L8,8,L,,,list,listaBOV_CORTE,,,
+Ativ. Pecuária,M8,8,M,,,list,listaBOV_CORTE,,,
+Ativ. Pecuária,N8,8,N,,,list,listaBOV_CORTE,,,
+Ativ. Pecuária,O8,8,O,,,list,listaBOV_CORTE,,,
+Ativ. Pecuária,AA8,8,AA,,,,,,,Não
+Ativ. Pecuária,AC8,8,AC,,,,,,,47
+Ativ. Pecuária,L9,9,L,,,list,listaOVI,,,
+Ativ. Pecuária,M9,9,M,,,list,listaOVI,,,
+Ativ. Pecuária,N9,9,N,,,list,listaOVI,,,
+Ativ. Pecuária,O9,9,O,,,list,listaOVI,,,
+Ativ. Pecuária,AC9,9,AC,,,,,,,22
+Ativ. Pecuária,L10,10,L,,,list,listaCAPRI,,,
+Ativ. Pecuária,M10,10,M,,,list,listaCAPRI,,,
+Ativ. Pecuária,N10,10,N,,,list,listaCAPRI,,,
+Ativ. Pecuária,O10,10,O,,,list,listaCAPRI,,,
+Ativ. Pecuária,AC10,10,AC,,,,,,,18
+Ativ. Pecuária,A13,13,A,,,,,,,0
+Ativ. Pecuária,A14,14,A,,,,,,,Verdadeiro
+Ativ. Pecuária,A16,16,A,,,,,,,1
+Ativ. Pecuária,Y26,26,Y,Indicadores Técnicos e de Vendas,,,,,,Critica
+Ativ. Pecuária,Z26,26,Z,Indicadores Técnicos e de Vendas,,,,,,0
+Ativ. Pecuária,AA26,26,AA,Indicadores Técnicos e de Vendas,,,,,,Bovinocultura de Leite
+Ativ. Pecuária,Y27,27,Y,Leite/cab/dia (L),,,,,,070-085
+Ativ. Pecuária,Z27,27,Z,Leite/cab/dia (L),,,,,,0
+Ativ. Pecuária,Y28,28,Y,Leite/Queijo (L/Kg),,,,,,004-006
+Ativ. Pecuária,Z28,28,Z,Leite/Queijo (L/Kg),,,,,,0
+Ativ. Pecuária,Y29,29,Y,Mortalidade até 1 ano (%),,,,,,003-003
+Ativ. Pecuária,Z29,29,Z,Mortalidade até 1 ano (%),,,,,,0
+Ativ. Pecuária,Y30,30,Y,Venda Queijo (%),,,,,,002-002
+Ativ. Pecuária,Z30,30,Z,Venda Queijo (%),,,,,,0
+Ativ. Pecuária,Y31,31,Y,Preço Queijo/Kg (R$),,,,,,025-030
+Ativ. Pecuária,Z31,31,Z,Preço Queijo/Kg (R$),,,,,,0
+Ativ. Pecuária,Y32,32,Y,Preço Leite/L (R$),,,,,,180-270
+Ativ. Pecuária,Z32,32,Z,Preço Leite/L (R$),,,,,,0
+Ativ. Pecuária,Q33,33,Q,Matrizes Estabilização (Cab),,whole,0,,Quantidade inválida,
+Ativ. Pecuária,R33,33,R,Matrizes Estabilização (Cab),,whole,0,,Quantidade inválida,
+Ativ. Pecuária,Y33,33,Y,Matrizes Estabilização (Cab),,,,,,006-015
+Ativ. Pecuária,Z33,33,Z,Matrizes Estabilização (Cab),,,,,,0
+Ativ. Pecuária,A35,35,A,,,,,,,1
+Ativ. Pecuária,A36,36,A,,,,,,,Falso
+Ativ. Pecuária,A38,38,A,,,,,,,1
+Ativ. Pecuária,S46,46,S,0.3,,,,,,6
+Ativ. Pecuária,T46,46,T,0.3,,,,,,10
+Ativ. Pecuária,U46,46,U,0.3,,,,,,30
+Ativ. Pecuária,V46,46,V,0.3,,,,,,15
+Ativ. Pecuária,W46,46,W,0.3,,,,,,1.2
+Ativ. Pecuária,X46,46,X,0.3,,,,,,2
+Ativ. Pecuária,Y47,47,Y,Indicadores Técnicos e de Vendas,,,,,,Critica
+Ativ. Pecuária,Z47,47,Z,Indicadores Técnicos e de Vendas,,,,,,0
+Ativ. Pecuária,AA47,47,AA,Indicadores Técnicos e de Vendas,,,,,,Bovinocultura de Corte
+Ativ. Pecuária,Y48,48,Y,Mortalidade Adulto (%),,,,,,060-080
+Ativ. Pecuária,Z48,48,Z,Mortalidade Adulto (%),,,,,,0
+Ativ. Pecuária,Y49,49,Y,Matrizes/Reprodutor(Cab),,,,,,004-006
+Ativ. Pecuária,Z49,49,Z,Matrizes/Reprodutor(Cab),,,,,,0
+Ativ. Pecuária,Q50,50,Q,Matrizes Estabilização,,whole,0,,Quantidade inválida,
+Ativ. Pecuária,R50,50,R,Matrizes Estabilização,,whole,0,,Quantidade inválida,
+Ativ. Pecuária,Y50,50,Y,Matrizes Estabilização,,,,,,003-003
+Ativ. Pecuária,Z50,50,Z,Matrizes Estabilização,,,,,,0
+Ativ. Pecuária,Z51,51,Z,,,,,,,0
+Ativ. Pecuária,A52,52,A,,,,,,,0
+Ativ. Pecuária,Y52,52,Y,Ovinocultura,,,,,,002-002
+Ativ. Pecuária,Z52,52,Z,Ovinocultura,,,,,,0
+Ativ. Pecuária,A53,53,A,,,,,,,Falso
+Ativ. Pecuária,A55,55,A,,,,,,,1
+Ativ. Pecuária,Y62,62,Y,Indicadores Técnicos e de Vendas,,,,,,Critica
+Ativ. Pecuária,Z62,62,Z,Indicadores Técnicos e de Vendas,,,,,,0
+Ativ. Pecuária,AA62,62,AA,Indicadores Técnicos e de Vendas,Mortalidade Adulto,,,,,Ovinocultura
+Ativ. Pecuária,Y63,63,Y,Mortalidade Adulto (%),,,,,,080-100
+Ativ. Pecuária,Z63,63,Z,Mortalidade Adulto (%),,,,,,0
+Ativ. Pecuária,Y64,64,Y,Matrizes/Reprodutor(Cab),,,,,,020-050
+Ativ. Pecuária,Z64,64,Z,Matrizes/Reprodutor(Cab),,,,,,0
+Ativ. Pecuária,Q65,65,Q,Matrizes Estabilização,,whole,0,,Quantidade inválida,
+Ativ. Pecuária,R65,65,R,Matrizes Estabilização,,whole,0,,Quantidade inválida,
+Ativ. Pecuária,Y65,65,Y,Matrizes Estabilização,,,,,,006-012
+Ativ. Pecuária,Z65,65,Z,Matrizes Estabilização,,,,,,0
+Ativ. Pecuária,Y66,66,Y,Mortalidade de 1 a 2 anos (%),,,,,,004-008
+Ativ. Pecuária,Z66,66,Z,Mortalidade de 1 a 2 anos (%),,,,,,0
+Ativ. Pecuária,Z67,67,Z,,,,,,,0
+Ativ. Pecuária,A68,68,A,,,,,,,0
+Ativ. Pecuária,Y68,68,Y,Caprinocultura,,,,,,001-005
+Ativ. Pecuária,Z68,68,Z,Caprinocultura,,,,,,0
+Ativ. Pecuária,A69,69,A,,,,,,,Falso
+Ativ. Pecuária,Y69,69,Y,Preço  Unitário Venda,,,,,,025-050
+Ativ. Pecuária,Z69,69,Z,Preço  Unitário Venda,,,,,,0
+Ativ. Pecuária,A71,71,A,,,,,,,1
+Ativ. Pecuária,Y78,78,Y,Indicadores Técnicos e de Vendas,,,,,,Critica
+Ativ. Pecuária,Z78,78,Z,Indicadores Técnicos e de Vendas,,,,,,0
+Ativ. Pecuária,AA78,78,AA,Indicadores Técnicos e de Vendas,Matrizes/Reprodutor,,,,,Caprinocultura
+Ativ. Pecuária,Y79,79,Y,Mortalid.Adulto (%),,,,,,080-100
+Ativ. Pecuária,Z79,79,Z,Mortalid.Adulto (%),,,,,,0
+Ativ. Pecuária,Y80,80,Y,Matrizes/Reprod.(Cab),,,,,,020-050
+Ativ. Pecuária,Z80,80,Z,Matrizes/Reprod.(Cab),,,,,,0
+Ativ. Pecuária,Q81,81,Q,Matrizes Estabilização,,whole,0,,Quantidade inválida,
+Ativ. Pecuária,R81,81,R,Matrizes Estabilização,,whole,0,,Quantidade inválida,
+Ativ. Pecuária,Y81,81,Y,Matrizes Estabilização,,,,,,006-012
+Ativ. Pecuária,Z81,81,Z,Matrizes Estabilização,,,,,,0
+Ativ. Pecuária,Y82,82,Y,Mortalidade de 1 a 2 anos (%),,,,,,004-008
+Ativ. Pecuária,Z82,82,Z,Mortalidade de 1 a 2 anos (%),,,,,,0
+Ativ. Pecuária,Z83,83,Z,,,,,,,0
+Ativ. Pecuária,Y84,84,Y,Custos da Pecuária,,,,,,150-270
+Ativ. Pecuária,Z84,84,Z,Custos da Pecuária,,,,,,0
+Ativ. Pecuária,Y85,85,Y,Salário Mínimo-Referência :,,,,,,"001-2,5"
+Ativ. Pecuária,Z85,85,Z,Salário Mínimo-Referência :,,,,,,0
+Ativ. Pecuária,Z86,86,Z,,,,,,,0
+Ativ. Pecuária,Y87,87,Y,Vacinas/Medicamentos/,,,,,,001-005
+Ativ. Pecuária,Z87,87,Z,Vacinas/Medicamentos/,,,,,,0
+Ativ. Pecuária,Y88,88,Y,Sais Minerais,,,,,,025-050
+Ativ. Pecuária,Z88,88,Z,Sais Minerais,,,,,,0

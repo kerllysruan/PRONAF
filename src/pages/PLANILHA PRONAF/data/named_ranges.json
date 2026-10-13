@@ -1,0 +1,926 @@
+[
+ {
+  "name": "a1c1",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$A$123:$C$123"
+ },
+ {
+  "name": "Benef_Politica_Pub_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$HQ$11:$HR$25"
+ },
+ {
+  "name": "Benef_Politica_Pub_Descr",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$HQ$11:$HQ$25"
+ },
+ {
+  "name": "calcFin_1",
+  "local": null,
+  "hidden": false,
+  "ref": "CalculoFinanceiro!$C$7"
+ },
+ {
+  "name": "calcFin_2",
+  "local": null,
+  "hidden": false,
+  "ref": "CalculoFinanceiro!$DC$7"
+ },
+ {
+  "name": "CLASSIF_MUNICIPIO",
+  "local": null,
+  "hidden": false,
+  "ref": "Cliente!$W$50"
+ },
+ {
+  "name": "Cod_Empreend_Cronograma",
+  "local": null,
+  "hidden": false,
+  "ref": "Cronograma!$Z$202:$Z$262"
+ },
+ {
+  "name": "Cod_Gleba",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$H$2:$J$6"
+ },
+ {
+  "name": "EMPREEND_ANT_BNB",
+  "local": null,
+  "hidden": false,
+  "ref": "BDEmpr!$A$1:$D$14912"
+ },
+ {
+  "name": "Empreend_Critica",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$EV$60:$EX$82"
+ },
+ {
+  "name": "Empreend_Critica_Arm",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$EV$51:$EW$54"
+ },
+ {
+  "name": "Empreend_MDA_CFI",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GH$42:$GK$77"
+ },
+ {
+  "name": "EMPREEND_PROG",
+  "local": null,
+  "hidden": false,
+  "ref": "BDEmpr!$A$2:$A$14912"
+ },
+ {
+  "name": "entrada_12",
+  "local": null,
+  "hidden": false,
+  "ref": "Bovinos_Leite!$A$681:$B$696"
+ },
+ {
+  "name": "FinCred_Sui_Avi_Frut",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$R$9"
+ },
+ {
+  "name": "flagDecPRONAF",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$FO$11"
+ },
+ {
+  "name": "Imoveis_Inversao",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$AF$7:$AF$7"
+ },
+ {
+  "name": "Inv_Financiada",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$D$27:$M$62"
+ },
+ {
+  "name": "Inv_Geodesica",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$A$2:$F$40"
+ },
+ {
+  "name": "Inv_Geodesica_Hist",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$M$2:$P$40"
+ },
+ {
+  "name": "Inv_Geodesica_Hist_NM",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$N$2:$N$40"
+ },
+ {
+  "name": "Inv_Geodesica_SE",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$F$2:$F$6"
+ },
+ {
+  "name": "lista_ANALISADOR_DESC_ATIVIDADE",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GF$12:$GF$241"
+ },
+ {
+  "name": "LISTABACEN",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AZ$12:$AZ$988"
+ },
+ {
+  "name": "LISTABACEN_BUSCA",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AZ$11:$BB$988"
+ },
+ {
+  "name": "LISTABACEN_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AZ$12:$BB$988"
+ },
+ {
+  "name": "listaBOV_CORTE",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$AG$11,0,0,COUNTA(VISAO!$AG$11:$AG$23),1)"
+ },
+ {
+  "name": "listaBOV_CORTE_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$AG$11,0,0,COUNTA(VISAO!$AG$11:$AG$23),2)"
+ },
+ {
+  "name": "listaBOV_LEITE",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$AI$11,0,0,COUNTA(VISAO!$AI$11:$AI$21),1)"
+ },
+ {
+  "name": "listaBOV_LEITE_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$AI$11,0,0,COUNTA(VISAO!$AI$11:$AI$21),2)"
+ },
+ {
+  "name": "listaBusca_",
+  "local": null,
+  "hidden": false,
+  "ref": "BUSCA!$C$12:$C$13"
+ },
+ {
+  "name": "listaCAPRI",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$AK$11,0,0,COUNTA(VISAO!$AK$11:$AK$21),1)"
+ },
+ {
+  "name": "listaCAPRI_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$AK$11,0,0,COUNTA(VISAO!$AK$11:$AK$21),2)"
+ },
+ {
+  "name": "listaFINALIDADE",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GI$12:$GL$39"
+ },
+ {
+  "name": "listaFINALIDADE_APL_REC",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GI$12:$GI$39"
+ },
+ {
+  "name": "listaFINALIDADE_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GH$12:$GL$39"
+ },
+ {
+  "name": "ListaIMV",
+  "local": null,
+  "hidden": false,
+  "ref": "\" \""
+ },
+ {
+  "name": "ListaIMV_1",
+  "local": null,
+  "hidden": false,
+  "ref": "\" \""
+ },
+ {
+  "name": "LISTAORCA_NMEMPREE",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GR$11:$GS$50"
+ },
+ {
+  "name": "listaOVI",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$L$11,0,0,COUNTA(VISAO!$L$11:$L$20),1)"
+ },
+ {
+  "name": "listaOVI_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$L$11,0,0,COUNTA(VISAO!$L$11:$L$20),2)"
+ },
+ {
+  "name": "Lst_Area_Apascentamento",
+  "local": null,
+  "hidden": false,
+  "ref": "Cronograma!$D$202:$F$240"
+ },
+ {
+  "name": "Lst_Coord_Geod",
+  "local": null,
+  "hidden": false,
+  "ref": "BUSCA!$EA$4:$ER$65536"
+ },
+ {
+  "name": "Lst_IMV_Imp",
+  "local": null,
+  "hidden": false,
+  "ref": "BUSCA!$DJ$4:$DK$4"
+ },
+ {
+  "name": "Lst_IMV_Proj",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$C$19:$L$22"
+ },
+ {
+  "name": "Lst_INV_Imp",
+  "local": null,
+  "hidden": false,
+  "ref": "BUSCA!$DM$4:$DR$65536"
+ },
+ {
+  "name": "Lst_INV_Proj",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GO$11:$HI$50"
+ },
+ {
+  "name": "Lst_INV_Proj_Qtde",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$AZ$27"
+ },
+ {
+  "name": "Lst_INV_Proposta",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$C$27:$P$62"
+ },
+ {
+  "name": "Mun_Decret_Emerg",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$Q$9"
+ },
+ {
+  "name": "Nome_Gleba",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$H$2:$H$6"
+ },
+ {
+  "name": "Notas",
+  "local": null,
+  "hidden": false,
+  "ref": "Menu!$B$51"
+ },
+ {
+  "name": "Param_Bioma",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CU$18"
+ },
+ {
+  "name": "Param_Hoje",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CU$19"
+ },
+ {
+  "name": "Parametro_coordenadas",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GN$2:$GO$5"
+ },
+ {
+  "name": "PlanoSafra_Empreend",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$EV$60:$FB$82"
+ },
+ {
+  "name": "Prod_Base_Agro_Org",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$Q$12"
+ },
+ {
+  "name": "Prop_Origem_Acao_Terr",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$Q$13"
+ },
+ {
+  "name": "RECEITA_PGPAF",
+  "local": null,
+  "hidden": false,
+  "ref": "Tabelas!$AK$7"
+ },
+ {
+  "name": "sim_nao",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$Q$4:$Q$5"
+ },
+ {
+  "name": "SQ_Geodesica",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$A$100:$M$100"
+ },
+ {
+  "name": "SQ_Geodesica_F",
+  "local": null,
+  "hidden": false,
+  "ref": "BUSCA!$CA$2:$CM$475"
+ },
+ {
+  "name": "SQ_GlebaPontos",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$F$100:$M$101"
+ },
+ {
+  "name": "SQ_GlebaPontos_F",
+  "local": null,
+  "hidden": false,
+  "ref": "BUSCA!$CF$2:$CM$475"
+ },
+ {
+  "name": "SQ_ImovVinc",
+  "local": null,
+  "hidden": false,
+  "ref": "Avaliação!$O$7:$AE$10"
+ },
+ {
+  "name": "SQ_Inv_Resumo",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$BA$100:$BP$101"
+ },
+ {
+  "name": "SQ_Inv_Tela",
+  "local": null,
+  "hidden": false,
+  "ref": "'Coord.Geodesica'!$S$4"
+ },
+ {
+  "name": "SQ_Inversão_Gleba",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$C$100:$S$101"
+ },
+ {
+  "name": "SQ_InversaoGeodesica",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$F$2:$F$40"
+ },
+ {
+  "name": "SQ_InversaoGeodesica_SE",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$G$2:$G$8"
+ },
+ {
+  "name": "Template_Gleba",
+  "local": null,
+  "hidden": false,
+  "ref": "BUSCA!$DB$9:$DF$11"
+ },
+ {
+  "name": "Template_Inversao",
+  "local": null,
+  "hidden": false,
+  "ref": "BUSCA!$DB$3:$DF$7"
+ },
+ {
+  "name": "TESTE",
+  "local": null,
+  "hidden": false,
+  "ref": "BUSCA!$EA$1551:$ET$1654"
+ },
+ {
+  "name": "teste1",
+  "local": null,
+  "hidden": false,
+  "ref": "BUSCA!$DO$4:$DR$36"
+ },
+ {
+  "name": "Tipo_Gleba",
+  "local": null,
+  "hidden": false,
+  "ref": "Geodesica!$H$1:$H$6"
+ },
+ {
+  "name": "valorDES",
+  "local": null,
+  "hidden": false,
+  "ref": "Cronograma!$AJ$14"
+ },
+ {
+  "name": "valorFIN",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$N$72"
+ },
+ {
+  "name": "valorSER",
+  "local": null,
+  "hidden": false,
+  "ref": "' Proposta'!$Z$134"
+ },
+ {
+  "name": "visao_PRG",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$EK$12:$EK$26"
+ },
+ {
+  "name": "visaoAGC",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$BO$12,0,0,COUNTA(VISAO!$BO$12:$BO$65536),1)"
+ },
+ {
+  "name": "visaoAGC_BUSCA",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$BO$11,0,0,COUNTA(VISAO!$BO$11:$BO$65536),2)"
+ },
+ {
+  "name": "visaoAGC_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$BO$11,0,0,COUNTA(VISAO!$BO$11:$BP$65536),2)"
+ },
+ {
+  "name": "visaoAPLIC",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AU$12:$AU$14"
+ },
+ {
+  "name": "visaoAPLIC_2",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$BE$12:$BE$14"
+ },
+ {
+  "name": "visaoAPLIC_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AU$12:$AV$14"
+ },
+ {
+  "name": "visaoATIV",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$J$12,0,0,COUNTA(VISAO!$J$12:$J$65536),1)"
+ },
+ {
+  "name": "visaoATIV_BUSCA",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$J$11,0,0,COUNTA(VISAO!$J$11:$J$65536),1)"
+ },
+ {
+  "name": "visaoATIV_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$J$12,0,0,COUNTA(VISAO!$J$12:$J$65536),2)"
+ },
+ {
+  "name": "visaoATIV_REB_CLAS",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CF$12:$CF$18"
+ },
+ {
+  "name": "visaoATIV_REB_CLAS_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CF$12:$CG$18"
+ },
+ {
+  "name": "VisaoATIVPEC",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GI$5"
+ },
+ {
+  "name": "VISAOBACEN",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AZ$12:$AZ$988"
+ },
+ {
+  "name": "VISAOBACEN_BUSCA",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AZ$11:$BB$988"
+ },
+ {
+  "name": "VISAOBACEN_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AZ$12:$BB$988"
+ },
+ {
+  "name": "visaoCIVIL",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$S$12:$S$20"
+ },
+ {
+  "name": "visaoCIVIL_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$S$12:$T$20"
+ },
+ {
+  "name": "visaoCLAS_MUT",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CQ$38"
+ },
+ {
+  "name": "visaoCONS",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$BX$12:$BX$16"
+ },
+ {
+  "name": "visaoCONS_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$BX$12:$BY$16"
+ },
+ {
+  "name": "visaoCRITICA",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$ED$12:$EG$104"
+ },
+ {
+  "name": "visaoDecPRONAF",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$FO$16:$FO$24"
+ },
+ {
+  "name": "visaoDOC",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$W$12:$W$28"
+ },
+ {
+  "name": "visaoDOC_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$W$12:$X$28"
+ },
+ {
+  "name": "visaoESCOLA",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AE$12:$AE$21"
+ },
+ {
+  "name": "visaoGAR",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CX$12:$CX$19"
+ },
+ {
+  "name": "visaoGAR_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CX$12:$DA$19"
+ },
+ {
+  "name": "visaoHORIZ",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CK$11"
+ },
+ {
+  "name": "visaoIMV_VINC",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$FD$12:$FD$15"
+ },
+ {
+  "name": "visaoINC_CAD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GB$12:$GC$12"
+ },
+ {
+  "name": "visaoIND_CAP_PGT",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$DM$12"
+ },
+ {
+  "name": "VisaoInversão",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$GO$11:$GP$50"
+ },
+ {
+  "name": "visaoMASC_CNPJ",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CU$12"
+ },
+ {
+  "name": "visaoMASC_CPF",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CU$13"
+ },
+ {
+  "name": "visaoMUNI",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$C$11:$C$5635"
+ },
+ {
+  "name": "visaoMUNI_BUSCA",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$C$10:$C$5635"
+ },
+ {
+  "name": "visaoMUNI_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$C$11:$F$5635"
+ },
+ {
+  "name": "VisaoNaturalidade",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$GA$12,0,0,COUNTA(VISAO!$GA:$GA)-2,1)"
+ },
+ {
+  "name": "visaoNATURALIDADE_BUSCA",
+  "local": null,
+  "hidden": false,
+  "ref": "OFFSET(VISAO!$GA$11,0,0,COUNTA(VISAO!$GA:$GA)-2,1)"
+ },
+ {
+  "name": "visaoOBJ",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AN$12:$AN$15"
+ },
+ {
+  "name": "visaoOBJ_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AN$12:$AO$15"
+ },
+ {
+  "name": "visaoPER",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$FI$12:$FI$15"
+ },
+ {
+  "name": "visaoPER_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$FI$12:$FL$15"
+ },
+ {
+  "name": "visaoPOR_PRONAF",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$FW$12:$FW$19"
+ },
+ {
+  "name": "visaoPOR_PRONAF_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$FW$12:$FX$19"
+ },
+ {
+  "name": "visaoPORTE",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AA$12:$AA$32"
+ },
+ {
+  "name": "visaoPORTE_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AA$12:$AB$32"
+ },
+ {
+  "name": "visaoPOSSE",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$DS$12:$DS$19"
+ },
+ {
+  "name": "visaoPRG",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$EK$12:$EK$18"
+ },
+ {
+  "name": "visaoPRG_BUSCA",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$EK$11:$EK$26"
+ },
+ {
+  "name": "visaoPRG_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$EK$12:$ET$26"
+ },
+ {
+  "name": "visaoPRG_COD2",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$EK$12:$ET$26"
+ },
+ {
+  "name": "visaoPROF",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$O$12:$O$20"
+ },
+ {
+  "name": "visaoPROF_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$O$12:$P$20"
+ },
+ {
+  "name": "visaoRACA_BOV_CORT",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$BS$12:$BS$27"
+ },
+ {
+  "name": "visaoRACA_BOV_LEIT",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$BS$28:$BS$43"
+ },
+ {
+  "name": "visaoRACA_CAPRIN",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$BS$48:$BS$56"
+ },
+ {
+  "name": "visaoRACA_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$BS$12:$BU$103"
+ },
+ {
+  "name": "visaoRACA_OVIN",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$BS$44:$BS$47"
+ },
+ {
+  "name": "visaoREGIAO",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$DZ$12:$EA$13"
+ },
+ {
+  "name": "visaoREL_CRND",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$DE$12:$DI$13"
+ },
+ {
+  "name": "visaoSETATIV",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CB$12:$CB$18"
+ },
+ {
+  "name": "visaoSETATIV_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$CB$12:$CC$18"
+ },
+ {
+  "name": "visaoSIM_NAO",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$DP$11:$DP$12"
+ },
+ {
+  "name": "visaoSIM_NAO_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$DP$11:$DQ$12"
+ },
+ {
+  "name": "visaoTP_LOG",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$FR$12:$FR$254"
+ },
+ {
+  "name": "visaoTP_LOG_BUSCA",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$FR$11:$FR$254"
+ },
+ {
+  "name": "visaoTP_LOG_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$FR$12:$FT$254"
+ },
+ {
+  "name": "visaoUF",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$H$12:$H$38"
+ },
+ {
+  "name": "visaoUND",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AQ$12:$AQ$93"
+ },
+ {
+  "name": "visaoUND_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AQ$12:$AR$93"
+ },
+ {
+  "name": "visaoUND_COD_S400",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AQ$102:$AR$183"
+ },
+ {
+  "name": "visaoUND_S400",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$AQ$102:$AQ$183"
+ },
+ {
+  "name": "visaoUSO",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$BH$12:$BH$32"
+ },
+ {
+  "name": "visaoUSO_COD",
+  "local": null,
+  "hidden": false,
+  "ref": "VISAO!$BH$12:$BL$32"
+ }
+]

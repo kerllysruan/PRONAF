@@ -11,6 +11,7 @@ import {
   BookOpen,
   FileCheck,
   Briefcase,
+  ClipboardList,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -36,6 +37,7 @@ const menuItems = [
   { title: "Projetistas", url: "/projetistas", icon: UserCheck, permission: "can_view_proposals", badge: null as string | null },
   { title: "Documentação", url: "/documentacao", icon: FolderCheck, permission: "can_view_documentation", badge: "doc" as string },
   { title: "Automatizador de Certidões", url: "/automatizador-certidoes", icon: FileCheck, permission: "can_view_documentation", badge: null as string | null },
+  { title: "PRONAF A2", url: "/pronaf-a2", icon: ClipboardList, permission: "can_view_pronaf_a2", badge: null as string | null },
   { title: "Controle de Acesso", url: "/controle-acesso", icon: Shield, permission: "can_view_access_control", badge: null as string | null },
   { title: "Gestão de Agências", url: "/admin/agencies", icon: Building2, permission: "can_manage_agencies", badge: null as string | null },
   { title: "Guia da Plataforma", url: "/documentacao-plataforma", icon: BookOpen, permission: "can_view_dashboard", badge: null as string | null },

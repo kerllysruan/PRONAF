@@ -57,12 +57,14 @@ interface UserPermission {
   can_view_agencies?: boolean;
   can_manage_agencies?: boolean;
   read_only?: boolean;
+  can_view_pronaf_a2?: boolean;
 }
 
 const PERMISSIONS = [
   { key: "can_view_dashboard", label: "Dashboard", group: "Visualização", icon: Eye },
   { key: "can_view_proposals", label: "Propostas", group: "Visualização", icon: Eye },
   { key: "can_view_documentation", label: "Documentação", group: "Visualização", icon: Eye },
+  { key: "can_view_pronaf_a2", label: "PRONAF A2", group: "Visualização", icon: Eye },
   { key: "can_view_access_control", label: "Controle Acesso", group: "Administração", icon: ShieldCheck },
   { key: "can_manage_users", label: "Gestão Usuários", group: "Administração", icon: ShieldAlert },
   { key: "can_view_agencies", label: "Visualizar Agências", group: "Administração", icon: Building2 },

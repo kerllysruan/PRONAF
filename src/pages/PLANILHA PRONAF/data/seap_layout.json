@@ -1,0 +1,1599 @@
+{
+ "B": {
+  "tipo": "Tipo",
+  "tam": "Tamanho",
+  "obrig": "Obrigatório (S/N)",
+  "tabela": null,
+  "campo": "Código do Projeto",
+  "formula_linha100": "=(Cliente!E15&' Proposta'!E5&' Proposta'!AL9)&\"PRJ\""
+ },
+ "C": {
+  "tipo": "N",
+  "tam": 15,
+  "obrig": "S",
+  "tabela": "T033CLIE",
+  "campo": "CPF_CGC_CLI",
+  "formula_linha100": "=IF(Cliente!E15=\"\",\"\",Cliente!E15)"
+ },
+ "D": {
+  "tipo": "C",
+  "tam": 55,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "NM_CLI",
+  "formula_linha100": "=IF(Cliente!E13=\"\",\"\",Cliente!E13)"
+ },
+ "E": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "CD_FTE_REC",
+  "formula_linha100": "=' Proposta'!AL7"
+ },
+ "F": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": "T033INAD",
+  "campo": "QT_EPO_ATL",
+  "formula_linha100": "=' Proposta'!D155"
+ },
+ "G": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "QT_EPO_PRJ",
+  "formula_linha100": "=' Proposta'!E155:I155"
+ },
+ "H": {
+  "tipo": "N",
+  "tam": 15,
+  "obrig": "S",
+  "tabela": "T033AVLR",
+  "campo": "NR_CPF_AVR",
+  "formula_linha100": "=IF(' Proposta'!$E$15=\"\",IF(' Proposta'!$E$13=\"\",\"\",' Proposta'!$E$13),' Proposta'!$E$15)"
+ },
+ "I": {
+  "tipo": "C",
+  "tam": 55,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "NM_AVR",
+  "formula_linha100": "=IF(' Proposta'!$E$15=\"\",IF(' Proposta'!$E$13=\"\",\"\",' Proposta'!$E$12),' Proposta'!$E$14)"
+ },
+ "K": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": "T033PROJ",
+  "campo": "TX_JRS_CRD_RUR",
+  "formula_linha100": "=IF(' Proposta'!AN193=\"\",\"\",' Proposta'!AN193)"
+ },
+ "L": {
+  "tipo": "C",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "ID_MUN_DCR_EMG",
+  "formula_linha100": "=IF(' Proposta'!Q9=\"\",\"\",' Proposta'!Q9)"
+ },
+ "M": {
+  "tipo": "N",
+  "tam": 6,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_MUN",
+  "formula_linha100": "=IF(Cliente!Y50=\"\",\"\",Cliente!Y50)"
+ },
+ "N": {
+  "tipo": "N",
+  "tam": 3,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_ORG",
+  "formula_linha100": "=IF(' Proposta'!AL9=\"\",\"\",' Proposta'!AL9)"
+ },
+ "O": {
+  "tipo": "D",
+  "tam": 10,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "DT_PRJ",
+  "formula_linha100": "=IF(' Proposta'!E5=\"\",\"\",' Proposta'!E5)"
+ },
+ "P": {
+  "tipo": "D",
+  "tam": 11,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "DT_Ctr",
+  "formula_linha100": "=IF(' Proposta'!R5=\"\",\"\",' Proposta'!R5)"
+ },
+ "Q": {
+  "tipo": "C",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "ID_PRD_AGR_ORG ",
+  "formula_linha100": "=IF(' Proposta'!Q12=\"\",\"\",' Proposta'!Q12)"
+ },
+ "R": {
+  "tipo": "C",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "ST_PRJ_ORI_TRT ",
+  "formula_linha100": "=IF(' Proposta'!Q13=\"\",\"\",' Proposta'!Q13)"
+ },
+ "U": {
+  "tipo": "N",
+  "tam": 13,
+  "obrig": "S",
+  "tabela": "T033COOB",
+  "campo": "CPF_CGC_COO",
+  "formula_linha100": "=IF(' Proposta'!E137=\"\",IF(' Proposta'!H137=\"\",\"\",' Proposta'!H137),' Proposta'!E137)"
+ },
+ "V": {
+  "tipo": "C",
+  "tam": 55,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "NM_COO",
+  "formula_linha100": "=IF(' Proposta'!E136=\"\",\"\",' Proposta'!E136)"
+ },
+ "W": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_TP_COO",
+  "formula_linha100": "=IF(' Proposta'!Z136=\"\",\"\",' Proposta'!Z136)"
+ },
+ "AA": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S ",
+  "tabela": "T033IMOV",
+  "campo": "SQ_IMV",
+  "formula_linha100": "=IF(AB100=\"\",\"\",1)"
+ },
+ "AB": {
+  "tipo": "C",
+  "tam": 40,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "NM_IMV",
+  "formula_linha100": "=IF(Avaliação!D7=\"\",\"\",Avaliação!D7)"
+ },
+ "AC": {
+  "tipo": "N",
+  "tam": 6,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_MUN",
+  "formula_linha100": "=IF(Avaliação!R7=\"\",\"\",Avaliação!R7)"
+ },
+ "AD": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "AR_LEG_IMV",
+  "formula_linha100": "=IF(Avaliação!K7=\"\",0,Avaliação!K7)"
+ },
+ "AE": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "AR_REA_IMV",
+  "formula_linha100": "=IF(Avaliação!K7=\"\",0,Avaliação!K7)"
+ },
+ "AF": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "VR_TRR_NUA",
+  "formula_linha100": "=IF(Avaliação!J43=\"\",0,Avaliação!J43)"
+ },
+ "AG": {
+  "tipo": "N",
+  "tam": 12.2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "NM_PRP_IMV",
+  "formula_linha100": "=IF(TRIM(Cliente!E74)=\"\",Cliente!E13,Cliente!E74)"
+ },
+ "AH": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "CPF_CGC_PRP",
+  "formula_linha100": "=IF(TRIM(Cliente!E75)=\"\",Cliente!E15,Cliente!E75)"
+ },
+ "AJ": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033SEMO",
+  "campo": "CD_CAT_ANI",
+  "formula_linha100": "=IF(AK100=\"\",\"\",IF(Avaliação!P245=\"\",\"\",Avaliação!P245))"
+ },
+ "AK": {
+  "tipo": "N",
+  "tam": 4,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "QT_SMV",
+  "formula_linha100": "=IF(Avaliação!E245=\"\",\"\",Avaliação!E245)"
+ },
+ "AL": {
+  "tipo": "N",
+  "tam": 3,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_RCA",
+  "formula_linha100": "=IF(Avaliação!Q245=\"\",\"\",Avaliação!Q245)"
+ },
+ "AM": {
+  "tipo": "C",
+  "tam": 60,
+  "obrig": "N ",
+  "tabela": null,
+  "campo": "NM_SEMO",
+  "formula_linha100": "=IF(Avaliação!D245=\"\",\"\",Avaliação!D245)"
+ },
+ "AN": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VR_CPN_IMV",
+  "formula_linha100": "=IF(Avaliação!J245=\"\",0,Avaliação!J245)"
+ },
+ "AR": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S ",
+  "tabela": "T033COBS",
+  "campo": "SQ_IMV",
+  "formula_linha100": "=IF(OR(Avaliação!$D$7=\"\",AU100=0),\"\",IF(AS100=\"\",\"\",AQ100))"
+ },
+ "AS": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "TP_EPL_SOL",
+  "formula_linha100": "=IF(Avaliação!P17=\"\",\"\",Avaliação!P17)"
+ },
+ "AT": {
+  "tipo": "N",
+  "tam": 8,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "CD_PRD_RUR",
+  "formula_linha100": "332110"
+ },
+ "AU": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "AR_HEC",
+  "formula_linha100": "=IF(Avaliação!E17=\"\",0,Avaliação!E17)"
+ },
+ "AV": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "N ",
+  "tabela": null,
+  "campo": "NR_AA_CUL",
+  "formula_linha100": "=IF(Avaliação!G17=\"\",0,Avaliação!G17)"
+ },
+ "AW": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": "",
+  "campo": "VR_CPN_IMV",
+  "formula_linha100": "=IF(Avaliação!J17=\"\",0,Avaliação!J17)"
+ },
+ "BA": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S ",
+  "tabela": "T033INST",
+  "campo": "SQ_IMV",
+  "formula_linha100": "=IF(Avaliação!$D$7=\"\",\"\",IF(BB100=\"\",\"\",AZ100))"
+ },
+ "BB": {
+  "tipo": "C",
+  "tam": 40,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "NM_INS",
+  "formula_linha100": "=IF(Avaliação!D49=\"\",\"\",Avaliação!D49)"
+ },
+ "BC": {
+  "tipo": "NR_AA_INS",
+  "tam": 2,
+  "obrig": "N ",
+  "tabela": null,
+  "campo": "NR_AA_INS",
+  "formula_linha100": "=IF(BA100=\"\",0,IF(Avaliação!E49=\"\",0,Avaliação!E49))"
+ },
+ "BD": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "CD_EST_CNS",
+  "formula_linha100": "=IF(Avaliação!P49=\"\",0,Avaliação!P49)"
+ },
+ "BE": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PC_RES",
+  "formula_linha100": "=IF(BA100=\"\",0,IF(Avaliação!K49=\"\",0,Avaliação!K49))"
+ },
+ "BF": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VR_CPN_IMV",
+  "formula_linha100": "=IF(BA100=\"\",0,IF(Avaliação!L49=\"\",0,Avaliação!L49))"
+ },
+ "BG": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "QTD",
+  "formula_linha100": "1"
+ },
+ "BK": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": "T033MAQU",
+  "campo": "SQ_MAQ_EP_MOV",
+  "formula_linha100": "=IF(Avaliação!D193=\"\",\"\",1)"
+ },
+ "BL": {
+  "tipo": "C",
+  "tam": 50,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "DE_MAQ",
+  "formula_linha100": "=IF(Avaliação!D193=\"\",\"\",Avaliação!D193)"
+ },
+ "BM": {
+  "tipo": "NR_AA_INS",
+  "tam": 2,
+  "obrig": "NR_AA_INS",
+  "tabela": null,
+  "campo": "NR_AA_INS",
+  "formula_linha100": "=IF(BK100=\"\",0,IF(Avaliação!E193=\"\",0,Avaliação!E193))"
+ },
+ "BN": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PC_RES",
+  "formula_linha100": "=IF(BK100=\"\",0,IF(Avaliação!K193=\"\",0,Avaliação!K193))"
+ },
+ "BO": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VR_CPN_IMV",
+  "formula_linha100": "=IF(BK100=\"\",0,IF(Avaliação!L193=\"\",\"\",Avaliação!L193))"
+ },
+ "BP": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "QTD",
+  "formula_linha100": "1"
+ },
+ "BQ": {
+  "tipo": "C",
+  "tam": 10,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "CD_MDA",
+  "formula_linha100": "=IF(BT100=\"\",\"\",IF(Cronograma!L243=\"\",\"\",Cronograma!L243))"
+ },
+ "BR": {
+  "tipo": "N",
+  "tam": 10,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_SIS_PRD",
+  "formula_linha100": "=IF(BT100=\"\",\"\",IF(Cronograma!Z202=-1,\"\",Cronograma!AB202))"
+ },
+ "BS": {
+  "tipo": "C ",
+  "tam": 10,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "CD_CFI",
+  "formula_linha100": "=IF(BT100=\"\",\"\",IF(Cronograma!M243=\"\",\"\",Cronograma!M243))"
+ },
+ "BT": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "SQ_IVS",
+  "tabela": "T033INVE",
+  "campo": "SQ_IVS",
+  "formula_linha100": "=IF(TRIM(BU100)=\"\",\"\",1)"
+ },
+ "BU": {
+  "tipo": "C",
+  "tam": 70,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "DE_IVS ",
+  "formula_linha100": "=IF(' Proposta'!D27=\"\",\"\",' Proposta'!D27)"
+ },
+ "BV": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_USO",
+  "formula_linha100": "=IF(BT100=\"\",\"\",' Proposta'!AE27)"
+ },
+ "BW": {
+  "tipo": "N",
+  "tam": 11,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_ATV_ECO ",
+  "formula_linha100": "=IF(BT100=\"\",\"\",' Proposta'!$AL$12)"
+ },
+ "BX": {
+  "tipo": "N",
+  "tam": 11,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_EPD",
+  "formula_linha100": "=IF(BT100=\"\",\"\",IF(Cronograma!Z202=-1,' Proposta'!$AC$9,Cronograma!Z202))"
+ },
+ "BY": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_OBJ_CRD",
+  "formula_linha100": "=IF(BT100=\"\",\"\",' Proposta'!$AL$13)"
+ },
+ "BZ": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_FIN_CRD ",
+  "formula_linha100": "=IF(BT100=\"\",\"\",' Proposta'!$AL$14)"
+ },
+ "CA": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_APL_REC ",
+  "formula_linha100": "=IF(BT100=\"\",\"\",Cronograma!$AA243)"
+ },
+ "CB": {
+  "tipo": "N",
+  "tam": 7.2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "QT_IVS ",
+  "formula_linha100": "=IF(' Proposta'!F27=\"\",\"\",' Proposta'!F27)"
+ },
+ "CC": {
+  "tipo": "C ",
+  "tam": 5,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_UND_MDD",
+  "formula_linha100": "=IF(BT100=\"\",\"\",' Proposta'!AA27)"
+ },
+ "CD": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "VR_UNI",
+  "formula_linha100": "=IF(' Proposta'!J27=\"\",\"\",' Proposta'!J27)"
+ },
+ "CE": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ID_TX_ELA",
+  "formula_linha100": "=IF(' Proposta'!O27=0,\"\",' Proposta'!AG27)"
+ },
+ "CF": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "TP_USO",
+  "formula_linha100": "=IF(' Proposta'!O27=0,\"\",' Proposta'!AH27)"
+ },
+ "CG": {
+  "tipo": "N",
+  "tam": 17.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VR_IVS_TOT",
+  "formula_linha100": "=IF(BT100<>\"\",' Proposta'!O27,0)"
+ },
+ "CH": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "SQ_IMOV",
+  "formula_linha100": "=IF(OR(' Proposta'!I27 = \"\",' Proposta'!I27 < 0,' Proposta'!I27 > 3),1,' Proposta'!I27 )"
+ },
+ "CJ": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033FOFI",
+  "campo": "SQ_IVS",
+  "formula_linha100": "=IF(BT100=\"\",\"\",CI100)"
+ },
+ "CK": {
+  "tipo": "N",
+  "tam": 3,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_PRG",
+  "formula_linha100": "=' Proposta'!$AL$6"
+ },
+ "CL": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PC_REC_TER",
+  "formula_linha100": "=' Proposta'!AC27"
+ },
+ "CM": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PC_REC_PRP",
+  "formula_linha100": "=' Proposta'!AB27"
+ },
+ "CN": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "VR_REC (TER)",
+  "formula_linha100": "=' Proposta'!J27-' Proposta'!L27"
+ },
+ "CO": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "VR_REC (PRP)",
+  "formula_linha100": "=' Proposta'!L27"
+ },
+ "CP": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "VR_REC_TOT (REC)",
+  "formula_linha100": "=' Proposta'!N27"
+ },
+ "CQ": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "VR_REC_TOT (PRP)",
+  "formula_linha100": "=CG100-CP100"
+ },
+ "CS": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033CRND/T033CRIV",
+  "campo": "SQ_IVS",
+  "formula_linha100": "=IF(BT100=\"\",\"\",CR100)"
+ },
+ "CT": {
+  "tipo": "C",
+  "tam": 70,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "DE_IVS",
+  "formula_linha100": "=IF(' Proposta'!D27=\"\",\"\",' Proposta'!D27)"
+ },
+ "CU": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PC_PCL",
+  "formula_linha100": "=Cronograma!J16"
+ },
+ "CV": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VL_PCL",
+  "formula_linha100": "=ROUND(Cronograma!J17,2)"
+ },
+ "CW": {
+  "tipo": "C",
+  "tam": 6,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PR_PCL  ",
+  "formula_linha100": "=IF(Cronograma!J15=\"\",\"\",Cronograma!J15)"
+ },
+ "CX": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PC_PCL",
+  "formula_linha100": "=Cronograma!K16"
+ },
+ "CY": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VL_PCL",
+  "formula_linha100": "=ROUND(Cronograma!K17,2)"
+ },
+ "CZ": {
+  "tipo": "C",
+  "tam": 6,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PR_PCL  ",
+  "formula_linha100": "=IF(Cronograma!K15=\"\",\"\",Cronograma!K15)"
+ },
+ "DA": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PC_PCL",
+  "formula_linha100": "=Cronograma!L16"
+ },
+ "DB": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VL_PCL",
+  "formula_linha100": "=ROUND(Cronograma!L17,2)"
+ },
+ "DC": {
+  "tipo": "C",
+  "tam": 6,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PR_PCL  ",
+  "formula_linha100": "=IF(Cronograma!L15=\"\",\"\",Cronograma!L15)"
+ },
+ "DD": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PC_PCL",
+  "formula_linha100": "=Cronograma!M16"
+ },
+ "DE": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VL_PCL",
+  "formula_linha100": "=ROUND(Cronograma!M17,2)"
+ },
+ "DF": {
+  "tipo": "C",
+  "tam": 6,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "PR_PCL  ",
+  "formula_linha100": "=IF(Cronograma!M15=\"\",\"\",Cronograma!M15)"
+ },
+ "DG": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "DDI",
+  "formula_linha100": "=IF(Cronograma!AA17>0,Cronograma!AA17,0)"
+ },
+ "DH": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "DDI",
+  "formula_linha100": "=IF(Cronograma!AB17>0,Cronograma!AB17,0)"
+ },
+ "DI": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "DDI",
+  "formula_linha100": "=IF(Cronograma!AC17>0,Cronograma!AC17,0)"
+ },
+ "DJ": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "DDI",
+  "formula_linha100": "=IF(Cronograma!AD17>0,Cronograma!AD17,0)"
+ },
+ "DL": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033GBEN",
+  "campo": "sq_gar",
+  "formula_linha100": "=IF(' Proposta'!Y27>0,SEAP!DK100,\"\")"
+ },
+ "DM": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "cd_ori_gar",
+  "formula_linha100": "=IF(DL100=\"\",\"\",3)"
+ },
+ "DN": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "cd_gar",
+  "formula_linha100": "=IF(DL100=\"\",\"\",' Proposta'!AF27)"
+ },
+ "DO": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "sq_imv",
+  "formula_linha100": "=IF(DL100=\"\",\"\",IF(' Proposta'!I27=\"\",1,' Proposta'!I27))"
+ },
+ "DP": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "sq_ivs   ",
+  "formula_linha100": "1"
+ },
+ "DQ": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "pc_par_coo"
+ },
+ "DR": {
+  "tipo": "N",
+  "tam": 6.2,
+  "obrig": "N",
+  "tabela": "T033ORCA",
+  "campo": "VR_UNI 1",
+  "formula_linha100": "=IF(BT100=\"\",\"\",ROUND($CD100 * $CU100%,2))"
+ },
+ "DS": {
+  "tipo": "N",
+  "tam": 7.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VR_UNI 2",
+  "formula_linha100": "=IF(BT100=\"\",\"\",IF($CU100+$CX100=100,ROUND($CD100-$DR100,2),ROUND($CD100 * CX100%,2)))"
+ },
+ "DT": {
+  "tipo": "N",
+  "tam": 8.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VR_UNI 3",
+  "formula_linha100": "=IF(BT100=\"\",\"\",IF($CU100+$CX100+$DA100=100,ROUND($CD100-($DR100+$DS100),2),ROUND($CD100 * $DA100%,2)))"
+ },
+ "DU": {
+  "tipo": "N",
+  "tam": 9.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "VR_UNI 4",
+  "formula_linha100": "=IF(BT100=\"\",\"\",IF($CU100+$CX100+$DA100+DD100=100,ROUND($CD100-($DR100+$DS100+DT100),2),ROUND($CD100 * $DD100%,2)))"
+ },
+ "DW": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033ATPJ",
+  "campo": "sq_atv",
+  "formula_linha100": "=IF('Ativ. Agrícola'!D85=\"\",\"\",SEAP!DV100)"
+ },
+ "DX": {
+  "tipo": "C",
+  "tam": 150,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "de_atv_prj",
+  "formula_linha100": "=IF(DW100=\"\",\"\",'Ativ. Agrícola'!D85)"
+ },
+ "DY": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "cd_set_atv",
+  "formula_linha100": "=IF(DW100=\"\",\"\",1)"
+ },
+ "DZ": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "tp_atv  ",
+  "formula_linha100": "=IF(DW100=\"\",\"\",'Ativ. Agrícola'!BV85)"
+ },
+ "EA": {
+  "tipo": "N",
+  "tam": 3,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "cd_rca"
+ },
+ "EB": {
+  "tipo": "N",
+  "tam": 11,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "cd_atv_eco",
+  "formula_linha100": "=IF(DW100=\"\",\"\",'Ativ. Agrícola'!BV166)"
+ },
+ "EC": {
+  "tipo": "N",
+  "tam": 7,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "qt_mat_est"
+ },
+ "ED": {
+  "tipo": "N",
+  "tam": 7,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "qt_cab_ope"
+ },
+ "EE": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "id_cst_pad ",
+  "formula_linha100": "=IF('Ativ. Agrícola'!$A$122=1,1,0)"
+ },
+ "EF": {
+  "tipo": "N",
+  "tam": 2.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "Area em Há",
+  "formula_linha100": "=IF(BT100=\"\",\"\",IF(Cronograma!F202<>\"\",Cronograma!F202,0))"
+ },
+ "EJ": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033CANU",
+  "campo": "sq_atv",
+  "formula_linha100": "=$DW$100"
+ },
+ "EK": {
+  "tipo": "nr_aa ",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "(Cultura anual)",
+  "campo": "nr_aa ",
+  "formula_linha100": "=IF(EJ100=\"\",\"\",0)"
+ },
+ "EL": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "ar_hec",
+  "formula_linha100": "=IF(EJ100=\"\",\"\",'Ativ. Agrícola'!$E$8)"
+ },
+ "EM": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "pro_cul_agc  ",
+  "formula_linha100": "=IF(EJ100=\"\",\"\",'Ativ. Agrícola'!$K$85)"
+ },
+ "ES": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T0339ERB",
+  "campo": "sq_atv",
+  "formula_linha100": "=IF(OR($DW$135=\"\",AND(EU100=0,EV100=0)),\"\",$DW$135)"
+ },
+ "ET": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "(Rebanho atual)",
+  "campo": "cd_cat_ani",
+  "formula_linha100": "16"
+ },
+ "EU": {
+  "tipo": "N",
+  "tam": 4,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "ano_0",
+  "formula_linha100": "='Ativ. Pecuária'!G17"
+ },
+ "EV": {
+  "tipo": "N",
+  "tam": 4,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "ano_1",
+  "formula_linha100": "='Ativ. Pecuária'!I17"
+ },
+ "FB": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033INDT",
+  "campo": "sq_atv"
+ },
+ "FC": {
+  "tipo": "N ",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "(Indicadores Técnicos)",
+  "campo": "nr_aa"
+ },
+ "FD": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ind_par"
+ },
+ "FE": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ind_pro"
+ },
+ "FF": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ind_ani_1"
+ },
+ "FG": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ind_ani_2"
+ },
+ "FH": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ind_ani_adu "
+ },
+ "FI": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "des_ani_exi"
+ },
+ "FJ": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "des_ani_adq"
+ },
+ "FK": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "qt_per_lct"
+ },
+ "FL": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "prd_lei_dia"
+ },
+ "FM": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "rel_lei_qej"
+ },
+ "FN": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "rel_lei_out"
+ },
+ "FO": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "rel_mat_rep"
+ },
+ "FP": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_mac_0"
+ },
+ "FQ": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_fem_0"
+ },
+ "FR": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_fem_1"
+ },
+ "FS": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_mac_0r"
+ },
+ "FT": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_fem_0r"
+ },
+ "FU": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_mac_1r"
+ },
+ "FV": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_fem_1r"
+ },
+ "FW": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_mat_r"
+ },
+ "FX": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_mac_1"
+ },
+ "FY": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_mac_2r"
+ },
+ "FZ": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_fem_2"
+ },
+ "GA": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_qej"
+ },
+ "GB": {
+  "tipo": "N",
+  "tam": null,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "ven_out"
+ },
+ "GH": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033RANU",
+  "campo": "sq_aqtv"
+ },
+ "GI": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "(UA-Unidade Anual)",
+  "campo": "cd_cat_ani"
+ },
+ "GJ": {
+  "tipo": "N ",
+  "tam": 2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "nr_aa"
+ },
+ "GK": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "qt_ua_cat"
+ },
+ "GL": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "tp_reg_rbn"
+ },
+ "GM": {
+  "tipo": "N",
+  "tam": 6,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "qt_ani"
+ },
+ "GN": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "qt_pso_med"
+ },
+ "GT": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033PROD",
+  "campo": "sq_atv",
+  "formula_linha100": "=IF(DW100=\"\",\"\",DW100)"
+ },
+ "GU": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "sq_prd",
+  "formula_linha100": "=IF(GT100=\"\",\"\",1)"
+ },
+ "GV": {
+  "tipo": "C",
+  "tam": 50,
+  "obrig": "S",
+  "tabela": "(Produção)",
+  "campo": "nm_prd",
+  "formula_linha100": "=$DX100"
+ },
+ "GW": {
+  "tipo": "cd_und_mdd",
+  "tam": 5,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "cd_und_mdd",
+  "formula_linha100": "='Ativ. Agrícola'!BW85"
+ },
+ "GZ": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033CUDE",
+  "campo": "sq_atv",
+  "formula_linha100": "=IF(DW100=\"\",\"\",DW100)"
+ },
+ "HA": {
+  "tipo": "N",
+  "tam": 3,
+  "obrig": "S",
+  "tabela": "(Custo despesa)",
+  "campo": "sq_cst",
+  "formula_linha100": "=IF(GZ100=\"\",\"\",1)"
+ },
+ "HB": {
+  "tipo": "C",
+  "tam": 50,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "de_cts_dsp",
+  "formula_linha100": "=DX100"
+ },
+ "HC": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "CD_CAT_ANI",
+  "formula_linha100": "=IF(GZ100=\"\",\"\",0)"
+ },
+ "HD": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "TP_REG_RBN",
+  "formula_linha100": "=IF(GZ100=\"\",\"\",0)"
+ },
+ "HE": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "ID_RPR",
+  "formula_linha100": "=IF(GZ100=\"\",\"\",0)"
+ },
+ "HF": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_ORI_CST",
+  "formula_linha100": "=IF(GZ100=\"\",\"\",2)"
+ },
+ "HG": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "CD_CTA",
+  "formula_linha100": "=IF(GZ100=\"\",\"\",0)"
+ },
+ "HH": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "cd_set_atv",
+  "formula_linha100": "=IF(GZ100=\"\",\"\",1)"
+ },
+ "HK": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033CDAN",
+  "campo": "sq_atv",
+  "formula_linha100": "=IF(OR($DW$100=\"\",HN100<=0),\"\",$DW$100)"
+ },
+ "HL": {
+  "tipo": "N",
+  "tam": 3,
+  "obrig": "S",
+  "tabela": "(Custo despesa anual)",
+  "campo": "sq_cst",
+  "formula_linha100": "=IF(HK100=\"\",\"\",1)"
+ },
+ "HM": {
+  "tipo": "N ",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "nr_aa     ",
+  "formula_linha100": "=IF(HL100=\"\",\"\",0)"
+ },
+ "HN": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "vr_uni       ",
+  "formula_linha100": "=Tabelas!$C$67"
+ },
+ "HQ": {
+  "tipo": "N",
+  "tam": 2,
+  "obrig": "S",
+  "tabela": "T033OPSE",
+  "campo": "cd_apl.rec",
+  "formula_linha100": "=Cronograma!AO217"
+ },
+ "HR": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": "T033OPSE",
+  "campo": "sq_rst_pgt",
+  "formula_linha100": "1"
+ },
+ "HS": {
+  "tipo": "N",
+  "tam": 1,
+  "obrig": "S",
+  "tabela": "Operação estudo e ser",
+  "campo": "tp_rst_pgt",
+  "formula_linha100": "2"
+ },
+ "HT": {
+  "tipo": "N",
+  "tam": 3,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "cd_prg",
+  "formula_linha100": "=' Proposta'!AL6"
+ },
+ "HU": {
+  "tipo": "N",
+  "tam": 3,
+  "obrig": null,
+  "tabela": null,
+  "campo": "pz_mm",
+  "formula_linha100": "=CalculoFinanceiro!D13"
+ },
+ "HV": {
+  "tipo": "N",
+  "tam": 3,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "crc_mm",
+  "formula_linha100": "=CalculoFinanceiro!D14"
+ },
+ "HW": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "tx_spr_fte",
+  "formula_linha100": "=CalculoFinanceiro!D15"
+ },
+ "HX": {
+  "tipo": "N ",
+  "tam": 3,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "nr_per_rbs",
+  "formula_linha100": "=CalculoFinanceiro!X15"
+ },
+ "HY": {
+  "tipo": "N",
+  "tam": 11.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "vr_epr",
+  "formula_linha100": "=CalculoFinanceiro!D12"
+ },
+ "HZ": {
+  "tipo": "N",
+  "tam": 5.2,
+  "obrig": "N",
+  "tabela": null,
+  "campo": "tx_del_crd"
+ },
+ "IA": {
+  "tipo": "N",
+  "tam": 3,
+  "obrig": "S",
+  "tabela": null,
+  "campo": "cd_agt_fnc",
+  "formula_linha100": "4"
+ },
+ "IC": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": "T033CRNR",
+  "campo": "QT_PCL",
+  "formula_linha100": "=CalculoFinanceiro!BQ12"
+ },
+ "ID": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "VR_PCL",
+  "formula_linha100": "=CalculoFinanceiro!BR12"
+ },
+ "IE": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "PC_PCL",
+  "formula_linha100": "=CalculoFinanceiro!BT12*100"
+ },
+ "IG": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": "T033PANU",
+  "campo": "sq_atv",
+  "formula_linha100": "=IF(OR($DW$100=\"\",IK100<=0),\"\",$DW$100)"
+ },
+ "IH": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": "Produção Anual",
+  "campo": "sq_prd",
+  "formula_linha100": "=IF($GU$100=\"\",\"\",1)"
+ },
+ "II": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "nr_aa",
+  "formula_linha100": "=IF(IG100=\"\",\"\",0)"
+ },
+ "IJ": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "qt_cap_prd",
+  "formula_linha100": "=IF('Ativ. Agrícola'!$K$85 > 0,'Ativ. Agrícola'!$K$85,0)"
+ },
+ "IK": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "vr_vda",
+  "formula_linha100": "='Ativ. Agrícola'!$I$85"
+ },
+ "IL": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "pc_dsp_grl"
+ },
+ "IN": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": "CATALOGO SICOR",
+  "campo": "Seq",
+  "formula_linha100": "1"
+ },
+ "IO": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "Perc.Energia Renov.",
+  "formula_linha100": "0"
+ },
+ "IP": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": "T033RPAN",
+  "campo": "sq_rst_pgt",
+  "formula_linha100": "=IF($IR$99>0,1,\"\")"
+ },
+ "IQ": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": "Amortizações Anuais",
+  "campo": "tp_rst_pgt",
+  "formula_linha100": "2"
+ },
+ "IR": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "nr_aa",
+  "formula_linha100": "1"
+ },
+ "IS": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "vr_tot_amr",
+  "formula_linha100": "=ROUND(Tabelas!AN342,2)"
+ },
+ "IT": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "pc_amt",
+  "formula_linha100": "=IF($IR$99>0,ROUND(IS100*100/$IR$99,2),0)"
+ },
+ "IU": {
+  "tipo": null,
+  "tam": null,
+  "obrig": null,
+  "tabela": null,
+  "campo": "VR_PGT_ECG",
+  "formula_linha100": "=ROUND(Tabelas!AN341,2)"
+ },
+ "AQ": {
+  "formula_linha100": "1"
+ },
+ "AZ": {
+  "formula_linha100": "1"
+ },
+ "CI": {
+  "formula_linha100": "1"
+ },
+ "CR": {
+  "formula_linha100": "1"
+ },
+ "DK": {
+  "formula_linha100": "1"
+ },
+ "DV": {
+  "formula_linha100": "1"
+ },
+ "IB": {
+  "formula_linha100": "1"
+ }
+}

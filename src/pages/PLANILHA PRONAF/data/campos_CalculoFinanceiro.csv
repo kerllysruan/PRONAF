@@ -1,0 +1,14 @@
+aba,celula,linha,coluna,rotulo_linha,cabecalho_coluna,validacao_tipo,validacao_formula1,formula2_limite,mensagem_erro,valor_padrao
+CalculoFinanceiro,Y12,12,Y,0,Validações,,,,,0
+CalculoFinanceiro,D13,13,D,Prazo em meses,,,,,Prazo incompatível com o Programa de Crédito,
+CalculoFinanceiro,DD13,13,DD,Prazo em meses,,,,,Prazo incompatível com o Programa de Crédito,
+CalculoFinanceiro,D14,14,D,Carência em meses,,,,,Carência incompatível com o Programa de Crédito,
+CalculoFinanceiro,DD14,14,DD,Carência em meses,,,,,Carência incompatível com o Programa de Crédito,
+CalculoFinanceiro,D15,15,D,Juros % a.a.,,,,,,4
+CalculoFinanceiro,DD15,15,DD,Juros % a.a.,,,,,,4
+CalculoFinanceiro,D16,16,D,Periodicidade Reembolso,,list,visaoPER,,,
+CalculoFinanceiro,DD16,16,DD,Periodicidade Reembolso,,list,visaoPER,,,
+CalculoFinanceiro,D17,17,D,Amortizações iguais ?,,list,visaoSIM_NAO,,Digite ou Selecione : Sim ou Não,
+CalculoFinanceiro,DD17,17,DD,Amortizações iguais ?,,list,visaoSIM_NAO,,Digite ou Selecione : Sim ou Não,
+CalculoFinanceiro,X18,18,X,0,Parâmetros,,,,,3
+CalculoFinanceiro,DX18,18,DX,0,Parâmetros,,,,,1
