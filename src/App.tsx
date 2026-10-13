@@ -17,13 +17,14 @@ import NotFound from "./pages/NotFound";
 import AdminAgencies from "./pages/AdminAgencies";
 import StockProposals from "./pages/StockProposals";
 import FileExchange from "./pages/FileExchange";
+import React, { useState, Suspense } from "react";
 import DocumentationSubmit from "./pages/DocumentationSubmit";
 import ProjetistasControl from "./pages/ProjetistasControl";
 import PlatformDocumentation from "./pages/PlatformDocumentation";
 import CertificatesAutomator from "./pages/CertificatesAutomator";
 import ProjetistaRegister from "./pages/ProjetistaRegister";
 import ProjetistaDashboard from "./pages/ProjetistaDashboard";
-import PronafA2Page from "./pages/PLANILHA PRONAF/PronafA2Page";
+const PronafA2Page = React.lazy(() => import("./pages/PLANILHA PRONAF/PronafA2Page"));
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Loader2 } from "lucide-react";
 
@@ -89,7 +90,6 @@ function HomeRoute() {
 }
 
 import { SplashScreen } from "@/components/SplashScreen";
-import { useState } from "react";
 
 const AppRoutes = () => (
   <Routes>
@@ -107,7 +107,24 @@ const AppRoutes = () => (
     <Route path="/controle-acesso" element={<ProtectedRoute><PermissionGate permission="can_view_access_control" showError><AccessControl /></PermissionGate></ProtectedRoute>} />
     <Route path="/admin/agencies" element={<ProtectedRoute><PermissionGate requireAdmin showError><AdminAgencies /></PermissionGate></ProtectedRoute>} />
     <Route path="/documentacao-plataforma" element={<ProtectedRoute><PlatformDocumentation /></ProtectedRoute>} />
-    <Route path="/pronaf-a2" element={<ProtectedRoute><PermissionGate permission="can_view_pronaf_a2" showError><PronafA2Page /></PermissionGate></ProtectedRoute>} />
+    <Route
+      path="/pronaf-a2"
+      element={
+        <ProtectedRoute>
+          <PermissionGate permission="can_view_pronaf_a2" showError>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center min-h-[50vh]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              }
+            >
+              <PronafA2Page />
+            </Suspense>
+          </PermissionGate>
+        </ProtectedRoute>
+      }
+    />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

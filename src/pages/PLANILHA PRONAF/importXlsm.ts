@@ -1,22 +1,32 @@
 import { Buffer } from "buffer";
-import officeCrypto from "officecrypto-tool";
 import * as XLSX from "xlsx";
 import { createXlsmReader, normalizeSheetKey } from "./exportXlsm";
 import { cellsToProjeto, type SheetName } from "./cellMapping";
 import type { ProjetoA2 } from "./types";
 
 // Polyfills para ambiente de navegador
-if (typeof window !== "undefined") {
-  if (!(window as unknown as { Buffer?: typeof Buffer }).Buffer) {
-    (window as unknown as { Buffer: typeof Buffer }).Buffer = Buffer;
+function ensureBufferPolyfill() {
+  if (typeof window !== "undefined") {
+    if (!(window as unknown as { Buffer?: typeof Buffer }).Buffer) {
+      (window as unknown as { Buffer: typeof Buffer }).Buffer = Buffer;
+    }
+    if (!(window as unknown as { global?: typeof window }).global) {
+      (window as unknown as { global: typeof window }).global = window;
+    }
+    if (!(window as unknown as { process?: { env: Record<string, string> } }).process) {
+      (window as unknown as { process: { env: Record<string, string> } }).process = { env: {} };
+    }
   }
-  if (!(window as unknown as { global?: typeof window }).global) {
-    (window as unknown as { global: typeof window }).global = window;
-  }
-  if (!(window as unknown as { process?: { env: Record<string, string> } }).process) {
-    (window as unknown as { process: { env: Record<string, string> } }).process = { env: {} };
+  if (typeof globalThis !== "undefined") {
+    if (!(globalThis as unknown as { Buffer?: typeof Buffer }).Buffer) {
+      (globalThis as unknown as { Buffer: typeof Buffer }).Buffer = Buffer;
+    }
+    if (!(globalThis as unknown as { global?: typeof globalThis }).global) {
+      (globalThis as unknown as { global: typeof globalThis }).global = globalThis;
+    }
   }
 }
+ensureBufferPolyfill();
 
 export const DEFAULT_SPREADSHEET_PASSWORDS = [
   "senhasBN",
@@ -33,7 +43,12 @@ export async function decryptSpreadsheetIfNeeded(
   buffer: ArrayBuffer,
   customPassword?: string
 ): Promise<ArrayBuffer> {
+  ensureBufferPolyfill();
   const fileBuffer = Buffer.from(buffer);
+
+  // Import dinâmico do officecrypto-tool para garantir execução pós-polyfill do Buffer
+  const officeCryptoMod = await import("officecrypto-tool");
+  const officeCrypto = (officeCryptoMod as unknown as { default?: typeof officeCryptoMod }).default || officeCryptoMod;
 
   let isEncrypted = false;
   try {
