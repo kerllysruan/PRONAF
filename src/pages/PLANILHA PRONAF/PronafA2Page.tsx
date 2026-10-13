@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { PronafA2Provider, usePronafA2 } from "./usePronafA2Store";
 import { exportXlsm } from "./exportXlsm";
-import { importXlsm } from "./importXlsm";
+import { importXlsm, decryptSpreadsheetIfNeeded } from "./importXlsm";
 import { projetoToCells } from "./cellMapping";
 import {
   AlertDialog,
@@ -152,7 +152,8 @@ function PronafA2Inner() {
 
     setIsExporting(true);
     try {
-      const arrayBuffer = await file.arrayBuffer();
+      const rawBuffer = await file.arrayBuffer();
+      const arrayBuffer = await decryptSpreadsheetIfNeeded(rawBuffer);
       const writes = projetoToCells(projeto);
       const result = await exportXlsm(arrayBuffer, writes);
       const now = new Date().toISOString().slice(0, 10);
