@@ -2,22 +2,15 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const DEFAULT_SUPABASE_URL = "https://ailmvtqnrltepobtwbhq.supabase.co";
+const DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpbG12dHFucmx0ZXBvYnR3YmhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1NzY0ODQsImV4cCI6MjA4NjE1MjQ4NH0.FEUHSB5ZELbJDyndzbndD6DPcahEs_GEmxIpRAzS8go";
 
-// Check for missing environment variables to prevent immediate crash
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.error(
-    "Supabase environment variables are missing! Check your .env file or deployment settings.",
-    { SUPABASE_URL: !!SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY: !!SUPABASE_PUBLISHABLE_KEY }
-  );
-}
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_KEY;
 
-// Use fallback empty strings if variables are missing to allow app to load (and fail gracefully at runtime)
-// instead of crashing at module load time.
 export const supabase = createClient<Database>(
-  SUPABASE_URL || "https://placeholder.supabase.co",
-  SUPABASE_PUBLISHABLE_KEY || "placeholder-key",
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY,
   {
     auth: {
       storage: localStorage,
