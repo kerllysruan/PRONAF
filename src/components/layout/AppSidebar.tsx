@@ -30,6 +30,7 @@ import {
 
 const menuItems = [
   { title: "Painel do Projetista", url: "/painel-projetista", icon: Briefcase, permission: "projetista_only", badge: null as string | null },
+  { title: "PRONAF A2", url: "/pronaf-a2", icon: ClipboardList, permission: "can_view_pronaf_a2", badge: null as string | null },
   { title: "Dashboard", url: "/", icon: LayoutDashboard, permission: "can_view_dashboard", badge: null as string | null },
   { title: "Propostas Concluídas", url: "/propostas", icon: FileText, permission: "can_view_proposals", badge: "concluded" as string },
   { title: "Estoque", url: "/estoque", icon: Box, permission: "can_view_proposals", badge: "stock" as string },
@@ -37,7 +38,6 @@ const menuItems = [
   { title: "Projetistas", url: "/projetistas", icon: UserCheck, permission: "can_view_proposals", badge: null as string | null },
   { title: "Documentação", url: "/documentacao", icon: FolderCheck, permission: "can_view_documentation", badge: "doc" as string },
   { title: "Automatizador de Certidões", url: "/automatizador-certidoes", icon: FileCheck, permission: "can_view_documentation", badge: null as string | null },
-  { title: "PRONAF A2", url: "/pronaf-a2", icon: ClipboardList, permission: "can_view_pronaf_a2", badge: null as string | null },
   { title: "Controle de Acesso", url: "/controle-acesso", icon: Shield, permission: "can_view_access_control", badge: null as string | null },
   { title: "Gestão de Agências", url: "/admin/agencies", icon: Building2, permission: "can_manage_agencies", badge: null as string | null },
   { title: "Guia da Plataforma", url: "/documentacao-plataforma", icon: BookOpen, permission: "can_view_dashboard", badge: null as string | null },
@@ -56,6 +56,7 @@ export function AppSidebar() {
     if (isProjetista) {
       return (
         item.url === "/painel-projetista" ||
+        item.url === "/pronaf-a2" ||
         item.url === "/troca-arquivos" ||
         item.url === "/automatizador-certidoes" ||
         item.url === "/documentacao-plataforma"

@@ -43,7 +43,7 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   can_view_agencies: true,
   can_manage_agencies: false,
   read_only: true, // Set to true as default for safety
-  can_view_pronaf_a2: false,
+  can_view_pronaf_a2: true,
 };
 
 export function usePermissions() {

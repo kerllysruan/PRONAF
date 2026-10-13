@@ -79,6 +79,7 @@ import {
   Trees,
   Users,
   Activity,
+  ClipboardList,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useInversoesReferencia } from "@/hooks/useInversoesReferencia";
@@ -1409,6 +1410,13 @@ export default function ProjetistaDashboard() {
                 <Calculator className="h-4 w-4" />
                 <span>Catálogo de Preços & Tetos BNB</span>
               </TabsTrigger>
+
+              <Link to="/pronaf-a2" className="flex items-center">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 px-3 py-1.5 rounded-xl transition-colors cursor-pointer border border-emerald-500/20 bg-emerald-500/5">
+                  <ClipboardList className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>Módulo PRONAF A2</span>
+                </div>
+              </Link>
             </TabsList>
 
             <div className="hidden lg:flex items-center gap-2 text-xs font-semibold text-muted-foreground bg-card/60 px-3 py-1.5 rounded-xl border border-border/40">
@@ -1847,16 +1855,28 @@ export default function ProjetistaDashboard() {
                 </div>
               </div>
 
-              <Button
-                onClick={() => {
-                  setImportModalOpen(true);
-                  setParsedProposalData(null);
-                }}
-                className="rounded-2xl bg-white text-teal-900 hover:bg-white/90 font-bold text-xs gap-2 shrink-0 shadow-md"
-              >
-                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                <span>Importar Planilha do Projeto</span>
-              </Button>
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <Link to="/pronaf-a2">
+                  <Button
+                    type="button"
+                    className="rounded-2xl bg-emerald-800/80 hover:bg-emerald-800 text-white border border-emerald-400/30 font-bold text-xs gap-2 shadow-md backdrop-blur-md"
+                  >
+                    <ClipboardList className="h-4 w-4 text-emerald-300" />
+                    <span>Abrir Módulo PRONAF A2</span>
+                  </Button>
+                </Link>
+
+                <Button
+                  onClick={() => {
+                    setImportModalOpen(true);
+                    setParsedProposalData(null);
+                  }}
+                  className="rounded-2xl bg-white text-teal-900 hover:bg-white/90 font-bold text-xs gap-2 shadow-md"
+                >
+                  <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                  <span>Importar Planilha do Projeto</span>
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
