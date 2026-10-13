@@ -77,6 +77,7 @@ function PronafA2Inner() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>("cliente");
   const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isVinculosDialogOpen, setIsVinculosDialogOpen] = useState(false);
   const [pendingXlsmBlob, setPendingXlsmBlob] = useState<Blob | null>(null);
@@ -122,6 +123,7 @@ function PronafA2Inner() {
   async function handleImportXlsm(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setIsImporting(true);
     try {
       toast({ title: "Importando...", description: "Lendo o arquivo e extraindo dados de todas as abas..." });
       const imported = await importXlsm(file);
@@ -140,6 +142,7 @@ function PronafA2Inner() {
         variant: "destructive",
       });
     } finally {
+      setIsImporting(false);
       e.target.value = "";
     }
   }
@@ -218,28 +221,31 @@ function PronafA2Inner() {
 
         {/* Ações */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Importar .xlsm */}
           <input
+            id="pronaf-a2-import-xlsm"
             ref={xlsmImportRef}
             type="file"
             accept=".xlsm,.xlsx,.xls,application/vnd.ms-excel.sheet.macroEnabled.12,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             className="hidden"
-            onClick={(e) => {
-              (e.target as HTMLInputElement).value = "";
-            }}
             onChange={handleImportXlsm}
           />
           <Button
+            asChild
             variant="outline"
             size="sm"
-            className="gap-2 rounded-xl border-border/40 font-bold"
-            onClick={() => xlsmImportRef.current?.click()}
+            disabled={isImporting}
+            className="gap-2 rounded-xl border-border/40 font-bold cursor-pointer"
           >
-            <Upload className="h-4 w-4" />
-            <span className="hidden sm:inline">Importar .xlsm</span>
+            <label htmlFor="pronaf-a2-import-xlsm">
+              {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              <span className="hidden sm:inline">{isImporting ? "Importando..." : "Importar .xlsm"}</span>
+            </label>
           </Button>
 
           {/* Abrir JSON */}
           <input
+            id="pronaf-a2-open-json"
             ref={jsonInputRef}
             type="file"
             accept=".json"
@@ -247,13 +253,15 @@ function PronafA2Inner() {
             onChange={handleOpenJsonFile}
           />
           <Button
+            asChild
             variant="outline"
             size="sm"
-            className="gap-2 rounded-xl border-border/40 font-bold"
-            onClick={() => jsonInputRef.current?.click()}
+            className="gap-2 rounded-xl border-border/40 font-bold cursor-pointer"
           >
-            <FolderOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Abrir JSON</span>
+            <label htmlFor="pronaf-a2-open-json">
+              <FolderOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Abrir JSON</span>
+            </label>
           </Button>
 
           {/* Salvar JSON */}
@@ -280,6 +288,7 @@ function PronafA2Inner() {
 
           {/* Exportar .xlsm */}
           <input
+            id="pronaf-a2-export-xlsm"
             ref={modeloInputRef}
             type="file"
             accept=".xlsm"
@@ -287,17 +296,19 @@ function PronafA2Inner() {
             onChange={handleExport}
           />
           <Button
+            asChild
             size="sm"
             disabled={isExporting}
-            className="gap-2 rounded-xl bg-primary shadow-lg shadow-primary/20 font-black h-10 px-5"
-            onClick={() => modeloInputRef.current?.click()}
+            className="gap-2 rounded-xl bg-primary shadow-lg shadow-primary/20 font-black h-10 px-5 cursor-pointer"
           >
-            {isExporting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" />
-            )}
-            Exportar .xlsm
+            <label htmlFor="pronaf-a2-export-xlsm">
+              {isExporting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              Exportar .xlsm
+            </label>
           </Button>
         </div>
       </header>
