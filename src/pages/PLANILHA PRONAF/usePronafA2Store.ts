@@ -4,6 +4,7 @@ import { ProjetoA2, createInitialProjetoA2 } from './types';
 interface PronafA2ContextType {
   projeto: ProjetoA2;
   updateTab: <T extends keyof ProjetoA2>(tab: T, data: Partial<ProjetoA2[T]>) => void;
+  replaceProjeto: (novo: ProjetoA2) => void;
   clearProjeto: () => Promise<void>;
   loading: boolean;
 }
@@ -176,6 +177,11 @@ export const PronafA2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
     }));
   }, []);
 
+  const replaceProjeto = useCallback((novo: ProjetoA2) => {
+    setProjeto(novo);
+    saveToIndexedDB(novo);
+  }, []);
+
   const clearProjeto = useCallback(async () => {
     await clearFromIndexedDB();
     setProjeto(createInitialProjetoA2());
@@ -183,7 +189,7 @@ export const PronafA2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   return React.createElement(
     PronafA2Context.Provider,
-    { value: { projeto, updateTab, clearProjeto, loading } },
+    { value: { projeto, updateTab, replaceProjeto, clearProjeto, loading } },
     children
   );
 };

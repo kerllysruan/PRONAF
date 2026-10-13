@@ -231,13 +231,24 @@ export function readCellValue(xml: string, cellRef: string, sharedStrings: strin
   if (!cell || cell.inner === null) return "";
   const t = cell.attrs.match(/\bt="([^"]*)"/)?.[1];
 
-  if (t === "inlineStr") {
+  // Strings inline (<is><t>...) ou <t> presente diretamente
+  if (t === "inlineStr" || cell.inner.includes("<is>") || (!cell.inner.includes("<v>") && cell.inner.includes("<t"))) {
     const texts = [...cell.inner.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((x) => x[1]);
-    return unescapeXml(texts.join(""));
+    if (texts.length > 0) return unescapeXml(texts.join(""));
   }
+
   const v = cell.inner.match(/<v>([\s\S]*?)<\/v>/)?.[1];
-  if (v === undefined) return "";
-  if (t === "s") return sharedStrings[Number(v)] ?? "";
+  if (v === undefined) {
+    const texts = [...cell.inner.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((x) => x[1]);
+    return texts.length > 0 ? unescapeXml(texts.join("")) : "";
+  }
+
+  // Índice para sharedStrings
+  if (t === "s") {
+    const idx = Number(v);
+    return sharedStrings[idx] ?? "";
+  }
+
   return unescapeXml(v);
 }
 
@@ -304,11 +315,34 @@ export function ensureFullCalcOnLoad(workbookXml: string): string {
   return workbookXml;
 }
 
+export function getZipFile(zip: JSZip, path: string) {
+  const direct = zip.file(path);
+  if (direct) return direct;
+  const normalized = path.toLowerCase().replace(/\\/g, "/");
+  for (const name of Object.keys(zip.files)) {
+    if (name.toLowerCase().replace(/\\/g, "/") === normalized) {
+      return zip.files[name];
+    }
+  }
+  return null;
+}
+
+export function normalizeSheetKey(n: string): string {
+  return n
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
 async function loadWorkbook(zip: JSZip): Promise<{ workbookXml: string; sheets: SheetInfo[] }> {
-  const workbookXml = await zip.file("xl/workbook.xml")?.async("string");
-  const relsXml = await zip.file("xl/_rels/workbook.xml.rels")?.async("string");
+  const wbFile = getZipFile(zip, "xl/workbook.xml");
+  const relsFile = getZipFile(zip, "xl/_rels/workbook.xml.rels");
+  const workbookXml = await wbFile?.async("string");
+  const relsXml = await relsFile?.async("string");
   if (!workbookXml || !relsXml) {
-    throw new Error("O arquivo escolhido não parece ser uma planilha .xlsm válida (workbook.xml ausente).");
+    throw new Error("O arquivo escolhido não parece ser uma planilha válida (workbook.xml ausente).");
   }
   return { workbookXml, sheets: resolveSheets(workbookXml, relsXml) };
 }
@@ -381,21 +415,28 @@ export async function exportXlsm(modelo: Blob | ArrayBuffer, writes: CellWrite[]
 export async function createXlsmReader(file: Blob | ArrayBuffer): Promise<(sheet: SheetName, cell: string) => string> {
   const zip = await JSZip.loadAsync(file);
   const { sheets } = await loadWorkbook(zip);
-  const ssXml = await zip.file("xl/sharedStrings.xml")?.async("string");
+  const ssFile = getZipFile(zip, "xl/sharedStrings.xml");
+  const ssXml = await ssFile?.async("string");
   const shared = ssXml ? parseSharedStrings(ssXml) : [];
 
   const xmlByName = new Map<string, string>();
+  const xmlByNorm = new Map<string, string>();
+
   await Promise.all(
     sheets
       .filter((s) => !s.hidden)
       .map(async (s) => {
-        const f = zip.file(s.path);
-        if (f) xmlByName.set(s.name, await f.async("string"));
+        const f = getZipFile(zip, s.path);
+        if (f) {
+          const content = await f.async("string");
+          xmlByName.set(s.name, content);
+          xmlByNorm.set(normalizeSheetKey(s.name), content);
+        }
       })
   );
 
   return (sheet, cell) => {
-    const xml = xmlByName.get(sheet);
+    const xml = xmlByName.get(sheet) || xmlByNorm.get(normalizeSheetKey(sheet));
     return xml ? readCellValue(xml, cell, shared) : "";
   };
 }

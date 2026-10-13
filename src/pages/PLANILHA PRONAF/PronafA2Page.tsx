@@ -73,7 +73,7 @@ type TabId = typeof TABS[number]["id"];
 // Componente interno (usa o contexto PronafA2)
 // ──────────────────────────────────────────────────────────────
 function PronafA2Inner() {
-  const { projeto, updateTab, clearProjeto, loading } = usePronafA2();
+  const { projeto, updateTab, replaceProjeto, clearProjeto, loading } = usePronafA2();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabId>("cliente");
   const [isExporting, setIsExporting] = useState(false);
@@ -108,13 +108,8 @@ function PronafA2Inner() {
     reader.onload = (ev) => {
       try {
         const parsed = JSON.parse(ev.target?.result as string);
-        // Restaura cada aba
-        for (const tab of Object.keys(parsed) as (keyof ProjetoA2)[]) {
-          if (parsed[tab]) {
-            updateTab(tab, parsed[tab]);
-          }
-        }
-        toast({ title: "Projeto carregado", description: "Dados importados do arquivo .json." });
+        replaceProjeto(parsed);
+        toast({ title: "Projeto carregado", description: "Dados importados do arquivo .json com sucesso." });
       } catch {
         toast({ title: "Erro ao abrir", description: "Arquivo .json inválido.", variant: "destructive" });
       }
@@ -128,19 +123,25 @@ function PronafA2Inner() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      toast({ title: "Importando...", description: "Lendo o arquivo .xlsm." });
-      const partial = await importXlsm(file);
-      for (const tab of Object.keys(partial) as (keyof ProjetoA2)[]) {
-        const tabData = partial[tab];
-        if (tabData) {
-          updateTab(tab, tabData);
-        }
-      }
-      toast({ title: "Importação concluída", description: "Dados lidos do .xlsm preenchido." });
-    } catch {
-      toast({ title: "Erro na importação", description: "Não foi possível ler o arquivo.", variant: "destructive" });
+      toast({ title: "Importando...", description: "Lendo o arquivo e extraindo dados de todas as abas..." });
+      const imported = await importXlsm(file);
+      replaceProjeto(imported);
+
+      const nomeCliente = imported.Cliente?.nome || "Cliente";
+      toast({
+        title: "Importação concluída!",
+        description: `Planilha importada com sucesso. Os dados de ${nomeCliente} e de todas as 8 abas foram carregados.`,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Não foi possível ler o arquivo da planilha.";
+      toast({
+        title: "Erro na importação",
+        description: msg,
+        variant: "destructive",
+      });
+    } finally {
+      e.target.value = "";
     }
-    e.target.value = "";
   }
 
   // ── Exportar .xlsm ────────────────────────────────────────
@@ -216,12 +217,14 @@ function PronafA2Inner() {
 
         {/* Ações */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Importar .xlsm */}
           <input
             ref={xlsmImportRef}
             type="file"
-            accept=".xlsm,.xlsx,.xls"
+            accept=".xlsm,.xlsx,.xls,application/vnd.ms-excel.sheet.macroEnabled.12,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             className="hidden"
+            onClick={(e) => {
+              (e.target as HTMLInputElement).value = "";
+            }}
             onChange={handleImportXlsm}
           />
           <Button
