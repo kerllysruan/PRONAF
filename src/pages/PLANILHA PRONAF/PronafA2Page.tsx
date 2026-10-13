@@ -221,12 +221,12 @@ function PronafA2Inner() {
 
         {/* Ações */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Importar .xlsm */}
+          {/* Importar .xlsm / PRONAF */}
           <input
             id="pronaf-a2-import-xlsm"
             ref={xlsmImportRef}
             type="file"
-            accept=".xlsm,.xlsx,.xls,application/vnd.ms-excel.sheet.macroEnabled.12,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            accept=".xlsm,.xlsx,.xls,.pronaf_a2,application/vnd.ms-excel.sheet.macroEnabled.12,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,*"
             className="hidden"
             onChange={handleImportXlsm}
           />
@@ -239,7 +239,7 @@ function PronafA2Inner() {
           >
             <label htmlFor="pronaf-a2-import-xlsm">
               {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              <span className="hidden sm:inline">{isImporting ? "Importando..." : "Importar .xlsm"}</span>
+              <span className="hidden sm:inline">{isImporting ? "Importando..." : "Importar Planilha"}</span>
             </label>
           </Button>
 
