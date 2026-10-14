@@ -116,7 +116,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   const itens: ItemCritica[] = [];
 
   // ────────────────────────────────────────────────────────────
-  // R01: Região (semiárido × fora) da proposta = classificação do município (F1)
+  // R01: Região (semiárido x fora) da proposta = classificação do município (F1)
   // ────────────────────────────────────────────────────────────
   const regiaoProposta = normalize(p.regiao || p.imovelRegiao || 'FORA DO SEMIÁRIDO');
   const regiaoRef = munClassif?.localizacao ? normalize(munClassif.localizacao) : 'FORA DO SEMIÁRIDO';
@@ -125,7 +125,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   
   itens.push({
     id: 'R01',
-    regra: 'Região (semiárido × fora) da proposta = classificação do município',
+    regra: 'Região (semiárido x fora) da proposta = classificação do município',
     valorProposta: p.regiao || p.imovelRegiao || 'Fora do Semi-árido',
     valorReferencia: regiaoRef,
     status: r01Ok ? 'OK' : 'ALERTA',
@@ -178,7 +178,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   });
 
   // ────────────────────────────────────────────────────────────
-  // R04: Nível tecnológico implícito ≤ NT permitido (F1 × F3)
+  // R04: Nível tecnológico implícito <=  NT permitido (F1 x F3)
   // ────────────────────────────────────────────────────────────
   const corteData = pec.corte;
   const paricaoInformada = corteData?.paricaoPercent || 70;
@@ -189,27 +189,27 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
 
   itens.push({
     id: 'R04',
-    regra: 'Nível tecnológico implícito (parição informada) ≤ NT permitido',
+    regra: 'Nível tecnológico implícito (parição informada) <=  NT permitido',
     valorProposta: ntImplicito,
     valorReferencia: ntPermitidoNum,
     status: r04Ok ? 'OK' : 'ALERTA',
     desvioPercentual: ntPermitidoNum > 0 ? (ntImplicito - ntPermitidoNum) / ntPermitidoNum : 0,
     confianca: 'Média',
-    fonte: 'F1 × F3',
+    fonte: 'F1 x F3',
     comoResolver: r04Ok
       ? `Conforme: NT implícito (${ntImplicito}) dentro do teto permitido (${ntPermitidoNum}).`
       : `O NT implícito (${ntImplicito}) excede o teto permitido (${ntPermitidoNum}) para o município. Adequar a taxa de parição na aba Pecuária.`,
   });
 
   // ────────────────────────────────────────────────────────────
-  // R05: Parição ≤ parição do NT permitido (F3)
+  // R05: Parição <=  parição do NT permitido (F3)
   // ────────────────────────────────────────────────────────────
   const paricaoTeto = ntPermitidoNum >= 3 ? 80 : (ntPermitidoNum >= 2 ? 75 : 70);
   const r05Ok = paricaoInformada <= paricaoTeto;
 
   itens.push({
     id: 'R05',
-    regra: 'Parição ≤ parição do NT permitido',
+    regra: 'Parição <=  parição do NT permitido',
     valorProposta: paricaoInformada,
     valorReferencia: paricaoTeto,
     status: r05Ok ? 'OK' : 'ALERTA',
@@ -261,7 +261,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   });
 
   // ────────────────────────────────────────────────────────────
-  // R08: Relação matriz/reprodutor ≤ máximo (F3)
+  // R08: Relação matriz/reprodutor <=  máximo (F3)
   // ────────────────────────────────────────────────────────────
   const matrizesPorReprodutor = corteData.matrizesPorReprodutor || 13;
   const tetoMatrizReprodutor = 25;
@@ -269,7 +269,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
 
   itens.push({
     id: 'R08',
-    regra: 'Relação matriz/reprodutor ≤ máximo',
+    regra: 'Relação matriz/reprodutor <=  máximo',
     valorProposta: matrizesPorReprodutor,
     valorReferencia: tetoMatrizReprodutor,
     status: r08Ok ? 'OK' : 'BLOQUEIA',
@@ -282,7 +282,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   });
 
   // ────────────────────────────────────────────────────────────
-  // R09: Mortalidade 0–1 ano não pode ser melhor que a do NT permitido (F3 × F1)
+  // R09: Mortalidade 0-1 ano não pode ser melhor que a do NT permitido (F3 x F1)
   // ────────────────────────────────────────────────────────────
   const mort01 = corteData.mortalidadeAte1AnoPercent || 5;
   const mort01Min = ntPermitidoNum >= 2 ? 5 : 6;
@@ -290,20 +290,20 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
 
   itens.push({
     id: 'R09',
-    regra: 'Mortalidade 0–1 ano não pode ser melhor que a do NT permitido',
+    regra: 'Mortalidade 0-1 ano não pode ser melhor que a do NT permitido',
     valorProposta: mort01,
     valorReferencia: mort01Min,
     status: r09Ok ? 'OK' : 'ALERTA',
     desvioPercentual: (mort01 - mort01Min) / mort01Min,
     confianca: 'Alta',
-    fonte: 'F3 × F1',
+    fonte: 'F3 x F1',
     comoResolver: r09Ok
       ? 'Conforme: taxa de mortalidade de bezerros dentro do limite aceito.'
       : `Mortalidade informada (${mort01}%) é menor que o padrão mínimo tolerado (${mort01Min}%) para NT${ntPermitidoNum}. Ajustar para ${mort01Min}%.`,
   });
 
   // ────────────────────────────────────────────────────────────
-  // R10: Mortalidade 1–2 anos não pode ser melhor que a do NT permitido (F3 × F1)
+  // R10: Mortalidade 1-2 anos não pode ser melhor que a do NT permitido (F3 x F1)
   // ────────────────────────────────────────────────────────────
   const mort12 = corteData.mortalidade1a2AnosPercent || 2;
   const mort12Min = 3;
@@ -311,20 +311,20 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
 
   itens.push({
     id: 'R10',
-    regra: 'Mortalidade 1–2 anos não pode ser melhor que a do NT permitido',
+    regra: 'Mortalidade 1-2 anos não pode ser melhor que a do NT permitido',
     valorProposta: mort12,
     valorReferencia: mort12Min,
     status: r10Ok ? 'OK' : 'ALERTA',
     desvioPercentual: (mort12 - mort12Min) / mort12Min,
     confianca: 'Alta',
-    fonte: 'F3 × F1',
+    fonte: 'F3 x F1',
     comoResolver: r10Ok
       ? 'Conforme: taxa de mortalidade de garrotes/novilhas dentro do limite.'
       : `Mortalidade de 1 a 2 anos informada (${mort12}%) está abaixo do padrão zootécnico mínimo (${mort12Min}%). Elevar para pelo menos ${mort12Min}%.`,
   });
 
   // ────────────────────────────────────────────────────────────
-  // R11: Mortalidade de adultos não pode ser melhor que a do NT permitido (F3 × F1)
+  // R11: Mortalidade de adultos não pode ser melhor que a do NT permitido (F3 x F1)
   // ────────────────────────────────────────────────────────────
   const mortAdulto = corteData.mortalidadeAdultoPercent || 1;
   const mortAdultoMin = 2;
@@ -338,14 +338,14 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
     status: r11Ok ? 'OK' : 'ALERTA',
     desvioPercentual: (mortAdulto - mortAdultoMin) / mortAdultoMin,
     confianca: 'Alta',
-    fonte: 'F3 × F1',
+    fonte: 'F3 x F1',
     comoResolver: r11Ok
       ? 'Conforme: mortalidade de animais adultos dentro do limite aceito.'
       : `Mortalidade de adultos (${mortAdulto}%) está abaixo do padrão zootécnico (${mortAdultoMin}%). Adequar na aba Pecuária para no mínimo ${mortAdultoMin}%.`,
   });
 
   // ────────────────────────────────────────────────────────────
-  // R12: Valor unitário das matrizes ≤ máximo VMIC (matriz mestiça de corte) (F5)
+  // R12: Valor unitário das matrizes <=  máximo VMIC (matriz mestiça de corte) (F5)
   // ────────────────────────────────────────────────────────────
   const itensInv = p.itensInvestimento || [];
   const itemMatriz = itensInv.find((it) => it.discriminacao?.toLowerCase().includes('matriz'));
@@ -355,7 +355,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
 
   itens.push({
     id: 'R12',
-    regra: `Valor unitário das matrizes ≤ máximo VMIC (${uf})`,
+    regra: `Valor unitário das matrizes <=  máximo VMIC (${uf})`,
     valorProposta: vrUnitMatriz,
     valorReferencia: tetoMatriz,
     status: r12Ok ? 'OK' : 'BLOQUEIA',
@@ -368,7 +368,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   });
 
   // ────────────────────────────────────────────────────────────
-  // R13: Valor unitário do reprodutor ≤ máximo VMIC (F5)
+  // R13: Valor unitário do reprodutor <=  máximo VMIC (F5)
   // ────────────────────────────────────────────────────────────
   const itemReprodutor = itensInv.find((it) => it.discriminacao?.toLowerCase().includes('reprodutor') || it.discriminacao?.toLowerCase().includes('touro'));
   const vrUnitReprodutor = itemReprodutor?.valorUnitario || 7200;
@@ -377,7 +377,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
 
   itens.push({
     id: 'R13',
-    regra: `Valor unitário do reprodutor ≤ máximo VMIC (${uf})`,
+    regra: `Valor unitário do reprodutor <=  máximo VMIC (${uf})`,
     valorProposta: vrUnitReprodutor,
     valorReferencia: tetoReprodutor,
     status: r13Ok ? 'OK' : 'BLOQUEIA',
@@ -390,14 +390,14 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   });
 
   // ────────────────────────────────────────────────────────────
-  // R14: Valor de reforma/instalações ≤ máximo VMIC (F5)
+  // R14: Valor de reforma/instalações <=  máximo VMIC (F5)
   // ────────────────────────────────────────────────────────────
   const itemReforma = itensInv.find((it) => it.discriminacao?.toLowerCase().includes('reforma') || it.discriminacao?.toLowerCase().includes('pastagem'));
   const vrUnitReforma = itemReforma?.valorUnitario || 2000;
 
   itens.push({
     id: 'R14',
-    regra: 'Valor da reforma de pastagem ≤ máximo VMIC',
+    regra: 'Valor da reforma de pastagem <=  máximo VMIC',
     valorProposta: vrUnitReforma,
     valorReferencia: 'Exige orçamento',
     status: 'NÃO VERIFICÁVEL',
@@ -407,7 +407,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   });
 
   // ────────────────────────────────────────────────────────────
-  // R15: Lotação da pastagem (UA/ha) ≤ capacidade de suporte do município (F4)
+  // R15: Lotação da pastagem (UA/ha) <=  capacidade de suporte do município (F4)
   // ────────────────────────────────────────────────────────────
   const tetoSuporteUaHa = munForr?.suporteUaHa?.maximoSequeiroBraquiaria || 1.34;
   
@@ -431,7 +431,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
 
   itens.push({
     id: 'R15',
-    regra: 'Lotação da pastagem (UA/ha) ≤ capacidade de suporte do município (braquiária, sequeiro)',
+    regra: 'Lotação da pastagem (UA/ha) <=  capacidade de suporte do município (braquiária, sequeiro)',
     valorProposta: lotacaoProposta,
     valorReferencia: tetoSuporteUaHa,
     status: r15Ok ? 'OK' : 'BLOQUEIA',
@@ -469,7 +469,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   // ────────────────────────────────────────────────────────────
   itens.push({
     id: 'R17',
-    regra: 'Área de pastagem mantida ao longo do plano (ano 10 ÷ ano 0)',
+    regra: 'Área de pastagem mantida ao longo do plano (ano 10 / ano 0)',
     valorProposta: '0.50 (queda de 50%)',
     valorReferencia: '1.00 (estável)',
     status: 'ALERTA',
@@ -494,7 +494,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   });
 
   // ────────────────────────────────────────────────────────────
-  // R19: Nº de parcelas anuais = (prazo − carência) ÷ 12 (interno)
+  // R19: Nº de parcelas anuais = (prazo - carência) / 12 (interno)
   // ────────────────────────────────────────────────────────────
   const prazoMeses = cf.bloco1?.prazoMeses || 120;
   const carenciaMeses = cf.bloco1?.carenciaMeses || 36;
@@ -504,7 +504,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
 
   itens.push({
     id: 'R19',
-    regra: 'Nº de parcelas anuais = (prazo − carência) ÷ 12',
+    regra: 'Nº de parcelas anuais = (prazo - carência) / 12',
     valorProposta: parcelasInformadas,
     valorReferencia: parcelasEsperadas,
     status: r19Ok ? 'OK' : 'ALERTA',
@@ -540,7 +540,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
     valorReferencia: munClassif?.municipio || munOriginal,
     status: r21Ok ? 'OK' : 'ALERTA',
     confianca: 'Alta',
-    fonte: 'F1 × F2 × F4',
+    fonte: 'F1 x F2 x F4',
     comoResolver: r21Ok
       ? 'Conforme: município identificado e localizado na base homologada do BNB.'
       : `Município "${munOriginal}" não localizado na base exata. Verificar acentuação ou grafia oficial do IBGE.`,
@@ -561,7 +561,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
   });
 
   // ────────────────────────────────────────────────────────────
-  // R23 a R27: Preços de Venda no Modelo ≤ Referência VMIC (F5)
+  // R23 a R27: Preços de Venda no Modelo <=  Referência VMIC (F5)
   // ────────────────────────────────────────────────────────────
   const precosRef = [
     { id: 'R23', categoria: 'Vacas descartadas', valor: 3600, ref: precosUf.vacasDescarteCabeca || 3861 },
@@ -575,7 +575,7 @@ export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
     const ok = pr.valor <= pr.ref;
     itens.push({
       id: pr.id,
-      regra: `Valor de venda no modelo — ${pr.categoria} ≤ referência VMIC (${uf})`,
+      regra: `Valor de venda no modelo - ${pr.categoria} <=  referência VMIC (${uf})`,
       valorProposta: pr.valor,
       valorReferencia: pr.ref,
       status: ok ? 'OK' : 'ALERTA',

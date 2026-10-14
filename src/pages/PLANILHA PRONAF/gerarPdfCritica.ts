@@ -13,8 +13,30 @@ function formatBRL(value: number | null | undefined): string {
 }
 
 /**
+ * Sanitiza e normaliza caracteres especiais para codificação segura no jsPDF (Helvetica / WinAnsi).
+ * Garante que nunca ocorram caracteres corrompidos ("d, ?, etc.) e preserva acentuação correta em pt-BR.
+ */
+function cleanPdfText(text: string | number | null | undefined): string {
+  if (text === null || text === undefined) return "";
+  return String(text)
+    .replace(/<= /g, "<= ")
+    .replace(/>= /g, ">= ")
+    .replace(/≤/g, "<= ")
+    .replace(/≥/g, ">= ")
+    .replace(/[−–—]/g, "-")
+    .replace(/×/g, "x")
+    .replace(/÷/g, "/")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/•/g, "-")
+    .replace(/✓/g, "OK")
+    .trim();
+}
+
+/**
  * Gera e realiza o download do Parecer de Conformidade Técnica da Proposta do PRONAF A2 em PDF.
- * Layout executivo moderno com KPIs intuitivos, paleta visual corporativa e instruções acionáveis de resolução.
+ * Layout executivo de nível aeroespacial com quebra automática de linha em todas as células,
+ * cabeçalhos dinâmicos em páginas adicionais e KPIs modernos e intuitivos.
  */
 export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   const doc = new jsPDF({
@@ -30,7 +52,7 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
 
   // Paleta de cores corporativa executiva moderna (Design System NASA / Fintech)
   const COLORS = {
-    brandDark: [11, 19, 43] as [number, number, number],       // Deep Space Slate (fundo nobre)
+    brandDark: [11, 19, 43] as [number, number, number],       // Deep Space Slate
     brandDarkSoft: [20, 32, 65] as [number, number, number],   // Slate Médio
     primaryBlue: [29, 78, 216] as [number, number, number],    // Royal Blue 700
     primaryLight: [239, 246, 255] as [number, number, number], // Blue 50
@@ -52,10 +74,8 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
     textLight: [148, 163, 184] as [number, number, number],     // Slate 400
   };
 
-  // Status visual consolidado
   const isBloqueia = relatorio.statusGeral === "BLOQUEIA";
   const isAlerta = relatorio.statusGeral === "ALERTA";
-  const isConforme = relatorio.statusGeral === "CONFORME";
 
   const statusColor = isBloqueia ? COLORS.bloqueia : isAlerta ? COLORS.alerta : COLORS.ok;
   const statusBg = isBloqueia ? COLORS.bloqueiaBg : isAlerta ? COLORS.alertaBg : COLORS.okBg;
@@ -64,7 +84,7 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   // ────────────────────────────────────────────────────────────
   // 1. HERO HEADER: CABEÇALHO EXECUTIVO MODERNO
   // ────────────────────────────────────────────────────────────
-  const headerH = 30;
+  const headerH = 29;
   doc.setFillColor(...COLORS.brandDark);
   doc.roundedRect(margin, margin, contentW, headerH, 3.5, 3.5, "F");
 
@@ -75,29 +95,29 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   // Tag superior institucional
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
-  doc.setTextColor(147, 197, 253); // Blue 300
-  doc.text("SISTEMA PRONAF A2  •  BANCO DO NORDESTE DO BRASIL / SEAP", margin + 8, margin + 7.5);
+  doc.setTextColor(147, 197, 253);
+  doc.text("SISTEMA PRONAF A2  -  BANCO DO NORDESTE DO BRASIL / SEAP", margin + 8, margin + 7.5);
 
-  // Título do Relatório (Exatamente conforme solicitado)
+  // Título do Relatório (Conforme solicitado)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14.5);
   doc.setTextColor(255, 255, 255);
-  doc.text("CONFORMIDADE TÉCNICA DA PROPOSTA", margin + 8, margin + 16);
+  doc.text("CONFORMIDADE TÉCNICA DA PROPOSTA", margin + 8, margin + 15.5);
 
   // Subtítulo e data
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.setTextColor(203, 213, 225); // Slate 300
+  doc.setTextColor(203, 213, 225);
   const dataFormatada = relatorio.dataAvaliacao || new Date().toLocaleDateString("pt-BR");
   doc.text(
-    `Parecer de Enquadramento Operacional perante 27 Parâmetros Oficiais BNB  •  Emissão: ${dataFormatada}`,
+    `Parecer de Enquadramento Operacional perante 27 Parâmetros Oficiais BNB  -  Emissão: ${dataFormatada}`,
     margin + 8,
-    margin + 23.5
+    margin + 23
   );
 
   // Badge de Status Geral no canto superior direito
   const badgeW = 46;
-  const badgeH = 16;
+  const badgeH = 15;
   const badgeX = pageW - margin - badgeW - 4;
   const badgeY = margin + 7;
 
@@ -110,7 +130,7 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(...statusColor);
-  doc.text("STATUS DA PROPOSTA", badgeX + badgeW / 2, badgeY + 5, { align: "center" });
+  doc.text("STATUS DA PROPOSTA", badgeX + badgeW / 2, badgeY + 4.8, { align: "center" });
 
   doc.setFontSize(8.5);
   const statusLabel = isBloqueia
@@ -118,13 +138,13 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
     : isAlerta
     ? "REQUER ATENÇÃO"
     : "TOTALMENTE CONFORME";
-  doc.text(statusLabel, badgeX + badgeW / 2, badgeY + 11.5, { align: "center" });
+  doc.text(statusLabel, badgeX + badgeW / 2, badgeY + 11, { align: "center" });
 
   // ────────────────────────────────────────────────────────────
   // 2. CARD MODERNO DO PROPONENTE E LOCALIZAÇÃO
   // ────────────────────────────────────────────────────────────
-  let currentY = margin + headerH + 4;
-  const propCardH = 26;
+  let currentY = margin + headerH + 3.5;
+  const propCardH = 25;
 
   doc.setFillColor(...COLORS.cardBgSoft);
   doc.roundedRect(margin, currentY, contentW, propCardH, 3, 3, "F");
@@ -132,7 +152,6 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   doc.setLineWidth(0.3);
   doc.roundedRect(margin, currentY, contentW, propCardH, 3, 3, "S");
 
-  // Divisores verticais do snapshot
   const colW = contentW / 4;
   doc.setDrawColor(...COLORS.cardBorder);
   doc.line(margin + colW, currentY + 3, margin + colW, currentY + propCardH - 3);
@@ -143,7 +162,7 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(...COLORS.textMuted);
-  doc.text("PROPONENTE", margin + 4, currentY + 6.5);
+  doc.text("PROPONENTE", margin + 4, currentY + 6);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(...COLORS.textTitle);
@@ -151,18 +170,18 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
     relatorio.proponenteNome.length > 24
       ? relatorio.proponenteNome.substring(0, 22) + "..."
       : relatorio.proponenteNome;
-  doc.text(nomeLimitado, margin + 4, currentY + 12.5);
+  doc.text(nomeLimitado, margin + 4, currentY + 12);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...COLORS.textBody);
-  doc.text(`CPF: ${relatorio.proponenteCpf || "Não informado"}`, margin + 4, currentY + 18.5);
+  doc.text(`CPF: ${relatorio.proponenteCpf || "Não informado"}`, margin + 4, currentY + 18);
 
   // Coluna 2: Localização e Região
   const col2X = margin + colW + 4;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(...COLORS.textMuted);
-  doc.text("LOCALIZAÇÃO DO IMÓVEL", col2X, currentY + 6.5);
+  doc.text("LOCALIZAÇÃO DO IMÓVEL", col2X, currentY + 6);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(...COLORS.textTitle);
@@ -170,18 +189,18 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
     relatorio.municipio.length > 22
       ? relatorio.municipio.substring(0, 20) + "..."
       : `${relatorio.municipio} - ${relatorio.uf}`;
-  doc.text(munLimitado, col2X, currentY + 12.5);
+  doc.text(munLimitado, col2X, currentY + 12);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...COLORS.textBody);
-  doc.text(`Estado Federado: ${relatorio.uf}`, col2X, currentY + 18.5);
+  doc.text(`Estado Federado: ${relatorio.uf}`, col2X, currentY + 18);
 
   // Coluna 3: Programa e Atividade
   const col3X = margin + colW * 2 + 4;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(...COLORS.textMuted);
-  doc.text("PROGRAMA & ATIVIDADE", col3X, currentY + 6.5);
+  doc.text("PROGRAMA & ATIVIDADE", col3X, currentY + 6);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(...COLORS.textTitle);
@@ -189,7 +208,7 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
     relatorio.programa.length > 24
       ? relatorio.programa.substring(0, 22) + "..."
       : relatorio.programa;
-  doc.text(prgLimitado, col3X, currentY + 12.5);
+  doc.text(prgLimitado, col3X, currentY + 12);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(...COLORS.textBody);
@@ -197,34 +216,33 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
     relatorio.atividadePrincipal.length > 24
       ? relatorio.atividadePrincipal.substring(0, 22) + "..."
       : relatorio.atividadePrincipal;
-  doc.text(ativLimitada, col3X, currentY + 18.5);
+  doc.text(ativLimitada, col3X, currentY + 18);
 
   // Coluna 4: Investimento e Validação
   const col4X = margin + colW * 3 + 4;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(...COLORS.textMuted);
-  doc.text("INVESTIMENTO PROPOSTO", col4X, currentY + 6.5);
+  doc.text("INVESTIMENTO PROPOSTO", col4X, currentY + 6);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setTextColor(...COLORS.primaryBlue);
-  doc.text(formatBRL(relatorio.valorFinanciado), col4X, currentY + 13.5);
+  doc.text(formatBRL(relatorio.valorFinanciado), col4X, currentY + 13);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(...COLORS.textMuted);
-  doc.text("Base Normativa BNB: Vigente", col4X, currentY + 18.5);
+  doc.text("Base Normativa BNB: Vigente", col4X, currentY + 18);
 
-  currentY += propCardH + 4;
+  currentY += propCardH + 3.5;
 
   // ────────────────────────────────────────────────────────────
   // 3. SCORECARD & KPIS INTUITIVOS E MODERNOS (DESIGN EXECUTIVO)
   // ────────────────────────────────────────────────────────────
   const taxaConformidade = Math.round((relatorio.totalOk / relatorio.totalRegras) * 100);
 
-  // 4 Cards de KPI com visual moderno
-  const kpiCardH = 22;
+  const kpiCardH = 21;
   const kpiGap = 3;
-  const gaugeW = 48; // Card 1 maior com medidor radial
+  const gaugeW = 48;
   const restW = (contentW - gaugeW - kpiGap * 3) / 3;
 
   // KPI 1: SCORECARD RADIAL DE ADERÊNCIA
@@ -233,45 +251,41 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   doc.setDrawColor(...COLORS.cardBorder);
   doc.roundedRect(margin, currentY, gaugeW, kpiCardH, 3, 3, "S");
 
-  // Desenha anel de progresso (Gauge)
   const cx = margin + 11;
   const cy = currentY + kpiCardH / 2;
   doc.setDrawColor(241, 245, 249);
   doc.setLineWidth(3);
-  doc.circle(cx, cy, 7, "S");
+  doc.circle(cx, cy, 6.8, "S");
 
-  // Anel colorido preenchido proporcional
   doc.setDrawColor(...statusColor);
   doc.setLineWidth(3);
-  doc.circle(cx, cy, 7, "S");
+  doc.circle(cx, cy, 6.8, "S");
 
-  // Texto central da taxa
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(...COLORS.textTitle);
   doc.text(`${taxaConformidade}%`, cx, cy + 1, { align: "center" });
 
-  // Rótulos do Scorecard
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(...COLORS.textMuted);
-  doc.text("ADERÊNCIA BNB", cx + 11, currentY + 7);
+  doc.text("ADERÊNCIA BNB", cx + 11, currentY + 6.5);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  doc.setFontSize(7.8);
   doc.setTextColor(...statusColor);
   doc.text(
     taxaConformidade === 100
       ? "Plena (100%)"
       : taxaConformidade >= 80
       ? "Elevada"
-      : "Requer Correção",
+      : "Requer Ajuste",
     cx + 11,
-    currentY + 13
+    currentY + 12.5
   );
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
   doc.setTextColor(...COLORS.textLight);
-  doc.text(`${relatorio.totalOk} de ${relatorio.totalRegras} critérios`, cx + 11, currentY + 18);
+  doc.text(`${relatorio.totalOk} de ${relatorio.totalRegras} critérios`, cx + 11, currentY + 17.5);
 
   // KPI 2: CONFORMES (OK)
   const kpi2X = margin + gaugeW + kpiGap;
@@ -286,15 +300,15 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(...COLORS.ok);
-  doc.text("CRITÉRIOS CONFORMES", kpi2X + 5, currentY + 6.5);
+  doc.text("CRITÉRIOS CONFORMES", kpi2X + 5, currentY + 6);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(...COLORS.ok);
-  doc.text(String(relatorio.totalOk), kpi2X + 5, currentY + 14.5);
+  doc.text(String(relatorio.totalOk), kpi2X + 5, currentY + 13.8);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
+  doc.setFontSize(6.2);
   doc.setTextColor(...COLORS.textMuted);
-  doc.text("Parâmetros plenamente atendidos", kpi2X + 5, currentY + 19);
+  doc.text("Parâmetros plenamente atendidos", kpi2X + 5, currentY + 18);
 
   // KPI 3: ADVERTÊNCIAS (ALERTAS)
   const kpi3X = kpi2X + restW + kpiGap;
@@ -309,15 +323,15 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(...COLORS.alerta);
-  doc.text("ADVERTÊNCIAS TÉCNICAS", kpi3X + 5, currentY + 6.5);
+  doc.text("ADVERTÊNCIAS TÉCNICAS", kpi3X + 5, currentY + 6);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(...COLORS.alerta);
-  doc.text(String(relatorio.totalAlertas), kpi3X + 5, currentY + 14.5);
+  doc.text(String(relatorio.totalAlertas), kpi3X + 5, currentY + 13.8);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
+  doc.setFontSize(6.2);
   doc.setTextColor(...COLORS.textMuted);
-  doc.text("Requerem atenção ou justificativa", kpi3X + 5, currentY + 19);
+  doc.text("Requerem atenção ou justificativa", kpi3X + 5, currentY + 18);
 
   // KPI 4: IMPEDIMENTOS (BLOQUEIOS)
   const kpi4X = kpi3X + restW + kpiGap;
@@ -332,22 +346,22 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(...COLORS.bloqueia);
-  doc.text("IMPEDIMENTOS (BLOQUEIA)", kpi4X + 5, currentY + 6.5);
+  doc.text("IMPEDIMENTOS (BLOQUEIA)", kpi4X + 5, currentY + 6);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(...COLORS.bloqueia);
-  doc.text(String(relatorio.totalBloqueios), kpi4X + 5, currentY + 14.5);
+  doc.text(String(relatorio.totalBloqueios), kpi4X + 5, currentY + 13.8);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
+  doc.setFontSize(6.2);
   doc.setTextColor(...COLORS.textMuted);
-  doc.text("Impedem aprovação bancária", kpi4X + 5, currentY + 19);
+  doc.text("Impedem aprovação bancária", kpi4X + 5, currentY + 18);
 
-  currentY += kpiCardH + 3.5;
+  currentY += kpiCardH + 3;
 
   // ── BARRA TRI-COLOR DE DISTRIBUIÇÃO DOS CRITÉRIOS ──
-  const barH = 3;
+  const barH = 2.8;
   doc.setFillColor(241, 245, 249);
-  doc.roundedRect(margin, currentY, contentW, barH, 1.5, 1.5, "F");
+  doc.roundedRect(margin, currentY, contentW, barH, 1.4, 1.4, "F");
 
   const pctOk = (relatorio.totalOk / relatorio.totalRegras) * contentW;
   const pctAlerta = (relatorio.totalAlertas / relatorio.totalRegras) * contentW;
@@ -369,7 +383,7 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
     doc.roundedRect(currentBarX, currentY, pctBloq, barH, 1, 1, "F");
   }
 
-  currentY += barH + 4.5;
+  currentY += barH + 4;
 
   // ────────────────────────────────────────────────────────────
   // 4. SEÇÃO: PONTOS DE ATENÇÃO E INSTRUÇÕES DE RESOLUÇÃO
@@ -379,34 +393,34 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   );
 
   if (pendencias.length > 0) {
-    // Título da Seção com Badge de Alerta
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9.5);
+    doc.setFontSize(9);
     doc.setTextColor(...(isBloqueia ? COLORS.bloqueia : COLORS.alerta));
     doc.text(
       `PONTOS DE ATENÇÃO E INSTRUÇÕES DE RESOLUÇÃO (${pendencias.length} ITENS PENDENTES)`,
       margin,
       currentY
     );
-    currentY += 3.5;
+    currentY += 3;
 
     const dataTabelaPendencias = pendencias.map((item) => [
-      item.id,
-      item.status,
-      item.regra,
-      String(item.valorProposta || "Não informado"),
-      String(item.valorReferencia || "—"),
-      item.comoResolver,
+      cleanPdfText(item.id),
+      cleanPdfText(item.status),
+      cleanPdfText(item.regra),
+      cleanPdfText(item.valorProposta || "Não informado"),
+      cleanPdfText(item.valorReferencia || "—"),
+      cleanPdfText(item.comoResolver),
     ]);
 
     autoTable(doc, {
       startY: currentY,
-      margin: { left: margin, right: margin },
+      margin: { left: margin, right: margin, top: 16, bottom: 12 },
+      showHead: "everyPage",
       head: [
         [
           "Cód.",
           "Severidade",
-          "Regra Técnica Avaliada",
+          "Critério Técnico Avaliado",
           "Informado na Proposta",
           "Parâmetro Oficial BNB",
           "Instrução Técnica (Como Resolver)",
@@ -418,22 +432,24 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
         fillColor: COLORS.brandDark,
         textColor: [255, 255, 255],
         fontStyle: "bold",
-        fontSize: 7.2,
+        fontSize: 7,
         halign: "left",
       },
       styles: {
-        fontSize: 6.8,
-        cellPadding: 2.2,
+        fontSize: 6.6,
+        cellPadding: 2,
         textColor: COLORS.textBody,
         overflow: "linebreak",
+        valign: "middle",
+        minCellHeight: 6,
       },
       columnStyles: {
-        0: { cellWidth: 10, fontStyle: "bold", halign: "center" },
-        1: { cellWidth: 20, fontStyle: "bold", halign: "center" },
-        2: { cellWidth: 38, fontStyle: "bold" },
-        3: { cellWidth: 23 },
-        4: { cellWidth: 24 },
-        5: { cellWidth: 71, textColor: COLORS.textTitle },
+        0: { cellWidth: 10, fontStyle: "bold", halign: "center", overflow: "linebreak" },
+        1: { cellWidth: 20, fontStyle: "bold", halign: "center", overflow: "linebreak" },
+        2: { cellWidth: 38, fontStyle: "bold", overflow: "linebreak" },
+        3: { cellWidth: 23, overflow: "linebreak" },
+        4: { cellWidth: 24, overflow: "linebreak" },
+        5: { cellWidth: 71, textColor: COLORS.textTitle, overflow: "linebreak" },
       },
       didParseCell: (data) => {
         if (data.section === "body" && data.column.index === 1) {
@@ -451,13 +467,28 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
           data.cell.styles.fontStyle = "bold";
         }
       },
+      didDrawPage: (data) => {
+        if (data.pageNumber > 1) {
+          // Cabeçalho institucional dinâmico em páginas subsequentes
+          doc.setFillColor(...COLORS.brandDark);
+          doc.roundedRect(margin, 5, contentW, 8.5, 2, 2, "F");
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(7);
+          doc.setTextColor(255, 255, 255);
+          doc.text("CONFORMIDADE TÉCNICA DA PROPOSTA  -  BANCO DO NORDESTE DO BRASIL / SEAP", margin + 4, 10.5);
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(6.5);
+          doc.setTextColor(203, 213, 225);
+          doc.text(`Proponente: ${nomeLimitado}  -  CPF: ${relatorio.proponenteCpf || "—"}`, pageW - margin - 4, 10.5, { align: "right" });
+        }
+      },
     });
 
     const docWithAutoTable = doc as unknown as { lastAutoTable?: { finalY: number } };
     currentY = (docWithAutoTable.lastAutoTable?.finalY ?? currentY) + 7;
   } else {
     // Banner elegante de 100% em Conformidade
-    const bannerH = 15;
+    const bannerH = 14;
     doc.setFillColor(...COLORS.okBg);
     doc.roundedRect(margin, currentY, contentW, bannerH, 2.5, 2.5, "F");
     doc.setDrawColor(...COLORS.okBorder);
@@ -466,16 +497,16 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
     doc.roundedRect(margin, currentY, 3, bannerH, 1, 1, "F");
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.setTextColor(...COLORS.ok);
-    doc.text("✓ PROPOSTA EM PLENA CONFORMIDADE TÉCNICA COM O BNB", margin + 7, currentY + 6);
+    doc.text("PROPOSTA EM PLENA CONFORMIDADE TÉCNICA COM O BNB", margin + 7, currentY + 5.5);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
+    doc.setFontSize(7.2);
     doc.setTextColor(...COLORS.textBody);
     doc.text(
-      "Nenhuma inconformidade técnica ou advertência foi identificada. Todos os parâmetros analisados atendem rigorosamente aos Manuais de Crédito do BNB.",
+      "Nenhuma inconformidade técnica ou advertência foi identificada. Todos os parâmetros atendem aos Manuais de Crédito do BNB.",
       margin + 7,
-      currentY + 11.5
+      currentY + 10.5
     );
 
     currentY += bannerH + 7;
@@ -486,27 +517,28 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
   // ────────────────────────────────────────────────────────────
   if (currentY > pageH - 45) {
     doc.addPage();
-    currentY = margin;
+    currentY = 16;
   }
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
+  doc.setFontSize(9);
   doc.setTextColor(...COLORS.brandDark);
   doc.text("MATRIZ COMPLETA DE CONFORMIDADE TÉCNICA (27 CRITÉRIOS BNB / SEAP)", margin, currentY);
-  currentY += 3.5;
+  currentY += 3;
 
   const todasRegrasData = relatorio.itens.map((item) => [
-    item.id,
-    item.regra,
-    item.status,
-    String(item.valorProposta || "—"),
-    String(item.valorReferencia || "—"),
-    item.fonte,
+    cleanPdfText(item.id),
+    cleanPdfText(item.regra),
+    cleanPdfText(item.status),
+    cleanPdfText(item.valorProposta || "—"),
+    cleanPdfText(item.valorReferencia || "—"),
+    cleanPdfText(item.fonte),
   ]);
 
   autoTable(doc, {
     startY: currentY,
-    margin: { left: margin, right: margin },
+    margin: { left: margin, right: margin, top: 16, bottom: 12 },
+    showHead: "everyPage",
     head: [
       [
         "ID",
@@ -523,20 +555,23 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
       fillColor: COLORS.brandDark,
       textColor: [255, 255, 255],
       fontStyle: "bold",
-      fontSize: 7.2,
+      fontSize: 7,
     },
     styles: {
       fontSize: 6.6,
-      cellPadding: 1.8,
+      cellPadding: 2,
       textColor: COLORS.textBody,
+      overflow: "linebreak",
+      valign: "middle",
+      minCellHeight: 5.5,
     },
     columnStyles: {
-      0: { cellWidth: 10, fontStyle: "bold", halign: "center" },
-      1: { cellWidth: 68 },
-      2: { cellWidth: 22, fontStyle: "bold", halign: "center" },
-      3: { cellWidth: 31 },
-      4: { cellWidth: 41 },
-      5: { cellWidth: 14, halign: "center", fontStyle: "bold" },
+      0: { cellWidth: 10, fontStyle: "bold", halign: "center", overflow: "linebreak" },
+      1: { cellWidth: 70, overflow: "linebreak" },
+      2: { cellWidth: 22, fontStyle: "bold", halign: "center", overflow: "linebreak" },
+      3: { cellWidth: 30, overflow: "linebreak" },
+      4: { cellWidth: 40, overflow: "linebreak" },
+      5: { cellWidth: 14, halign: "center", fontStyle: "bold", overflow: "linebreak" },
     },
     didParseCell: (data) => {
       if (data.section === "body" && data.column.index === 2) {
@@ -551,6 +586,21 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
           data.cell.styles.textColor = COLORS.ok;
           data.cell.styles.fillColor = COLORS.okBg;
         }
+      }
+    },
+    didDrawPage: (data) => {
+      if (data.pageNumber > 1) {
+        // Cabeçalho institucional dinâmico em páginas subsequentes
+        doc.setFillColor(...COLORS.brandDark);
+        doc.roundedRect(margin, 5, contentW, 8.5, 2, 2, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7);
+        doc.setTextColor(255, 255, 255);
+        doc.text("CONFORMIDADE TÉCNICA DA PROPOSTA  -  BANCO DO NORDESTE DO BRASIL / SEAP", margin + 4, 10.5);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6.5);
+        doc.setTextColor(203, 213, 225);
+        doc.text(`Proponente: ${nomeLimitado}  -  CPF: ${relatorio.proponenteCpf || "—"}`, pageW - margin - 4, 10.5, { align: "right" });
       }
     },
   });
@@ -581,7 +631,7 @@ export function gerarPdfParecerCritica(relatorio: RelatorioCritica): jsPDF {
 
     doc.setFont("helvetica", "bold");
     doc.text(
-      `Página ${i} de ${totalPages}  •  Emitido em ${dataHoraEmissao}`,
+      `Página ${i} de ${totalPages}  -  Emitido em ${dataHoraEmissao}`,
       pageW - margin,
       pageH - 5.5,
       { align: "right" }
