@@ -22,6 +22,9 @@ import {
   Loader2,
   AlertTriangle,
   CheckCircle2,
+  ShieldAlert,
+  ShieldCheck,
+  FileDown,
 } from "lucide-react";
 import { PronafA2Provider, usePronafA2 } from "./usePronafA2Store";
 import { exportXlsm } from "./exportXlsm";
@@ -29,6 +32,8 @@ import { importXlsm, decryptSpreadsheetIfNeeded } from "./importXlsm";
 import { projetoToCells } from "./cellMapping";
 import { PropostaData } from "./types";
 import { identificarParametrosPorPrograma } from "./programasCredito";
+import { executarCriticaProjeto, RelatorioCritica } from "./engineCritica";
+import { DialogCriticaConformidade } from "./components/DialogCriticaConformidade";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -84,10 +89,19 @@ function PronafA2Inner() {
   const [isVinculosDialogOpen, setIsVinculosDialogOpen] = useState(false);
   const [pendingXlsmBlob, setPendingXlsmBlob] = useState<Blob | null>(null);
   const [pendingXlsmName, setPendingXlsmName] = useState("");
+  const [relatorioCritica, setRelatorioCritica] = useState<RelatorioCritica | null>(null);
+  const [isCriticaDialogOpen, setIsCriticaDialogOpen] = useState(false);
 
   const modeloInputRef = useRef<HTMLInputElement>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const xlsmImportRef = useRef<HTMLInputElement>(null);
+
+  // ── Abrir modal de crítica e reavaliar projeto atual ────────
+  function handleAbrirCritica() {
+    const rel = executarCriticaProjeto(projeto);
+    setRelatorioCritica(rel);
+    setIsCriticaDialogOpen(true);
+  }
 
   // ── Salvar JSON ────────────────────────────────────────────
   function handleSaveJson() {
@@ -157,10 +171,23 @@ function PronafA2Inner() {
       const imported = await importXlsm(file);
       replaceProjeto(imported);
 
+      // Avaliação automática das 27 regras de conformidade técnica do BNB
+      const relatorio = executarCriticaProjeto(imported);
+      setRelatorioCritica(relatorio);
+      setIsCriticaDialogOpen(true);
+
       const nomeCliente = imported.Cliente?.nome || "Cliente";
+      const descCritica =
+        relatorio.statusGeral === "BLOQUEIA"
+          ? `Atenção: Proposta de ${nomeCliente} possui ${relatorio.totalBloqueios} bloqueio(s) técnico(s) perante o BNB.`
+          : relatorio.statusGeral === "ALERTA"
+          ? `Proposta de ${nomeCliente} possui ${relatorio.totalAlertas} alerta(s) técnico(s).`
+          : `Proposta de ${nomeCliente} 100% em conformidade técnica com o BNB!`;
+
       toast({
-        title: "Importação concluída!",
-        description: `Planilha importada com sucesso. Os dados de ${nomeCliente} e de todas as 8 abas foram carregados.`,
+        title: "Importação e Análise Concluídas!",
+        description: descCritica,
+        variant: relatorio.statusGeral === "BLOQUEIA" ? "destructive" : "default",
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Não foi possível ler o arquivo da planilha.";
@@ -312,6 +339,51 @@ function PronafA2Inner() {
           >
             <Trash2 className="h-4 w-4" />
             <span className="hidden sm:inline">Limpar</span>
+          </Button>
+
+          {/* Parecer Técnico / Crítica BNB */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAbrirCritica}
+            className={`gap-2 rounded-xl font-bold cursor-pointer transition-all ${
+              relatorioCritica?.statusGeral === "BLOQUEIA"
+                ? "border-rose-400 bg-rose-50/70 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300 hover:bg-rose-100"
+                : relatorioCritica?.statusGeral === "ALERTA"
+                ? "border-amber-400 bg-amber-50/70 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 hover:bg-amber-100"
+                : relatorioCritica?.statusGeral === "CONFORME"
+                ? "border-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100"
+                : "border-border/40"
+            }`}
+          >
+            {relatorioCritica?.statusGeral === "BLOQUEIA" ? (
+              <ShieldAlert className="h-4 w-4 text-rose-600 animate-pulse" />
+            ) : relatorioCritica?.statusGeral === "ALERTA" ? (
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+            ) : relatorioCritica?.statusGeral === "CONFORME" ? (
+              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            ) : (
+              <ShieldAlert className="h-4 w-4 text-primary" />
+            )}
+            <span>Parecer de Crítica</span>
+            {relatorioCritica && (
+              <Badge
+                variant="outline"
+                className={`ml-1 text-[10px] font-black px-1.5 py-0 border-0 ${
+                  relatorioCritica.statusGeral === "BLOQUEIA"
+                    ? "bg-rose-600 text-white"
+                    : relatorioCritica.statusGeral === "ALERTA"
+                    ? "bg-amber-500 text-white"
+                    : "bg-emerald-600 text-white"
+                }`}
+              >
+                {relatorioCritica.statusGeral === "BLOQUEIA"
+                  ? `${relatorioCritica.totalBloqueios} Bloq`
+                  : relatorioCritica.statusGeral === "ALERTA"
+                  ? `${relatorioCritica.totalAlertas} Alert`
+                  : "OK"}
+              </Badge>
+            )}
           </Button>
 
           {/* Exportar .xlsm */}
@@ -491,6 +563,14 @@ function PronafA2Inner() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Dialog: Parecer Técnico de Conformidade / Crítica BNB ── */}
+      <DialogCriticaConformidade
+        open={isCriticaDialogOpen}
+        onOpenChange={setIsCriticaDialogOpen}
+        relatorio={relatorioCritica}
+        onNavigateTab={(tabId) => setActiveTab(tabId as TabId)}
+      />
     </div>
   );
 }
