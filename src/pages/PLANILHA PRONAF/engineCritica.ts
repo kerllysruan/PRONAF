@@ -1,5 +1,5 @@
 /**
- * Motor de Auditoria, Crítica e Parecer de Conformidade Técnica do PRONAF A2.
+ * Motor de Validação, Parâmetros e Conformidade Técnica do PRONAF A2.
  * Executa as 27 regras de conformidade técnica do Banco do Nordeste (BNB)
  * comparando os dados da proposta contra os parâmetros consolidados oficiais (F1 a F5).
  */

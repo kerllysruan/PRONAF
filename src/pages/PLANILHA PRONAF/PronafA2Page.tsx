@@ -365,7 +365,7 @@ function PronafA2Inner() {
             ) : (
               <ShieldAlert className="h-4 w-4 text-primary" />
             )}
-            <span>Parecer de Crítica</span>
+            <span>Conformidade Técnica</span>
             {relatorioCritica && (
               <Badge
                 variant="outline"

@@ -105,7 +105,7 @@ export const DialogCriticaConformidade: React.FC<DialogCriticaConformidadeProps>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wider uppercase bg-primary/20 text-primary-foreground border border-primary/30">
-                  Auditoria Automática BNB
+                  Validação Automática BNB
                 </span>
                 <span className="text-xs text-slate-400">27 Parâmetros Oficiais (F1 a F5)</span>
               </div>
@@ -113,7 +113,7 @@ export const DialogCriticaConformidade: React.FC<DialogCriticaConformidadeProps>
                 {relatorio.statusGeral === "BLOQUEIA" && <ShieldAlert className="h-6 w-6 text-rose-500 animate-pulse" />}
                 {relatorio.statusGeral === "ALERTA" && <AlertTriangle className="h-6 w-6 text-amber-400" />}
                 {relatorio.statusGeral === "CONFORME" && <ShieldCheck className="h-6 w-6 text-emerald-400" />}
-                Parecer Técnico de Conformidade
+                Conformidade Técnica da Proposta
               </DialogTitle>
               <DialogDescription className="text-slate-300 text-xs sm:text-sm">
                 Proponente: <span className="font-semibold text-white">{relatorio.proponenteNome}</span> • Município:{" "}
@@ -345,7 +345,7 @@ export const DialogCriticaConformidade: React.FC<DialogCriticaConformidadeProps>
         {/* ── RODAPÉ DO MODAL ── */}
         <div className="p-4 bg-muted/30 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[11px] text-muted-foreground text-center sm:text-left">
-            * As regras de auditoria foram compiladas a partir dos Manuais de Crédito e Fórmulas de Crítica do Banco do Nordeste (BNB).
+            * Os critérios técnicos foram compilados a partir dos Manuais de Crédito e Normas Operacionais do Banco do Nordeste (BNB).
           </p>
 
           <div className="flex items-center gap-2">
