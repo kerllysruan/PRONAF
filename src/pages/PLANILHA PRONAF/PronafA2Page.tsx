@@ -27,6 +27,8 @@ import { PronafA2Provider, usePronafA2 } from "./usePronafA2Store";
 import { exportXlsm } from "./exportXlsm";
 import { importXlsm, decryptSpreadsheetIfNeeded } from "./importXlsm";
 import { projetoToCells } from "./cellMapping";
+import { PropostaData } from "./types";
+import { identificarParametrosPorPrograma } from "./programasCredito";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,6 +101,32 @@ function PronafA2Inner() {
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: "Projeto salvo", description: "Arquivo .json baixado com sucesso." });
+  }
+
+  // Atualização da Proposta com sincronização automática dos parâmetros de cálculo pelo programa de crédito
+  function handlePropostaChange(patch: Partial<PropostaData>) {
+    updateTab(" Proposta", patch);
+    if (patch.programa) {
+      const param = identificarParametrosPorPrograma(patch.programa);
+      updateTab("CalculoFinanceiro", {
+        bloco1: {
+          ...projeto.CalculoFinanceiro.bloco1,
+          prazoMeses: param.prazoMeses,
+          carenciaMeses: param.carenciaMeses,
+          jurosPercentAa: param.jurosPercentAa,
+          periodicidadeReembolso: param.periodicidadeReembolso,
+          amortizacoesIguais: param.amortizacoesIguais,
+        },
+        bloco2: {
+          ...projeto.CalculoFinanceiro.bloco2,
+          prazoMeses: param.prazoMeses,
+          carenciaMeses: param.carenciaMeses,
+          jurosPercentAa: param.jurosPercentAa,
+          periodicidadeReembolso: param.periodicidadeReembolso,
+          amortizacoesIguais: param.amortizacoesIguais,
+        },
+      });
+    }
   }
 
   // ── Abrir JSON ────────────────────────────────────────────
@@ -365,7 +393,7 @@ function PronafA2Inner() {
             <TabsContent value="proposta" className="m-0">
               <TabProposta
                 data={projeto[" Proposta"]}
-                onChange={(data) => updateTab(" Proposta", data)}
+                onChange={handlePropostaChange}
               />
             </TabsContent>
             <TabsContent value="cronograma" className="m-0">
@@ -396,6 +424,7 @@ function PronafA2Inner() {
               <TabCalcFinanceiro
                 data={projeto.CalculoFinanceiro}
                 onChange={(data) => updateTab("CalculoFinanceiro", data)}
+                programaSelecionado={projeto[" Proposta"]?.programa}
               />
             </TabsContent>
           </React.Suspense>

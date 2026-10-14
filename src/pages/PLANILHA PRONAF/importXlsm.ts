@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { createXlsmReader, normalizeSheetKey } from "./exportXlsm";
 import { cellsToProjeto, serialToDateStr, type SheetName } from "./cellMapping";
 import { createInitialProjetoA2, type ProjetoA2, type InvestimentoItem } from "./types";
+import { identificarParametrosPorPrograma } from "./programasCredito";
 
 // Polyfills para ambiente de navegador
 function ensureBufferPolyfill() {
@@ -529,16 +530,43 @@ export function parseBdPronafCToProjeto(rows: unknown[][]): ProjetoA2 {
     if (rows[543]) o.subsistenciaFamilia = parseNum(rows[543][6]);
   }
 
-  // 8. FINANCIAMENTO / CÁLCULO FINANCEIRO (Linha 721)
+  // 8. FINANCIAMENTO / CÁLCULO FINANCEIRO (Linhas 721 e 722)
+  const fin = projeto.CalculoFinanceiro;
+  const paramProg = identificarParametrosPorPrograma(projeto[" Proposta"].programa);
+
   if (rows.length > 721 && rows[721]) {
     const r721 = rows[721];
-    const fin = projeto.CalculoFinanceiro;
     if (fin.bloco1) {
-      if (r721[4]) fin.bloco1.prazoMeses = parseNum(r721[4]);
-      if (r721[5]) fin.bloco1.carenciaMeses = parseNum(r721[5]);
-      if (r721[6]) fin.bloco1.jurosPercentAa = parseNum(r721[6]);
-      if (r721[7]) fin.bloco1.periodicidadeReembolso = cleanStr(r721[7]);
-      if (r721[8]) fin.bloco1.amortizacoesIguais = cleanStr(r721[8]);
+      fin.bloco1.prazoMeses = r721[4] !== undefined && r721[4] !== "" ? Math.round(parseNum(r721[4])) : paramProg.prazoMeses;
+      fin.bloco1.carenciaMeses = r721[5] !== undefined && r721[5] !== "" ? Math.round(parseNum(r721[5])) : paramProg.carenciaMeses;
+      fin.bloco1.jurosPercentAa = r721[6] !== undefined && r721[6] !== "" ? parseNum(r721[6]) : paramProg.jurosPercentAa;
+      fin.bloco1.periodicidadeReembolso = cleanStr(r721[7]) || paramProg.periodicidadeReembolso;
+      fin.bloco1.amortizacoesIguais = (cleanStr(r721[8]) as "Sim" | "Não") || paramProg.amortizacoesIguais;
+    }
+  } else if (fin.bloco1) {
+    fin.bloco1.prazoMeses = paramProg.prazoMeses;
+    fin.bloco1.carenciaMeses = paramProg.carenciaMeses;
+    fin.bloco1.jurosPercentAa = paramProg.jurosPercentAa;
+    fin.bloco1.periodicidadeReembolso = paramProg.periodicidadeReembolso;
+    fin.bloco1.amortizacoesIguais = paramProg.amortizacoesIguais;
+  }
+
+  // Bloco 2 (Linha 722 ou herança do Bloco 1)
+  if (fin.bloco2) {
+    const r722 = rows.length > 722 ? rows[722] : null;
+    if (r722 && r722[4] !== undefined && r722[4] !== "" && parseNum(r722[4]) > 0) {
+      fin.bloco2.prazoMeses = Math.round(parseNum(r722[4]));
+      fin.bloco2.carenciaMeses = r722[5] !== undefined && r722[5] !== "" ? Math.round(parseNum(r722[5])) : fin.bloco1.carenciaMeses;
+      fin.bloco2.jurosPercentAa = r722[6] !== undefined && r722[6] !== "" ? parseNum(r722[6]) : fin.bloco1.jurosPercentAa;
+      fin.bloco2.periodicidadeReembolso = cleanStr(r722[7]) || fin.bloco1.periodicidadeReembolso;
+      fin.bloco2.amortizacoesIguais = (cleanStr(r722[8]) as "Sim" | "Não") || fin.bloco1.amortizacoesIguais;
+    } else {
+      // Se bloco 2 não tiver inversão separada, mantém os mesmos parâmetros do programa / bloco 1
+      fin.bloco2.prazoMeses = fin.bloco1.prazoMeses;
+      fin.bloco2.carenciaMeses = fin.bloco1.carenciaMeses;
+      fin.bloco2.jurosPercentAa = fin.bloco1.jurosPercentAa;
+      fin.bloco2.periodicidadeReembolso = fin.bloco1.periodicidadeReembolso;
+      fin.bloco2.amortizacoesIguais = fin.bloco1.amortizacoesIguais;
     }
   }
 
