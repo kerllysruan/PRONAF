@@ -153,7 +153,7 @@ describe("importXlsm and decryptSpreadsheetIfNeeded", () => {
     const p = parseBdPronafCToProjeto(rows);
 
     expect(p.Cliente.nome).toBe("OSVALDO DE JESUS");
-    expect(p.Cliente.cpf).toBe("460388843-00");
+    expect(p.Cliente.cpf).toBe("460.388.843-00");
     expect(p.Cliente.conjugeNome).toBe("VALDENORA ANTONIA AMORIM DE JESUS");
     expect(p["Avaliação"].imoveis[0].denominacao).toBe("PA MIRA FLORES");
     expect(p["Avaliação"].informacoesAdicionais[0].registroCar).toBe("MA2112407CA5E0914A50C4059BEEED3A9CAF483D9");

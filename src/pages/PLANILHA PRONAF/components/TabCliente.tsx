@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Copy, User, MapPin, Building, Heart, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toInputDate, fromInputDate } from '../validators';
 
 export interface TabClienteProps {
   data: ClienteData;
@@ -177,8 +178,8 @@ export const TabCliente: React.FC<TabClienteProps> = ({
               <Input
                 id="dataNascimento"
                 type="date"
-                value={data.dataNascimento || ''}
-                onChange={(e) => onChange({ dataNascimento: e.target.value })}
+                value={toInputDate(data.dataNascimento)}
+                onChange={(e) => onChange({ dataNascimento: fromInputDate(e.target.value) })}
                 className={cn(
                   'h-10 rounded-xl mt-1.5 bg-background/50',
                   !data.dataNascimento && 'border-destructive/60 focus-visible:ring-destructive'
@@ -266,8 +267,8 @@ export const TabCliente: React.FC<TabClienteProps> = ({
               <Input
                 id="dataEmissaoDoc"
                 type="date"
-                value={data.dataEmissaoDoc || ''}
-                onChange={(e) => onChange({ dataEmissaoDoc: e.target.value })}
+                value={toInputDate(data.dataEmissaoDoc)}
+                onChange={(e) => onChange({ dataEmissaoDoc: fromInputDate(e.target.value) })}
                 className="h-10 rounded-xl mt-1.5 bg-background/50"
               />
             </div>
@@ -1050,8 +1051,8 @@ export const TabCliente: React.FC<TabClienteProps> = ({
               <Input
                 id="conjugeDataNascimento"
                 type="date"
-                value={data.conjugeDataNascimento || ''}
-                onChange={(e) => onChange({ conjugeDataNascimento: e.target.value })}
+                value={toInputDate(data.conjugeDataNascimento)}
+                onChange={(e) => onChange({ conjugeDataNascimento: fromInputDate(e.target.value) })}
                 className="h-10 rounded-xl mt-1.5 bg-background/50"
               />
             </div>
@@ -1126,8 +1127,8 @@ export const TabCliente: React.FC<TabClienteProps> = ({
               <Input
                 id="conjugeDataEmissao"
                 type="date"
-                value={data.conjugeDataEmissao || ''}
-                onChange={(e) => onChange({ conjugeDataEmissao: e.target.value })}
+                value={toInputDate(data.conjugeDataEmissao)}
+                onChange={(e) => onChange({ conjugeDataEmissao: fromInputDate(e.target.value) })}
                 className="h-10 rounded-xl mt-1.5 bg-background/50"
               />
             </div>

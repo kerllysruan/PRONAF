@@ -152,3 +152,37 @@ export function formatDateBR(date: Date): string {
 
   return `${day}/${month}/${year}`;
 }
+
+/**
+ * Converte data no formato dd/mm/aaaa (ou já aaaa-mm-dd) para formato do input HTML type="date" (aaaa-mm-dd).
+ */
+export function toInputDate(value?: string | null): string {
+  if (!value) return '';
+  const s = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) {
+    const d = m[1].padStart(2, '0');
+    const mo = m[2].padStart(2, '0');
+    const y = m[3];
+    return `${y}-${mo}-${d}`;
+  }
+  return '';
+}
+
+/**
+ * Converte valor vindo de input HTML type="date" (aaaa-mm-dd) para dd/mm/aaaa.
+ */
+export function fromInputDate(value?: string | null): string {
+  if (!value) return '';
+  const s = String(value).trim();
+  const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) {
+    const y = m[1];
+    const mo = m[2].padStart(2, '0');
+    const d = m[3].padStart(2, '0');
+    return `${d}/${mo}/${y}`;
+  }
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) return s;
+  return s;
+}

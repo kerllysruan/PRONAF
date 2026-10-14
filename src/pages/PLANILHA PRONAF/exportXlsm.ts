@@ -16,13 +16,25 @@ import type { CellValueType, CellWrite, SheetName } from "./cellMapping";
 // Utilitários
 // ──────────────────────────────────────────────────────────────
 
-/** dd/mm/aaaa → número serial do Excel (sistema 1900). Retorna NaN se inválida. */
+/** dd/mm/aaaa ou aaaa-mm-dd → número serial do Excel (sistema 1900). Retorna NaN se inválida. */
 export function toExcelSerial(dateStr: string): number {
-  const m = String(dateStr).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return NaN;
-  const day = Number(m[1]);
-  const month = Number(m[2]);
-  const year = Number(m[3]);
+  const str = String(dateStr).trim();
+  let day: number, month: number, year: number;
+  const mBr = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (mBr) {
+    day = Number(mBr[1]);
+    month = Number(mBr[2]);
+    year = Number(mBr[3]);
+  } else {
+    const mIso = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (mIso) {
+      year = Number(mIso[1]);
+      month = Number(mIso[2]);
+      day = Number(mIso[3]);
+    } else {
+      return NaN;
+    }
+  }
   const utc = Date.UTC(year, month - 1, day);
   const check = new Date(utc);
   if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) {

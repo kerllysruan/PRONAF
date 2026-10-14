@@ -2,7 +2,7 @@ import { Buffer } from "buffer";
 import * as XLSX from "xlsx";
 import { createXlsmReader, normalizeSheetKey } from "./exportXlsm";
 import { cellsToProjeto, serialToDateStr, type SheetName } from "./cellMapping";
-import { createInitialProjetoA2, type ProjetoA2 } from "./types";
+import { createInitialProjetoA2, type ProjetoA2, type InvestimentoItem } from "./types";
 
 // Polyfills para ambiente de navegador
 function ensureBufferPolyfill() {
@@ -126,6 +126,24 @@ function formatMesAno(val: unknown): string {
   return s;
 }
 
+function formatCpf(val: unknown): string {
+  if (!val) return "";
+  const digits = String(val).replace(/\D/g, "");
+  if (digits.length === 11) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+  }
+  return cleanStr(val);
+}
+
+function formatCnpj(val: unknown): string {
+  if (!val) return "";
+  const digits = String(val).replace(/\D/g, "");
+  if (digits.length === 14) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
+  }
+  return cleanStr(val);
+}
+
 /**
  * Converte as linhas da aba oficial "BdPRONAF_C" (padrão SEAP / BNB)
  * para a estrutura de dados completa do ProjetoA2 cobrindo todas as 8 abas.
@@ -140,7 +158,7 @@ export function parseBdPronafCToProjeto(rows: unknown[][]): ProjetoA2 {
     if (r[4]) c.tipoCliente = cleanStr(r[4]);
     if (r[5]) c.nome = cleanStr(r[5]);
     if (r[6]) c.apelido = cleanStr(r[6]);
-    if (r[7]) c.cpf = cleanStr(r[7]);
+    if (r[7]) c.cpf = formatCpf(r[7]);
     if (r[8]) c.dataNascimento = serialToDateStr(String(r[8]));
     if (r[9]) c.numDocumento = cleanStr(r[9]);
     if (r[10]) c.dataEmissaoDoc = serialToDateStr(String(r[10]));
@@ -193,16 +211,16 @@ export function parseBdPronafCToProjeto(rows: unknown[][]): ProjetoA2 {
     if (corrDdd) c.corrDddTelefone = cleanStr(corrDdd);
     if (corrTel) c.corrNumTelefone = cleanStr(corrTel);
 
-    // Imóvel da Atividade
-    if (r[56]) c.imovelDenominacao = cleanStr(r[56]);
-    if (r[57]) c.imovelArea = parseNum(r[57]);
-    if (r[58]) c.imovelTipoUso = cleanStr(r[58]);
-    if (r[59]) c.imovelProprietario = cleanStr(r[59]);
-    if (r[60]) c.imovelCpfCnpjProprietario = cleanStr(r[60]);
+    // Imóvel da Atividade (se colunas vazias na linha 11, busca da Avaliação linha 21)
+    c.imovelDenominacao = cleanStr(r[56]) || cleanStr(rows[21]?.[4]);
+    c.imovelArea = parseNum(r[57]) || parseNum(rows[21]?.[6]);
+    c.imovelTipoUso = cleanStr(r[58]) || "Proprietário(a)";
+    c.imovelProprietario = cleanStr(r[59]) || c.nome;
+    c.imovelCpfCnpjProprietario = formatCpf(r[60]) || c.cpf;
 
     // Cônjuge
     if (r[63]) c.conjugeNome = cleanStr(r[63]);
-    if (r[64]) c.conjugeCpf = cleanStr(r[64]);
+    if (r[64]) c.conjugeCpf = formatCpf(r[64]);
     if (r[65]) c.conjugeDataNascimento = serialToDateStr(String(r[65]));
     if (r[66]) c.conjugeNumDocumento = cleanStr(r[66]);
     if (r[67]) c.conjugeTipoDocumento = cleanStr(r[67]);
@@ -231,7 +249,7 @@ export function parseBdPronafCToProjeto(rows: unknown[][]): ProjetoA2 {
       if (r21[8]) a.imoveis[0].compoeGarantia = cleanStr(r21[8]);
       if (r21[59]) a.imoveis[0].tipoProprietario = cleanStr(r21[59]);
       if (r21[60]) a.imoveis[0].nomeProprietario = cleanStr(r21[60]);
-      if (r21[61]) a.imoveis[0].cpfCnpjProprietario = cleanStr(r21[61]);
+      if (r21[61]) a.imoveis[0].cpfCnpjProprietario = formatCpf(r21[61]);
     }
     if (a.informacoesAdicionais && a.informacoesAdicionais[0]) {
       if (r21[55]) a.informacoesAdicionais[0].nirf = cleanStr(r21[55]);
@@ -314,6 +332,27 @@ export function parseBdPronafCToProjeto(rows: unknown[][]): ProjetoA2 {
         }
       }
     }
+
+    // Semoventes (Linhas 21..50)
+    if (a.semoventes) {
+      for (let i = 0; i < Math.min(30, rows.length - 21); i++) {
+        const row = rows[21 + i];
+        if (!row || !row[49]) continue;
+        const cat = cleanStr(row[49]);
+        const qtd = parseNum(row[50]);
+        const raca = cleanStr(row[51]);
+        const val = parseNum(row[52]);
+        if (qtd > 0 || val > 0 || raca) {
+          const sem = a.semoventes.find((s) => s.categoria.toLowerCase() === cat.toLowerCase());
+          if (sem) {
+            sem.quantidadeCabecas = qtd;
+            sem.racaMesticagem = raca;
+            sem.valorUnitario = val;
+            sem.valorTotal = qtd * val;
+          }
+        }
+      }
+    }
   }
 
   // 3. PROPOSTA (Linhas 120 e 121+)
@@ -326,9 +365,9 @@ export function parseBdPronafCToProjeto(rows: unknown[][]): ProjetoA2 {
     if (r121[7]) p.regiao = (cleanStr(r121[7]) as "Semi-árido" | "Fora do Semi-árido") || "";
     if (r121[8]) p.atividadePrincipal = cleanStr(r121[8]);
     if (r121[11]) p.empresaElaboradora = cleanStr(r121[11]);
-    if (r121[12]) p.cnpjEmpresaElaboradora = cleanStr(r121[12]);
+    if (r121[12]) p.cnpjEmpresaElaboradora = formatCnpj(r121[12]);
     if (r121[13]) p.elaborador = cleanStr(r121[13]);
-    if (r121[14]) p.cpfElaborador = cleanStr(r121[14]);
+    if (r121[14]) p.cpfElaborador = formatCpf(r121[14]);
     if (r121[15]) p.objetivoCredito = cleanStr(r121[15]);
     if (r121[16]) p.municipioDecretoEmergencia = (cleanStr(r121[16]) as "Sim" | "Não") || "";
     if (r121[17]) p.producaoAgroecologica = (cleanStr(r121[17]) as "Sim" | "Não") || "";
@@ -347,26 +386,32 @@ export function parseBdPronafCToProjeto(rows: unknown[][]): ProjetoA2 {
     if (!p.imovelMunicipio && projeto["Avaliação"].imoveis?.[0]?.municipio) {
       p.imovelMunicipio = projeto["Avaliação"].imoveis[0].municipio;
     }
+    p.imovelRegiao = p.regiao || "Semi-árido";
+    p.imovelNum = "1";
 
-    // Programa de Investimentos (Linhas 121 a 156 = 36 itens)
+    // Programa de Investimentos (Linhas 121 a 156 = até 36 itens)
+    const itensInvestimento: InvestimentoItem[] = [];
     for (let i = 0; i < 36; i++) {
       const rIdx = 121 + i;
       if (rIdx >= rows.length) break;
       const row = rows[rIdx];
       if (!row || !row[22]) continue;
-      if (p.itensInvestimento[i]) {
-        p.itensInvestimento[i] = {
-          id: i + 1,
-          discriminacao: cleanStr(row[22]),
-          compoeGarantia: (cleanStr(row[23]) as "Sim" | "Não") || "Não",
-          quantidade: parseNum(row[24]) || 1,
-          unidade: cleanStr(row[25]) || "Unidade",
-          uso: cleanStr(row[26]) || "",
-          numImovel: cleanStr(row[28]) || "1",
-          valorUnitario: parseNum(row[27]),
-          recursosPropriosUnit: parseNum(row[29]),
-        };
-      }
+      const disc = cleanStr(row[22]);
+      if (!disc) continue;
+      itensInvestimento.push({
+        id: itensInvestimento.length + 1,
+        discriminacao: disc,
+        compoeGarantia: (cleanStr(row[23]) as "Sim" | "Não") || "Não",
+        quantidade: parseNum(row[24]) || 1,
+        unidade: cleanStr(row[25]) || "Unidade",
+        uso: cleanStr(row[26]) || "",
+        numImovel: cleanStr(row[28]) || "1",
+        valorUnitario: parseNum(row[27]),
+        recursosPropriosUnit: parseNum(row[29]),
+      });
+    }
+    if (itensInvestimento.length > 0) {
+      p.itensInvestimento = itensInvestimento;
     }
   }
 
@@ -506,14 +551,26 @@ function mergeProjetos(base: ProjetoA2, overlay: ProjetoA2): ProjetoA2 {
     const oVal = overlay[key];
     const bVal = base[key];
     if (typeof oVal === "object" && oVal !== null && !Array.isArray(oVal)) {
-      result[key] = {
-        ...(bVal as Record<string, unknown>),
-        ...Object.fromEntries(
-          Object.entries(oVal as Record<string, unknown>).filter(
-            ([, v]) => v !== "" && v !== null && v !== undefined && v !== 0
-          )
-        ),
-      } as never;
+      const mergedSection = { ...(bVal as Record<string, unknown>) };
+      for (const [prop, val] of Object.entries(oVal as Record<string, unknown>)) {
+        if (Array.isArray(val)) {
+          // Só sobrescreve se o array do overlay tiver itens com conteúdo preenchido
+          const hasContent = val.some((item) => {
+            if (typeof item === "object" && item !== null) {
+              return Object.values(item).some(
+                (v) => v !== "" && v !== null && v !== undefined && v !== 0 && v !== "Não"
+              );
+            }
+            return item !== "" && item !== null && item !== undefined && item !== 0;
+          });
+          if (hasContent) {
+            mergedSection[prop] = val;
+          }
+        } else if (val !== "" && val !== null && val !== undefined && val !== 0) {
+          mergedSection[prop] = val;
+        }
+      }
+      result[key] = mergedSection as never;
     }
   }
   return result;
@@ -552,32 +609,53 @@ export async function importXlsm(file: Blob | ArrayBuffer, customPassword?: stri
     }
   }
 
-  // 4. Tenta leitor OpenXML / JSZip primeiro se for ZIP
-  let reader: ((sheet: SheetName, cell: string) => string) | null = null;
-  if (isZipSignature(buffer)) {
-    try {
-      reader = await createXlsmReader(buffer);
-    } catch {
-      reader = null;
-    }
-  }
+  // 4. Só devemos ler abas individuais se o arquivo REALMENTE tiver abas individuais!
+  const hasIndividualSheets = !!(
+    wb &&
+    wb.SheetNames.some((name) => {
+      const norm = normalizeSheetKey(name);
+      return norm === "cliente" || norm === "avaliacao" || norm === "proposta";
+    })
+  );
 
-  // 5. Se não conseguiu leitor ZIP e temos pasta SheetJS, usa SheetJS
-  if (!reader && wb) {
-    reader = createSheetJsReader(wb);
-  }
-
-  // 6. Se temos um leitor de abas (JSZip ou SheetJS), extrai dados das abas
-  if (reader) {
-    try {
-      const fromCells = cellsToProjeto(reader);
-      if (hasBdPronaf) {
-        projeto = mergeProjetos(projeto, fromCells);
-      } else {
-        projeto = fromCells;
+  if (hasIndividualSheets) {
+    let reader: ((sheet: SheetName, cell: string) => string) | null = null;
+    if (isZipSignature(buffer)) {
+      try {
+        reader = await createXlsmReader(buffer);
+      } catch {
+        reader = null;
       }
-    } catch {
-      // Se falhar a extração por células, mantém o projeto (ex: de BdPRONAF_C)
+    }
+    if (!reader && wb) {
+      reader = createSheetJsReader(wb);
+    }
+    if (reader) {
+      try {
+        const fromCells = cellsToProjeto(reader);
+        if (hasBdPronaf) {
+          projeto = mergeProjetos(projeto, fromCells);
+        } else {
+          projeto = fromCells;
+        }
+      } catch {
+        // mantém projeto
+      }
+    }
+  } else if (!hasBdPronaf) {
+    let reader: ((sheet: SheetName, cell: string) => string) | null = null;
+    if (isZipSignature(buffer)) {
+      try {
+        reader = await createXlsmReader(buffer);
+      } catch {
+        reader = null;
+      }
+    }
+    if (!reader && wb) {
+      reader = createSheetJsReader(wb);
+    }
+    if (reader) {
+      projeto = cellsToProjeto(reader);
     }
   }
 

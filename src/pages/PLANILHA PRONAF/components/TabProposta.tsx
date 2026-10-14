@@ -9,6 +9,7 @@ import {
 } from "../types";
 import { useReferenceTables } from "../useReferenceTables";
 import { SearchableSelect, SelectOption } from "./SearchableSelect";
+import { toInputDate, fromInputDate } from "../validators";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -177,19 +178,34 @@ export const TabProposta: React.FC<TabPropostaProps> = ({ data, onChange }) => {
   // Garante que existam itens no investimento (até 36)
   const itensInvestimento = React.useMemo(() => {
     if (data.itensInvestimento && data.itensInvestimento.length > 0) {
-      return data.itensInvestimento;
+      const preenchidos = data.itensInvestimento.filter(
+        (it) => it.discriminacao && it.discriminacao.trim() !== ""
+      );
+      if (preenchidos.length > 0) {
+        if (data.itensInvestimento.length === 36) {
+          return preenchidos.map((it, idx) => ({ ...it, id: idx + 1 }));
+        }
+        const last = data.itensInvestimento[data.itensInvestimento.length - 1];
+        if (last && (!last.discriminacao || last.discriminacao.trim() === "")) {
+          return [...preenchidos, last].map((it, idx) => ({ ...it, id: idx + 1 }));
+        }
+        return preenchidos.map((it, idx) => ({ ...it, id: idx + 1 }));
+      }
+      return data.itensInvestimento.slice(0, 1).map((it, idx) => ({ ...it, id: idx + 1 }));
     }
-    return Array.from({ length: 1 }, (_, i) => ({
-      id: i + 1,
-      discriminacao: "",
-      compoeGarantia: "Não" as const,
-      quantidade: 0,
-      unidade: "",
-      uso: "",
-      numImovel: "1",
-      valorUnitario: 0,
-      recursosPropriosUnit: 0,
-    }));
+    return [
+      {
+        id: 1,
+        discriminacao: "",
+        compoeGarantia: "Não" as const,
+        quantidade: 0,
+        unidade: "",
+        uso: "",
+        numImovel: "1",
+        valorUnitario: 0,
+        recursosPropriosUnit: 0,
+      },
+    ];
   }, [data.itensInvestimento]);
 
   // Atualizador de Item de Investimento
@@ -423,8 +439,8 @@ export const TabProposta: React.FC<TabPropostaProps> = ({ data, onChange }) => {
               <Input
                 id="dataProposta"
                 type="date"
-                value={data.dataProposta || ""}
-                onChange={(e) => onChange({ dataProposta: e.target.value })}
+                value={toInputDate(data.dataProposta)}
+                onChange={(e) => onChange({ dataProposta: fromInputDate(e.target.value) })}
                 className="rounded-xl border-border/50 bg-background/50 h-10"
               />
             </div>
@@ -709,7 +725,7 @@ export const TabProposta: React.FC<TabPropostaProps> = ({ data, onChange }) => {
               </Label>
               <Input
                 id="imovelRegiao"
-                value={data.imovelRegiao || ""}
+                value={data.imovelRegiao || data.regiao || ""}
                 onChange={(e) => onChange({ imovelRegiao: e.target.value })}
                 placeholder="Ex.: Semi-árido"
                 className="rounded-xl border-border/50 bg-background/50 h-10"
@@ -1440,9 +1456,9 @@ export const TabProposta: React.FC<TabPropostaProps> = ({ data, onChange }) => {
                     <TableCell className="p-2">
                       <Input
                         type="date"
-                        value={fin.dataContratacao || ""}
+                        value={toInputDate(fin.dataContratacao)}
                         onChange={(e) =>
-                          handleUpdateFinanciamento(index, "dataContratacao", e.target.value)
+                          handleUpdateFinanciamento(index, "dataContratacao", fromInputDate(e.target.value))
                         }
                         className="h-8 rounded-lg text-xs bg-background/50"
                       />
@@ -1837,9 +1853,9 @@ export const TabProposta: React.FC<TabPropostaProps> = ({ data, onChange }) => {
                     <TableCell className="p-2">
                       <Input
                         type="date"
-                        value={op.data || ""}
+                        value={toInputDate(op.data)}
                         onChange={(e) =>
-                          handleUpdateOperacaoDeclarada(index, "data", e.target.value)
+                          handleUpdateOperacaoDeclarada(index, "data", fromInputDate(e.target.value))
                         }
                         className="h-8 rounded-lg text-xs bg-background/50"
                       />
