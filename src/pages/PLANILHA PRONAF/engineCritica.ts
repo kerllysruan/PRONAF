@@ -411,27 +411,85 @@ export function executarCriticaProjeto(
   });
 
   // ────────────────────────────────────────────────────────────
-  // R15: Lotação da pastagem (UA/ha) <=  capacidade de suporte do município (F4)
+  // R15: Lotação da pastagem (UA/ha) <= capacidade de suporte do município (F4 integrado a F3)
   // ────────────────────────────────────────────────────────────
   const tetoSuporteUaHa = munForr?.suporteUaHa?.maximoSequeiroBraquiaria || 1.34;
-  
-  // Calcula a partir do uso da terra preenchido ou utiliza os valores padrão da proposta SEAP
-  const terras = projeto['Ativ. Agrícola']?.usoTerras || [];
+
+  const projRec = projeto as unknown as Record<string, unknown>;
+  const ativAgrObj = (projeto['Ativ. Agrícola'] || projRec['Ativ. Agricola'] || {}) as unknown as Record<string, unknown>;
+  const terrasCustom = (ativAgrObj.usoTerras as Array<Record<string, unknown>>) || [];
+  const pecuariaCustom = (ativAgrObj.usoTerrasPecuaria as Array<Record<string, unknown>>) || [];
+  const pastagensList = terrasCustom.length > 0 ? terrasCustom : pecuariaCustom;
   let areaPastagemCalc = 0;
   let uaPastagemCalc = 0;
-  for (const t of terras) {
-    if (t.areaAtual && t.areaAtual > 0) {
-      areaPastagemCalc += t.areaAtual;
-      uaPastagemCalc += t.uaAtual || 0;
+
+  for (const t of pastagensList) {
+    const a = Number(t.atualArea ?? t.areaAtual ?? 0);
+    const u = Number(t.atualUaHa ?? t.uaAtual ?? 0);
+    if (a > 0) {
+      areaPastagemCalc += a;
+      if (u > 0) {
+        uaPastagemCalc += u <= 4 ? u * a : u;
+      }
     }
   }
 
-  const lotacaoProposta = areaPastagemCalc > 0
-    ? Number((uaPastagemCalc / areaPastagemCalc).toFixed(2))
-    : 1.7; // valor da proposta analisada (SEAP)
+  // Demanda zootécnica de F3 (calculada com base na parição das matrizes se houver rebanho informado)
+  let totUaRebanhoF3 = 0;
+  let temAnimaisInformados = false;
+  const calcExploracaoF3 = (
+    catArr: Array<{ categoria: string; quantidadeAtual: number; aAdquirir: number; equivalenciaUa?: number }> | undefined,
+    paricaoTaxa: number
+  ) => {
+    if (!catArr || catArr.length === 0) return;
+    let matTot = 0;
+    catArr.forEach((c) => {
+      const a = Number(c.quantidadeAtual) || 0;
+      const b = Number(c.aAdquirir) || 0;
+      if (a + b > 0) temAnimaisInformados = true;
+      const catLow = c.categoria.toLowerCase();
+      if (catLow.includes('vaca') || catLow.includes('matriz')) {
+        matTot += a + b;
+      }
+    });
+    if (!temAnimaisInformados) return;
+
+    const criasTot = matTot > 0 ? Math.round(matTot * (paricaoTaxa / 100)) : 0;
+    const femCrias = Math.floor(criasTot / 2);
+    const mascCrias = criasTot - femCrias;
+    let addCrias = false;
+
+    catArr.forEach((c) => {
+      const catLow = c.categoria.toLowerCase();
+      const a = Number(c.quantidadeAtual) || 0;
+      const b = Number(c.aAdquirir) || 0;
+      let proj = a + b;
+      let ua = Number(c.equivalenciaUa) || 1.0;
+
+      if (catLow.includes('touro') || catLow.includes('reprodutor')) ua = 1.5;
+      else if (catLow.includes('vaca') || catLow.includes('matriz')) ua = 1.0;
+      else if (catLow.includes('bezerra')) { ua = 0.3; proj += femCrias; addCrias = true; }
+      else if (catLow.includes('bezerro')) { ua = 0.3; proj += mascCrias; addCrias = true; }
+      else if (catLow.includes('novilha') || catLow.includes('novilho')) ua = 0.7;
+
+      totUaRebanhoF3 += proj * ua;
+    });
+
+    if (matTot > 0 && criasTot > 0 && !addCrias) {
+      totUaRebanhoF3 += criasTot * 0.3;
+    }
+  };
+
+  const parBovEngine = Number(corteData?.paricaoPercent || pec.leite?.paricaoPercent) || 70;
+  calcExploracaoF3(corteData?.categorias, parBovEngine);
+  calcExploracaoF3(pec.leite?.categorias, parBovEngine);
 
   const areaPastagem = areaPastagemCalc > 0 ? areaPastagemCalc : 25.07;
-  const r15Ok = lotacaoProposta <= tetoSuporteUaHa;
+  const lotacaoProposta = temAnimaisInformados && totUaRebanhoF3 > 0
+    ? Number((totUaRebanhoF3 / areaPastagem).toFixed(2))
+    : (areaPastagemCalc > 0 && uaPastagemCalc > 0 ? Number((uaPastagemCalc / areaPastagemCalc).toFixed(2)) : 1.7);
+
+  const r15Ok = lotacaoProposta <= tetoSuporteUaHa * 1.05;
 
   itens.push({
     id: 'R15',
@@ -452,7 +510,7 @@ export function executarCriticaProjeto(
   // ────────────────────────────────────────────────────────────
   const suporteTotalRef = Number((areaPastagem * tetoSuporteUaHa).toFixed(1));
   const suporteProposta = Number((areaPastagem * lotacaoProposta).toFixed(1));
-  const r16Ok = suporteProposta <= suporteTotalRef;
+  const r16Ok = suporteProposta <= suporteTotalRef * 1.05;
 
   itens.push({
     id: 'R16',

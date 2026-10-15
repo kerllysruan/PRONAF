@@ -651,6 +651,12 @@ export function gerarPdfParecerCritica(
   // ══════════════════════════════════════════════════════════════════════
   //  6. COMPOSICAO DO REBANHO PROJETADO (F3) — DADOS REAIS DA PROPOSTA
   // ══════════════════════════════════════════════════════════════════════
+  // Variaveis de integracao entre F3 e F4
+  let f3TotAtual = 0;
+  let f3TotAdq   = 0;
+  let f3TotProj  = 0;
+  let f3TotUa    = 0;
+
   if (projeto) {
     y = secTitle(doc, y, "F3", "COMPOSICAO DO REBANHO PROJETADO E BALANCO ZOOTECNICO", P.blue);
 
@@ -663,40 +669,170 @@ export function gerarPdfParecerCritica(
     const ovinos   = pec.ovinos;
     const caprinos = pec.caprinos;
 
+    // Indicadores zootecnicos oficiais da proposta
+    const paricaoCorte = Number(bovCorte?.paricaoPercent) || 0;
+    const paricaoLeite = Number(bovLeite?.paricaoPercent) || 0;
+    const paricaoOvi   = Number(ovinos?.paricaoPercent) || 0;
+    const paricaoCapri = Number(caprinos?.paricaoPercent) || 0;
+    const paricaoBov   = paricaoCorte > 0 ? paricaoCorte : (paricaoLeite > 0 ? paricaoLeite : 70);
+    const mortCriaBov  = Number(bovCorte?.mortalidadeAte1AnoPercent || bovLeite?.mortalidadeAte1AnoPercent) || 0;
+
     interface CatRow { especie: string; categoria: string; atual: number; adquirir: number; projetado: number; ua: number; totalUa: number; }
     const cats: CatRow[] = [];
 
-    const processCats = (
+    // Helper para processar bovinos com projecao zootecnica via % de paricao
+    const processBovinos = (
       especie: string,
       catArr: Array<{ categoria: string; quantidadeAtual: number; aAdquirir: number; equivalenciaUa?: number }> | undefined,
-      uaDefault: number
+      paricaoTaxa: number,
+      mortCriaTaxa: number
     ) => {
-      if (!catArr) return;
+      if (!catArr || catArr.length === 0) return;
+
+      // 1. Identificar matrizes (vacas) existentes e a adquirir
+      let matAtual = 0;
+      let matAdq = 0;
       catArr.forEach((c) => {
-        const a = Number(c.quantidadeAtual) || 0;
-        const b = Number(c.aAdquirir) || 0;
-        if (a + b > 0) {
-          const ua = Number(c.equivalenciaUa) || uaDefault;
-          cats.push({ especie, categoria: c.categoria, atual: a, adquirir: b, projetado: a + b, ua, totalUa: (a + b) * ua });
+        const catLow = c.categoria.toLowerCase();
+        if (catLow.includes("vaca") || catLow.includes("matriz")) {
+          matAtual += Number(c.quantidadeAtual) || 0;
+          matAdq   += Number(c.aAdquirir) || 0;
         }
       });
+      const matTot = matAtual + matAdq;
+
+      // 2. Calcular crias projetadas a partir do % de paricao
+      let criasTotais = 0;
+      if (matTot > 0) {
+        const nascimentos = Math.round(matTot * (paricaoTaxa / 100));
+        criasTotais = mortCriaTaxa > 0 ? Math.round(nascimentos * (1 - mortCriaTaxa / 100)) : nascimentos;
+        if (criasTotais === 0) criasTotais = Math.max(1, Math.round(matTot * 0.7));
+      }
+
+      // 3. Verificar se as categorias ja possuem linhas de bezerras/bezerros
+      const hasBezerras = catArr.some((c) => c.categoria.toLowerCase().includes("bezerra"));
+      const hasBezerros = catArr.some((c) => c.categoria.toLowerCase().includes("bezerro") && !c.categoria.toLowerCase().includes("bezerra"));
+      const femeasCrias = hasBezerras && hasBezerros ? Math.floor(criasTotais / 2) : 0;
+      const machosCrias = hasBezerras && hasBezerros ? (criasTotais - femeasCrias) : (hasBezerros ? criasTotais : 0);
+
+      let adicionouCrias = false;
+
+      catArr.forEach((c) => {
+        const catLow = c.categoria.toLowerCase();
+        const a = Number(c.quantidadeAtual) || 0;
+        const b = Number(c.aAdquirir) || 0;
+        let proj = a + b;
+        let ua = Number(c.equivalenciaUa) || 1.0;
+
+        if (catLow.includes("touro") || catLow.includes("reprodutor")) {
+          ua = Number(c.equivalenciaUa) || 1.5;
+        } else if (catLow.includes("vaca") || catLow.includes("matriz")) {
+          ua = Number(c.equivalenciaUa) || 1.0;
+        } else if (catLow.includes("bezerra")) {
+          ua = Number(c.equivalenciaUa) || 0.3;
+          proj += femeasCrias;
+          adicionouCrias = true;
+        } else if (catLow.includes("bezerro")) {
+          ua = Number(c.equivalenciaUa) || 0.3;
+          proj += machosCrias;
+          adicionouCrias = true;
+        } else if (catLow.includes("novilha") || catLow.includes("novilho")) {
+          ua = Number(c.equivalenciaUa) || 0.7;
+        } else if (catLow.includes("garrota") || catLow.includes("garrote")) {
+          ua = Number(c.equivalenciaUa) || 0.5;
+        }
+
+        if (a + b > 0 || proj > 0) {
+          cats.push({ especie, categoria: c.categoria, atual: a, adquirir: b, projetado: proj, ua, totalUa: proj * ua });
+        }
+      });
+
+      // Se havia matrizes mas nenhuma linha de bezerro(a) recebeu as crias calculadas pela paricao:
+      if (matTot > 0 && criasTotais > 0 && !adicionouCrias) {
+        cats.push({
+          especie,
+          categoria: "Bezerros(as) / Crias Projetadas",
+          atual: 0,
+          adquirir: 0,
+          projetado: criasTotais,
+          ua: 0.3,
+          totalUa: criasTotais * 0.3,
+        });
+      }
     };
 
-    processCats("Bov. Corte",  bovCorte?.categorias, 1.0);
-    processCats("Bov. Leite",  bovLeite?.categorias, 1.0);
-    processCats("Ovinos",      ovinos?.categorias,   0.15);
-    processCats("Caprinos",    caprinos?.categorias, 0.15);
+    // Helper para ovinos e caprinos
+    const processPequenos = (
+      especie: string,
+      catArr: Array<{ categoria: string; quantidadeAtual: number; aAdquirir: number; equivalenciaUa?: number }> | undefined,
+      paricaoTaxa: number
+    ) => {
+      if (!catArr || catArr.length === 0) return;
+      let matTot = 0;
+      catArr.forEach((c) => {
+        if (c.categoria.toLowerCase().includes("matriz")) {
+          matTot += (Number(c.quantidadeAtual) || 0) + (Number(c.aAdquirir) || 0);
+        }
+      });
+      const criasTotais = matTot > 0 ? Math.round(matTot * (paricaoTaxa / 100)) : 0;
+      const femCrias = Math.floor(criasTotais / 2);
+      const mascCrias = criasTotais - femCrias;
+      let adicionouCrias = false;
+
+      catArr.forEach((c) => {
+        const catLow = c.categoria.toLowerCase();
+        const a = Number(c.quantidadeAtual) || 0;
+        const b = Number(c.aAdquirir) || 0;
+        let proj = a + b;
+        let ua = Number(c.equivalenciaUa) || 0.15;
+
+        if (catLow.includes("reprodutor")) ua = 0.16;
+        else if (catLow.includes("matriz")) ua = 0.14;
+        else if (catLow.includes("1 a 2")) ua = 0.10;
+        else if (catLow.includes("0 a 1")) {
+          ua = 0.04;
+          proj += catLow.includes("femea") || catLow.includes("f\u00EAmea") ? femCrias : mascCrias;
+          adicionouCrias = true;
+        }
+
+        if (a + b > 0 || proj > 0) {
+          cats.push({ especie, categoria: c.categoria, atual: a, adquirir: b, projetado: proj, ua, totalUa: proj * ua });
+        }
+      });
+
+      if (matTot > 0 && criasTotais > 0 && !adicionouCrias) {
+        cats.push({
+          especie,
+          categoria: "Crias / Jovens 0-1 ano (Paricao)",
+          atual: 0,
+          adquirir: 0,
+          projetado: criasTotais,
+          ua: 0.04,
+          totalUa: criasTotais * 0.04,
+        });
+      }
+    };
+
+    processBovinos("Bov. Corte", bovCorte?.categorias, paricaoBov, mortCriaBov);
+    processBovinos("Bov. Leite", bovLeite?.categorias, paricaoBov, mortCriaBov);
+    processPequenos("Ovinos", ovinos?.categorias, paricaoOvi > 0 ? paricaoOvi : 80);
+    processPequenos("Caprinos", caprinos?.categorias, paricaoCapri > 0 ? paricaoCapri : 80);
 
     // Se a aba de pecuaria nao tiver categorias cadastradas, verificar semoventes da aba Avaliacao
     if (cats.length === 0 && Array.isArray(av.semoventes)) {
+      let semMatrizes = 0;
       av.semoventes.forEach((s: SemoventeItem) => {
         const q = Number(s.quantidadeCabecas) || 0;
         if (q > 0) {
           const esp = s.especie || "Bovinos";
+          const cat = s.categoria || "Semoventes Cadastrados";
           const ua = esp.toLowerCase().includes("ovino") || esp.toLowerCase().includes("caprino") ? 0.15 : 1.0;
+          if (cat.toLowerCase().includes("vaca") || cat.toLowerCase().includes("matriz")) {
+            semMatrizes += q;
+          }
           cats.push({
             especie: esp,
-            categoria: s.categoria || "Semoventes Cadastrados",
+            categoria: cat,
             atual: q,
             adquirir: 0,
             projetado: q,
@@ -705,11 +841,30 @@ export function gerarPdfParecerCritica(
           });
         }
       });
+
+      if (semMatrizes > 0) {
+        const criasSem = Math.round(semMatrizes * (paricaoBov / 100));
+        if (criasSem > 0) {
+          cats.push({
+            especie: "Bovinos",
+            categoria: "Bezerros(as) / Crias Projetadas",
+            atual: 0,
+            adquirir: 0,
+            projetado: criasSem,
+            ua: 0.3,
+            totalUa: criasSem * 0.3,
+          });
+        }
+      }
     }
 
-    // Se mesmo assim nao houver animais no projeto, exibir linha informativa sem inventar dados
-    let totAtual = 0, totAdq = 0, totProj = 0, totUa = 0;
-    cats.forEach((c) => { totAtual += c.atual; totAdq += c.adquirir; totProj += c.projetado; totUa += c.totalUa; });
+    // Calcular somatorios de F3
+    cats.forEach((c) => {
+      f3TotAtual += c.atual;
+      f3TotAdq   += c.adquirir;
+      f3TotProj  += c.projetado;
+      f3TotUa    += c.totalUa;
+    });
 
     if (cats.length === 0) {
       y = infoCard(doc, y, [
@@ -728,7 +883,7 @@ export function gerarPdfParecerCritica(
         txt(fmtN(r.totalUa, 2)),
       ]);
 
-      rowsReb.push(["", "", "TOTAIS", txt(String(totAtual)), txt(String(totAdq)), txt(String(totProj)), "", txt(fmtN(totUa, 2))]);
+      rowsReb.push(["", "", "TOTAIS", txt(String(f3TotAtual)), txt(String(f3TotAdq)), txt(String(f3TotProj)), "", txt(fmtN(f3TotUa, 2))]);
 
       autoTable(doc, {
         startY: y,
@@ -761,37 +916,49 @@ export function gerarPdfParecerCritica(
 
       y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
 
-      // Card de indicadores zootecnicos com MEMORIAL DE CALCULO EXPLICITO
-      const paricao  = bovCorte?.paricaoPercent || bovLeite?.paricaoPercent || 0;
-      const relMT    = bovCorte?.matrizesPorReprodutor || 0;
-      const mortCria = bovCorte?.mortalidadeAte1AnoPercent || 0;
+      // Card de memorial explicito do calculo zootecnico
+      const relMT = bovCorte?.matrizesPorReprodutor || 0;
+      const criasTotaisProj = f3TotProj - (f3TotAtual + f3TotAdq);
 
-      const indTxt = paricao > 0
-        ? `* Parametros Tecnicos Oficiais: Taxa de Paricao = ${paricao}% | Relacao Matriz/Touro = ${relMT}:1 | Mortalidade de Cria = ${mortCria}%.`
+      const indTxt = paricaoBov > 0
+        ? `* Parametros Tecnicos Oficiais: Taxa de Paricao = ${paricaoBov}% | Relacao Matriz/Touro = ${relMT}:1 | Mortalidade de Cria = ${mortCriaBov}%.`
         : `* Balanco Zootecnico calculado a partir do efetivo de cabecas x fator de equivalencia UA informado.`;
+
+      const criasTxt = criasTotaisProj > 0
+        ? `* Nascimentos Projetados (% de Paricao): +${criasTotaisProj} crias/bezerros gerados no ciclo zootecnico a partir das matrizes.`
+        : `* Nascimentos Projetados: Conforme efetivo de matrizes cadastradas.`;
 
       y = infoCard(doc, y, [
         `MEMORIAL DE CALCULO DO REBANHO E CARGA ANIMAL (TABELA F3 BNB):`,
-        `* Efetivo Total = Rebanho Existente (${totAtual} cab) + Aquisicoes (${totAdq} cab) = ${totProj} cabecas totais projetadas.`,
-        `* Carga Animal Total = Somatorio de [Efetivo por Categoria x Equivalencia UA (Eq. UA)] = ${fmtN(totUa, 2)} UA.`,
+        `* Efetivo Total = Rebanho Existente (${f3TotAtual} cab) + Aquisicoes (${f3TotAdq} cab) + Crias Projetadas (${Math.max(0, criasTotaisProj)} cab) = ${f3TotProj} cabecas totais projetadas.`,
+        `* Demanda Forrageira Total (F3): Somatorio de [Efetivo Projetado por Categoria x Eq. UA] = ${fmtN(f3TotUa, 2)} UA demandadas.`,
+        criasTxt,
         indTxt,
       ], P.blue, P.blueLight);
     }
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  7. CAPACIDADE DE SUPORTE FORRAGEIRO (F4) — DADOS REAIS DA PROPOSTA
+  //  7. CAPACIDADE DE SUPORTE FORRAGEIRO (F4) — DADOS INTEGRADOS COM F3
   // ══════════════════════════════════════════════════════════════════════
   if (projeto) {
-    y = secTitle(doc, y, "F4", "CAPACIDADE DE SUPORTE FORRAGEIRO DO IMOVEL", P.blue);
+    y = secTitle(doc, y, "F4", "CAPACIDADE DE SUPORTE FORRAGEIRO E BALANCO DA PASTAGEM", P.blue);
 
     const munNorm  = normKey(relatorio.municipio);
     const fMun     = parametros.suporteForrageiroMunicipios?.[munNorm];
     const ativAgr = (projeto["Ativ. Agrícola"] || projRecord["Ativ. Agricola"] || {}) as ProjetoA2["Ativ. Agrícola"];
     const listaPastagens: UsoTerraAgricolaItem[] = ativAgr.usoTerrasPecuaria || [];
-    const pastagens = listaPastagens.filter(
+    let pastagens = listaPastagens.filter(
       (p: UsoTerraAgricolaItem) => p.descricao?.trim() && ((p.atualArea && Number(p.atualArea) > 0) || (p.atualUaHa && Number(p.atualUaHa) > 0))
     );
+
+    // Se nao houver em usoTerrasPecuaria, verificar em usoTerras geral
+    if (pastagens.length === 0) {
+      const outras = ((ativAgr as unknown as Record<string, unknown>).usoTerras || ativAgr.usoTerrasAgricola || []) as UsoTerraAgricolaItem[];
+      pastagens = outras.filter(
+        (p: UsoTerraAgricolaItem) => p.descricao?.trim() && ((p.atualArea && Number(p.atualArea) > 0) || (p.atualUaHa && Number(p.atualUaHa) > 0))
+      );
+    }
 
     const uaHaTeto = fMun?.suporteUaHa?.maximoSequeiroBraquiaria ?? 1.2;
     const chuva    = fMun?.chuvaMmAno ? `${fMun.chuvaMmAno} mm/ano` : "Semiarido / Transicao";
@@ -799,35 +966,55 @@ export function gerarPdfParecerCritica(
 
     const uaEquivBovino = 1.0;
     let areaTot = 0, capTotUa = 0;
+    pastagens.forEach((p) => {
+      const area = Number(p.atualArea) || 0;
+      areaTot += area;
+      capTotUa += area * uaHaTeto;
+    });
 
-    if (pastagens.length === 0) {
+    if (areaTot === 0 && pastagens.length === 0) {
       y = infoCard(doc, y, [
         `Nenhuma pastagem ou uso de terra pecuario cadastrado na aba Ativ. Agricola deste projeto.`,
         `Teto Tecnico Municipal de Suporte Forrageiro para ${txt(relatorio.municipio)}: ${fmtN(uaHaTeto)} UA/ha (Braquiaria em Sequeiro).`,
         `Precipitação Bioclimática: ${chuva} | Classificação Köppen: ${koppen}.`,
       ], P.green, P.greenBg);
     } else {
-      const rowsFor = pastagens.map((p: UsoTerraAgricolaItem, idx: number) => {
-        const area       = Number(p.atualArea) || 0;
-        const lotProp    = Number(p.atualUaHa) || uaHaTeto;
-        const capUa      = area * uaHaTeto;
-        const maxAnimais = Math.floor(capUa / uaEquivBovino);
-        areaTot   += area;
-        capTotUa  += capUa;
+      // UTILIZAR DADOS REAIS DE DEMANDA DE F3 PARA A CRITICA DE F4:
+      const demandaTotUa = f3TotUa > 0 ? f3TotUa : (areaTot * uaHaTeto);
+      const lotacaoRealGeral = areaTot > 0 ? Number((demandaTotUa / areaTot).toFixed(2)) : uaHaTeto;
+      const isSobrepastejoGeral = demandaTotUa > capTotUa * 1.05;
 
-        const diagn = lotProp > uaHaTeto * 1.05 ? "SOBREPASTEJO" : "ADEQUADO";
+      const rowsFor: string[][] = pastagens.map((p: UsoTerraAgricolaItem, idx: number) => {
+        const area       = Number(p.atualArea) || 0;
+        const demandaUa  = areaTot > 0 ? Number(((area / areaTot) * demandaTotUa).toFixed(2)) : demandaTotUa;
+        const capUa      = area * uaHaTeto;
+        const lotReal    = area > 0 ? Number((demandaUa / area).toFixed(2)) : 0;
+        const diagn      = lotReal > uaHaTeto * 1.05 ? "SOBREPASTEJO" : "ADEQUADO";
 
         return [
           txt(String(idx + 1)),
           txt(p.descricao),
           txt(`${fmtN(area)} ha`),
-          txt(`${fmtN(lotProp)} UA/ha`),
-          txt(`${fmtN(uaHaTeto)} UA/ha`),
+          txt(`${fmtN(demandaUa, 2)} UA`),
           txt(`${fmtN(capUa, 1)} UA`),
-          txt(`${maxAnimais} cab`),
+          txt(`${fmtN(lotReal, 2)} UA/ha`),
+          txt(`${fmtN(uaHaTeto, 2)} UA/ha`),
           txt(diagn),
         ];
       });
+
+      // Linha de totais e balanço geral integrado com F3
+      const diagnGeral = isSobrepastejoGeral ? "SOBREPASTEJO" : "ADEQUADO";
+      rowsFor.push([
+        "",
+        "TOTAL / BALANCO GERAL",
+        txt(`${fmtN(areaTot)} ha`),
+        txt(`${fmtN(demandaTotUa, 2)} UA`),
+        txt(`${fmtN(capTotUa, 1)} UA`),
+        txt(`${fmtN(lotacaoRealGeral, 2)} UA/ha`),
+        txt(`${fmtN(uaHaTeto, 2)} UA/ha`),
+        txt(diagnGeral),
+      ]);
 
       const maxTotAnimais = Math.floor(capTotUa / uaEquivBovino);
 
@@ -835,7 +1022,7 @@ export function gerarPdfParecerCritica(
         startY: y,
         margin: TABLE_MARGIN,
         showHead: "everyPage",
-        head: [["#", "Tipologia Forrageira", "Area (ha)", "Lotacao Proposta", "Teto BNB (UA/ha)", "Cap. Suporte (UA)", "Max. Animais", "Diagnostico"]],
+        head: [["#", "Tipologia Forrageira", "Area (ha)", "Demanda F3", "Cap. Suporte", "Lotacao Real", "Teto BNB", "Diagnostico"]],
         body: rowsFor,
         theme: "plain",
         headStyles: TABLE_HEAD_STYLE,
@@ -843,15 +1030,20 @@ export function gerarPdfParecerCritica(
         alternateRowStyles: { fillColor: TABLE_ALT_BG },
         columnStyles: {
           0: { cellWidth:  8, halign: "center", fontStyle: "bold" },
-          1: { cellWidth: 50 },
+          1: { cellWidth: 44 },
           2: { cellWidth: 18, halign: "right" },
-          3: { cellWidth: 20, halign: "right" },
-          4: { cellWidth: 20, halign: "right" },
-          5: { cellWidth: 22, halign: "right", fontStyle: "bold" },
-          6: { cellWidth: 22, halign: "center", fontStyle: "bold" },
+          3: { cellWidth: 22, halign: "right", fontStyle: "bold" },
+          4: { cellWidth: 22, halign: "right", fontStyle: "bold" },
+          5: { cellWidth: 22, halign: "center" },
+          6: { cellWidth: 20, halign: "center" },
           7: { cellWidth: 26, halign: "center", fontStyle: "bold" },
         },
         didParseCell: (data) => {
+          if (data.section === "body" && data.row.index === rowsFor.length - 1) {
+            data.cell.styles.fillColor = P.blueLight;
+            data.cell.styles.textColor = P.navyMd;
+            data.cell.styles.fontStyle = "bold";
+          }
           if (data.section === "body" && data.column.index === 7) {
             const v = String(data.cell.raw);
             if (v.includes("SOBREPASTEJO")) {
@@ -862,21 +1054,24 @@ export function gerarPdfParecerCritica(
               data.cell.styles.fillColor = P.greenBg;
             }
           }
-          if (data.section === "body" && data.column.index === 6) {
-            data.cell.styles.textColor = P.navyMd;
-            data.cell.styles.fillColor = P.blueLight;
-          }
         },
       });
 
       y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
 
+      const saldoUa = capTotUa - demandaTotUa;
+      const saldoTxt = saldoUa >= 0
+        ? `Saldo forrageiro positivo de +${fmtN(saldoUa, 1)} UA disponiveis (Suporte Suficiente - ADEQUADO)`
+        : `Deficit forrageiro de ${fmtN(Math.abs(saldoUa), 1)} UA (Carga superior a capacidade - SOBREPASTEJO)`;
+
       y = infoCard(doc, y, [
-        `MEMORIAL DE CALCULO DO SUPORTE FORRAGEIRO (TABELA F4 BNB):`,
-        `* Capacidade Total de Pastejo = Area Total (${fmtN(areaTot)} ha) x Teto Municipal BNB (${fmtN(uaHaTeto)} UA/ha) = ${fmtN(capTotUa, 1)} UA.`,
-        `* Quantidade Maxima de Animais Suportados = Capacidade Total (${fmtN(capTotUa, 1)} UA) / Equivalencia Bovina (1.0 UA/cab) = ${maxTotAnimais} cabecas.`,
+        `MEMORIAL DE CALCULO DO SUPORTE FORRAGEIRO E BALANCO DA PASTAGEM (F4 BNB):`,
+        `* Demanda Efetiva do Rebanho Projetado (F3): ${fmtN(demandaTotUa, 2)} UA (${f3TotProj} cabecas projetadas no plano).`,
+        `* Capacidade Total de Pastejo: Area Total (${fmtN(areaTot)} ha) x Teto Municipal (${fmtN(uaHaTeto)} UA/ha) = ${fmtN(capTotUa, 1)} UA (${maxTotAnimais} cabecas suportadas).`,
+        `* Lotacao Efetiva Real da Proposta: ${fmtN(lotacaoRealGeral, 2)} UA/ha vs. Teto Tecnico Municipal de ${fmtN(uaHaTeto)} UA/ha.`,
+        `* Diagnostico Tecnico: ${saldoTxt}.`,
         `* Bioclima Regional: Precipitacao = ${chuva} | Classificacao Koppen = ${koppen}.`,
-      ], P.green, P.greenBg);
+      ], isSobrepastejoGeral ? P.red : P.green, isSobrepastejoGeral ? P.redBg : P.greenBg);
     }
   }
 
