@@ -25,6 +25,7 @@ import CertificatesAutomator from "./pages/CertificatesAutomator";
 import ProjetistaRegister from "./pages/ProjetistaRegister";
 import ProjetistaDashboard from "./pages/ProjetistaDashboard";
 const PronafA2Page = React.lazy(() => import("./pages/PLANILHA PRONAF/PronafA2Page"));
+const ParametrosTecnicosPage = React.lazy(() => import("./pages/ParametrosTecnicosPage"));
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Loader2 } from "lucide-react";
 
@@ -120,6 +121,24 @@ const AppRoutes = () => (
               }
             >
               <PronafA2Page />
+            </Suspense>
+          </PermissionGate>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/parametros-tecnicos"
+      element={
+        <ProtectedRoute>
+          <PermissionGate permission="can_view_parametros_tecnicos" showError>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center min-h-[50vh]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              }
+            >
+              <ParametrosTecnicosPage />
             </Suspense>
           </PermissionGate>
         </ProtectedRoute>

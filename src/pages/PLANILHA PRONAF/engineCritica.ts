@@ -5,7 +5,7 @@
  */
 
 import { ProjetoA2 } from './types';
-import parametrosConsolidados from './data/parametros_critica_bnb.json';
+import { getParametrosConsolidados, BaseParametrosTecnicos } from './parametrosStorage';
 
 export type StatusRegra = 'OK' | 'ALERTA' | 'BLOQUEIA' | 'NÃO VERIFICÁVEL';
 
@@ -78,7 +78,11 @@ function normalize(str?: string | null): string {
 /**
  * Executa a bateria de 27 regras de crítica do Banco do Nordeste sobre o projeto.
  */
-export function executarCriticaProjeto(projeto: ProjetoA2): RelatorioCritica {
+export function executarCriticaProjeto(
+  projeto: ProjetoA2,
+  parametrosCustom?: BaseParametrosTecnicos
+): RelatorioCritica {
+  const parametrosConsolidados = parametrosCustom || getParametrosConsolidados();
   const p = projeto[' Proposta'] || {};
   const c = projeto.Cliente || {};
   const av = projeto['Avaliação'] || {};

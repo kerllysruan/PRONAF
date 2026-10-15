@@ -22,6 +22,7 @@ export interface UserPermissions {
   can_manage_agencies: boolean;
   read_only: boolean;
   can_view_pronaf_a2: boolean;
+  can_view_parametros_tecnicos: boolean;
 }
 
 const DEFAULT_PERMISSIONS: UserPermissions = {
@@ -44,6 +45,7 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
   can_manage_agencies: false,
   read_only: true, // Set to true as default for safety
   can_view_pronaf_a2: true,
+  can_view_parametros_tecnicos: true,
 };
 
 export function usePermissions() {
@@ -64,12 +66,12 @@ export function usePermissions() {
     ]);
 
     if (permRes.data) {
-      const { id, user_id, created_at, updated_at, ...perms } = permRes.data as any;
+      const { id, user_id, created_at, updated_at, ...perms } = permRes.data as Record<string, unknown>;
       // Merge with defaults to ensure missing columns don't break the UI
-      setPermissions(prev => ({ ...prev, ...perms }));
+      setPermissions(prev => ({ ...prev, ...(perms as unknown as Partial<UserPermissions>) }));
     }
 
-    let userRole = roleRes.data?.role || "usuario";
+    const userRole = roleRes.data?.role || "usuario";
     setRole(userRole);
 
     setLoading(false);

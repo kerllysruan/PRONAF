@@ -12,6 +12,7 @@ import {
   FileCheck,
   Briefcase,
   ClipboardList,
+  Sliders,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -31,6 +32,7 @@ import {
 const menuItems = [
   { title: "Painel do Projetista", url: "/painel-projetista", icon: Briefcase, permission: "projetista_only", badge: null as string | null },
   { title: "PRONAF A2", url: "/pronaf-a2", icon: ClipboardList, permission: "can_view_pronaf_a2", badge: null as string | null },
+  { title: "Parâmetros Técnicos", url: "/parametros-tecnicos", icon: Sliders, permission: "can_view_parametros_tecnicos", badge: null as string | null },
   { title: "Dashboard", url: "/", icon: LayoutDashboard, permission: "can_view_dashboard", badge: null as string | null },
   { title: "Propostas Concluídas", url: "/propostas", icon: FileText, permission: "can_view_proposals", badge: "concluded" as string },
   { title: "Estoque", url: "/estoque", icon: Box, permission: "can_view_proposals", badge: "stock" as string },
@@ -57,6 +59,7 @@ export function AppSidebar() {
       return (
         item.url === "/painel-projetista" ||
         item.url === "/pronaf-a2" ||
+        item.url === "/parametros-tecnicos" ||
         item.url === "/troca-arquivos" ||
         item.url === "/automatizador-certidoes" ||
         item.url === "/documentacao-plataforma"
