@@ -23,6 +23,7 @@ const P = {
   navyMd:     [23,  49, 100 ] as RGB,  // Sub-headers / destaques
   blue:       [37,  99, 235 ] as RGB,  // Azul primario vivo
   blueLight:  [219, 234, 254] as RGB,  // Fundo azul suave
+  blueBg:     [239, 246, 255] as RGB,
 
   // Status — Conformidade
   green:      [5,  150, 105 ] as RGB,
@@ -100,9 +101,9 @@ function fmtN(n: number | null | undefined, dec = 2): string {
 function txt(s: string | number | null | undefined): string {
   if (s === null || s === undefined) return "";
   return String(s)
-    .replace(/[<=]\s/g, (m) => m)        // mantem < = e > = com espaco
-    .replace(/\u2264/g, "<=")            // menor ou igual
-    .replace(/\u2265/g, ">=")            // maior ou igual
+    .replace(/[<=]\s/g, (m) => m)
+    .replace(/\u2264/g, "<=")
+    .replace(/\u2265/g, ">=")
     .replace(/[\u2212\u2013\u2014]/g, "-")
     .replace(/\u00d7/g, "x")
     .replace(/\u00f7/g, "/")
@@ -110,7 +111,7 @@ function txt(s: string | number | null | undefined): string {
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/\u2022/g, "-")
     .replace(/\u2713/g, "OK")
-    .replace(/[^\u0020-\u00FF]/g, "")       // remove chars fora do Latin-1 printable
+    .replace(/[^\u0020-\u00FF]/g, "")
     .trim();
 }
 
@@ -119,16 +120,11 @@ function normKey(s?: string | null): string {
   return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
 }
 
-/** Limita string e adiciona reticencias se necessario */
-function cap(s: string, max: number): string {
-  return s.length > max ? s.substring(0, max - 2) + ".." : s;
-}
-
 /* ═══════════════════════════════════════════════════════════════════════
    HELPERS DE LAYOUT — gestao de espaco e elementos visuais
    ═══════════════════════════════════════════════════════════════════════ */
 
-const MG = 12;  // margem lateral
+const MG = 12;
 
 function cW(doc: jsPDF): number {
   return doc.internal.pageSize.getWidth() - MG * 2;
@@ -153,17 +149,14 @@ function space(doc: jsPDF, y: number, needed: number): number {
 
 /**
  * Titulo de secao — linha fina colorida acima + numero e texto
- * Retorna o y apos o titulo
  */
 function secTitle(doc: jsPDF, y: number, num: string, title: string, color: RGB = P.blue): number {
   y = space(doc, y, 14);
   const w = cW(doc);
 
-  // Linha de acento superior
   doc.setFillColor(...color);
   doc.rect(MG, y, w, 0.7, "F");
 
-  // Icone de numero
   doc.setFillColor(...color);
   doc.roundedRect(MG, y + 2.5, 14, 7, 1.5, 1.5, "F");
   doc.setFont("helvetica", "bold");
@@ -171,7 +164,6 @@ function secTitle(doc: jsPDF, y: number, num: string, title: string, color: RGB 
   doc.setTextColor(255, 255, 255);
   doc.text(num, MG + 7, y + 7.2, { align: "center" });
 
-  // Texto do titulo
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(...P.ink);
@@ -182,90 +174,69 @@ function secTitle(doc: jsPDF, y: number, num: string, title: string, color: RGB 
 }
 
 /**
- * Card de informacao compacto com linha lateral colorida
- * Retorna o y apos o card
+ * Card informativo flexivel com quebra de linha automatica e suporte total a multilinhas.
+ * Garante que NENHUM texto seja cortado ou sobreposto.
  */
 function infoCard(
   doc: jsPDF,
   y: number,
-  lines: string[],
+  paragraphs: string[],
   accent: RGB = P.blue,
   bg: RGB = P.surface
 ): number {
   const w = cW(doc);
-  const lH = 4.4;
-  const pad = 3.5;
-  const h = pad * 2 + lines.length * lH;
-  y = space(doc, y, h + 3);
+  const padX = 7;
+  const padY = 4;
+  const maxTextW = w - padX - 4;
+  const lH = 4.0;
 
-  doc.setFillColor(...bg);
-  doc.roundedRect(MG, y, w, h, 1.5, 1.5, "F");
-  doc.setDrawColor(...P.border);
-  doc.setLineWidth(0.2);
-  doc.roundedRect(MG, y, w, h, 1.5, 1.5, "S");
-  doc.setFillColor(...accent);
-  doc.roundedRect(MG, y, 2.5, h, 1.2, 1.2, "F");
-
+  // Processa quebra de cada paragrafo
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.8);
-  doc.setTextColor(...P.bodyTxt);
-  lines.forEach((line, i) => {
-    const parts = line.split("::");  // "LABEL::valor"
-    if (parts.length === 2) {
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...P.mutedTxt);
-      doc.text(txt(parts[0]) + ": ", MG + 6, y + pad + lH * i + lH * 0.65);
-      const labelW = doc.getTextWidth(txt(parts[0]) + ": ");
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...P.ink);
-      doc.text(txt(parts[1]), MG + 6 + labelW, y + pad + lH * i + lH * 0.65);
-    } else {
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(...P.bodyTxt);
-      const wraps = doc.splitTextToSize(txt(line), w - 12);
-      doc.text(wraps[0] || "", MG + 6, y + pad + lH * i + lH * 0.65);
-    }
+
+  const wrappedBlocks: string[][] = [];
+  let totalLines = 0;
+
+  paragraphs.forEach((p) => {
+    const wrapped = doc.splitTextToSize(txt(p), maxTextW);
+    wrappedBlocks.push(wrapped);
+    totalLines += wrapped.length;
   });
 
-  return y + h + 3;
-}
+  const cardH = padY * 2 + totalLines * lH + (paragraphs.length - 1) * 1.5;
+  y = space(doc, y, cardH + 4);
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CABEÇALHO INSTITUCIONAL MINI para paginas internas (p > 1)
-   ═══════════════════════════════════════════════════════════════════════ */
-function miniHeader(doc: jsPDF, proponenteNome: string, cpf: string) {
-  const w = cW(doc);
-  doc.setFillColor(...P.navy);
-  doc.rect(MG, 5, w, 8.5, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.8);
-  doc.setTextColor(255, 255, 255);
-  doc.text("CONFORMIDADE TECNICA DA PROPOSTA  -  BNB / SEAP  -  PRONAF A2", MG + 3, 10.5);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.2);
-  doc.setTextColor(...P.lightTxt);
-  const nome = cap(proponenteNome, 30);
-  doc.text(`Proponente: ${nome}  |  CPF: ${cpf || "--"}`, pW(doc) - MG - 3, 10.5, { align: "right" });
+  // Fundo e bordas
+  doc.setFillColor(...bg);
+  doc.roundedRect(MG, y, w, cardH, 2, 2, "F");
+  doc.setDrawColor(...P.border);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(MG, y, w, cardH, 2, 2, "S");
+
+  // Barra de acento lateral
+  doc.setFillColor(...accent);
+  doc.roundedRect(MG, y, 2.5, cardH, 1.2, 1.2, "F");
+
+  // Renderizacao do texto
+  let currentY = y + padY + 3.0;
+
+  wrappedBlocks.forEach((lines) => {
+    lines.forEach((line) => {
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...P.bodyTxt);
+      doc.text(line, MG + padX, currentY);
+      currentY += lH;
+    });
+    currentY += 1.5;
+  });
+
+  return y + cardH + 3.5;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
    GERADOR PRINCIPAL DO PARECER DE CONFORMIDADE TECNICA
    ═══════════════════════════════════════════════════════════════════════ */
 
-/**
- * Gera e faz download do Parecer de Conformidade Tecnica da Proposta PRONAF A2 em PDF.
- *
- * Secoes do relatorio (design fintech clean / data-forward):
- *  1. Hero Header Institucional
- *  2. Identidade da Proposta (4 colunas)
- *  3. Scorecard KPI (gauge + 3 contadores)
- *  4. Pendencias e Orientacoes de Ajuste
- *  5. Programa de Inversoes vs. Tetos VMIC (F5)
- *  6. Composicao do Rebanho Projetado (F3)  — com totais claros
- *  7. Capacidade de Suporte Forrageiro (F4) — com max animais suportados
- *  8. Matriz Completa 27 Criterios BNB/SEAP
- *  9. Rodape com paginacao
- */
 export function gerarPdfParecerCritica(
   relatorio: RelatorioCritica,
   projeto?: ProjetoA2,
@@ -333,60 +304,99 @@ export function gerarPdfParecerCritica(
   let y = MG + hdrH + 4;
 
   // ══════════════════════════════════════════════════════════════════════
-  //  2. IDENTIDADE DA PROPOSTA — 4 colunas
+  //  2. IDENTIDADE DA PROPOSTA (LAYOUT 2x2 SEGURO CONTRA SOBREPOSICAO)
   // ══════════════════════════════════════════════════════════════════════
-  const idH = 24;
+  const blockW = (W - 4) / 2;
+  const blockH = 18;
+
+  // Bloco 1 (Superior Esquerdo): Proponente
   doc.setFillColor(...P.offWhite);
-  doc.roundedRect(MG, y, W, idH, 2.5, 2.5, "F");
+  doc.roundedRect(MG, y, blockW, blockH, 2, 2, "F");
   doc.setDrawColor(...P.border);
   doc.setLineWidth(0.2);
-  doc.roundedRect(MG, y, W, idH, 2.5, 2.5, "S");
+  doc.roundedRect(MG, y, blockW, blockH, 2, 2, "S");
 
-  const colW = W / 4;
-  // divisores internos
-  for (let i = 1; i <= 3; i++) {
-    doc.setDrawColor(...P.border);
-    doc.setLineWidth(0.18);
-    doc.line(MG + colW * i, y + 3, MG + colW * i, y + idH - 3);
-  }
-
-  const drawIDCol = (x: number, label: string, main: string, sub: string) => {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(5.8);
-    doc.setTextColor(...P.mutedTxt);
-    doc.text(label.toUpperCase(), x, y + 6);
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    doc.setTextColor(...P.ink);
-    doc.text(txt(cap(main, 26)), x, y + 12);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.8);
-    doc.setTextColor(...P.bodyTxt);
-    doc.text(txt(cap(sub, 26)), x, y + 18);
-  };
-
-  drawIDCol(MG + 4, "Proponente", relatorio.proponenteNome, `CPF: ${relatorio.proponenteCpf || "Nao informado"}`);
-  drawIDCol(MG + colW + 4, "Localizacao do Imovel", relatorio.municipio, `UF: ${relatorio.uf}`);
-  drawIDCol(MG + colW * 2 + 4, "Programa / Atividade", relatorio.programa, relatorio.atividadePrincipal);
-
-  // Coluna 4 — investimento em destaque
-  const c4x = MG + colW * 3 + 4;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(5.8);
+  doc.setFontSize(6);
   doc.setTextColor(...P.mutedTxt);
-  doc.text("INVESTIMENTO PROPOSTO", c4x, y + 6);
+  doc.text("PROPONENTE", MG + 4, y + 4.5);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
+  doc.setFontSize(8);
+  doc.setTextColor(...P.ink);
+  const propNome = doc.splitTextToSize(txt(relatorio.proponenteNome || "Nao informado"), blockW - 8);
+  doc.text(propNome[0] || "", MG + 4, y + 9.5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.8);
+  doc.setTextColor(...P.bodyTxt);
+  doc.text(`CPF: ${txt(relatorio.proponenteCpf || "Nao informado")}`, MG + 4, y + 14.5);
+
+  // Bloco 2 (Superior Direito): Investimento Proposto
+  const b2x = MG + blockW + 4;
+  doc.setFillColor(...P.blueBg);
+  doc.roundedRect(b2x, y, blockW, blockH, 2, 2, "F");
+  doc.setDrawColor(...P.border);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(b2x, y, blockW, blockH, 2, 2, "S");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6);
+  doc.setTextColor(...P.mutedTxt);
+  doc.text("INVESTIMENTO PROPOSTO", b2x + 4, y + 4.5);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
   doc.setTextColor(...P.blue);
-  doc.text(txt(formatBRL(relatorio.valorFinanciado)), c4x, y + 13.5);
+  doc.text(txt(formatBRL(relatorio.valorFinanciado)), b2x + 4, y + 10.5);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6);
   doc.setTextColor(...P.mutedTxt);
-  doc.text("Base Normativa BNB: Vigente", c4x, y + 18.5);
+  doc.text("Enquadramento Normativo BNB: Vigente", b2x + 4, y + 15);
 
-  y += idH + 4;
+  y += blockH + 3;
+
+  // Bloco 3 (Inferior Esquerdo): Localizacao do Imovel
+  doc.setFillColor(...P.offWhite);
+  doc.roundedRect(MG, y, blockW, blockH, 2, 2, "F");
+  doc.setDrawColor(...P.border);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(MG, y, blockW, blockH, 2, 2, "S");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6);
+  doc.setTextColor(...P.mutedTxt);
+  doc.text("LOCALIZACAO DO IMOVEL", MG + 4, y + 4.5);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...P.ink);
+  const munLines = doc.splitTextToSize(txt(`${relatorio.municipio} - ${relatorio.uf}`), blockW - 8);
+  doc.text(munLines[0] || "", MG + 4, y + 9.5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.8);
+  doc.setTextColor(...P.bodyTxt);
+  doc.text(`Estado / Regiao: ${txt(relatorio.uf)}`, MG + 4, y + 14.5);
+
+  // Bloco 4 (Inferior Direito): Programa & Atividade
+  doc.setFillColor(...P.offWhite);
+  doc.roundedRect(b2x, y, blockW, blockH, 2, 2, "F");
+  doc.setDrawColor(...P.border);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(b2x, y, blockW, blockH, 2, 2, "S");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6);
+  doc.setTextColor(...P.mutedTxt);
+  doc.text("PROGRAMA & ATIVIDADE PRINCIPAL", b2x + 4, y + 4.5);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.8);
+  doc.setTextColor(...P.ink);
+  const prgLines = doc.splitTextToSize(txt(relatorio.programa || "PRONAF"), blockW - 8);
+  doc.text(prgLines[0] || "", b2x + 4, y + 9.5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.8);
+  doc.setTextColor(...P.bodyTxt);
+  const ativLines = doc.splitTextToSize(txt(relatorio.atividadePrincipal || "Agropecuaria"), blockW - 8);
+  doc.text(ativLines[0] || "", b2x + 4, y + 14.5);
+
+  y += blockH + 4;
 
   // ══════════════════════════════════════════════════════════════════════
   //  3. SCORECARD KPI
@@ -400,7 +410,7 @@ export function gerarPdfParecerCritica(
   const kpiGap = 3;
   const kpiW   = (W - gaugeW - kpiGap * 3) / 3;
 
-  // ── Gauge circular de aderencia ──
+  // Gauge circular de aderencia
   doc.setFillColor(...P.white);
   doc.roundedRect(MG, y, gaugeW, kpiH, 2.5, 2.5, "F");
   doc.setDrawColor(...P.border);
@@ -424,17 +434,17 @@ export function gerarPdfParecerCritica(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.2);
   doc.setTextColor(...P.mutedTxt);
-  doc.text("ADERENCIA BNB", MG + 27, y + 7);
+  doc.text("ADERENCIA BNB", MG + 26, y + 7);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
   doc.setTextColor(...sColor);
-  doc.text(txt(adhLabel), MG + 27, y + 13);
+  doc.text(txt(adhLabel), MG + 26, y + 13);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(5.8);
   doc.setTextColor(...P.lightTxt);
-  doc.text(`${relatorio.totalOk} de ${relatorio.totalRegras} criterios`, MG + 27, y + 18);
+  doc.text(`${relatorio.totalOk} de ${relatorio.totalRegras} criterios`, MG + 26, y + 18);
 
-  // ── 3 KPI cards ──
+  // 3 KPI cards
   const drawKPI = (x: number, label: string, val: number, sub: string, color: RGB, bg: RGB, brd: RGB) => {
     doc.setFillColor(...bg);
     doc.roundedRect(x, y, kpiW, kpiH, 2.5, 2.5, "F");
@@ -445,14 +455,14 @@ export function gerarPdfParecerCritica(
     doc.roundedRect(x, y, 2.5, kpiH, 1, 1, "F");
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(6);
+    doc.setFontSize(5.8);
     doc.setTextColor(...color);
     doc.text(label.toUpperCase(), x + 5, y + 6.5);
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
+    doc.setFontSize(13);
     doc.setTextColor(...color);
-    doc.text(String(val), x + 5, y + 15.5);
+    doc.text(String(val), x + 5, y + 15.0);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(5.8);
@@ -639,7 +649,7 @@ export function gerarPdfParecerCritica(
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  6. COMPOSICAO DO REBANHO PROJETADO (F3)
+  //  6. COMPOSICAO DO REBANHO PROJETADO (F3) — COM MEMORIAL DE CALCULO
   // ══════════════════════════════════════════════════════════════════════
   if (projeto) {
     y = secTitle(doc, y, "F3", "COMPOSICAO DO REBANHO PROJETADO E BALANCO ZOOTECNICO", P.blue);
@@ -674,7 +684,6 @@ export function gerarPdfParecerCritica(
     processCats("Ovinos",      ovinos?.categorias,   0.15);
     processCats("Caprinos",    caprinos?.categorias, 0.15);
 
-    // Dados padrao se nao houver entrada real
     if (cats.length === 0) {
       cats.push(
         { especie: "Bovinos", categoria: "Vacas / Matrizes",    atual: 13, adquirir: 0, projetado: 13, ua: 1.0,  totalUa: 13.0 },
@@ -698,7 +707,6 @@ export function gerarPdfParecerCritica(
       txt(fmtN(r.totalUa, 2)),
     ]);
 
-    // Linha de totais
     rowsReb.push(["", "", "TOTAIS", txt(String(totAtual)), txt(String(totAdq)), txt(String(totProj)), "", txt(fmtN(totUa, 2))]);
 
     autoTable(doc, {
@@ -732,14 +740,16 @@ export function gerarPdfParecerCritica(
 
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
 
-    // Card de indicadores zootecnicos
+    // Card de indicadores zootecnicos com MEMORIAL DE CALCULO EXPLICITO
     const paricao  = bovCorte?.paricaoPercent || bovLeite?.paricaoPercent || 70;
     const relMT    = bovCorte?.matrizesPorReprodutor || 25;
     const mortCria = bovCorte?.mortalidadeAte1AnoPercent || 5;
 
     y = infoCard(doc, y, [
-      `Rebanho Existente: ${totAtual} cab  |  A Adquirir: ${totAdq} cab  |  Rebanho Projetado: ${totProj} cab  |  Carga Animal Total: ${fmtN(totUa)} UA`,
-      `Taxa de Paricao: ${paricao}%  |  Relacao Matriz/Reprodutor: ${relMT}:1  |  Mortalidade de Crias (0-1 ano): ${mortCria}%`,
+      `MEMORIAL DE CALCULO DO REBANHO E CARGA ANIMAL (TABELA F3 BNB):`,
+      `* Efetivo Total = Rebanho Existente (${totAtual} cab) + Aquisicoes (${totAdq} cab) = ${totProj} cabecas totais projetadas.`,
+      `* Carga Animal Total = Somatorio de [Efetivo por Categoria x Equivalencia UA (Eq. UA)] = ${fmtN(totUa, 2)} UA.`,
+      `* Parametros Tecnicos Oficiais: Taxa de Paricao = ${paricao}% | Relacao Matriz/Touro = ${relMT}:1 | Mortalidade de Cria = ${mortCria}%.`,
     ], P.blue, P.blueLight);
   }
 
@@ -759,9 +769,7 @@ export function gerarPdfParecerCritica(
     const chuva    = fMun?.chuvaMmAno ? `${fMun.chuvaMmAno} mm/ano` : "Semiarido / Transicao";
     const koppen   = fMun?.classeKoppen || "BSh";
 
-    // UA equivalente media padrao bovino para calculo de max animais
     const uaEquivBovino = 1.0;
-
     let areaTot = 0, capTotUa = 0;
 
     const rowsFor = (pastagens.length > 0 ? pastagens : [
@@ -769,8 +777,8 @@ export function gerarPdfParecerCritica(
     ]).map((p, idx) => {
       const area       = p.atualArea || 0;
       const lotProp    = p.atualUaHa || uaHaTeto;
-      const capUa      = area * uaHaTeto;          // capacidade pelo teto BNB
-      const maxAnimais = Math.floor(capUa / uaEquivBovino);  // animais bovinos equivalentes maximos
+      const capUa      = area * uaHaTeto;
+      const maxAnimais = Math.floor(capUa / uaEquivBovino);
       areaTot   += area;
       capTotUa  += capUa;
 
@@ -783,7 +791,7 @@ export function gerarPdfParecerCritica(
         txt(`${fmtN(lotProp)} UA/ha`),
         txt(`${fmtN(uaHaTeto)} UA/ha`),
         txt(`${fmtN(capUa, 1)} UA`),
-        txt(`${maxAnimais} cab`),   // NOVO: max animais suportados
+        txt(`${maxAnimais} cab`),
         txt(diagn),
       ];
     });
@@ -831,16 +839,16 @@ export function gerarPdfParecerCritica(
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
 
     y = infoCard(doc, y, [
-      `Precipitacao Regional: ${chuva}  |  Clima (Koppen): ${koppen}  |  Area Total de Pastagens: ${fmtN(areaTot)} ha`,
-      `Capacidade Total de Pastejo: ${fmtN(capTotUa, 1)} UA  |  Max. Animais Suportados (bovinos equivalentes): ${maxTotAnimais} cab  |  Teto Municipal: ${fmtN(uaHaTeto)} UA/ha`,
+      `MEMORIAL DE CALCULO DO SUPORTE FORRAGEIRO (TABELA F4 BNB):`,
+      `* Capacidade Total de Pastejo = Area Total (${fmtN(areaTot)} ha) x Teto Municipal BNB (${fmtN(uaHaTeto)} UA/ha) = ${fmtN(capTotUa, 1)} UA.`,
+      `* Quantidade Maxima de Animais Suportados = Capacidade Total (${fmtN(capTotUa, 1)} UA) / Equivalencia Bovina (1.0 UA/cab) = ${maxTotAnimais} cabecas.`,
+      `* Bioclima Regional: Precipitacao = ${chuva} | Classificacao Koppen = ${koppen}.`,
     ], P.green, P.greenBg);
   }
 
   // ══════════════════════════════════════════════════════════════════════
   //  8. MATRIZ COMPLETA — 27 CRITERIOS BNB / SEAP
   // ══════════════════════════════════════════════════════════════════════
-  const nomeLimitado = cap(relatorio.proponenteNome || "", 28);
-
   y = secTitle(doc, y, "S8", "MATRIZ COMPLETA DE CONFORMIDADE TECNICA (27 CRITERIOS BNB / SEAP)", P.navy);
 
   autoTable(doc, {
@@ -883,21 +891,34 @@ export function gerarPdfParecerCritica(
         }
       }
     },
-    didDrawPage: (data) => {
-      if (data.pageNumber > 1) {
-        miniHeader(doc, nomeLimitado, relatorio.proponenteCpf || "");
-      }
-    },
   });
 
   // ══════════════════════════════════════════════════════════════════════
-  //  9. RODAPE — paginacao + nota legal em todas as paginas
+  //  9. RODAPE INSTITUCIONAL — PAGINACAO E IDENTIFICACAO EM TODAS AS PAGINAS
   // ══════════════════════════════════════════════════════════════════════
   const totalPages = doc.getNumberOfPages();
   const dataHora   = `${dataFmt} as ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+  const propHeaderNome = txt(relatorio.proponenteNome || "");
 
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
+
+    // Mini-header em paginas subsequentes (p > 1) desenhado a posteriori no topo livre
+    if (i > 1) {
+      doc.setFillColor(...P.navy);
+      doc.rect(MG, 4.5, W, 7.5, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text("CONFORMIDADE TECNICA DA PROPOSTA  -  BNB / SEAP  -  PRONAF A2", MG + 3, 9.5);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.0);
+      doc.setTextColor(...P.lightTxt);
+      const capNome = propHeaderNome.length > 28 ? propHeaderNome.substring(0, 26) + ".." : propHeaderNome;
+      doc.text(`Proponente: ${capNome}  |  CPF: ${relatorio.proponenteCpf || "--"}`, PW - MG - 3, 9.5, { align: "right" });
+    }
+
+    // Rodape
     doc.setDrawColor(...P.borderMd);
     doc.setLineWidth(0.2);
     doc.line(MG, PH - 10, PW - MG, PH - 10);
