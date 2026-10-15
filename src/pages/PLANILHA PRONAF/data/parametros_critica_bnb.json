@@ -5,246 +5,246 @@
   "regrasCatalogo": [
     {
       "id": "R01",
-      "regra": "Região (semiárido × fora) da proposta = classificação do município",
-      "referencia": "FORA DO SEMIÁRIDO",
-      "statusDefault": "OK",
+      "regra": "Enquadramento Regional: Região da proposta (Semiárido ou Fora) idêntica à classificação oficial do município",
+      "referencia": "Tabela F1 - Zoneamento Oficial BNB",
+      "statusDefault": "BLOQUEIA",
       "confianca": "Alta",
-      "fonte": "F1",
-      "comoResolver": "Região coerente com a classificação."
+      "fonte": "Tabela F1 (BNB)",
+      "comoResolver": "Verificar na Tabela F1 o zoneamento oficial do município do imóvel e selecionar a opção correspondente (Semiárido ou Fora do Semiárido) na aba Proposta."
     },
     {
       "id": "R02",
-      "regra": "Agência da proposta = agência do município na classificação",
-      "referencia": "PRESIDENTE DUTRA - MA",
+      "regra": "Jurisdição Bancária: Agência indicada na proposta deve ser a agência BNB jurisdicionada ao município",
+      "referencia": "Tabela F1 - Jurisdição de Agências BNB",
       "statusDefault": "ALERTA",
-      "confianca": "Média",
-      "fonte": "F1",
-      "comoResolver": "Agência divergente: confirmar se a proposta foi enviada pela agência de atendimento correta do município."
+      "confianca": "Alta",
+      "fonte": "Tabela F1 (BNB)",
+      "comoResolver": "Confirmar na Tabela F1 a agência BNB que atende oficialmente o município do projeto e atualizar o campo Agência na aba Proposta."
     },
     {
       "id": "R03",
-      "regra": "Vocação da atividade principal no município (PRONAF e Mini)",
-      "referencia": "CONSOLIDADA",
-      "statusDefault": "OK",
+      "regra": "Vocação Agropecuária: A atividade produtiva principal financiada deve possuir vocação reconhecida no município",
+      "referencia": "Tabela F1 - Vocações Econômicas Municipais",
+      "statusDefault": "ALERTA",
       "confianca": "Alta",
-      "fonte": "F1",
-      "comoResolver": "Cria de bovinos de corte é consolidada no município."
+      "fonte": "Tabela F1 (BNB)",
+      "comoResolver": "Verificar se a exploração pecuária/agrícola possui vocação consolidada ou potencial na Tabela F1. Caso não possua, apresentar justificativa técnica de viabilidade."
     },
     {
       "id": "R04",
-      "regra": "Nível tecnológico implícito (parição informada) ≤ NT permitido",
-      "referencia": 2,
-      "statusDefault": "OK",
-      "confianca": "Média",
-      "fonte": "F1 × F3",
-      "comoResolver": "Parição de 70% corresponde ao NT1; o município permite até NT2."
+      "regra": "Teto Tecnológico: O Nível Tecnológico (NT) implícito nos índices zootécnicos não pode exceder o NT máximo permitido para o município",
+      "referencia": "Tabela F1 × F3 - Limite Máximo de NT por Município",
+      "statusDefault": "BLOQUEIA",
+      "confianca": "Alta",
+      "fonte": "Tabela F1 × F3",
+      "comoResolver": "Ajustar os indicadores zootécnicos do rebanho para se adequarem aos parâmetros do Nível Tecnológico máximo admitido para o município na Tabela F1."
     },
     {
       "id": "R05",
-      "regra": "Parição ≤ parição do NT permitido",
-      "referencia": 75,
-      "statusDefault": "OK",
-      "confianca": "Hipótese",
-      "fonte": "F3",
-      "comoResolver": "Depende de \"Indic_1\" ser a parição (confirmar no dicionário)."
+      "regra": "Taxa de Parição: Índice de parição do rebanho não pode superar a taxa máxima do Nível Tecnológico admitido",
+      "referencia": "Tabela F3 - Parâmetros Zootécnicos BNB",
+      "statusDefault": "ALERTA",
+      "confianca": "Alta",
+      "fonte": "Tabela F3 (BNB)",
+      "comoResolver": "Revisar o índice de parição informado na aba Ativ. Pecuária para respeitar a faixa técnica normatizada na Tabela F3 para a espécie e nível tecnológico."
     },
     {
       "id": "R06",
-      "regra": "Descarte de matrizes (ano 1) dentro da faixa",
-      "referencia": "10 a 25",
-      "statusDefault": "OK",
+      "regra": "Taxa de Descarte Inicial (Ano 1): Descarte de matrizes no 1º ano dentro dos limites zootécnicos normativos",
+      "referencia": "Tabela F3 - Faixa de Descarte Ano 1",
+      "statusDefault": "ALERTA",
       "confianca": "Alta",
-      "fonte": "F3",
-      "comoResolver": ""
+      "fonte": "Tabela F3 (BNB)",
+      "comoResolver": "Calibrar o percentual de descarte de matrizes do 1º ano conforme a faixa aceita pelo BNB na Tabela F3 (evitando taxas irrealistas de subutilização ou liquidação antecipada)."
     },
     {
       "id": "R07",
-      "regra": "Descarte de matrizes (demais anos) dentro da faixa",
-      "referencia": "15 a 20",
-      "statusDefault": "OK",
+      "regra": "Taxa de Descarte Contínuo (Demais Anos): Descarte de matrizes nos anos seguintes dentro da faixa de renovação de plantel",
+      "referencia": "Tabela F3 - Faixa de Descarte Demais Anos",
+      "statusDefault": "ALERTA",
       "confianca": "Alta",
-      "fonte": "F3",
-      "comoResolver": "No limite superior da faixa."
+      "fonte": "Tabela F3 (BNB)",
+      "comoResolver": "Ajustar o percentual de descarte contínuo para manter a estabilização e reposição natural do rebanho dentro dos limites da Tabela F3."
     },
     {
       "id": "R08",
-      "regra": "Relação matriz/reprodutor ≤ máximo",
-      "referencia": 25,
-      "statusDefault": "OK",
+      "regra": "Relação Touro/Matriz: Proporção de matrizes por reprodutor não pode ultrapassar o teto normativo da espécie",
+      "referencia": "Tabela F3 - Relação Máxima Matriz/Reprodutor",
+      "statusDefault": "BLOQUEIA",
       "confianca": "Alta",
-      "fonte": "F3",
-      "comoResolver": "13 matrizes para 1 reprodutor (bate com Indic_6 = 13)."
+      "fonte": "Tabela F3 (BNB)",
+      "comoResolver": "Dimensionar o número de reprodutores necessários ou ajustar a quantidade de matrizes no plano para respeitar a capacidade máxima de cobertura da espécie (ex: até 25 matrizes/touro)."
     },
     {
       "id": "R09",
-      "regra": "Mortalidade 0–1 ano não pode ser melhor que a do NT permitido",
-      "referencia": 5,
-      "statusDefault": "OK",
-      "confianca": "Hipótese",
-      "fonte": "F3 × F1",
-      "comoResolver": "No limite do NT permitido."
+      "regra": "Mortalidade de Cria (0 a 1 ano): Taxa de mortalidade infantil de bezerros/crias coerente com o Nível Tecnológico",
+      "referencia": "Tabela F3 - Mortalidade Máxima 0-1 Ano",
+      "statusDefault": "ALERTA",
+      "confianca": "Alta",
+      "fonte": "Tabela F3 (BNB)",
+      "comoResolver": "Adequar a taxa de mortalidade até 1 ano aos parâmetros zootécnicos normatizados na Tabela F3 para a exploração."
     },
     {
       "id": "R10",
-      "regra": "Mortalidade 1–2 anos não pode ser melhor que a do NT permitido",
-      "referencia": 3,
+      "regra": "Mortalidade Jovem (1 a 2 anos): Taxa de perdas na recria coerente com o Nível Tecnológico do projeto",
+      "referencia": "Tabela F3 - Mortalidade Máxima 1-2 Anos",
       "statusDefault": "ALERTA",
-      "confianca": "Hipótese",
-      "fonte": "F3 × F1",
-      "comoResolver": "Se confirmado que o indicador é mortalidade, o valor proposto é de nível tecnológico acima do permitido (NT3)."
+      "confianca": "Alta",
+      "fonte": "Tabela F3 (BNB)",
+      "comoResolver": "Corrigir o percentual de mortalidade de animais de 1 a 2 anos na aba Ativ. Pecuária para respeitar a taxa de referência do Nível Tecnológico."
     },
     {
       "id": "R11",
-      "regra": "Mortalidade de adultos não pode ser melhor que a do NT permitido",
-      "referencia": 2,
+      "regra": "Mortalidade de Adultos: Taxa de mortalidade de matrizes e reprodutores dentro dos padrões normativos",
+      "referencia": "Tabela F3 - Mortalidade Máxima de Adultos",
       "statusDefault": "ALERTA",
-      "confianca": "Hipótese",
-      "fonte": "F3 × F1",
-      "comoResolver": "Se confirmado que o indicador é mortalidade, o valor proposto é de nível tecnológico acima do permitido (NT3)."
+      "confianca": "Alta",
+      "fonte": "Tabela F3 (BNB)",
+      "comoResolver": "Ajustar o índice de perdas de animais adultos para corresponder à faixa técnica normatizada na Tabela F3."
     },
     {
       "id": "R12",
-      "regra": "Valor unitário das matrizes ≤ máximo VMIC (matriz mestiça de corte, MA)",
-      "referencia": 3200,
-      "statusDefault": "OK",
-      "confianca": "Média",
-      "fonte": "F5",
-      "comoResolver": "Exatamente no teto (alta mestiçagem: ver REFERENCIAS). Sem folga: qualquer reajuste estoura."
+      "regra": "Teto VMIC - Aquisição de Matrizes: Valor unitário proposto não pode exceder o teto normativo fixado para a UF",
+      "referencia": "Tabela F5 - Tetos VMIC por UF (Matrizes)",
+      "statusDefault": "BLOQUEIA",
+      "confianca": "Alta",
+      "fonte": "Tabela F5 (BNB)",
+      "comoResolver": "Consultar a Tabela F5 da UF correspondente e ajustar o valor unitário das matrizes no Programa de Investimentos para não ultrapassar o valor limite aceito pelo BNB."
     },
     {
       "id": "R13",
-      "regra": "Valor unitário do reprodutor ≤ máximo VMIC (mestiço de alta mestiçagem, MA)",
-      "referencia": 9000,
-      "statusDefault": "OK",
-      "confianca": "Média",
-      "fonte": "F5",
-      "comoResolver": "Se for PO com registro o teto é maior (ver REFERENCIAS); a proposta não informa."
+      "regra": "Teto VMIC - Aquisição de Reprodutores: Valor unitário proposto não pode superar o teto fixado para reprodutores na UF",
+      "referencia": "Tabela F5 - Tetos VMIC por UF (Reprodutores)",
+      "statusDefault": "BLOQUEIA",
+      "confianca": "Alta",
+      "fonte": "Tabela F5 (BNB)",
+      "comoResolver": "Adequar o valor unitário do reprodutor ao teto da Tabela F5 da UF ou comprovar registro genealógico PO que justifique o enquadramento em categoria superior."
     },
     {
       "id": "R14",
-      "regra": "Valor da reforma de pastagem ≤ máximo VMIC (MA)",
-      "referencia": "xxxxx",
-      "statusDefault": "NÃO VERIFICÁVEL",
+      "regra": "Teto VMIC - Inversões e Formação de Pastagens: Custo por hectare de formação/reforma de pastagens dentro dos limites VMIC",
+      "referencia": "Tabela F5 - Valores Máximos de Inversões Agrícolas",
+      "statusDefault": "ALERTA",
       "confianca": "Alta",
-      "fonte": "F5",
-      "comoResolver": "O VMIC do MA não define teto (placeholder). Item de R$ 18.000 (38% do financiamento) sem referência: exigir orçamento/comprovação ou teto formal."
+      "fonte": "Tabela F5 (BNB)",
+      "comoResolver": "Apresentar orçamento detalhado e cronograma de execução com ART/TRT caso o valor por hectare de reforma/formação de pastagem não possua teto fixado na UF."
     },
     {
       "id": "R15",
-      "regra": "Lotação da pastagem (UA/ha) ≤ capacidade de suporte do município (braquiária, sequeiro, maior NT)",
-      "referencia": 1.34,
+      "regra": "Capacidade de Suporte Forrageiro: Lotação planejada (UA/ha) não pode superar o suporte máximo do município e tipo de forragem",
+      "referencia": "Tabela F4 - Suporte Forrageiro por Município (UA/ha)",
       "statusDefault": "BLOQUEIA",
-      "confianca": "Média",
-      "fonte": "F4",
-      "comoResolver": "1,7 UA/ha coincide com a faixa de pangola/panicum (1,71), não com braquiária (1,22–1,34). Corrigir o grupo de capim ou a lotação."
+      "confianca": "Alta",
+      "fonte": "Tabela F4 (BNB)",
+      "comoResolver": "Consultar na Tabela F4 a capacidade de suporte em UA/ha do município para o capim cultivado (sequeiro ou irrigado) e redimensionar a área de pastagem ou o rebanho."
     },
     {
       "id": "R16",
-      "regra": "Capacidade de suporte total (UA) com a lotação proposta vs. com o teto do município",
-      "referencia": 33.5938,
+      "regra": "Equilíbrio Forrageiro do Rebanho: Capacidade total de pastejo do imóvel deve comportar o rebanho estabilizado projetado",
+      "referencia": "Tabela F4 - Suporte Forrageiro Total (UA Total)",
       "statusDefault": "ALERTA",
-      "confianca": "Média",
-      "fonte": "F4",
-      "comoResolver": "Capacidade superestimada em cerca de 27%. Reavaliar a evolução do rebanho (a projeção do rebanho não vem no arquivo exportado)."
+      "confianca": "Alta",
+      "fonte": "Tabela F4 (BNB)",
+      "comoResolver": "Verificar se a área forrageira útil total multiplicada pela capacidade de suporte (UA/ha) suporta o rebanho previsto nos anos de pico da atividade."
     },
     {
       "id": "R17",
-      "regra": "Área de pastagem mantida ao longo do plano (ano 10 ÷ ano 0)",
-      "referencia": 1,
+      "regra": "Consistência da Área de Pastagem: A evolução das áreas de pastagem e forragem deve ser coerente ao longo dos anos do plano",
+      "referencia": "Diretrizes de Consistência Técnica BNB",
       "statusDefault": "ALERTA",
-      "confianca": "Média",
-      "fonte": "interno",
-      "comoResolver": "A área cai de 25,07 ha para 12,5 ha enquanto a lotação fica fixa em 1,7 UA/ha; há reforma de 9 ha no plano. Explicar a queda ou corrigir o modelo."
+      "confianca": "Alta",
+      "fonte": "Manual de Crédito BNB",
+      "comoResolver": "Verificar na aba Ativ. Agrícola se não há supressão inexplicada de pastagens ao longo do horizonte de projeção ou inconsistência entre área inicial e projetada."
     },
     {
       "id": "R18",
-      "regra": "Soma das parcelas = principal × (1 + juros × prazo)",
-      "referencia": 49980,
-      "statusDefault": "OK",
-      "confianca": "Média",
-      "fonte": "interno",
-      "comoResolver": "Fecha em R$ 49.980 (juros simples de 0,5% a.a. por 10 anos)."
+      "regra": "Consistência Financeira: A soma do fluxo de amortização do cronograma deve saldar o principal acrescido dos juros normativos",
+      "referencia": "Diretriz Financeira: Amortização Integral do Financiamento",
+      "statusDefault": "BLOQUEIA",
+      "confianca": "Alta",
+      "fonte": "MCR / Manual do Crédito",
+      "comoResolver": "Revisar as parcelas na aba Cronograma para assegurar que o montante total amortizado quite exatamente o valor financiado corrigido pelos juros da linha de crédito."
     },
     {
       "id": "R19",
-      "regra": "Nº de parcelas anuais = (prazo − carência) ÷ 12",
-      "referencia": 7,
-      "statusDefault": "OK",
+      "regra": "Estrutura do Cronograma: Número de parcelas anuais compatível com o prazo total e a carência pactuados",
+      "referencia": "Fórmula Normativa: Nº Parcelas = (Prazo - Carência) / 12",
+      "statusDefault": "BLOQUEIA",
       "confianca": "Alta",
-      "fonte": "interno",
-      "comoResolver": ""
+      "fonte": "Normas de Crédito BNB",
+      "comoResolver": "Conferir o número de parcelas informadas na aba Cronograma para que seja rigorosamente igual ao período pós-carência em anos."
     },
     {
       "id": "R20",
-      "regra": "Liberação (1ª parcela) posterior à data da proposta",
-      "referencia": 46160,
-      "statusDefault": "OK",
+      "regra": "Cronologia de Desembolso: A data prevista da 1ª parcela de liberação deve ser posterior à data de protocolo da proposta",
+      "referencia": "Cronologia Normativa: Liberação > Data da Proposta",
+      "statusDefault": "BLOQUEIA",
       "confianca": "Alta",
-      "fonte": "interno",
-      "comoResolver": ""
+      "fonte": "Manual de Crédito BNB",
+      "comoResolver": "Ajustar a data de liberação dos recursos para uma data futura em relação à data de elaboração/envio da proposta."
     },
     {
       "id": "R21",
-      "regra": "Município escrito igual em todas as fontes de referência",
-      "referencia": "GOVERNADOR NUNES FREIRE",
+      "regra": "Padronização Cadastral: Grafia do município na proposta idêntica à base do IBGE e tabelas normativas BNB",
+      "referencia": "Cadastro Oficial de Municípios IBGE / BNB",
       "statusDefault": "ALERTA",
       "confianca": "Alta",
-      "fonte": "F2 × F1/F4",
-      "comoResolver": "O arquivo de culturas grafa \"GOVERNADOE\": uma busca exata não encontra o município. Usar código IBGE ou chave aproximada."
+      "fonte": "Tabelas F1, F2 e F4",
+      "comoResolver": "Selecionar o nome do município rigorosamente a partir da lista suspensa oficial para evitar rejeição por divergência de caracteres ou acentuação."
     },
     {
       "id": "R22",
-      "regra": "Mandioca (sequeiro): cultura com vocação reconhecida no município",
-      "referencia": "REFERENDADA - NT 1 BAIXO",
-      "statusDefault": "OK",
-      "confianca": "Média",
-      "fonte": "F2",
-      "comoResolver": "Referendada, NT1. Grafia da fonte fora do padrão (\"NT 1\")."
+      "regra": "Zoneamento Agrícola: Culturas agrícolas projetadas devem possuir vocação e aptidão climática reconhecida no município",
+      "referencia": "Tabela F2 - Zoneamento e Vocações Agrícolas",
+      "statusDefault": "ALERTA",
+      "confianca": "Alta",
+      "fonte": "Tabela F2 (BNB)",
+      "comoResolver": "Verificar na Tabela F2 se a cultura agrícola possui vocação referendada para o município ou anexar justificativa técnica agronômica."
     },
     {
       "id": "R23",
-      "regra": "Valor de venda no modelo — Vacas ≤ referência VMIC (NT permitido = NT2)",
-      "referencia": 3861,
-      "statusDefault": "OK",
-      "confianca": "Hipótese",
-      "fonte": "F5",
-      "comoResolver": "Categoria deduzida pela ordem das linhas do export; confirmar no dicionário."
+      "regra": "Preço de Venda - Vacas de Descarte: Valor unitário de venda projetado dentro dos preços médios de referência da UF",
+      "referencia": "Tabela F5 - Preços de Referência de Venda de Animais",
+      "statusDefault": "ALERTA",
+      "confianca": "Alta",
+      "fonte": "Tabela F5 (BNB)",
+      "comoResolver": "Ajustar o preço unitário de venda das vacas de descarte na aba Ativ. Pecuária para não divergir dos preços médios praticados e aceitos pelo BNB na UF."
     },
     {
       "id": "R24",
-      "regra": "Valor de venda no modelo — Novilhas ≤ referência VMIC (NT permitido = NT2)",
-      "referencia": 3762,
-      "statusDefault": "OK",
-      "confianca": "Hipótese",
-      "fonte": "F5",
-      "comoResolver": "Categoria deduzida pela ordem das linhas do export; confirmar no dicionário."
+      "regra": "Preço de Venda - Novilhas: Valor unitário de venda projetado compatível com o preço de mercado de referência",
+      "referencia": "Tabela F5 - Preços de Referência de Venda de Animais",
+      "statusDefault": "ALERTA",
+      "confianca": "Alta",
+      "fonte": "Tabela F5 (BNB)",
+      "comoResolver": "Conferir o valor unitário de venda de novilhas na pecuária para manter coerência com os valores da Tabela F5 da respectiva UF."
     },
     {
       "id": "R25",
-      "regra": "Valor de venda no modelo — Novilhos ≤ referência VMIC (NT permitido = NT2)",
-      "referencia": 5610,
-      "statusDefault": "OK",
-      "confianca": "Hipótese",
-      "fonte": "F5",
-      "comoResolver": "Categoria deduzida pela ordem das linhas do export; confirmar no dicionário."
+      "regra": "Preço de Venda - Novilhos: Valor unitário de comercialização de novilhos compatível com a referência BNB",
+      "referencia": "Tabela F5 - Preços de Referência de Venda de Animais",
+      "statusDefault": "ALERTA",
+      "confianca": "Alta",
+      "fonte": "Tabela F5 (BNB)",
+      "comoResolver": "Adequar a receita unitária prevista para a venda de novilhos aos limites da Tabela F5 do estado do projeto."
     },
     {
       "id": "R26",
-      "regra": "Valor de venda no modelo — Garrotes ≤ referência VMIC (NT permitido = NT2)",
-      "referencia": 3993,
-      "statusDefault": "OK",
-      "confianca": "Hipótese",
-      "fonte": "F5",
-      "comoResolver": "Categoria deduzida pela ordem das linhas do export; confirmar no dicionário."
+      "regra": "Preço de Venda - Garrotes: Preço de comercialização projetado dentro dos limites referenciais da UF",
+      "referencia": "Tabela F5 - Preços de Referência de Venda de Animais",
+      "statusDefault": "ALERTA",
+      "confianca": "Alta",
+      "fonte": "Tabela F5 (BNB)",
+      "comoResolver": "Ajustar o valor de comercialização por cabeça de garrotes ao parâmetro da Tabela F5 para assegurar a consistência do fluxo de receitas."
     },
     {
       "id": "R27",
-      "regra": "Valor de venda no modelo — Bezerros ≤ referência VMIC (NT permitido = NT2)",
-      "referencia": 2574,
-      "statusDefault": "OK",
-      "confianca": "Hipótese",
-      "fonte": "F5",
-      "comoResolver": "Categoria deduzida pela ordem das linhas do export; confirmar no dicionário."
+      "regra": "Preço de Venda - Bezerros: Preço unitário de desmame e venda de bezerros compatível com a referência BNB",
+      "referencia": "Tabela F5 - Preços de Referência de Venda de Animais",
+      "statusDefault": "ALERTA",
+      "confianca": "Alta",
+      "fonte": "Tabela F5 (BNB)",
+      "comoResolver": "Revisar o preço de venda de bezerros na aba Ativ. Pecuária conforme os valores referenciais da Tabela F5 da respectiva UF."
     }
   ],
   "parametrosZootecnicos": {

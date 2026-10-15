@@ -8,7 +8,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  CheckCircle2,
   AlertTriangle,
   XCircle,
   HelpCircle,
@@ -22,7 +21,7 @@ import {
   Layers,
   Sprout,
   Save,
-  X,
+  CheckCircle2,
 } from "lucide-react";
 import {
   useParametrosTecnicos,
@@ -135,9 +134,7 @@ export default function ParametrosTecnicosPage() {
     nome: string;
   } | null>(null);
 
-  // ----------------------------------------------------
-  // HANDLERS DE UPLOAD E DOWNLOAD
-  // ----------------------------------------------------
+  // Handlers de upload e download
   const handleUploadJson = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -149,7 +146,7 @@ export default function ParametrosTecnicosPage() {
         importarJson(conteudo);
         toast({
           title: "Parâmetros importados com sucesso!",
-          description: "A base de regras, tetos e índices técnicos foi atualizada.",
+          description: "A base de regras gerais, tetos e índices técnicos foi atualizada.",
         });
       } catch (err: unknown) {
         toast({
@@ -168,8 +165,8 @@ export default function ParametrosTecnicosPage() {
     restaurarPadroes();
     setAlertRestaurarAberto(false);
     toast({
-      title: "Padrões BNB Restaurados",
-      description: "Todos os parâmetros técnicos retornaram aos valores normativos oficiais.",
+      title: "Padrões Gerais BNB Restaurados",
+      description: "Todas as regras gerais e parâmetros técnicos retornaram aos padrões normativos institucionais.",
     });
   };
 
@@ -195,9 +192,7 @@ export default function ParametrosTecnicosPage() {
     setItemParaExcluir(null);
   };
 
-  // ----------------------------------------------------
-  // LISTAS FILTRADAS E MEMOIZADAS
-  // ----------------------------------------------------
+  // Filtros
   const regrasFiltradas = useMemo(() => {
     const q = buscaRegras.toLowerCase().trim();
     if (!q) return parametros.regrasCatalogo;
@@ -205,7 +200,8 @@ export default function ParametrosTecnicosPage() {
       (r) =>
         r.id.toLowerCase().includes(q) ||
         r.regra.toLowerCase().includes(q) ||
-        r.comoResolver.toLowerCase().includes(q)
+        r.comoResolver.toLowerCase().includes(q) ||
+        String(r.referencia || "").toLowerCase().includes(q)
     );
   }, [parametros.regrasCatalogo, buscaRegras]);
 
@@ -268,33 +264,29 @@ export default function ParametrosTecnicosPage() {
 
   const totalPagMunicipios = Math.ceil(municipiosFiltrados.length / ITEMS_POR_PAGINA) || 1;
 
-  // ----------------------------------------------------
-  // HELPERS DE FORMATAÇÃO E STATUS
-  // ----------------------------------------------------
-  const renderBadgeStatus = (status: string) => {
+  // Impacto Normativo Geral da Regra
+  const renderBadgeImpacto = (status: string) => {
     switch (status) {
       case "BLOQUEIA":
         return (
-          <Badge className="bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30 flex items-center gap-1 font-semibold">
-            <XCircle className="w-3 h-3 text-red-500" /> Bloqueante
+          <Badge className="bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30 flex items-center gap-1 font-semibold text-[11px] whitespace-nowrap">
+            <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+            <span>Impeditivo (Bloqueante)</span>
           </Badge>
         );
       case "ALERTA":
         return (
-          <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1 font-semibold">
-            <AlertTriangle className="w-3 h-3 text-amber-500" /> Alerta
+          <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1 font-semibold text-[11px] whitespace-nowrap">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span>Alerta Técnico</span>
           </Badge>
         );
       case "OK":
-        return (
-          <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1 font-semibold">
-            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Em Conformidade
-          </Badge>
-        );
       default:
         return (
-          <Badge variant="outline" className="text-muted-foreground flex items-center gap-1">
-            <HelpCircle className="w-3 h-3" /> {status}
+          <Badge className="bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30 flex items-center gap-1 font-semibold text-[11px] whitespace-nowrap">
+            <Info className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <span>Diretriz Normativa</span>
           </Badge>
         );
     }
@@ -330,7 +322,7 @@ export default function ParametrosTecnicosPage() {
                   Parâmetros Técnicos & Normativos BNB
                 </h1>
                 <p className="text-sm text-muted-foreground font-medium">
-                  Configuração, calibração e manutenção das regras de crítica técnica do PRONAF A2
+                  Regras gerais e parâmetros universais do Banco do Nordeste aplicados na crítica técnica de qualquer proposta PRONAF A2
                 </p>
               </div>
             </div>
@@ -374,11 +366,11 @@ export default function ParametrosTecnicosPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-border/40">
           <div className="rounded-2xl bg-card/60 border border-border/40 p-4 shadow-sm">
             <div className="flex items-center justify-between text-muted-foreground mb-1">
-              <span className="text-xs font-semibold uppercase tracking-wider">Regras de Conformidade</span>
+              <span className="text-xs font-semibold uppercase tracking-wider">Regras Normativas</span>
               <Database className="h-4 w-4 text-indigo-500" />
             </div>
             <div className="text-2xl font-black text-foreground">{parametros.regrasCatalogo.length}</div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">R01 a R27 mapeadas e calibradas</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">R01 a R27 universais para análise</p>
           </div>
 
           <div className="rounded-2xl bg-card/60 border border-border/40 p-4 shadow-sm">
@@ -442,23 +434,23 @@ export default function ParametrosTecnicosPage() {
         </div>
 
         {/* ---------------------------------------------------- */}
-        {/* ABA 1: REGRAS DE CONFORMIDADE */}
+        {/* ABA 1: REGRAS GERAIS DE CONFORMIDADE BNB */}
         {/* ---------------------------------------------------- */}
         <TabsContent value="regras" className="space-y-4">
           <Card className="rounded-3xl border-border/50 bg-card/40 backdrop-blur-xl shadow-premium">
             <CardHeader className="p-6 pb-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <CardTitle className="text-lg font-bold">Catálogo de Regras de Conformidade BNB</CardTitle>
+                  <CardTitle className="text-lg font-bold">Catálogo de Regras Gerais de Conformidade BNB</CardTitle>
                   <CardDescription className="text-xs">
-                    Regras R01 a R27 aplicadas automaticamente na análise crítica e geração do PDF técnico
+                    Critérios normativos institucionais universais do BNB aplicados a qualquer proposta importada para emissão da Conformidade Técnica
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="relative w-full sm:w-64">
+                  <div className="relative w-full sm:w-72">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Buscar regra ou resolução..."
+                      placeholder="Buscar regra, critério ou resolução..."
                       value={buscaRegras}
                       onChange={(e) => setBuscaRegras(e.target.value)}
                       className="pl-9 h-9 rounded-xl bg-background/50 text-xs"
@@ -470,10 +462,10 @@ export default function ParametrosTecnicosPage() {
                       setRegraEmEdicao({
                         id: `R${String(parametros.regrasCatalogo.length + 1).padStart(2, "0")}`,
                         regra: "",
-                        referencia: "",
+                        referencia: "Norma Geral BNB",
                         statusDefault: "ALERTA",
                         confianca: "Alta",
-                        fonte: "Manual do Crédito BNB",
+                        fonte: "Manual de Crédito BNB",
                         comoResolver: "",
                         ativa: true,
                       });
@@ -493,10 +485,10 @@ export default function ParametrosTecnicosPage() {
                   <TableHeader>
                     <TableRow className="border-border/40 bg-muted/20">
                       <TableHead className="w-20 text-xs font-bold">Código</TableHead>
-                      <TableHead className="text-xs font-bold">Descrição da Regra / Exigência</TableHead>
-                      <TableHead className="w-36 text-xs font-bold">Referência / Limite</TableHead>
-                      <TableHead className="w-36 text-xs font-bold">Classificação</TableHead>
-                      <TableHead className="text-xs font-bold">Instrução de Resolução ("Como Resolver")</TableHead>
+                      <TableHead className="text-xs font-bold">Exigência Técnica / Normativa BNB</TableHead>
+                      <TableHead className="w-44 text-xs font-bold">Referência Geral / Base Normativa</TableHead>
+                      <TableHead className="w-44 text-xs font-bold">Impacto Normativo</TableHead>
+                      <TableHead className="text-xs font-bold">Orientação de Regularização ("Como Resolver")</TableHead>
                       <TableHead className="w-24 text-right text-xs font-bold">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -516,11 +508,13 @@ export default function ParametrosTecnicosPage() {
                             </span>
                           </TableCell>
                           <TableCell className="text-xs font-medium max-w-xs">{r.regra}</TableCell>
-                          <TableCell className="text-xs font-mono text-muted-foreground">
-                            {String(r.referencia || "—")}
+                          <TableCell className="text-xs font-medium text-muted-foreground">
+                            <span className="px-2 py-0.5 rounded-md bg-muted/30 border border-border/30 text-[11px]">
+                              {String(r.referencia || "—")}
+                            </span>
                           </TableCell>
-                          <TableCell>{renderBadgeStatus(r.statusDefault)}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground max-w-sm">
+                          <TableCell>{renderBadgeImpacto(r.statusDefault)}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground max-w-md">
                             <span className="line-clamp-2" title={r.comoResolver}>
                               {r.comoResolver}
                             </span>
@@ -576,7 +570,7 @@ export default function ParametrosTecnicosPage() {
                 <div>
                   <CardTitle className="text-lg font-bold">Tetos de Investimento VMIC por UF (Tabela F5)</CardTitle>
                   <CardDescription className="text-xs">
-                    Valores máximos de aquisição (R$/cabeça) permitidos por estado para matrizes e reprodutores
+                    Valores máximos de aquisição (R$/cabeça) permitidos pelo Banco do Nordeste por estado para matrizes e reprodutores
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1192,10 +1186,10 @@ export default function ParametrosTecnicosPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg font-bold">
               <Sliders className="h-5 w-5 text-primary" />
-              <span>{regraEmEdicao?.id ? `Configurar Regra ${regraEmEdicao.id}` : "Nova Regra Técnica"}</span>
+              <span>{regraEmEdicao?.id ? `Configurar Regra ${regraEmEdicao.id}` : "Nova Regra Geral Técnica"}</span>
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Defina o código, severidade e o texto de "Como Resolver" apresentado na crítica e no relatório PDF.
+              Defina a exigência institucional, o impacto normativo e a instrução geral de regularização para os projetistas.
             </DialogDescription>
           </DialogHeader>
 
@@ -1208,67 +1202,66 @@ export default function ParametrosTecnicosPage() {
                     value={regraEmEdicao.id}
                     onChange={(e) => setRegraEmEdicao({ ...regraEmEdicao, id: e.target.value.toUpperCase() })}
                     placeholder="Ex: R28"
-                    className="h-9 font-mono rounded-xl"
+                    className="h-9 font-mono rounded-xl font-bold"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Severidade</Label>
+                  <Label className="text-xs">Impacto Normativo</Label>
                   <Select
                     value={regraEmEdicao.statusDefault}
                     onValueChange={(val: "OK" | "ALERTA" | "BLOQUEIA" | "NÃO VERIFICÁVEL") =>
                       setRegraEmEdicao({ ...regraEmEdicao, statusDefault: val })
                     }
                   >
-                    <SelectTrigger className="h-9 rounded-xl">
+                    <SelectTrigger className="h-9 rounded-xl text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="BLOQUEIA">Bloqueante (Erro)</SelectItem>
-                      <SelectItem value="ALERTA">Alerta (Aviso)</SelectItem>
-                      <SelectItem value="OK">Informativo (OK)</SelectItem>
-                      <SelectItem value="NÃO VERIFICÁVEL">Não Verificável</SelectItem>
+                      <SelectItem value="BLOQUEIA">Impeditivo (Bloqueante)</SelectItem>
+                      <SelectItem value="ALERTA">Alerta Técnico</SelectItem>
+                      <SelectItem value="OK">Diretriz Normativa</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Referência / Limite</Label>
+                  <Label className="text-xs">Referência Geral / Base</Label>
                   <Input
                     value={String(regraEmEdicao.referencia)}
                     onChange={(e) => setRegraEmEdicao({ ...regraEmEdicao, referencia: e.target.value })}
-                    placeholder="Ex: R$ 40.000"
-                    className="h-9 font-mono rounded-xl"
+                    placeholder="Ex: Tabela F1 - BNB"
+                    className="h-9 rounded-xl text-xs"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs">Descrição da Regra / Exigência Normativa</Label>
+                <Label className="text-xs">Descrição da Exigência Técnica / Normativa</Label>
                 <Textarea
                   rows={2}
                   value={regraEmEdicao.regra}
                   onChange={(e) => setRegraEmEdicao({ ...regraEmEdicao, regra: e.target.value })}
-                  placeholder="Ex: Valor total do financiamento não pode ultrapassar o teto..."
+                  placeholder="Ex: A atividade financiada deve possuir vocação reconhecida no município..."
                   className="rounded-xl resize-none text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs">Fonte Normativa</Label>
+                <Label className="text-xs">Fonte Normativa Oficial</Label>
                 <Input
                   value={regraEmEdicao.fonte}
                   onChange={(e) => setRegraEmEdicao({ ...regraEmEdicao, fonte: e.target.value })}
-                  placeholder="Ex: Manual do BNB PRONAF Grupo A / MCR 10"
+                  placeholder="Ex: Manual do BNB PRONAF A / Tabelas F1 a F5"
                   className="h-9 rounded-xl text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-primary">Instruções de Resolução ("Como Resolver")</Label>
+                <Label className="text-xs font-semibold text-primary">Orientação Geral de Resolução ("Como Resolver")</Label>
                 <Textarea
                   rows={4}
                   value={regraEmEdicao.comoResolver}
                   onChange={(e) => setRegraEmEdicao({ ...regraEmEdicao, comoResolver: e.target.value })}
-                  placeholder="Texto explicativo para o projetista sobre como ajustar a planilha ou proposta..."
+                  placeholder="Orientação genérica clara de como os projetistas devem adequar a proposta para atender à norma..."
                   className="rounded-xl resize-none text-xs"
                 />
               </div>
@@ -1343,7 +1336,7 @@ export default function ParametrosTecnicosPage() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-[11px]">Reprodutor Mestiço Alta Mestiçagem (R$)</Label>
+                  <Label className="text-[11px]">Reprodutor Mestiço Alta Mesticagem (R$)</Label>
                   <Input
                     type="number"
                     value={vmicEmEdicao.valores.reprodutorMesticoAltaMesticagem ?? ""}
@@ -1877,7 +1870,7 @@ export default function ParametrosTecnicosPage() {
               <span>Restaurar todos os parâmetros de fábrica do BNB?</span>
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
-              Esta ação redefinirá todas as 27 regras técnicas, tetos VMIC, suporte forrageiro e tabelas zootécnicas
+              Esta ação redefinirá todas as 27 regras técnicas gerais, tetos VMIC, suporte forrageiro e tabelas zootécnicas
               para as versões normativas originais do Banco do Nordeste. Todas as edições e adições locais serão
               substituídas.
             </AlertDialogDescription>

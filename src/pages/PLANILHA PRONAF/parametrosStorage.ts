@@ -93,7 +93,7 @@ export interface BaseParametrosTecnicos {
   municipiosClassificacao: Record<string, MunicipioClassifItem>;
 }
 
-const STORAGE_KEY = "PRONAF_PARAMETROS_TECNICOS_CUSTOM_V2";
+const STORAGE_KEY = "PRONAF_PARAMETROS_TECNICOS_NORMATIVOS_V3";
 
 // Cache em memória para acesso síncrono rápido no engineCritica
 let memoriaParametros: BaseParametrosTecnicos | null = null;
@@ -104,6 +104,8 @@ function carregarDoArmazenamento(): BaseParametrosTecnicos {
 
   try {
     if (typeof window !== "undefined" && window.localStorage) {
+      // Limpa dados de teste anteriores
+      localStorage.removeItem("PRONAF_PARAMETROS_TECNICOS_CUSTOM_V2");
       const salvo = localStorage.getItem(STORAGE_KEY);
       if (salvo) {
         const parsed = JSON.parse(salvo);
