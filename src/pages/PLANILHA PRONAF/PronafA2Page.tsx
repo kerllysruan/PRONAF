@@ -569,6 +569,7 @@ function PronafA2Inner() {
         open={isCriticaDialogOpen}
         onOpenChange={setIsCriticaDialogOpen}
         relatorio={relatorioCritica}
+        projeto={projeto}
         onNavigateTab={(tabId) => setActiveTab(tabId as TabId)}
       />
     </div>

@@ -24,11 +24,13 @@ import {
 } from "lucide-react";
 import { RelatorioCritica, ItemCritica, StatusRegra } from "../engineCritica";
 import { gerarPdfParecerCritica } from "../gerarPdfCritica";
+import { ProjetoA2 } from "../types";
 
 interface DialogCriticaConformidadeProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   relatorio: RelatorioCritica | null;
+  projeto?: ProjetoA2;
   onNavigateTab?: (tabId: string) => void;
 }
 
@@ -67,6 +69,7 @@ export const DialogCriticaConformidade: React.FC<DialogCriticaConformidadeProps>
   open,
   onOpenChange,
   relatorio,
+  projeto,
   onNavigateTab,
 }) => {
   const [filtroStatus, setFiltroStatus] = useState<"TODOS" | "PENDENCIAS" | "BLOQUEIA" | "ALERTA" | "OK">("PENDENCIAS");
@@ -122,7 +125,7 @@ export const DialogCriticaConformidade: React.FC<DialogCriticaConformidadeProps>
             </div>
 
             <Button
-              onClick={() => gerarPdfParecerCritica(relatorio)}
+              onClick={() => gerarPdfParecerCritica(relatorio, projeto)}
               className="gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-lg hover:shadow-emerald-900/30 transition-all shrink-0 cursor-pointer"
             >
               <FileDown className="h-4 w-4" />

@@ -108,64 +108,13 @@ async function clearFromIndexedDB(): Promise<void> {
 
 export const PronafA2Provider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [projeto, setProjeto] = useState<ProjetoA2>(createInitialProjetoA2);
-  const [loading, setLoading] = useState<boolean>(true);
-  const isInitialMount = useRef<boolean>(true);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  // Carrega do IndexedDB na montagem
+  // Ao iniciar a aplicação ou recarregar a página, garante que a proposta anterior seja apagada
+  // para que o projetista sempre comece com a tela limpa para uma nova importação.
   useEffect(() => {
-    let mounted = true;
-
-    async function init() {
-      const savedData = await loadFromIndexedDB();
-      if (mounted) {
-        if (savedData) {
-          const initial = createInitialProjetoA2();
-          setProjeto({
-            Cliente: { ...initial.Cliente, ...(savedData.Cliente || {}) },
-            'Avaliação': { ...initial['Avaliação'], ...(savedData['Avaliação'] || {}) },
-            ' Proposta': { ...initial[' Proposta'], ...(savedData[' Proposta'] || {}) },
-            Cronograma: { ...initial.Cronograma, ...(savedData.Cronograma || {}) },
-            'Ativ. Agrícola': { ...initial['Ativ. Agrícola'], ...(savedData['Ativ. Agrícola'] || {}) },
-            'Ativ. Pecuária': { ...initial['Ativ. Pecuária'], ...(savedData['Ativ. Pecuária'] || {}) },
-            'Outras Ativ': { ...initial['Outras Ativ'], ...(savedData['Outras Ativ'] || {}) },
-            CalculoFinanceiro: { ...initial.CalculoFinanceiro, ...(savedData.CalculoFinanceiro || {}) }
-          });
-        }
-        setLoading(false);
-      }
-    }
-
-    init();
-
-    return () => {
-      mounted = false;
-    };
+    clearFromIndexedDB();
   }, []);
-
-  // Salva automaticamente no IndexedDB com debounce de 500ms
-  useEffect(() => {
-    if (loading || isInitialMount.current) {
-      if (!loading) {
-        isInitialMount.current = false;
-      }
-      return;
-    }
-
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      saveToIndexedDB(projeto);
-    }, DEBOUNCE_MS);
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [projeto, loading]);
 
   const updateTab = useCallback(<T extends keyof ProjetoA2>(tab: T, data: Partial<ProjetoA2[T]>) => {
     setProjeto((prev) => ({
