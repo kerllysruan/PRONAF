@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { RelatorioCritica } from "./engineCritica";
-import { ProjetoA2 } from "./types";
+import { ProjetoA2, SemoventeItem, UsoTerraAgricolaItem } from "./types";
 import { getParametrosConsolidados, BaseParametrosTecnicos } from "./parametrosStorage";
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -649,12 +649,15 @@ export function gerarPdfParecerCritica(
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  6. COMPOSICAO DO REBANHO PROJETADO (F3) — COM MEMORIAL DE CALCULO
+  //  6. COMPOSICAO DO REBANHO PROJETADO (F3) — DADOS REAIS DA PROPOSTA
   // ══════════════════════════════════════════════════════════════════════
   if (projeto) {
     y = secTitle(doc, y, "F3", "COMPOSICAO DO REBANHO PROJETADO E BALANCO ZOOTECNICO", P.blue);
 
-    const pec      = projeto["Ativ. Pecuaria"] || {};
+    // Suporte a chaves com e sem acento
+    const projRecord = projeto as unknown as Record<string, unknown>;
+    const pec = (projeto["Ativ. Pecuária"] || projRecord["Ativ. Pecuaria"] || {}) as ProjetoA2["Ativ. Pecuária"];
+    const av = (projeto.Avaliação || projRecord["Avaliacao"] || {}) as ProjetoA2["Avaliação"];
     const bovCorte = pec.corte;
     const bovLeite = pec.leite;
     const ovinos   = pec.ovinos;
@@ -670,10 +673,10 @@ export function gerarPdfParecerCritica(
     ) => {
       if (!catArr) return;
       catArr.forEach((c) => {
-        const a = c.quantidadeAtual || 0;
-        const b = c.aAdquirir || 0;
+        const a = Number(c.quantidadeAtual) || 0;
+        const b = Number(c.aAdquirir) || 0;
         if (a + b > 0) {
-          const ua = c.equivalenciaUa || uaDefault;
+          const ua = Number(c.equivalenciaUa) || uaDefault;
           cats.push({ especie, categoria: c.categoria, atual: a, adquirir: b, projetado: a + b, ua, totalUa: (a + b) * ua });
         }
       });
@@ -684,85 +687,110 @@ export function gerarPdfParecerCritica(
     processCats("Ovinos",      ovinos?.categorias,   0.15);
     processCats("Caprinos",    caprinos?.categorias, 0.15);
 
-    if (cats.length === 0) {
-      cats.push(
-        { especie: "Bovinos", categoria: "Vacas / Matrizes",    atual: 13, adquirir: 0, projetado: 13, ua: 1.0,  totalUa: 13.0 },
-        { especie: "Bovinos", categoria: "Reprodutores",        atual:  1, adquirir: 0, projetado:  1, ua: 1.0,  totalUa:  1.0 },
-        { especie: "Bovinos", categoria: "Novilhas de Reposicao",atual: 4, adquirir: 0, projetado:  4, ua: 0.75, totalUa:  3.0 },
-        { especie: "Bovinos", categoria: "Bezerros(as) de Cria", atual: 8, adquirir: 0, projetado:  8, ua: 0.25, totalUa:  2.0 }
-      );
+    // Se a aba de pecuaria nao tiver categorias cadastradas, verificar semoventes da aba Avaliacao
+    if (cats.length === 0 && Array.isArray(av.semoventes)) {
+      av.semoventes.forEach((s: SemoventeItem) => {
+        const q = Number(s.quantidadeCabecas) || 0;
+        if (q > 0) {
+          const esp = s.especie || "Bovinos";
+          const ua = esp.toLowerCase().includes("ovino") || esp.toLowerCase().includes("caprino") ? 0.15 : 1.0;
+          cats.push({
+            especie: esp,
+            categoria: s.categoria || "Semoventes Cadastrados",
+            atual: q,
+            adquirir: 0,
+            projetado: q,
+            ua,
+            totalUa: q * ua,
+          });
+        }
+      });
     }
 
+    // Se mesmo assim nao houver animais no projeto, exibir linha informativa sem inventar dados
     let totAtual = 0, totAdq = 0, totProj = 0, totUa = 0;
     cats.forEach((c) => { totAtual += c.atual; totAdq += c.adquirir; totProj += c.projetado; totUa += c.totalUa; });
 
-    const rowsReb: string[][] = cats.map((r, idx) => [
-      txt(String(idx + 1)),
-      txt(r.especie),
-      txt(r.categoria),
-      txt(String(r.atual)),
-      txt(String(r.adquirir)),
-      txt(String(r.projetado)),
-      txt(fmtN(r.ua, 2)),
-      txt(fmtN(r.totalUa, 2)),
-    ]);
+    if (cats.length === 0) {
+      y = infoCard(doc, y, [
+        `Nenhum rebanho existente ou a adquirir cadastrado nas abas Ativ. Pecuaria ou Avaliacao deste projeto.`,
+        `Preencha o efetivo de animais na aba Ativ. Pecuaria para calculo automatico da carga animal (UA) e balanco zootecnico.`,
+      ], P.blue, P.blueBg);
+    } else {
+      const rowsReb: string[][] = cats.map((r, idx) => [
+        txt(String(idx + 1)),
+        txt(r.especie),
+        txt(r.categoria),
+        txt(String(r.atual)),
+        txt(String(r.adquirir)),
+        txt(String(r.projetado)),
+        txt(fmtN(r.ua, 2)),
+        txt(fmtN(r.totalUa, 2)),
+      ]);
 
-    rowsReb.push(["", "", "TOTAIS", txt(String(totAtual)), txt(String(totAdq)), txt(String(totProj)), "", txt(fmtN(totUa, 2))]);
+      rowsReb.push(["", "", "TOTAIS", txt(String(totAtual)), txt(String(totAdq)), txt(String(totProj)), "", txt(fmtN(totUa, 2))]);
 
-    autoTable(doc, {
-      startY: y,
-      margin: TABLE_MARGIN,
-      showHead: "everyPage",
-      head: [["#", "Especie", "Categoria do Rebanho", "Existente", "A Adquirir", "Projetado", "Eq. UA", "Carga UA"]],
-      body: rowsReb,
-      theme: "plain",
-      headStyles: TABLE_HEAD_STYLE,
-      styles: TABLE_BODY_STYLE,
-      alternateRowStyles: { fillColor: TABLE_ALT_BG },
-      columnStyles: {
-        0: { cellWidth:  8, halign: "center", fontStyle: "bold" },
-        1: { cellWidth: 26 },
-        2: { cellWidth: 46 },
-        3: { cellWidth: 20, halign: "center" },
-        4: { cellWidth: 20, halign: "center" },
-        5: { cellWidth: 20, halign: "center", fontStyle: "bold" },
-        6: { cellWidth: 18, halign: "right" },
-        7: { cellWidth: 28, halign: "right", fontStyle: "bold" },
-      },
-      didParseCell: (data) => {
-        if (data.section === "body" && data.row.index === rowsReb.length - 1) {
-          data.cell.styles.fillColor = P.blueLight;
-          data.cell.styles.textColor = P.navyMd;
-          data.cell.styles.fontStyle = "bold";
-        }
-      },
-    });
+      autoTable(doc, {
+        startY: y,
+        margin: TABLE_MARGIN,
+        showHead: "everyPage",
+        head: [["#", "Especie", "Categoria do Rebanho", "Existente", "A Adquirir", "Projetado", "Eq. UA", "Carga UA"]],
+        body: rowsReb,
+        theme: "plain",
+        headStyles: TABLE_HEAD_STYLE,
+        styles: TABLE_BODY_STYLE,
+        alternateRowStyles: { fillColor: TABLE_ALT_BG },
+        columnStyles: {
+          0: { cellWidth:  8, halign: "center", fontStyle: "bold" },
+          1: { cellWidth: 26 },
+          2: { cellWidth: 46 },
+          3: { cellWidth: 20, halign: "center" },
+          4: { cellWidth: 20, halign: "center" },
+          5: { cellWidth: 20, halign: "center", fontStyle: "bold" },
+          6: { cellWidth: 18, halign: "right" },
+          7: { cellWidth: 28, halign: "right", fontStyle: "bold" },
+        },
+        didParseCell: (data) => {
+          if (data.section === "body" && data.row.index === rowsReb.length - 1) {
+            data.cell.styles.fillColor = P.blueLight;
+            data.cell.styles.textColor = P.navyMd;
+            data.cell.styles.fontStyle = "bold";
+          }
+        },
+      });
 
-    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
 
-    // Card de indicadores zootecnicos com MEMORIAL DE CALCULO EXPLICITO
-    const paricao  = bovCorte?.paricaoPercent || bovLeite?.paricaoPercent || 70;
-    const relMT    = bovCorte?.matrizesPorReprodutor || 25;
-    const mortCria = bovCorte?.mortalidadeAte1AnoPercent || 5;
+      // Card de indicadores zootecnicos com MEMORIAL DE CALCULO EXPLICITO
+      const paricao  = bovCorte?.paricaoPercent || bovLeite?.paricaoPercent || 0;
+      const relMT    = bovCorte?.matrizesPorReprodutor || 0;
+      const mortCria = bovCorte?.mortalidadeAte1AnoPercent || 0;
 
-    y = infoCard(doc, y, [
-      `MEMORIAL DE CALCULO DO REBANHO E CARGA ANIMAL (TABELA F3 BNB):`,
-      `* Efetivo Total = Rebanho Existente (${totAtual} cab) + Aquisicoes (${totAdq} cab) = ${totProj} cabecas totais projetadas.`,
-      `* Carga Animal Total = Somatorio de [Efetivo por Categoria x Equivalencia UA (Eq. UA)] = ${fmtN(totUa, 2)} UA.`,
-      `* Parametros Tecnicos Oficiais: Taxa de Paricao = ${paricao}% | Relacao Matriz/Touro = ${relMT}:1 | Mortalidade de Cria = ${mortCria}%.`,
-    ], P.blue, P.blueLight);
+      const indTxt = paricao > 0
+        ? `* Parametros Tecnicos Oficiais: Taxa de Paricao = ${paricao}% | Relacao Matriz/Touro = ${relMT}:1 | Mortalidade de Cria = ${mortCria}%.`
+        : `* Balanco Zootecnico calculado a partir do efetivo de cabecas x fator de equivalencia UA informado.`;
+
+      y = infoCard(doc, y, [
+        `MEMORIAL DE CALCULO DO REBANHO E CARGA ANIMAL (TABELA F3 BNB):`,
+        `* Efetivo Total = Rebanho Existente (${totAtual} cab) + Aquisicoes (${totAdq} cab) = ${totProj} cabecas totais projetadas.`,
+        `* Carga Animal Total = Somatorio de [Efetivo por Categoria x Equivalencia UA (Eq. UA)] = ${fmtN(totUa, 2)} UA.`,
+        indTxt,
+      ], P.blue, P.blueLight);
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  7. CAPACIDADE DE SUPORTE FORRAGEIRO (F4) — com MAX animais suportados
+  //  7. CAPACIDADE DE SUPORTE FORRAGEIRO (F4) — DADOS REAIS DA PROPOSTA
   // ══════════════════════════════════════════════════════════════════════
   if (projeto) {
     y = secTitle(doc, y, "F4", "CAPACIDADE DE SUPORTE FORRAGEIRO DO IMOVEL", P.blue);
 
     const munNorm  = normKey(relatorio.municipio);
     const fMun     = parametros.suporteForrageiroMunicipios?.[munNorm];
-    const pastagens = (projeto["Ativ. Agricola"]?.usoTerrasPecuaria || []).filter(
-      (p) => p.descricao?.trim() && ((p.atualArea && p.atualArea > 0) || (p.atualUaHa && p.atualUaHa > 0))
+    const ativAgr = (projeto["Ativ. Agrícola"] || projRecord["Ativ. Agricola"] || {}) as ProjetoA2["Ativ. Agrícola"];
+    const listaPastagens: UsoTerraAgricolaItem[] = ativAgr.usoTerrasPecuaria || [];
+    const pastagens = listaPastagens.filter(
+      (p: UsoTerraAgricolaItem) => p.descricao?.trim() && ((p.atualArea && Number(p.atualArea) > 0) || (p.atualUaHa && Number(p.atualUaHa) > 0))
     );
 
     const uaHaTeto = fMun?.suporteUaHa?.maximoSequeiroBraquiaria ?? 1.2;
@@ -772,78 +800,84 @@ export function gerarPdfParecerCritica(
     const uaEquivBovino = 1.0;
     let areaTot = 0, capTotUa = 0;
 
-    const rowsFor = (pastagens.length > 0 ? pastagens : [
-      { id: 1, descricao: "Pastagens Formadas / Nativas", atualArea: 20, atualUaHa: uaHaTeto, anos: [] }
-    ]).map((p, idx) => {
-      const area       = p.atualArea || 0;
-      const lotProp    = p.atualUaHa || uaHaTeto;
-      const capUa      = area * uaHaTeto;
-      const maxAnimais = Math.floor(capUa / uaEquivBovino);
-      areaTot   += area;
-      capTotUa  += capUa;
+    if (pastagens.length === 0) {
+      y = infoCard(doc, y, [
+        `Nenhuma pastagem ou uso de terra pecuario cadastrado na aba Ativ. Agricola deste projeto.`,
+        `Teto Tecnico Municipal de Suporte Forrageiro para ${txt(relatorio.municipio)}: ${fmtN(uaHaTeto)} UA/ha (Braquiaria em Sequeiro).`,
+        `Precipitação Bioclimática: ${chuva} | Classificação Köppen: ${koppen}.`,
+      ], P.green, P.greenBg);
+    } else {
+      const rowsFor = pastagens.map((p: UsoTerraAgricolaItem, idx: number) => {
+        const area       = Number(p.atualArea) || 0;
+        const lotProp    = Number(p.atualUaHa) || uaHaTeto;
+        const capUa      = area * uaHaTeto;
+        const maxAnimais = Math.floor(capUa / uaEquivBovino);
+        areaTot   += area;
+        capTotUa  += capUa;
 
-      const diagn = lotProp > uaHaTeto * 1.05 ? "SOBREPASTEJO" : "ADEQUADO";
+        const diagn = lotProp > uaHaTeto * 1.05 ? "SOBREPASTEJO" : "ADEQUADO";
 
-      return [
-        txt(String(idx + 1)),
-        txt(p.descricao),
-        txt(`${fmtN(area)} ha`),
-        txt(`${fmtN(lotProp)} UA/ha`),
-        txt(`${fmtN(uaHaTeto)} UA/ha`),
-        txt(`${fmtN(capUa, 1)} UA`),
-        txt(`${maxAnimais} cab`),
-        txt(diagn),
-      ];
-    });
+        return [
+          txt(String(idx + 1)),
+          txt(p.descricao),
+          txt(`${fmtN(area)} ha`),
+          txt(`${fmtN(lotProp)} UA/ha`),
+          txt(`${fmtN(uaHaTeto)} UA/ha`),
+          txt(`${fmtN(capUa, 1)} UA`),
+          txt(`${maxAnimais} cab`),
+          txt(diagn),
+        ];
+      });
 
-    const maxTotAnimais = Math.floor(capTotUa / uaEquivBovino);
+      const maxTotAnimais = Math.floor(capTotUa / uaEquivBovino);
 
-    autoTable(doc, {
-      startY: y,
-      margin: TABLE_MARGIN,
-      showHead: "everyPage",
-      head: [["#", "Tipologia Forrageira", "Area (ha)", "Lotacao Proposta", "Teto BNB (UA/ha)", "Cap. Suporte (UA)", "Max. Animais", "Diagnostico"]],
-      body: rowsFor,
-      theme: "plain",
-      headStyles: TABLE_HEAD_STYLE,
-      styles: TABLE_BODY_STYLE,
-      alternateRowStyles: { fillColor: TABLE_ALT_BG },
-      columnStyles: {
-        0: { cellWidth:  8, halign: "center", fontStyle: "bold" },
-        1: { cellWidth: 50 },
-        2: { cellWidth: 18, halign: "right" },
-        3: { cellWidth: 20, halign: "right" },
-        4: { cellWidth: 20, halign: "right" },
-        5: { cellWidth: 22, halign: "right", fontStyle: "bold" },
-        6: { cellWidth: 22, halign: "center", fontStyle: "bold" },
-        7: { cellWidth: 26, halign: "center", fontStyle: "bold" },
-      },
-      didParseCell: (data) => {
-        if (data.section === "body" && data.column.index === 7) {
-          const v = String(data.cell.raw);
-          if (v.includes("SOBREPASTEJO")) {
-            data.cell.styles.textColor = P.red;
-            data.cell.styles.fillColor = P.redBg;
-          } else {
-            data.cell.styles.textColor = P.green;
-            data.cell.styles.fillColor = P.greenBg;
+      autoTable(doc, {
+        startY: y,
+        margin: TABLE_MARGIN,
+        showHead: "everyPage",
+        head: [["#", "Tipologia Forrageira", "Area (ha)", "Lotacao Proposta", "Teto BNB (UA/ha)", "Cap. Suporte (UA)", "Max. Animais", "Diagnostico"]],
+        body: rowsFor,
+        theme: "plain",
+        headStyles: TABLE_HEAD_STYLE,
+        styles: TABLE_BODY_STYLE,
+        alternateRowStyles: { fillColor: TABLE_ALT_BG },
+        columnStyles: {
+          0: { cellWidth:  8, halign: "center", fontStyle: "bold" },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 18, halign: "right" },
+          3: { cellWidth: 20, halign: "right" },
+          4: { cellWidth: 20, halign: "right" },
+          5: { cellWidth: 22, halign: "right", fontStyle: "bold" },
+          6: { cellWidth: 22, halign: "center", fontStyle: "bold" },
+          7: { cellWidth: 26, halign: "center", fontStyle: "bold" },
+        },
+        didParseCell: (data) => {
+          if (data.section === "body" && data.column.index === 7) {
+            const v = String(data.cell.raw);
+            if (v.includes("SOBREPASTEJO")) {
+              data.cell.styles.textColor = P.red;
+              data.cell.styles.fillColor = P.redBg;
+            } else {
+              data.cell.styles.textColor = P.green;
+              data.cell.styles.fillColor = P.greenBg;
+            }
           }
-        }
-        if (data.section === "body" && data.column.index === 6) {
-          data.cell.styles.textColor = P.navyMd;
-          data.cell.styles.fillColor = P.blueLight;
-        }
-      },
-    });
+          if (data.section === "body" && data.column.index === 6) {
+            data.cell.styles.textColor = P.navyMd;
+            data.cell.styles.fillColor = P.blueLight;
+          }
+        },
+      });
 
-    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
 
-    y = infoCard(doc, y, [
-      `MEMORIAL DE CALCULO DO SUPORTE FORRAGEIRO (TABELA F4 BNB):`,
-      `* Capacidade Total de Pastejo = Area Total (${fmtN(areaTot)} ha) x Teto Municipal BNB (${fmtN(uaHaTeto)} UA/ha) = ${fmtN(capTotUa, 1)} UA.`,
-      `* Quantidade Maxima de Animais Suportados = Capacidade Total (${fmtN(capTotUa, 1)} UA) / Equivalencia Bovina (1.0 UA/cab) = ${maxTotAnimais} cabecas.`,
-      `* Bioclima Regional: Precipitacao = ${chuva} | Classificacao Koppen = ${koppen}.`,
-    ], P.green, P.greenBg);
+      y = infoCard(doc, y, [
+        `MEMORIAL DE CALCULO DO SUPORTE FORRAGEIRO (TABELA F4 BNB):`,
+        `* Capacidade Total de Pastejo = Area Total (${fmtN(areaTot)} ha) x Teto Municipal BNB (${fmtN(uaHaTeto)} UA/ha) = ${fmtN(capTotUa, 1)} UA.`,
+        `* Quantidade Maxima de Animais Suportados = Capacidade Total (${fmtN(capTotUa, 1)} UA) / Equivalencia Bovina (1.0 UA/cab) = ${maxTotAnimais} cabecas.`,
+        `* Bioclima Regional: Precipitacao = ${chuva} | Classificacao Koppen = ${koppen}.`,
+      ], P.green, P.greenBg);
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════
